@@ -249,14 +249,14 @@ make_qc_plots_one <- function(df, ds, out_dir = "data/qc/figs_by_dataset",
   }
   
   # ---- Save PDFs ----
-  ggsave(file.path(out_dir, paste0(prefix, "_depth.pdf")),    p_depth,   width = 12, height = 6)
-  ggsave(file.path(out_dir, paste0(prefix, "_het.pdf")),      p_het,     width = 12, height = 6)
-  ggsave(file.path(out_dir, paste0(prefix, "_het_vs_alt.pdf")), p_het_alt, width = 12, height = 6)
-  ggsave(file.path(out_dir, paste0(prefix, "_missing.pdf")),  p_missing, width = 12, height = 6)
-  ggsave(file.path(out_dir, paste0(prefix, "_alt_af.pdf")),   p_afs,     width = 12, height = 6)
+  ggsave(file.path(out_dir, paste0(prefix, "_depth.pdf")),    p_depth,   width = 12, height = 6, dpi = 300, bg = "white", )
+  ggsave(file.path(out_dir, paste0(prefix, "_het.pdf")),      p_het,     width = 12, height = 6, dpi = 300, bg = "white")
+  ggsave(file.path(out_dir, paste0(prefix, "_het_vs_alt.pdf")), p_het_alt, width = 12, height = 6, dpi = 300, bg = "white")
+  ggsave(file.path(out_dir, paste0(prefix, "_missing.pdf")),  p_missing, width = 12, height = 6, dpi = 300, bg = "white")
+  ggsave(file.path(out_dir, paste0(prefix, "_alt_af.pdf")),   p_afs,     width = 12, height = 6, dpi = 300, bg = "white")
   
   if (!is.null(p_tstv)) {
-    ggsave(file.path(out_dir, paste0(prefix, "_tstv.pdf")), p_tstv, width = 12, height = 6)
+    ggsave(file.path(out_dir, paste0(prefix, "_tstv.pdf")), p_tstv, width = 12, height = 6, dpi = 300, bg = "white")
   }
   
   # optional: pop up plots
@@ -281,8 +281,8 @@ make_qc_plots_one <- function(df, ds, out_dir = "data/qc/figs_by_dataset",
 }
 
 # ---- run for each dataset (SEPARATE outputs) ----
-make_qc_plots_one(qc_samp, "unimputed", out_dir = "data/qc/figs_by_dataset", open_quartz = TRUE)
-make_qc_plots_one(qc_samp, "imputed",   out_dir = "data/qc/figs_by_dataset", open_quartz = TRUE)
+make_qc_plots_one(qc_samp, "unimputed", out_dir = "figs", open_quartz = TRUE)
+make_qc_plots_one(qc_samp, "imputed",   out_dir = "figs", open_quartz = TRUE)
 
 # ---- optional: separate summary table per dataset ----
 summary_stats <- qc_samp %>%
@@ -536,3 +536,6 @@ ggsave("qc/Fig_QC_depth_by_dataset.pdf", p_depth, width = 6, height = 4)
 ggsave("qc/Fig_QC_residual_heterozygosity.pdf", p_het, width = 6, height = 4)
 ggsave("qc/Fig_QC_het_vs_alt_burden.pdf", p_het_alt, width = 6, height = 4)
 ggsave("qc/Fig_QC_imputation_R2_vs_AF.pdf", p_r2, width = 6, height = 4)
+
+
+

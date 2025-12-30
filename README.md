@@ -315,5 +315,127 @@ tabix -p vcf BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz
 
 ---
 
+---
+
+## Step 6 — Filtering (DP → fill-tags → MAF + missingness)
+
+**Goal:** Starting from the cleaned, biallelic SNP-only VCF, apply:
+1) genotype depth (DP) filter (set low-DP genotypes to missing),
+2) compute site-level tags (AN/AC/AF/MAF/NS/F_MISSING),
+3) filter sites by MAF and missingness to create an imputation-ready VCF.
+
+> Low-pass note: DP thresholds depend on sequencing depth. In this repo we document what was used in the scripts, but you should keep the chosen DP/MAF/missingness thresholds consistent across the run.
+
+---
+
+### 6.1 DP filter (set low-DP genotypes to missing)
+
+📜 Script: `9_filter_DP.sh`
+
+**Input**
+- `BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz`
+
+**Output**
+- `BZea.biallelic_snps.DP5.vcf.gz` (+ `.tbi`)
+
+**Run**
+    bsub < 9_filter_DP.sh
+
+**What it does**
+- Uses `bcftools filter -S . -e 'FMT/DP<5'`
+- Any genotype with DP < 5 becomes `./.` (missing), but the variant record is retained.
+
+---
+
+### 6.2 Add site-level summary tags (AN/AC/AF/MAF/NS/F_MISSING)
+
+📜 Script: `10_add_AF_AC_AN_MAF_NS_F_missing.sh`
+
+**Input**
+- `BZea.biallelic_snps.DP5.vcf.gz`
+
+**Output**
+- `BZea.biallelic_snps.DP5.tags.vcf.gz` (+ `.tbi`)
+
+**Run**
+    bsub < 10_add_AF_AC_AN_MAF_NS_F_missing.sh
+
+---
+
+### 6.3 Filter by MAF and missingness
+
+📜 Script: `11_filter_MAF_F_missing.sh`
+
+**What it does**
+- Keeps variants with:
+  - `MAF >= 0.005`
+  - `F_MISSING <= 0.2`
+
+**Output (from your script)**
+- `BZea.DP1.MAF005.MISS20.vcf.gz` (+ `.tbi`)
+
+**Run**
+    bsub < 11_filter_MAF_F_missing.sh
+
+⚠️ IMPORTANT consistency check (from your actual scripts)
+- Step 6.2 writes: `BZea.biallelic_snps.DP5.tags.vcf.gz`
+- Step 6.3 (your script) reads: `BZea.biallelic_snps.DP1.tags.vcf.gz`
+
+So you must either:
+- (A) change `11_filter_MAF_F_missing.sh` to read the DP5-tagged file, **or**
+- (B) intentionally run a DP1 pipeline and keep naming consistent.
+
+---
+
+## Step 7 — Split by chromosome + imputation (Beagle)
+
+**Goal:** Split the filtered VCF into chr-specific VCFs and run Beagle per chromosome using a genetic map.
+
+---
+
+### 7.1 Split genome-wide VCF into per-chromosome files (chr1–chr10)
+
+📜 Script: `12_separate_chr.sh`
+
+**Input (as in your script)**
+- `BZea.DP2.MAF005.MISS50.vcf.gz`
+
+**Outputs**
+- `BZea.DP2.MAF005.MISS50.chr1.vcf.gz` (+ `.tbi`)
+- …
+- `BZea.DP2.MAF005.MISS50.chr10.vcf.gz` (+ `.tbi`)
+
+**Run**
+    bsub < 12_separate_chr.sh
+
+⚠️ Your current loop is `{10..10}` (only chr10).
+To split all chromosomes, change it to `{1..10}`.
+
+---
+
+### 7.2 Beagle imputation per chromosome (using NAM genetic maps)
+
+📜 Script: `13_beagle_impute.sh`
+
+**Inputs**
+- Per-chromosome VCFs from Step 7.1 (e.g. `...chr8.vcf.gz`)
+- Beagle jar:
+  - `beagle.27Feb25.75f.jar`
+- Genetic map per chromosome:
+  - `NAM_genetic_map/beagle/chrN.plink.map`
+
+**Outputs**
+- `BZea.beagle.chr1.vcf.gz` (+ `.tbi`)
+- …
+- `BZea.beagle.chr10.vcf.gz` (+ `.tbi`)
+
+**Run**
+    bsub < 13_beagle_impute.sh
+
+Notes:
+- Your Beagle loop is currently commented (example shows chr8). Uncomment and set `{1..10}` (or the chr range you want).
+- After Beagle finishes, index outputs with tabix (your script does this).
+
+---
 
 

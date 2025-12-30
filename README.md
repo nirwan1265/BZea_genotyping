@@ -438,4 +438,32 @@ Notes:
 
 ---
 
+### 7.3 Add original FORMAT tags back to Beagle output + concatenate all chromosomes
+
+📜 Script: `14_add_tags_back_and_concat.sh`  *(suggested name)*
+
+**Goal:** After Beagle imputation, re-attach useful per-genotype fields (e.g. `AD/DP/PL`) from the **pre-imputation** chr-specific VCFs, then concatenate chr1–chr10 into one imputed genome-wide VCF.
+
+**Inputs (per chromosome)**
+- Pre-imputation VCF (source of FORMAT tags):
+  - `BZea.DP2.MAF005.MISS50.chr${chr}.vcf.gz`
+- Beagle output VCF:
+  - `BZea.beagle.chr${chr}.vcf.gz`
+
+**Outputs (per chromosome)**
+- Beagle VCF with tags added back:
+  - `BZea.beagle.chr${chr}.withPL.vcf.gz` (+ `.tbi`)
+
+**Final output**
+- Concatenated genome-wide imputed VCF:
+  - `BZea.beagle.imputed.allchr.vcf.gz` (+ `.tbi`)
+
+**Run**
+    bsub < 14_add_tags_back_and_concat.sh
+
+**Notes / fixes (based on your script)**
+- Your `tabix` line and `concat` line use `withTags`, but your output filename is `withPL`.
+  Pick one naming scheme and keep it consistent (recommended: use `withPL` everywhere).
+
+---
 

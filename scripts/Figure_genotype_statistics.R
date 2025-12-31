@@ -56,7 +56,10 @@ psc_unimp <- read_bcftools_section("data/qc/unimputed.bcftools.stats.txt", "PSC"
 psc_imp <- read_bcftools_section("data/qc/imputed.bcftools.stats.txt", "PSC") %>%
   mutate(dataset = "imputed")
 
-psc <- bind_rows(psc_unimp, psc_imp)
+psc_all <- read_bcftools_section("data/qc/BZea.chr1_10.biallelic_snpstats.txt") %>%
+  mutate(dataset="Unfiltered")
+
+psc <- bind_rows(psc_unimp, psc_imp,psc_all)
 
 # Inspect available columns (bcftools version dependent)
 print(names(psc))
@@ -283,6 +286,7 @@ make_qc_plots_one <- function(df, ds, out_dir = "data/qc/figs_by_dataset",
 # ---- run for each dataset (SEPARATE outputs) ----
 make_qc_plots_one(qc_samp, "unimputed", out_dir = "figs", open_quartz = TRUE)
 make_qc_plots_one(qc_samp, "imputed",   out_dir = "figs", open_quartz = TRUE)
+make_qc_plots_one(qc_samp, "Unfiltered", out_dir = "figs", open_quartz = TRUE)
 
 # ---- optional: separate summary table per dataset ----
 summary_stats <- qc_samp %>%

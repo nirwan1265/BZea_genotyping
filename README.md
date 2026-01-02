@@ -537,10 +537,9 @@ Principal component analysis (PCA) is designed to capture genome-wide ancestry a
 ### Unimputed (filtered) PCA and Imputed (filtered) PCA
 ![Unimputed (filtered) PCA and Imputed (filtered) PCA](figs/all_figs/PCA.png)
 
-
-**Plotting note**
-- The ellipses represent **95% confidence intervals** around each group (typically assuming a multivariate normal approximation of the cluster in PC space).
-- Also note: in the panels shown, the axes are labeled **PC2 (x)** and **PC3 (y)**. If your title says “PC1 vs PC2”, update the title to match the plotted axes to avoid confusion.
+**Figure X | Population structure PCA for the filtered BZea panel before and after imputation.**  
+(A) PCA of the **filtered, unimputed** callset computed from an LD-pruned SNP set; points represent individuals colored by teosinte taxon group (Zd, Zl, Zv, Zx). 
+(B) PCA of the **filtered, imputed** callset using the same PCA workflow (QC + LD pruning), showing tighter clustering and reduced dispersion after imputation. Axes show PC2 and PC3 scores. Ellipses indicate **95% confidence intervals** for each group.
 
 ---
 

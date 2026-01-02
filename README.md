@@ -511,3 +511,50 @@ Notes:
 
 ---
 
+## Step 8 Population structure visualization using PCA
+
+Principal component analysis (PCA) is designed to capture genome-wide ancestry and population structure. A central requirement is to prevent a small number of long haplotype blocks from disproportionately influencing the eigenvectors. In BZea introgression panels,LD can be both strong and highly heterogeneous across the genome. Consequently, LD pruning is essential prior to performing PCA, because PCA conducted on dense, unpruned SNP data can produce clusters that primarily reflect local regions of elevated LD rather than broad-scale genetic structure. By removing highly correlated markers, LD pruning reduces redundancy in the dataset, enabling PCA to more faithfully represent genome-wide structure instead of local clusters of correlated SNPs. In the specific context of introgression lines, LD pruning also mitigates the risk that a small number of introgressed haplotype segments exert an outsized influence on the leading principal components. Thus, LD pruning is a prerequisite for interpreting PCA plots as depictions of genome-wide ancestry patterns. In the absence of pruning, extended LD blocks—especially those corresponding to introgressed haplotypes—can contribute many tightly correlated variants, thereby over-representing those genomic regions and disproportionately shaping the first few principal components. Applying an r²-based pruning threshold (here, r² = 0.2) decreases marker redundancy such that the resulting PCA more accurately reflects distributed ancestry signals across the genome, rather than artifacts arising from local haplotype structure.
+
+
+### Inputs
+- **Imputed VCF (filtered):** `BZea.DP2.MAF005.MISS50.allchr.vcf.gz`
+- **Unimputed VCF (filtered):** corresponding filtered, unimputed callset (same SNP set / similar filters)
+
+**Importan parameters used in PLINK2 for PCA**
+
+**What these thresholds mean**
+- `--maf 0.01`: removes very rare variants (rare SNPs add noise to PCA and are more sensitive to genotyping errors in low-pass data).
+- `--geno 0.2`: removes SNPs missing in >20% of samples (high missingness SNPs distort distance relationships).
+- `--mind 0.5`: removes samples missing in >50% of SNPs (important for unimputed low-pass; missingness can dominate PCs if not controlled).
+- `--indep-pairwise 50 5 0.2` 
+  - `50` = window size in **variants** (not bp by default; PLINK slides a window of 50 SNPs)
+  - `5`  = step size (shift window by 5 SNPs each iteration)
+  - `0.2` = LD threshold (remove SNPs until remaining pairs in the window have **r² < 0.2**)
+
+
+## PCA figures (95% CI ellipses)
+
+### Unimputed (filtered) PCA and Imputed (filtered) PCA
+![Unimputed (filtered) PCA and Imputed (filtered) PCA](figs/all_figs/PCA.png)
+
+
+**Plotting note**
+- The ellipses represent **95% confidence intervals** around each group (typically assuming a multivariate normal approximation of the cluster in PC space).
+- Also note: in the panels shown, the axes are labeled **PC2 (x)** and **PC3 (y)**. If your title says “PC1 vs PC2”, update the title to match the plotted axes to avoid confusion.
+
+---
+
+## Results
+
+Clear group-level structure is evident in both PCA panels and is concordant with the four teosinte taxa labels (Zd, Zl, Zv, Zx). The separation among clusters indicates that, even under low-pass sequencing, the dataset preserves a strong genome-wide ancestry signal once standard quality control and LD pruning are applied. The imputed dataset displays noticeably tighter and more coherent clustering. This pattern is expected because imputation reduces noise arising from missing data and stabilizes allele count estimates across individuals by leveraging haplotype structure. Consequently, it reduces the scatter attributable to stochastic genotype uncertainty at low sequencing depth. As a result, group boundaries are more sharply defined and the point clouds contract around their central tendency in principal component space.
+
+By contrast, the unimputed dataset exhibits greater dispersion and more elongated group geometries. Under low coverage, missing genotypes are unevenly distributed across both individuals and loci, which can distort estimated genetic distances in a non-uniform manner and inflate variance along major principal components. Residual genotype uncertainty (and, for some individuals, low-complexity or low-yield libraries) can therefore stretch clusters and accentuate distribution tails, making within-group spread appear larger than it would under complete or imputed genotype data. The particularly elongated ellipses (notably for Zl in the unimputed panel) likely reflect a combination of genuine within-group genetic diversity and technical heterogeneity, including heterogeneous coverage and missingness patterns within that taxon.
+
+In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned or overlapping in a two-dimensional projection become more clearly separated once PC3 is included. Samples that share similar coordinates on PC1 and PC2 can still differ substantially along PC3. The 3D representation therefore provides additional visual confirmation that the four taxa form separable clusters in multi-PC space,
+
+*Optional caption (Nature-style):* **Figure X (supplementary) | 3D PCA of population structure.** Scatterplot of individuals across PC1, PC2, and PC3 using the LD-pruned SNP set. The 3D representation highlights separation along PC3 for groups that appear partially overlapping in 2D projections, supporting robust multi-axis structure among taxa.
+
+---
+
+
+---

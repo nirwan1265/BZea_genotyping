@@ -173,7 +173,7 @@ make_qc_plots_one <- function(df, ds, out_dir = "data/qc/figs_by_dataset",
   p_depth <- d %>%
     filter(!is.na(meanDP)) %>%
     ggplot(aes(x = meanDP)) +
-    geom_histogram(bins = 60, alpha = 0.8) +
+    geom_histogram(bins = 30, alpha = 0.8) +
     theme_minimal(base_size = 14) +
     labs(
       x = "Mean DP (across variants)",
@@ -543,3 +543,185 @@ ggsave("qc/Fig_QC_imputation_R2_vs_AF.pdf", p_r2, width = 6, height = 4)
 
 
 
+
+
+
+
+
+
+#####
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# ============================================================
+# Table for 3 datasets: Unfiltered, Unimputed_Filtered, Imputed
+# Uses PSC from bcftools stats and (optionally) SN/TSTV lines.
+# ============================================================
+
+# ---- helpers: pull a section from bcftools stats (you already have PSC reader) ----
+read_bcftools_section <- function(stats_file, section = "PSC") {
+  lines <- readLines(stats_file, warn = FALSE)
+  
+  hdr_idx <- which(grepl(paste0("^#\\s*", section, "\\t"), lines))
+  if (length(hdr_idx) == 0) stop("No tab-delimited header found for section ", section, " in ", stats_file)
+  hdr <- lines[hdr_idx[1]]
+  
+  hdr_fields <- strsplit(sub("^#\\s*", "", hdr), "\t")[[1]]
+  hdr_fields <- hdr_fields[-1]
+  
+  coln <- gsub("^\\[[0-9]+\\]", "", hdr_fields)
+  coln <- trimws(coln)
+  bad  <- is.na(coln) | coln == ""
+  if (any(bad)) coln[bad] <- paste0("V", which(bad))
+  coln <- make.names(coln, unique = TRUE)
+  
+  dat_lines <- lines[grepl(paste0("^", section, "\\t"), lines)]
+  if (length(dat_lines) == 0) stop("No data lines found for section ", section, " in ", stats_file)
+  
+  df <- readr::read_tsv(I(dat_lines), col_names = FALSE, show_col_types = FALSE)
+  df <- df[, -1, drop = FALSE]
+  
+  if (ncol(df) > length(coln)) coln <- c(coln, paste0("extra_", seq_len(ncol(df) - length(coln))))
+  names(df) <- coln[seq_len(ncol(df))]
+  df
+}
+
+# ---- small parsers for dataset-level stats from the bcftools stats text file ----
+get_sn_value <- function(stats_file, key_regex) {
+  lines <- readLines(stats_file, warn = FALSE)
+  # SN  id  key  value
+  sn <- lines[grepl("^SN\\t", lines)]
+  if (length(sn) == 0) return(NA_real_)
+  tab <- readr::read_tsv(I(sn), col_names = c("tag","id","key","value"), show_col_types = FALSE)
+  hit <- tab %>% filter(grepl(key_regex, key, ignore.case = TRUE))
+  if (nrow(hit) == 0) return(NA_real_)
+  suppressWarnings(as.numeric(hit$value[1]))
+}
+
+get_tstv <- function(stats_file) {
+  lines <- readLines(stats_file, warn = FALSE)
+  tstv <- lines[grepl("^TSTV\\t", lines)]
+  if (length(tstv) == 0) return(NA_real_)
+  fields <- strsplit(tstv[1], "\t")[[1]]
+  suppressWarnings(as.numeric(fields[5]))  # ts/tv column
+}
+
+# ---- PSC metric extractor (NA-safe, works across bcftools versions) ----
+get_col <- function(df, candidates) {
+  hit <- candidates[candidates %in% names(df)]
+  if (length(hit) == 0) return(NULL)
+  hit[1]
+}
+
+summarise_psc <- function(psc_df, dataset_label, stats_file = NULL) {
+  col_sample  <- get_col(psc_df, c("sample","Sample","INDV"))
+  col_hets    <- get_col(psc_df, c("nHets","nHET"))
+  col_altHom  <- get_col(psc_df, c("nNonRefHom","nAltHom","nNonRefHoms"))
+  col_refHom  <- get_col(psc_df, c("nRefHom","nRefHoms"))
+  col_depth   <- get_col(psc_df, c("average_depth","avg_depth","average.depth","mean_depth","dp"))
+  col_missing <- get_col(psc_df, c("nMissing","nMiss","missing"))
+  
+  if (is.null(col_sample)) stop("PSC missing sample column for ", dataset_label)
+  
+  d <- psc_df %>%
+    rename(sample = all_of(col_sample)) %>%
+    mutate(
+      nHets      = if (!is.null(col_hets)) as.numeric(.data[[col_hets]]) else NA_real_,
+      nNonRefHom = if (!is.null(col_altHom)) as.numeric(.data[[col_altHom]]) else NA_real_,
+      nRefHom    = if (!is.null(col_refHom)) as.numeric(.data[[col_refHom]]) else NA_real_,
+      meanDP     = if (!is.null(col_depth)) as.numeric(.data[[col_depth]]) else NA_real_,
+      nMissing   = if (!is.null(col_missing)) as.numeric(.data[[col_missing]]) else NA_real_
+    ) %>%
+    mutate(
+      called = ifelse(!is.na(nRefHom) & !is.na(nNonRefHom) & !is.na(nHets),
+                      nRefHom + nNonRefHom + nHets, NA_real_),
+      total_sites = ifelse(!is.na(called) & !is.na(nMissing), called + nMissing, NA_real_),
+      missing_rate = ifelse(!is.na(total_sites) & total_sites > 0, nMissing/total_sites, NA_real_),
+      alt_alleles = ifelse(!is.na(nNonRefHom) & !is.na(nHets),
+                           2*nNonRefHom + nHets, NA_real_),
+      total_alleles = ifelse(!is.na(called), 2*called, NA_real_),
+      alt_allele_freq = ifelse(!is.na(total_alleles) & total_alleles > 0,
+                               alt_alleles/total_alleles, NA_real_),
+      het_rate = ifelse(!is.na(called) & called > 0, nHets/called, NA_real_)
+    )
+  
+  out <- tibble(
+    Dataset = dataset_label,
+    n_samples = n_distinct(d$sample),
+    
+    mean_DP = mean(d$meanDP, na.rm = TRUE),
+    sd_DP   = sd(d$meanDP, na.rm = TRUE),
+    
+    median_missing = median(d$missing_rate, na.rm = TRUE),
+    IQR_missing    = IQR(d$missing_rate, na.rm = TRUE),
+    
+    median_het = median(d$het_rate, na.rm = TRUE),
+    IQR_het    = IQR(d$het_rate, na.rm = TRUE),
+    
+    median_altAF = median(d$alt_allele_freq, na.rm = TRUE),
+    IQR_altAF    = IQR(d$alt_allele_freq, na.rm = TRUE)
+  )
+  
+  # Add dataset-level VCF summary stats if you provide the bcftools stats file path
+  if (!is.null(stats_file)) {
+    out <- out %>%
+      mutate(
+        n_variants = get_sn_value(stats_file, "number of records"),
+        n_snps     = get_sn_value(stats_file, "number of SNPs"),
+        n_multiallelic = get_sn_value(stats_file, "number of multiallelic"),
+        tstv = get_tstv(stats_file)
+      )
+  }
+  
+  out
+}
+
+# ============================================================
+# YOUR three PSC objects (you already created them)
+# ============================================================
+# psc_unimp <- read_bcftools_section("data/qc/unimputed.bcftools.stats.txt", "PSC") %>% mutate(dataset="Unimputed_filtered")
+# psc_imp   <- read_bcftools_section("data/qc/imputed.bcftools.stats.txt",   "PSC") %>% mutate(dataset="Imputed")
+# psc_all   <- read_bcftools_section("data/qc/BZea.chr1_10.biallelic_snpstats.txt", "PSC") %>% mutate(dataset="Unfiltered")
+
+# ---- build summary table (add stats_file paths if you have them) ----
+tab <- bind_rows(
+  summarise_psc(psc_all,   "Unfiltered",        stats_file = NULL),  # set to your unfiltered bcftools stats file if you have it
+  summarise_psc(psc_unimp, "Unimputed_filtered",stats_file = "data/qc/unimputed.bcftools.stats.txt"),
+  summarise_psc(psc_imp,   "Imputed",           stats_file = "data/qc/imputed.bcftools.stats.txt")
+) %>%
+  mutate(
+    mean_DP = round(mean_DP, 3),
+    sd_DP   = round(sd_DP, 3),
+    
+    median_missing = scales::percent(median_missing, accuracy = 0.1),
+    IQR_missing    = scales::percent(IQR_missing, accuracy = 0.1),
+    
+    median_het = scales::percent(median_het, accuracy = 0.1),
+    IQR_het    = scales::percent(IQR_het, accuracy = 0.1),
+    
+    median_altAF = scales::percent(median_altAF, accuracy = 0.1),
+    IQR_altAF    = scales::percent(IQR_altAF, accuracy = 0.1),
+    
+    n_variants = if ("n_variants" %in% names(.)) format(n_variants, big.mark = ",") else NA,
+    n_snps     = if ("n_snps"     %in% names(.)) format(n_snps,     big.mark = ",") else NA,
+    tstv       = if ("tstv"       %in% names(.)) round(tstv, 3) else NA
+  )
+
+# ---- pick “paper-important” columns (compact Nature-style) ----
+tab_show <- tab %>%
+  select(
+    Dataset,
+    n_samples,
+    n_variants,
+    mean_DP, sd_DP,
+    median_missing, IQR_missing,
+    median_het, IQR_het,
+    median_altAF, IQR_altAF,
+    tstv
+  )
+
+# ---- print table ----
+kable(tab_show, caption = "Callset summary statistics across processing stages") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover")) %>%
+  column_spec(1, bold = TRUE)

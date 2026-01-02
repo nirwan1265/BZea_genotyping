@@ -279,6 +279,25 @@ bsub < 6_merge_one_chr.sh
 
 ---
 
+## Unfiltered genotype QC summary
+
+![Sample-level genotype statistics for the unfiltered post-calling dataset](figs/all_figs/Fig_genotype_statistics_unfiltered.png)
+
+**Figure 1 | Sample-level genotype statistics for the unfiltered post-calling dataset.**  
+(A) Distribution of mean read depth (DP) per sample averaged across variant sites.  
+(B) Density of per-sample alternate allele frequency (fraction of called alleles that are non-reference).  
+(C) Distribution of per-sample missing genotype rate.  
+(D) Distribution of residual heterozygosity per sample, calculated as nHets / nCalled.  
+(E) Relationship between residual heterozygosity and alternate allele burden (2×AltHom + Het), computed across called sites.  
+(F) Distribution of per-sample transition/transversion (Ts/Tv) ratio.  
+This panel set reflects raw calls prior to downstream QC filters; outliers in missingness, heterozygosity, ALT burden, or Ts/Tv flag samples for exclusion or closer inspection. Known controls/checks (e.g., B73 and repeated check lines) may occupy distribution extremes due to reference similarity and/or coverage differences and are assessed separately from the primary study panel.
+
+### Results
+
+Figure 1 summarizes per-sample QC metrics for the *unfiltered* genotype calls (immediately after variant calling, prior to any sample- or site-level filtering) and highlights the expected properties of a raw low-pass dataset along with a small set of clear outliers. Mean depth per sample is narrowly centered around ~1.4–1.7× (Panel A), consistent with uniformly low sequencing depth across the cohort at this stage. The per-sample alternate allele fraction is strongly concentrated at low values with a right-skewed tail (Panel B), indicating that most individuals contribute relatively few non-reference calls while a minority of samples show elevated ALT fractions that merit follow-up (e.g., higher divergence from the reference, contamination/mixture, or mapping artifacts). Missing genotype rate is high and broadly distributed (Panel C), with most samples in the ~60–80% missing range and a tail approaching complete missingness for a subset of individuals, consistent with incomplete site coverage before imputation and before enforcing call-rate thresholds. Residual heterozygosity (nHets / called) is generally low (Panel D) but includes outliers extending to markedly higher values; these same individuals tend to carry a larger overall alternate allele burden (2×AltHom + Het), producing the positive association between heterozygosity and non-reference load (Panel E). The Ts/Tv ratio distribution (Panel F) shows a dominant mode around ~3.4–3.6 with a broader right shoulder, suggesting that most samples share a consistent SNP spectrum while a subset display atypical spectra that often coincide with the missingness and heterozygosity outliers. As with the unimputed QC summaries, known controls/checks can disproportionately populate distribution tails due to reference similarity and/or depth differences, and are interpreted separately when assessing cohort-wide QC thresholds.
+
+---
+
 ## Step 5 — Post-calling cleanup (biallelic SNP-only VCF)
 
 **Goal:** Convert the genome-wide BCF into a clean, biallelic SNP-only VCF.gz for downstream **filtering + imputation**.
@@ -385,6 +404,31 @@ So you must either:
 - (A) change `11_filter_MAF_F_missing.sh` to read the DP5-tagged file, **or**
 - (B) intentionally run a DP1 pipeline and keep naming consistent.
 
+
+
+---
+
+## Unimputed filtered callset QC summary
+
+![Sample-level genotype statistics for the unimputed filtered callset](figs/all_figs/Fig_genotype_statistics_filtered_DP2_FMissing50perc_unimputed.png)
+
+**Figure 2 | Sample-level genotype statistics for the unimputed callset.**  
+(A) Distribution of mean read depth (DP) per sample averaged across variant sites.  
+(B) Density of per-sample alternate allele frequency (fraction of called alleles that are non-reference).  
+(C) Distribution of per-sample missing genotype rate.  
+(D) Distribution of residual heterozygosity per sample, calculated as nHets / nCalled.  
+(E) Relationship between residual heterozygosity and alternate allele burden (2×AltHom + Het), computed across called sites.  
+(F) Distribution of per-sample transition/transversion (Ts/Tv) ratio.  
+Known controls/checks (including B73 and additional check lines) are expected to appear at distribution extremes in some panels due to reference similarity and/or depth differences and are interpreted separately from the main study panel.
+
+### Results
+
+Figure 2 summarizes per-sample quality metrics for the unimputed callset and shows that most accessions cluster tightly while a small subset of samples drive the distribution tails. Mean sequencing depth per sample is low-pass, with the majority of individuals centered around ~2–3× mean DP across variant sites and a smaller right tail reflecting deeper sequenced libraries (Panel A). The per-sample alternate allele fraction is strongly concentrated near low values with a long tail (Panel B), consistent with a predominantly reference-like callset in which only a subset of samples are more divergent or exhibit elevated non-reference calls. Missing genotype rate varies widely across samples (Panel C), as expected for unimputed low-coverage genotyping, with a subset of individuals approaching very high missingness indicative of weak libraries and/or insufficient coverage. Residual heterozygosity (nHets / called) is generally low but includes clear outliers (Panel D); these same samples tend to show higher alternate allele burden (2×AltHom + Het), producing a positive relationship between heterozygosity and overall non-reference load (Panel E). Finally, the per-sample Ts/Tv ratio is broadly consistent across most individuals (Panel F), supporting a coherent SNP spectrum for the bulk of the dataset while highlighting a small number of samples with atypical variant spectra. Known controls/checks (e.g., B73 and other repeated check lines) plausibly contribute to the extreme ends of several panels due to their distinct genetic background relative to the reference and/or differences in sequencing depth, and therefore can disproportionately influence cohort-wide tails without reflecting the typical behavior of the study panel.
+
+---
+
+
+
 ---
 
 ## Step 7 — Split by chromosome + imputation (Beagle)
@@ -467,3 +511,50 @@ Notes:
 
 ---
 
+## Step 8 Population structure visualization using PCA
+
+Principal component analysis (PCA) is designed to capture genome-wide ancestry and population structure. A central requirement is to prevent a small number of long haplotype blocks from disproportionately influencing the eigenvectors. In BZea introgression panels,LD can be both strong and highly heterogeneous across the genome. Consequently, LD pruning is essential prior to performing PCA, because PCA conducted on dense, unpruned SNP data can produce clusters that primarily reflect local regions of elevated LD rather than broad-scale genetic structure. By removing highly correlated markers, LD pruning reduces redundancy in the dataset, enabling PCA to more faithfully represent genome-wide structure instead of local clusters of correlated SNPs. In the specific context of introgression lines, LD pruning also mitigates the risk that a small number of introgressed haplotype segments exert an outsized influence on the leading principal components. Thus, LD pruning is a prerequisite for interpreting PCA plots as depictions of genome-wide ancestry patterns. In the absence of pruning, extended LD blocks—especially those corresponding to introgressed haplotypes—can contribute many tightly correlated variants, thereby over-representing those genomic regions and disproportionately shaping the first few principal components. Applying an r²-based pruning threshold (here, r² = 0.2) decreases marker redundancy such that the resulting PCA more accurately reflects distributed ancestry signals across the genome, rather than artifacts arising from local haplotype structure.
+
+
+### Inputs
+- **Imputed VCF (filtered):** `BZea.DP2.MAF005.MISS50.allchr.vcf.gz`
+- **Unimputed VCF (filtered):** corresponding filtered, unimputed callset (same SNP set / similar filters)
+
+**Importan parameters used in PLINK2 for PCA**
+
+**What these thresholds mean**
+- `--maf 0.01`: removes very rare variants (rare SNPs add noise to PCA and are more sensitive to genotyping errors in low-pass data).
+- `--geno 0.2`: removes SNPs missing in >20% of samples (high missingness SNPs distort distance relationships).
+- `--mind 0.5`: removes samples missing in >50% of SNPs (important for unimputed low-pass; missingness can dominate PCs if not controlled).
+- `--indep-pairwise 50 5 0.2` 
+  - `50` = window size in **variants** (not bp by default; PLINK slides a window of 50 SNPs)
+  - `5`  = step size (shift window by 5 SNPs each iteration)
+  - `0.2` = LD threshold (remove SNPs until remaining pairs in the window have **r² < 0.2**)
+
+
+## PCA figures (95% CI ellipses)
+
+### Unimputed (filtered) PCA and Imputed (filtered) PCA
+![Unimputed (filtered) PCA and Imputed (filtered) PCA](figs/all_figs/PCA.png)
+
+
+**Figure X | Population structure PCA for the filtered BZea panel before and after imputation.**  
+(A) PCA of the **filtered, unimputed** callset computed from an LD-pruned SNP set; points represent individuals colored by teosinte taxon group (Zd, Zl, Zv, Zx).
+(B) PCA of the **filtered, imputed** callset using the same PCA workflow (QC + LD pruning), showing tighter clustering and reduced dispersion after imputation. Axes show PC2 and PC3 scores. Ellipses indicate **95% confidence intervals** for each group.
+
+---
+
+## Results
+
+Clear group-level structure is evident in both PCA panels and is concordant with the four teosinte taxa labels (Zd, Zl, Zv, Zx). The separation among clusters indicates that, even under low-pass sequencing, the dataset preserves a strong genome-wide ancestry signal once standard quality control and LD pruning are applied. The imputed dataset displays noticeably tighter and more coherent clustering. This pattern is expected because imputation reduces noise arising from missing data and stabilizes allele count estimates across individuals by leveraging haplotype structure. Consequently, it reduces the scatter attributable to stochastic genotype uncertainty at low sequencing depth. As a result, group boundaries are more sharply defined and the point clouds contract around their central tendency in principal component space.
+
+By contrast, the unimputed dataset exhibits greater dispersion and more elongated group geometries. Under low coverage, missing genotypes are unevenly distributed across both individuals and loci, which can distort estimated genetic distances in a non-uniform manner and inflate variance along major principal components. Residual genotype uncertainty (and, for some individuals, low-complexity or low-yield libraries) can therefore stretch clusters and accentuate distribution tails, making within-group spread appear larger than it would under complete or imputed genotype data. The particularly elongated ellipses (notably for Zl in the unimputed panel) likely reflect a combination of genuine within-group genetic diversity and technical heterogeneity, including heterogeneous coverage and missingness patterns within that taxon.
+
+In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned or overlapping in a two-dimensional projection become more clearly separated once PC3 is included. Samples that share similar coordinates on PC1 and PC2 can still differ substantially along PC3. The 3D representation therefore provides additional visual confirmation that the four taxa form separable clusters in multi-PC space,
+
+*Optional caption (Nature-style):* **Figure X (supplementary) | 3D PCA of population structure.** Scatterplot of individuals across PC1, PC2, and PC3 using the LD-pruned SNP set. The 3D representation highlights separation along PC3 for groups that appear partially overlapping in 2D projections, supporting robust multi-axis structure among taxa.
+
+---
+
+
+---

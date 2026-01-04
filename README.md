@@ -734,12 +734,20 @@ setupJulia(JULIA_HOME = "/home/youruser/software/julia-1.0.5/bin")
 
 #If the error shows that you are calling Julia from somewhere else do this:
 # run in R
-target <- file.path(Sys.getenv("CONDA_PREFIX"), "lib/R/library")
-.libPaths(c(target))
-install.packages("JuliaCall", lib = target)
-install.packages("remotes",   lib = target)
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 
-# Restart R and confirm the path:
+target <- file.path(Sys.getenv("CONDA_PREFIX"), "lib/R/library")
+dir.create(target, recursive = TRUE, showWarnings = FALSE)
+.libPaths(c(target))
+
+# sanity
+R.version.string
+getOption("repos")
+.libPaths()
+install.packages(c("JuliaCall", "remotes"), lib = target)
+
+
+# Restart R and confirm the path again:
 .libPaths()
 find.package("JuliaCall")
 #It should be somewhere = .../env_RTIGER/lib/R/library/JuliaCall

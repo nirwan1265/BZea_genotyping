@@ -683,7 +683,7 @@ First create a conda environment:
 conda create --prefix /usr/local/usrapps/$GROUP/$USER/env_RTIGER \
   -c conda-forge -c bioconda --strict-channel-priority \
   r-base=4.4.* r-remotes r-biocmanager r-devtools \
-  r-ggplot2 r-reshape2 r-e1071 r-extradistr r-juliacall r-qpdf \
+  r-ggplot2 r-gviz r-reshape2 r-e1071 r-extradistr r-juliacall r-qpdf \
   qpdf
 
 conda activate /usr/local/usrapps/$GROUP/$USER/env_RTIGER

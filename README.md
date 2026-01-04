@@ -675,5 +675,77 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
 
 ---
 
+## INTROGRESSION analysis using RTIGER
+First we have to install the package in HPC server.
+
+First create a conda environment:
+```R
+conda create --prefix /usr/local/usrapps/$GROUP/$USER/env_RTIGER \
+  -c conda-forge -c bioconda --strict-channel-priority \
+  r-base=4.4.* r-remotes r-biocmanager r-devtools \
+  r-ggplot2 r-reshape2 r-e1071 r-extradistr r-juliacall r-qpdf \
+  qpdf
+
+conda activate /usr/local/usrapps/$GROUP/$USER/env_RTIGER
+```
+
+Then in shell:
+```shell
+CONDA_PREFIX=/usr/local/usrapps/$GROUP/$USER/
+
+conda activate "$CONDA_PREFIX"
+
+# keep all Julia packages inside the conda env
+export JULIA_DEPOT_PATH="$CONDA_PREFIX/julia_depot"
+mkdir -p "$JULIA_DEPOT_PATH"
+
+# Export Julia
+export JULIA_HOME="$CONDA_PREFIX/bin"
+export PATH="$JULIA_HOME:$PATH"
+
+# Or if you have Julia 1.0.5
+export JULIA_HOME="$HOME/software/julia-1.0.5/bin"
+export PATH="$JULIA_HOME:$PATH"
+
+# Check which julia you are using
+which julia
+julia -v
+
+# Install RCall into that Julia depot
+julia -e 'ENV["R_HOME"]="'$CONDA_PREFIX'/lib/R"; import Pkg; Pkg.add("RCall"); Pkg.build("RCall")'
+# SANITY CHECK
+julia -e 'ENV["R_HOME"]="'$CONDA_PREFIX'/lib/R"; using RCall; println("RCall OK")'
+# Should print RCALL ok
+```
+
+Inside R do this:
+```R
+# After conda activate
+target <- file.path(Sys.getenv("CONDA_PREFIX"), "lib/R/library")
+dir.create(target, recursive = TRUE, showWarnings = FALSE)
+.libPaths(c(target, .libPaths()))
+
+library(RTIGER)
+
+# Load Julia
+setupJulia(JULIA_HOME = )
+# if you want to use Julia 1.0.5
+setupJulia(JULIA_HOME = "/home/youruser/software/julia-1.0.5/bin")
+
+#If the error shows that you are calling Julia from somewhere else do this:
+# run in R
+target <- file.path(Sys.getenv("CONDA_PREFIX"), "lib/R/library")
+.libPaths(c(target))
+install.packages("JuliaCall", lib = target)
+install.packages("remotes",   lib = target)
+
+# Restart R and confirm the path:
+.libPaths()
+find.package("JuliaCall")
+#It should be somewhere = .../env_RTIGER/lib/R/library/JuliaCall
+
+```
+
+
 
 ---

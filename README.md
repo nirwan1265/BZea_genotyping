@@ -675,12 +675,85 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
 
 ---
 
-# Methods overview: QTL mapping of flowering time in a B73 × teosinte BC₂S₃ population using probabilistic introgression genotypes (RTIGER) and LOCO mixed models (GridLMM)
+# QTL mapping of flowering time in BZea Population
 
-## Population structure and analysis goals
-We analyzed a B73 × teosinte backcross-derived population advanced to BC₂S₃, consisting of multiple “families” (e.g., Zd, Zx, Zl, Zv). At any locus, the population is effectively **bi-allelic** (B73 vs. teosinte donor), so the natural mapping model is a **two-allele additive introgression effect**, analogous to the “bi-allelic SNP” model used in GWAS and to the special case of a “founder model” with only two founders. This framing follows multi-parent QTL model comparisons (GWAS_SNP vs. founder/haplotype models), but in a biparental introgression design those multi-allelic models collapse to a two-allele test. :contentReference[oaicite:0]{index=0}
+## Introduction
+We analyzed a **B73 × teosinte backcross-derived population advanced to BC₂S₃**, composed of four families (*Zd, Zx, Zl, Zv*). At any locus, only two allelic states segregate—**B73 vs. teosinte donor**—so the appropriate mapping framework is a **two-allele additive introgression model**. Conceptually, this corresponds to the *bi-allelic SNP model* used in GWAS and represents a simplified form of the multi-allelic QTL models developed for multi-founder populations such as MAGIC.
 
-We performed (i) a **combined scan** pooling families (with family as a covariate), and (ii) **family-wise scans** run separately within each family to identify shared vs. background-specific QTL.
+This framework follows the logic presented by **Odell et al. (2019, *Genetics* 213: 1367–1383, “Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci”)**. In that study, Odell and colleagues compared three models for QTL detection in multi-parent populations:
+
+1. **GWAS_SNP model** – a *bi-allelic* model where each marker is treated as a single SNP effect (reference vs. alternate allele).  
+2. **Founder model (QTLF)** – a *multi-allelic* model assigning a separate effect to each founder’s allele, parameterized by the probability of inheriting that founder’s haplotype.  
+3. **Haplotype model (QTLH)** – an *ancestral haplotype* model that clusters founders sharing identical-by-descent segments, reducing the number of allelic states relative to the founder model.
+
+Odell et al. demonstrated that model choice depends on the population’s allelic diversity:
+- **GWAS_SNP** has the highest power when loci are effectively bi-allelic.  
+- **QTLF** is most appropriate when each founder contributes a unique allele.  
+- **QTLH** provides a balance by collapsing founders with shared haplotypes, improving power when allelic diversity is intermediate.
+
+In our **biparental BC₂S₃ population**, these three frameworks collapse naturally into the bi-allelic case: **B73 and teosinte represent the only two founders**, and thus the founder (QTLF) and haplotype (QTLH) formulations both reduce to a single additive effect of the **teosinte allele**. The theoretical equivalence of these models in this setting justifies treating each locus as a *bi-allelic SNP*, where genotype is represented by the **expected teosinte allele dosage**.
+
+Following Odell et al., who parameterized founder and haplotype effects as **haplotype probabilities** derived from hidden Markov models (e.g. implemented in *R/qtl2*), we similarly used **probabilistic genotype states** estimated from low-pass sequence data via **RTIGER**. RTIGER outputs per-line, per-position posterior probabilities (*γ*) for each ancestry state—B73, heterozygous, or teosinte.  
+We converted these posteriors to an additive dosage as:
+
+\[
+E[\text{Teosinte dosage}] = P(\text{HET}) + 2P(\text{TEO})
+\]
+
+This parallels the *haplotype probability* framework of Odell et al., substituting founder probabilities with **ancestry posteriors from RTIGER**. In essence, we extended the multi-allelic founder-probability concept to a **biparental introgression design**, where state probabilities arise from local ancestry inference rather than founder haplotype reconstruction.
+
+While Odell et al. used per-founder probabilities or genotype likelihoods (GL) from their simulations, our implementation used RTIGER posteriors as the equivalent probabilistic genotype source. The same statistical principle applies: rather than treating genotypes as hard calls, the mapping model integrates the **expected allele dosage** to account for uncertainty in local ancestry.
+
+We then conducted genome-wide association scans using **GridLMM**, fitting **linear mixed models (LMMs)** with **LOCO kinship matrices** to control for relatedness and the shared B73 background. Two complementary analyses were performed:
+
+- **(i) Combined analysis:** pooling all families with *Family* as a fixed covariate to identify QTL consistent across backgrounds.  
+- **(ii) Family-wise analysis:** running separate scans within each family to detect background-specific or context-dependent QTL.
+
+Thus, our mapping framework is conceptually aligned with the multi-allelic models of Odell et al., but adapted for a biparental, introgression-probabilistic context where **RTIGER posterior probabilities replace founder haplotype probabilities** as genotype covariates.
+
+---
+
+## Genotype probability modeling and complementary hard-call analysis
+
+In addition to the **probabilistic (state-dosage)** models, we conducted parallel analyses using **hard-called genotypes** derived from RTIGER’s most probable ancestry state at each marker.  
+For these, each locus was encoded as:
+
+| Genotype state | Code | Dosage |
+|----------------|------|---------|
+| B73 | 0 | 0 |
+| Heterozygous | 1 | 1 |
+| Teosinte | 2 | 2 |
+
+This representation allows direct comparison between **probability-weighted dosage models** (which retain uncertainty) and **discrete hard-call models** (which treat each state deterministically).  
+Both were analyzed using the same **LOCO-kinship mixed model framework** in *GridLMM*:
+
+\[
+y = \mu + \text{Family} + \beta X + u + \epsilon
+\]
+where  
+\(u \sim N(0, \sigma_g^2 K_{-chr})\) and \( \epsilon \sim N(0, \sigma_e^2 I) \).
+
+**Dosage-based hard calls** were also computed (e.g., treating 0, 1, 2 as additive dosage), allowing a unified test of additive introgression effects across both genotype encoding strategies.
+
+---
+
+## Summary of analyses performed
+
+| Analysis Type | Genotype Source | Covariates | Model | Purpose |
+|----------------|----------------|-------------|---------|----------|
+| Combined (Probabilistic) | RTIGER posterior dosage (`E[Teo] = P(HET)+2P(TEO)`) | Family (fixed), Kinship (random) | Additive LMM (GridLMM) | Detect shared QTL across all families |
+| Family-wise (Probabilistic) | RTIGER posterior dosage | Kinship (per-family LOCO) | Additive LMM | Identify family-specific or background-dependent QTL |
+| Combined (Hard-call) | RTIGER max-state calls (0/1/2) | Family (fixed), Kinship (random) | Additive LMM | Validate probabilistic results under deterministic genotypes |
+| Family-wise (Hard-call) | RTIGER max-state calls | Kinship (per-family LOCO) | Additive LMM | Assess consistency of QTL across genotype encodings |
+
+All scans were performed using **maximum likelihood (ML)** fits within *GridLMM* to ensure valid likelihood-ratio-based inference for marker effects, followed by summarization of peak loci and confidence intervals based on *−log₁₀(p)* drop support.
+
+---
+
+> **In summary:**  
+> This study extends the probabilistic, founder-based QTL modeling framework of Odell et al. (2019) to a biparental introgression population using **RTIGER ancestry posteriors** as genotype probabilities.  
+> Both **probability-weighted** and **hard-called dosage** representations were tested using **LOCO-kinship mixed models (GridLMM)** to identify introgression-derived QTL influencing flowering time, in combined and family-specific contexts.
+
 
 ---
 
@@ -807,11 +880,6 @@ Using LOCO mixed models (GridLMM) with family as a covariate, we conducted a gen
 
 ## Family-wise scans (background specificity / replication)
 We repeated the scan within each family using the corresponding LOCO kinship submatrix. Comparing peak locations across families allowed us to distinguish QTL that are consistent across genetic backgrounds from family-specific signals, which may reflect background interactions or family-private segregating variation.
-
----
-
-# How this connects to Sarah Odell’s model framing (and how you adapted it)
-Odell et al. formalize QTL detection under different assumptions about allelic diversity in multi-parent populations (bi-allelic SNP model vs. founder-allelic vs. haplotype-cluster models). In your BC₂S₃ B73 × teosinte design, allelic diversity at any locus is fundamentally limited to **two founders**, so the appropriate model is the bi-allelic/additive introgression effect. Your pipeline operationalizes this by converting RTIGER posterior state probabilities into an **expected donor allele dosage**, then testing each locus/window in an LOCO mixed model. In other words, you adopted the *model logic* (what “allelic states” mean, how genotype uncertainty/structure impacts detection) and implemented it in a biparental introgression context where the multi-allelic models collapse to a two-allele test. :contentReference[oaicite:9]{index=9}
 
 ---
 

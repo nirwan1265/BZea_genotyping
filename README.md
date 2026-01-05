@@ -79,9 +79,9 @@ We developed multiple predictor modes:
 
 ---
 
-## Dependencies
+## Software and packages
 
-### Core command-line tools (LINUX)
+### Genotyping
 
 - **sabre** — demultiplexing by barcode (FASTQ splitting)
 - **Trimmomatic** — adapter/primer trimming + quality filtering
@@ -126,7 +126,7 @@ We developed multiple predictor modes:
   - `..._R2_001.fastq.gz`
 - Barcode map file (`.txt`)
 
-### Barcode file format (required)
+### Barcode file format
 Tab-separated **2 columns**:
 
 1. **BARCODE** (exact barcode sequence)
@@ -148,19 +148,18 @@ Unmatched reads are written to the `no_bc_match_*` files.
   - `no_bc_match_S<...>_R1.fq.gz`
   - `no_bc_match_S<...>_R2.fq.gz`
 
-### Run (LSF)
+### Run
 ```bash
 bsub < scripts/01_demultiplex_sabre.tcsh
 ```
 
-📜 Script: [`scripts/01_demultiplex_sabre.tcsh`](scripts/01_demultiplex_sabre.tcsh)  
-📚 Notes: [`docs/01_demultiplex.md`](docs/01_demultiplex.md)
+📜 Script: [`scripts/01_demultiplex_sabre.sh`](scripts/01_demultiplex_sabre.sh)
 
 ---
 
 ## Step 2 — Trim adapters/primers + quality filter (Trimmomatic PE)
 
-**Goal:** Remove adapters/primers, trim low-quality bases, and retain high-quality **paired** reads for alignment.
+**Goal:** Remove adapters/primers 
 
 ### Inputs
 - Demultiplexed paired FASTQs:
@@ -171,9 +170,6 @@ bsub < scripts/01_demultiplex_sabre.tcsh
 - Paired reads (used for alignment):
   - `*_paired_R1.fq.gz`
   - `*_paired_R2.fq.gz`
-- Optional unpaired reads (kept for debugging/QC):
-  - `*_unpaired_R1.fq.gz`
-  - `*_unpaired_R2.fq.gz`
 
 ### Parameters used
 - `ILLUMINACLIP:<adapters.fa>:2:30:10`
@@ -182,45 +178,42 @@ bsub < scripts/01_demultiplex_sabre.tcsh
 - `SLIDINGWINDOW:4:15`
 - `MINLEN:36`
 
-> Note: If you truly want to discard unpaired reads, redirect them to `/dev/null`.  
-> Keeping them is often useful for QC.
 
-### Run (LSF)
+### Run
 ```bash
 bsub < scripts/02_trim_trimmomatic.tcsh
 ```
 
-📜 Script: [`scripts/02_trim_trimmomatic.tcsh`](scripts/02_trim_trimmomatic.tcsh)  
-📚 Notes: [`docs/02_trimming.md`](docs/02_trimming.md)
+📜 Script: [`scripts/02_trim_trimmomatic.sh`](scripts/02_trim_trimmomatic.sh)  
 
 ---
 
 ## Step 3 — BAM preprocessing (sort → mark/remove duplicates → index)
 
-**Goal:** Ensure each sample BAM is **coordinate-sorted**, optionally **deduplicated**, and **indexed** before genotype likelihood (GL) generation with `bcftools mpileup`.
+**Goal:** Ensure each sample BAM is **coordinate-sorted**, **deduplicated**, and **indexed** before genotype likelihood (GL) generation with `bcftools mpileup`.
 
-### Why this matters (low-pass)
-- `bcftools mpileup` expects **sorted + indexed** BAMs.
-- Marking/removing duplicates is typically recommended to reduce PCR/optical duplicate inflation.
-- Downstream QC becomes much easier if every BAM follows the same naming convention.
+Ensure the files are:
+- sorted 
+- Mark/remove duplicates
+- Index BAMs files
 
 ### Inputs
 - Aligned BAMs (usually from BWA/BWA-MEM2), one per sample:
-  - `*.bam`
-
-> If your BAMs are already sorted, you can skip sorting and go straight to duplicate handling.
+  - `PN*_SID*.bam`
 
 ### Outputs
-For each input `sample.bam`:
-- Sorted BAM: `sample.sorted.bam`
-- Deduplicated BAM (duplicates removed): `sample.sorted.rmdup.bam`
-- Metrics: `sample.dedup_metrics.txt`
-- Index: `sample.sorted.rmdup.bam.bai`
+For each input `PN*_SID*.bam`
+- Sorted BAM: `PN*_SID*.sorted.bam`
+- Deduplicated BAM (duplicates removed): `PN*_SID*.sorted.rmdup.bam`
+- Metrics: `PN*_SID*.dedup_metrics.txt`
+- Index: `PN*_SID*.sorted.rmdup.bam.bai`
 
-### Run (LSF)
+### Run
 ```bash
 bash scripts/03_bam_sort_dedup_index.sh
 ```
+
+📜 Script: [`scripts/03_bam_sort_dedup_index.sh`](scripts/03_bam_sort_dedup_index.sh)  
 
 ---
 

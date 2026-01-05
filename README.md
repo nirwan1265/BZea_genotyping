@@ -678,7 +678,7 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
 # QTL mapping of flowering time in BZea Population
 
 ## Introduction
-We analyzed a **B73 × teosinte backcross-derived population advanced to BC₂S₃**, composed of four families (*Zd, Zx, Zl, Zv*). At any locus, only two allelic states segregate—**B73 vs. teosinte donor**—so the appropriate mapping framework is a **two-allele additive introgression model**. Conceptually, this corresponds to the *bi-allelic SNP model* used in GWAS and represents a simplified form of the multi-allelic QTL models developed for multi-founder populations such as MAGIC.
+We analyzed a **B73 × teosinte backcross-derived population advanced to BC₂S₃**, or BZea, composed of four families (*Zd, Zx, Zl, Zv*). At any locus, only two allelic states segregate—**B73 vs. teosinte donor**—so the appropriate mapping framework is a **two-allele additive introgression model**. Conceptually, this corresponds to the *bi-allelic SNP model* used in GWAS and represents a simplified form of the multi-allelic QTL models developed for multi-founder populations such as MAGIC.
 
 This framework follows the logic presented by **Odell et al. (2019, *Genetics* 213: 1367–1383, “Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci”)**. In that study, Odell and colleagues compared three models for QTL detection in multi-parent populations:
 
@@ -686,10 +686,7 @@ This framework follows the logic presented by **Odell et al. (2019, *Genetics* 2
 2. **Founder model (QTLF)** – a *multi-allelic* model assigning a separate effect to each founder’s allele, parameterized by the probability of inheriting that founder’s haplotype.  
 3. **Haplotype model (QTLH)** – an *ancestral haplotype* model that clusters founders sharing identical-by-descent segments, reducing the number of allelic states relative to the founder model.
 
-Odell et al. demonstrated that model choice depends on the population’s allelic diversity:
-- **GWAS_SNP** has the highest power when loci are effectively bi-allelic.  
-- **QTLF** is most appropriate when each founder contributes a unique allele.  
-- **QTLH** provides a balance by collapsing founders with shared haplotypes, improving power when allelic diversity is intermediate.
+Odell et al. demonstrated that model choice depends on the population’s allelic diversity. **GWAS_SNP** has the highest power when loci are effectively bi-allelic. **QTLF** is most appropriate when each founder contributes a unique allele. **QTLH** provides a balance by collapsing founders with shared haplotypes, improving power when allelic diversity is intermediate.
 
 In our **biparental BC₂S₃ population**, these three frameworks collapse naturally into the bi-allelic case: **B73 and teosinte represent the only two founders**, and thus the founder (QTLF) and haplotype (QTLH) formulations both reduce to a single additive effect of the **teosinte allele**. The theoretical equivalence of these models in this setting justifies treating each locus as a *bi-allelic SNP*, where genotype is represented by the **expected teosinte allele dosage**.
 
@@ -715,7 +712,7 @@ Thus, our mapping framework is conceptually aligned with the multi-allelic model
 
 ## Genotype probability modeling and complementary hard-call analysis
 
-In addition to the **probabilistic (state-dosage)** models, we conducted parallel analyses using **hard-called genotypes** derived from RTIGER’s most probable ancestry state at each marker.  
+In addition to the **probabilistic (state-dosage)** models, we conducted parallel analyses using **hard-called genotypes** derived from bcftools genotype likelihood pipeline.  
 For these, each locus was encoded as:
 
 | Genotype state | Code | Dosage |
@@ -748,12 +745,8 @@ where
 
 All scans were performed using **maximum likelihood (ML)** fits within *GridLMM* to ensure valid likelihood-ratio-based inference for marker effects, followed by summarization of peak loci and confidence intervals based on *−log₁₀(p)* drop support.
 
----
 
-> **In summary:**  
-> This study extends the probabilistic, founder-based QTL modeling framework of Odell et al. (2019) to a biparental introgression population using **RTIGER ancestry posteriors** as genotype probabilities.  
-> Both **probability-weighted** and **hard-called dosage** representations were tested using **LOCO-kinship mixed models (GridLMM)** to identify introgression-derived QTL influencing flowering time, in combined and family-specific contexts.
-
+In summary, this study extends the probabilistic, founder-based QTL modeling framework of Odell et al. (2019) to a biparental introgression population using **RTIGER ancestry posteriors** as genotype probabilities.   Both **probability-weighted** and **hard-called dosage** representations were tested using **LOCO-kinship mixed models (GridLMM)** to identify introgression-derived QTL influencing flowering time, in combined and family-specific contexts.
 
 ---
 
@@ -766,29 +759,20 @@ Flowering time was measured with replication and spatial field heterogeneity. Re
 
 ## Genotypes: probabilistic ancestry inference from low-pass data (RTIGER)
 ### RTIGER output (posterior state probabilities, `gamma`)
-Rather than relying on hard genotype calls (which are often unreliable under low-pass coverage), local ancestry along the genome was inferred using a hidden Markov model (HMM)-style framework that returns **posterior state probabilities** at each marker position. RTIGER stores these as `gamma`, typically organized as:
-- list over samples (lines)
-- list over chromosomes
-- matrix of size **nstates × nmarkers**, where each column sums to 1 (posterior probabilities of each hidden state at that position).
+Rather than relying on hard genotype calls (which are often unreliable under low-pass coverage), local ancestry along the genome was inferred using a hidden Markov model (HMM)-style framework that returns **posterior state probabilities** at each marker position stored as `gamma` which is a matrix of size **nstates × nmarkers**, where each column sums to 1 (posterior probabilities of each hidden state at that position).
 
-RTIGER documentation and software descriptions emphasize this probabilistic representation for recombinant/introgression genomes, enabling downstream analyses to propagate uncertainty instead of forcing discrete calls. :contentReference[oaicite:2]{index=2}
-
-### Fixing sample IDs: mapping RTIGER internal IDs → biological line IDs
-RTIGER objects can carry internal sample identifiers (e.g., “Sample_1 … Sample_100”) that do not match the biological line names used elsewhere. To prevent marker/sample mismatches, we remapped the `gamma` list names using the RTIGER experiment-design metadata (e.g., `expDesign`, with “Sample_*” and the desired original names in `OName`). This ensured that:
-- `names(gamma)` matched phenotype IDs and kinship IDs
-- downstream row alignment (`Line`) was consistent across phenotype, genotype, and kinship.
-
-(Conceptually, this is a bookkeeping step, but it is *critical*—mislabeling produces silent, catastrophic errors.)
+RTIGER documentation and software descriptions emphasize this probabilistic representation for recombinant/introgression genomes, enabling downstream analyses to propagate uncertainty instead of forcing discrete calls.
 
 ---
 
 ## Collapsing 3-state posteriors to an additive teosinte dosage (recommended primary model)
-Your `gamma` has **3 states** per locus (rows 1:3), which in a two-founder cross are typically interpreted as:
+The `gamma` has **3 states** per locus, which in a two-founder cross are typically interpreted as:
 1) B73/B73 (no donor allele)
 2) B73/Teo (heterozygous introgression)
 3) Teo/Teo (donor homozygote)
 
 Even if donor homozygotes are rare (as you observed), the cleanest way to use the full posterior is to compute an **expected teosinte allele dosage** per locus:
+
 \[
 E[\text{Teo dosage}] \;=\; 0\cdot P(\text{B73}) \;+\; 1\cdot P(\text{HET}) \;+\; 2\cdot P(\text{TEO})
 \]
@@ -797,20 +781,17 @@ i.e.
 X \;=\; P(\text{HET}) \;+\; 2P(\text{TEO})
 \]
 
-This produces a continuous predictor (0–2) that:
-- uses all the information in the 3-state posterior,
-- preserves uncertainty (values are not forced to 0/1/2),
-- implements the **additive** introgression model (the default for QTL mapping unless dominance is strongly suspected).
+This produces a continuous predictor (0–2) that uses all the information in the 3-state posterior, preserves uncertainty (values are not forced to 0/1/2), and implements the **additive** introgression model (the default for QTL mapping unless dominance is strongly suspected).
 
 **Why not run a full 3-state (2-df) test everywhere?**  
-A 3-state “genotypic” model is effectively a 2-degree-of-freedom test (separate parameters for HET and TEO relative to B73), which can reduce power when one class (often TEO/TEO) is rare. The additive dosage model is the standard first-pass in such designs; dominance can be tested later at top loci by adding a dominance term (see below). :contentReference[oaicite:3]{index=3}
+A 3-state “genotypic” model is effectively a 2-degree-of-freedom test (separate parameters for HET and TEO relative to B73), which can reduce power when one class (often TEO/TEO) is rare. The additive dosage model is the standard first-pass in such designs; dominance can be tested later at top loci by adding a dominance term (see below).
 
 ### Optional dominance follow-up (only at peaks)
 At a peak locus/window, you can test dominance deviation with two predictors:
 - additive: \(A = P(\text{HET}) + 2P(\text{TEO})\)
 - dominance-like: \(D = P(\text{HET})\) (or \(P(\text{HET}) - 2P(\text{B73})P(\text{TEO})\) depending on parameterization)
 
-Fit both only for a short list of significant peaks, not genome-wide.
+We fit both only for a short list of significant peaks, not genome-wide.
 
 ---
 
@@ -830,15 +811,16 @@ Kinship matrices were generated externally (e.g., PLINK), then imported and **re
 
 ---
 
-## Genome scan model: GridLMM mixed-model association
-### Why GridLMM
-We used **GridLMM**, which accelerates LMM inference by evaluating likelihoods over a grid of variance-component proportions, enabling efficient genome scans while retaining mixed-model structure. GridLMM is designed for exactly this setting: many marker/window tests with one or more random effects (here, the polygenic term via LOCO kinship). :contentReference[oaicite:6]{index=6}
+## GridLMM mixed-model association
+We used **GridLMM**, which accelerates LMM inference by evaluating likelihoods over a grid of variance-component proportions, enabling efficient genome scans while retaining mixed-model structure. 
 
 ### Combined (all-family) scan
 For the combined analysis, we fit:
+
 \[
 y = \mu + \text{Family} + \beta X_{w} + u + \epsilon
 \]
+
 where:
 - \(y\) is flowering time BLUE,
 - **Family** is a fixed-effect factor capturing baseline shifts among families,
@@ -850,6 +832,7 @@ This yields a p-value per tested marker/window reflecting evidence that teosinte
 
 ### Family-wise scans
 For each family, we fit the same model **without** the family covariate (because it is constant within a family):
+
 \[
 y = \mu + \beta X_{w} + u + \epsilon
 \]
@@ -860,8 +843,7 @@ Family-wise scans help distinguish:
 - QTL driven by one family/background (potential epistasis or segregating modifiers),
 - QTL masked in the combined scan by heterogeneity.
 
-### ML vs REML
-We used **maximum likelihood (ML)** during scanning because likelihood ratio comparisons across models differing in fixed effects (marker included vs excluded) require ML for valid LRT-style inference. REML is appropriate for final variance-component estimation but is not generally comparable across different fixed-effect models in a genome scan. GridLMM supports this scanning mode directly. 
+We used **maximum likelihood (ML)** during scanning because likelihood ratio comparisons across models differing in fixed effects (marker included vs excluded) require ML for valid LRT-style inference.
 
 ---
 
@@ -874,18 +856,9 @@ This produces an interpretable genomic interval that can be reported as a candid
 
 ---
 
-# Results reporting: what you can write (template)
-## Combined scan (primary discovery)
-Using LOCO mixed models (GridLMM) with family as a covariate, we conducted a genome-wide scan of teosinte introgression dosage across [N] lines (genotyped subset) using [W]-bp windows. The scan produced p-values for each window reflecting the association between local teosinte ancestry and flowering time while controlling for genome-wide relatedness. Top signals were summarized as peak windows and support intervals per chromosome, providing candidate QTL regions for follow-up. 
-
-## Family-wise scans (background specificity / replication)
-We repeated the scan within each family using the corresponding LOCO kinship submatrix. Comparing peak locations across families allowed us to distinguish QTL that are consistent across genetic backgrounds from family-specific signals, which may reflect background interactions or family-private segregating variation.
-
----
-
-# Extensions: hard calls, dosages, and other probability sources
 ## Hard-call ancestry (for sensitivity checks)
 If you want a “hard call” version, you can assign each locus/window to the max-posterior state:
+
 \[
 \hat{s} = \arg\max_{s \in \{\text{B73,HET,TEO}\}} P(s)
 \]
@@ -898,15 +871,6 @@ The same mapping framework works with any probabilistic genotype representation,
 - expected allele dosage (DS) directly from imputation outputs.
 
 In each case, the recommended mapping covariate is the **expected allele dosage** (continuous), which propagates uncertainty and typically improves calibration/power relative to forced hard calls in low-coverage settings. :contentReference[oaicite:10]{index=10}
-
----
-
-# Practical notes for the paper (what to explicitly state)
-- BLUEs were obtained after spatial correction of replicated trials; the mapping phenotype is one value per line. :contentReference[oaicite:11]{index=11}  
-- Local ancestry was inferred with RTIGER; posterior state probabilities were converted to expected teosinte dosage per locus/window. :contentReference[oaicite:12]{index=12}  
-- Genome scans used LOCO kinship matrices and an LMM implemented in GridLMM; combined scans included family as a fixed effect.   
-- Peaks were summarized as the top window/marker per region plus a support interval defined by a drop rule on \(-\log_{10}(p)\).
-
 
 ---
 

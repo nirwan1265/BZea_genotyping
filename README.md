@@ -219,55 +219,53 @@ bash scripts/03_bam_sort_dedup_index.sh
 
 ## Step 4 — Genotype likelihoods (GL) genotyping at SNPVersity sites (bcftools)
 
-**Goal:** Use low-pass BAMs to generate genotype likelihood–based calls **only at known SNP sites** (SNPVersity), by running `bcftools mpileup | bcftools call` in parallel across **chromosomes × BAM-chunks**, then merging outputs.
+**Goal:** Generate genotype likelihood–based calls **only at known SNP sites** using SNPVersity, by running `bcftools mpileup | bcftools call` in parallel across **chromosomes × BAM-chunks**, then merging outputs.
 
 ### What you need before running Step 4
-- ✅ Reference FASTA + index:  
+- Reference FASTA + index:  
   - `Zm-B73-REFERENCE-NAM-5.0.fa`  
   - `Zm-B73-REFERENCE-NAM-5.0.fa.fai`  (create with `samtools faidx ref.fa`)
-- ✅ SNPVersity per-chromosome VCFs (indexed):  
+- SNPVersity per-chromosome VCFs (indexed):  
   - `chr1_high_coverage.vcf.gz` … `chr10_high_coverage.vcf.gz` (+ `.tbi`)
-- ✅ BAMs are **sorted + (deduped recommended) + indexed** (`.bai`)
-- ✅ Tools available: `bcftools`, `bgzip`, `tabix`, `samtools`
+- BAMs are **sorted + (deduped recommended) + indexed** (`.bai`)
 
 ---
 
 ### 4.1 Build SNPVersity allele-target files (biallelic SNPs only)
-📜 Script: `1_SNPVersity_bialleles.sh`
 
-**Purpose:** Convert each SNPVersity VCF into a **tabix-indexed target file** that contains:  
+**Goal:** Convert each SNPVersity VCF into a **tabix-indexed target file** that contains:  
 `CHROM  POS  REF,ALT`
 
 **Outputs (per chromosome):**
 - `SNPversity/targets_als/chrN.als.tsv.gz`
 - `SNPversity/targets_als/chrN.als.tsv.gz.tbi`
 
-**Run (job array chr1–chr10):**
+**Run**
 ```bash
-bsub < 1_SNPVersity_bialleles.sh
+bsub < 04_SNPVersity_bialleles.sh
 ```
+📜 Script: `04_SNPVersity_bialleles.sh`
 
 ---
 
 ### 4.2 Create BAM list (absolute paths)
-📜 Script: `2_BAM_list.sh`
 
-**Purpose:** Generate a stable, sorted list of all BAMs used for genotyping.
+**Goal:** Generate a sorted list of all BAMs used for genotyping.
 
 **Output:**
 - `GL_work/bamlist.txt`
 
 **Run:**
 ```bash
-bsub < 2_BAM_list.sh
+bsub < 05_BAM_list.sh
 ```
+📜 Script: `05_BAM_list.sh`
 
 ---
 
 ### 4.3 Split BAM list into chunks (controls open file handles)
-📜 Script: `3_create_chunks.sh`
 
-**Purpose:** Split BAM list into manageable chunks (you used `CHUNK=100`) so each mpileup job opens fewer BAMs.
+**Goal:** Split BAM list into manageable chunks (you used `CHUNK=100`) so each mpileup job opens fewer BAMs.
 
 **Outputs:**
 - `GL_work/bam_chunks/bamlist.chunk.000`
@@ -276,15 +274,15 @@ bsub < 2_BAM_list.sh
 
 **Run:**
 ```bash
-bsub < 3_create_chunks.sh
+bsub < 05_create_chunks.sh
 ```
+📜 Script: `05_create_chunks.sh`
 
 ---
 
 ### 4.4 Compute GL-based calls per (chromosome × BAM-chunk)
-📜 Script: `4_GL.sh`
 
-**Purpose:** For each chromosome and BAM chunk:
+**Goal:** For each chromosome and BAM chunk:
 - run `bcftools mpileup` restricted to:
   - chromosome: `-r chrN`
   - target sites: `-T chrN.als.tsv.gz`
@@ -294,21 +292,17 @@ bsub < 3_create_chunks.sh
 - `GL_work/GL_by_chr_chunks/chrN.chunk###.bcf`
 - `GL_work/GL_by_chr_chunks/chrN.chunk###.bcf.csi`
 
-**Run (job array; range depends on your total chunks):**
+**Run**
 ```bash
-bsub < 4_GL.sh
+bsub < 06_GL.sh
 ```
-
-> Note (recommended for “true GLs”): add PLs in mpileup annotation:  
-> `-a FORMAT/DP,FORMAT/AD,FORMAT/PL`  
-> Your current script writes DP/AD only.
+📜 Script: `06_GL.sh`
 
 ---
 
 ### 4.5 Merge chunk-BCFs into one BCF per chromosome
-📜 Script: `5_combine_bcf.sh`
 
-**Purpose:** Each `chrN.chunk###.bcf` contains a **subset of samples**. This step merges all chunk outputs into a single multi-sample chromosome BCF.
+**Goal:** Each `chrN.chunk###.bcf` contains a **subset of samples**. This step merges all chunk outputs into a single multi-sample chromosome BCF.
 
 **Outputs (per chromosome):**
 - `GL_work/GL_by_chr_merged/chrN.merged_withGT.bcf`
@@ -316,18 +310,15 @@ bsub < 4_GL.sh
 
 **Run:**
 ```bash
-bsub < 5_combine_bcf.sh
+bsub < 07_combine_bcf.sh
 ```
-
-⚠️ Important: your current script loops `{10..10}` (only chr10).  
-To merge all chromosomes, use `{1..10}`.
+📜 Script: `07_combine_bcf.sh`
 
 ---
 
 ### 4.6 Concatenate chr1–chr10 into one genome-wide BCF
-📜 Script: `6_merge_one_chr.sh`
 
-**Purpose:** Concatenate chromosome BCFs into a single file.
+**Goal:** Concatenate chromosome BCFs into a single file.
 
 **Outputs:**
 - `GL_work/final_genotypes/BZea.chr1_10.bcf`
@@ -335,12 +326,15 @@ To merge all chromosomes, use `{1..10}`.
 
 **Run:**
 ```bash
-bsub < 6_merge_one_chr.sh
+bsub < 08_merge_one_chr.sh
 ```
+📜 Script: `08_merge_one_chr.sh`
 
 ---
 
-## Unfiltered genotype QC summary
+## Results
+
+### Unfiltered genotype QC summary
 
 ![Sample-level genotype statistics for the unfiltered post-calling dataset](figs/all_figs/Fig_genotype_statistics_unfiltered.png)
 
@@ -353,7 +347,6 @@ bsub < 6_merge_one_chr.sh
 (F) Distribution of per-sample transition/transversion (Ts/Tv) ratio.  
 This panel set reflects raw calls prior to downstream QC filters; outliers in missingness, heterozygosity, ALT burden, or Ts/Tv flag samples for exclusion or closer inspection. Known controls/checks (e.g., B73 and repeated check lines) may occupy distribution extremes due to reference similarity and/or coverage differences and are assessed separately from the primary study panel.
 
-### Results
 
 Figure 1 summarizes per-sample QC metrics for the *unfiltered* genotype calls (immediately after variant calling, prior to any sample- or site-level filtering) and highlights the expected properties of a raw low-pass dataset along with a small set of clear outliers. Mean depth per sample is narrowly centered around ~1.4–1.7× (Panel A), consistent with uniformly low sequencing depth across the cohort at this stage. The per-sample alternate allele fraction is strongly concentrated at low values with a right-skewed tail (Panel B), indicating that most individuals contribute relatively few non-reference calls while a minority of samples show elevated ALT fractions that merit follow-up (e.g., higher divergence from the reference, contamination/mixture, or mapping artifacts). Missing genotype rate is high and broadly distributed (Panel C), with most samples in the ~60–80% missing range and a tail approaching complete missingness for a subset of individuals, consistent with incomplete site coverage before imputation and before enforcing call-rate thresholds. Residual heterozygosity (nHets / called) is generally low (Panel D) but includes outliers extending to markedly higher values; these same individuals tend to carry a larger overall alternate allele burden (2×AltHom + Het), producing the positive association between heterozygosity and non-reference load (Panel E). The Ts/Tv ratio distribution (Panel F) shows a dominant mode around ~3.4–3.6 with a broader right shoulder, suggesting that most samples share a consistent SNP spectrum while a subset display atypical spectra that often coincide with the missingness and heterozygosity outliers. As with the unimputed QC summaries, known controls/checks can disproportionately populate distribution tails due to reference similarity and/or depth differences, and are interpreted separately when assessing cohort-wide QC thresholds.
 
@@ -361,12 +354,9 @@ Figure 1 summarizes per-sample QC metrics for the *unfiltered* genotype calls (i
 
 ## Step 5 — Post-calling cleanup (biallelic SNP-only VCF)
 
-**Goal:** Convert the genome-wide BCF into a clean, biallelic SNP-only VCF.gz for downstream **filtering + imputation**.
-
----
+**Goal:** Convert the genome-wide BCF into a biallelic SNP-only VCF.gz for downstream **filtering + imputation**.
 
 ### 5.1 Keep only biallelic SNPs
-📜 Script: `7_bialleles.sh`
 
 **Output:**
 - `BZea.chr1_10.biallelic_snps.vcf.gz` (+ `.tbi`)
@@ -375,61 +365,49 @@ Figure 1 summarizes per-sample QC metrics for the *unfiltered* genotype calls (i
 ```bash
 bsub < 7_bialleles.sh
 ```
+📜 Script: `09_bialleles.sh`
 
 ---
 
 ### 5.2 Remove sites with empty ALT (recommended fix)
-📜 Script: `8_bialleles_remove_empty_alts.sh`
-
-⚠️ Your current `8_*` is identical to `7_*`.  
-If the intention is to drop empty/missing ALT alleles, use:
 
 ```bash
-bcftools view --threads 16 -Oz -v snps -m2 -M2 \
-  -e 'ALT="."' \
-  -o BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz \
-  BZea.chr1_10.bcf
-
-tabix -p vcf BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz
+bsub < 10_bialleles_remove_empty_alts.sh
 ```
-
----
+📜 Script: `10_bialleles_remove_empty_alts.sh`
 
 ---
 
 ## Step 6 — Filtering (DP → fill-tags → MAF + missingness)
 
-**Goal:** Starting from the cleaned, biallelic SNP-only VCF, apply:
+**Goal:** Starting from the biallelic SNP-only VCF, apply:
 1) genotype depth (DP) filter (set low-DP genotypes to missing),
 2) compute site-level tags (AN/AC/AF/MAF/NS/F_MISSING),
 3) filter sites by MAF and missingness to create an imputation-ready VCF.
 
-> Low-pass note: DP thresholds depend on sequencing depth. In this repo we document what was used in the scripts, but you should keep the chosen DP/MAF/missingness thresholds consistent across the run.
-
----
+For PCA we used the filters described below. For RTIGER introgression analysis, we used a more relaxed filtering parameters. 
 
 ### 6.1 DP filter (set low-DP genotypes to missing)
 
-📜 Script: `9_filter_DP.sh`
-
 **Input**
 - `BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz`
+
+**Parameters**
+- Uses `bcftools filter -S . -e 'FMT/DP<5'`
+- Any genotype with DP < 5 becomes `./.` (missing), but the variant record is retained.
 
 **Output**
 - `BZea.biallelic_snps.DP5.vcf.gz` (+ `.tbi`)
 
 **Run**
-    bsub < 9_filter_DP.sh
-
-**What it does**
-- Uses `bcftools filter -S . -e 'FMT/DP<5'`
-- Any genotype with DP < 5 becomes `./.` (missing), but the variant record is retained.
+```bash
+bsub < 11_filter_DP.sh
+```
+📜 Script: `11_filter_DP.sh`
 
 ---
 
 ### 6.2 Add site-level summary tags (AN/AC/AF/MAF/NS/F_MISSING)
-
-📜 Script: `10_add_AF_AC_AN_MAF_NS_F_missing.sh`
 
 **Input**
 - `BZea.biallelic_snps.DP5.vcf.gz`
@@ -438,38 +416,31 @@ tabix -p vcf BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz
 - `BZea.biallelic_snps.DP5.tags.vcf.gz` (+ `.tbi`)
 
 **Run**
-    bsub < 10_add_AF_AC_AN_MAF_NS_F_missing.sh
+```bash
+bsub < 12_add_AF_AC_AN_MAF_NS_F_missing.sh
+```
+📜 Script: `12_add_AF_AC_AN_MAF_NS_F_missing.sh`
 
 ---
 
 ### 6.3 Filter by MAF and missingness
 
-📜 Script: `11_filter_MAF_F_missing.sh`
+**Goal** Keeps variants with `MAF >= 0.005` and `F_MISSING <= 0.5` for PCA and imputation
 
-**What it does**
-- Keeps variants with:
-  - `MAF >= 0.005`
-  - `F_MISSING <= 0.2`
-
-**Output (from your script)**
-- `BZea.DP1.MAF005.MISS20.vcf.gz` (+ `.tbi`)
+**Output**
+- `BZea.DP1.MAF005.MISS50.vcf.gz` (+ `.tbi`)
 
 **Run**
-    bsub < 11_filter_MAF_F_missing.sh
-
-⚠️ IMPORTANT consistency check (from your actual scripts)
-- Step 6.2 writes: `BZea.biallelic_snps.DP5.tags.vcf.gz`
-- Step 6.3 (your script) reads: `BZea.biallelic_snps.DP1.tags.vcf.gz`
-
-So you must either:
-- (A) change `11_filter_MAF_F_missing.sh` to read the DP5-tagged file, **or**
-- (B) intentionally run a DP1 pipeline and keep naming consistent.
-
-
+```bash
+bsub < 13_filter_MAF_F_missing.sh
+```
+📜 Script: `13_filter_MAF_F_missing.sh`
 
 ---
 
-## Unimputed filtered callset QC summary
+## Results
+
+### Unimputed filtered callset QC summary
 
 ![Sample-level genotype statistics for the unimputed filtered callset](figs/all_figs/Fig_genotype_statistics_filtered_DP2_FMissing50perc_unimputed.png)
 
@@ -482,27 +453,20 @@ So you must either:
 (F) Distribution of per-sample transition/transversion (Ts/Tv) ratio.  
 Known controls/checks (including B73 and additional check lines) are expected to appear at distribution extremes in some panels due to reference similarity and/or depth differences and are interpreted separately from the main study panel.
 
-### Results
 
 Figure 2 summarizes per-sample quality metrics for the unimputed callset and shows that most accessions cluster tightly while a small subset of samples drive the distribution tails. Mean sequencing depth per sample is low-pass, with the majority of individuals centered around ~2–3× mean DP across variant sites and a smaller right tail reflecting deeper sequenced libraries (Panel A). The per-sample alternate allele fraction is strongly concentrated near low values with a long tail (Panel B), consistent with a predominantly reference-like callset in which only a subset of samples are more divergent or exhibit elevated non-reference calls. Missing genotype rate varies widely across samples (Panel C), as expected for unimputed low-coverage genotyping, with a subset of individuals approaching very high missingness indicative of weak libraries and/or insufficient coverage. Residual heterozygosity (nHets / called) is generally low but includes clear outliers (Panel D); these same samples tend to show higher alternate allele burden (2×AltHom + Het), producing a positive relationship between heterozygosity and overall non-reference load (Panel E). Finally, the per-sample Ts/Tv ratio is broadly consistent across most individuals (Panel F), supporting a coherent SNP spectrum for the bulk of the dataset while highlighting a small number of samples with atypical variant spectra. Known controls/checks (e.g., B73 and other repeated check lines) plausibly contribute to the extreme ends of several panels due to their distinct genetic background relative to the reference and/or differences in sequencing depth, and therefore can disproportionately influence cohort-wide tails without reflecting the typical behavior of the study panel.
 
 ---
 
 
-
----
-
 ## Step 7 — Split by chromosome + imputation (Beagle)
 
-**Goal:** Split the filtered VCF into chr-specific VCFs and run Beagle per chromosome using a genetic map.
+**Goal:** Split the filtered VCF into chr-specific VCFs and run Beagle inmputation per chromosome using a genetic map.
 
----
 
 ### 7.1 Split genome-wide VCF into per-chromosome files (chr1–chr10)
 
-📜 Script: `12_separate_chr.sh`
-
-**Input (as in your script)**
+**Input**
 - `BZea.DP2.MAF005.MISS50.vcf.gz`
 
 **Outputs**
@@ -511,23 +475,22 @@ Figure 2 summarizes per-sample quality metrics for the unimputed callset and sho
 - `BZea.DP2.MAF005.MISS50.chr10.vcf.gz` (+ `.tbi`)
 
 **Run**
-    bsub < 12_separate_chr.sh
-
-⚠️ Your current loop is `{10..10}` (only chr10).
-To split all chromosomes, change it to `{1..10}`.
+```bash
+    bsub < 14_separate_chr.sh
+```
+📜 Script: `scripts/14_separate_chr.sh`
 
 ---
 
 ### 7.2 Beagle imputation per chromosome (using NAM genetic maps)
 
-📜 Script: `13_beagle_impute.sh`
 
 **Inputs**
-- Per-chromosome VCFs from Step 7.1 (e.g. `...chr8.vcf.gz`)
-- Beagle jar:
+- Per-chromosome VCFs from Step 7.1
+- Beagle software:
   - `beagle.27Feb25.75f.jar`
 - Genetic map per chromosome:
-  - `NAM_genetic_map/beagle/chrN.plink.map`
+  - `NAM_genetic_map/beagle/chrN.plink.map` or anything similar
 
 **Outputs**
 - `BZea.beagle.chr1.vcf.gz` (+ `.tbi`)
@@ -535,55 +498,49 @@ To split all chromosomes, change it to `{1..10}`.
 - `BZea.beagle.chr10.vcf.gz` (+ `.tbi`)
 
 **Run**
-    bsub < 13_beagle_impute.sh
-
-Notes:
-- Your Beagle loop is currently commented (example shows chr8). Uncomment and set `{1..10}` (or the chr range you want).
-- After Beagle finishes, index outputs with tabix (your script does this).
+```bash
+bsub < 15_beagle_impute.sh
+```
+📜 Script: `scripts/15_beagle_impute.sh`
 
 ---
 
 ### 7.3 Add original FORMAT tags back to Beagle output + concatenate all chromosomes
 
-📜 Script: `14_add_tags_back_and_concat.sh`  *(suggested name)*
-
 **Goal:** After Beagle imputation, re-attach useful per-genotype fields (e.g. `AD/DP/PL`) from the **pre-imputation** chr-specific VCFs, then concatenate chr1–chr10 into one imputed genome-wide VCF.
 
-**Inputs (per chromosome)**
-- Pre-imputation VCF (source of FORMAT tags):
+**Inputs**
+- Pre-imputation VCF:
   - `BZea.DP2.MAF005.MISS50.chr${chr}.vcf.gz`
 - Beagle output VCF:
   - `BZea.beagle.chr${chr}.vcf.gz`
 
-**Outputs (per chromosome)**
+**Outputs**
 - Beagle VCF with tags added back:
   - `BZea.beagle.chr${chr}.withPL.vcf.gz` (+ `.tbi`)
-
-**Final output**
 - Concatenated genome-wide imputed VCF:
   - `BZea.beagle.imputed.allchr.vcf.gz` (+ `.tbi`)
 
 **Run**
-    bsub < 14_add_tags_back_and_concat.sh
-
-**Notes / fixes (based on your script)**
-- Your `tabix` line and `concat` line use `withTags`, but your output filename is `withPL`.
-  Pick one naming scheme and keep it consistent (recommended: use `withPL` everywhere).
+```bash
+    bsub < 16_add_tags_back_and_concat.sh
+```
+📜 Script: `scripts/16_add_tags_back_and_concat.sh`
 
 ---
 
 ## Step 8 Population structure visualization using PCA
 
+## Introduction
+
 Principal component analysis (PCA) is designed to capture genome-wide ancestry and population structure. A central requirement is to prevent a small number of long haplotype blocks from disproportionately influencing the eigenvectors. In BZea introgression panels,LD can be both strong and highly heterogeneous across the genome. Consequently, LD pruning is essential prior to performing PCA, because PCA conducted on dense, unpruned SNP data can produce clusters that primarily reflect local regions of elevated LD rather than broad-scale genetic structure. By removing highly correlated markers, LD pruning reduces redundancy in the dataset, enabling PCA to more faithfully represent genome-wide structure instead of local clusters of correlated SNPs. In the specific context of introgression lines, LD pruning also mitigates the risk that a small number of introgressed haplotype segments exert an outsized influence on the leading principal components. Thus, LD pruning is a prerequisite for interpreting PCA plots as depictions of genome-wide ancestry patterns. In the absence of pruning, extended LD blocks—especially those corresponding to introgressed haplotypes—can contribute many tightly correlated variants, thereby over-representing those genomic regions and disproportionately shaping the first few principal components. Applying an r²-based pruning threshold (here, r² = 0.2) decreases marker redundancy such that the resulting PCA more accurately reflects distributed ancestry signals across the genome, rather than artifacts arising from local haplotype structure.
 
 
 ### Inputs
-- **Imputed VCF (filtered):** `BZea.DP2.MAF005.MISS50.allchr.vcf.gz`
+- **Imputed VCF (filtered):** `BZea.DP2.MAF005.MISS50.allchr.vcf.gz` ( or `BZea.DP1.MAF005.MISS50.allchr.vcf.gz` for more markers)
 - **Unimputed VCF (filtered):** corresponding filtered, unimputed callset (same SNP set / similar filters)
 
-**Importan parameters used in PLINK2 for PCA**
-
-**What these thresholds mean**
+**Parameters used in PLINK2 for PCA**
 - `--maf 0.01`: removes very rare variants (rare SNPs add noise to PCA and are more sensitive to genotyping errors in low-pass data).
 - `--geno 0.2`: removes SNPs missing in >20% of samples (high missingness SNPs distort distance relationships).
 - `--mind 0.5`: removes samples missing in >50% of SNPs (important for unimputed low-pass; missingness can dominate PCs if not controlled).
@@ -593,7 +550,9 @@ Principal component analysis (PCA) is designed to capture genome-wide ancestry a
   - `0.2` = LD threshold (remove SNPs until remaining pairs in the window have **r² < 0.2**)
 
 
-## PCA figures (95% CI ellipses)
+## Results
+
+### PCA figures (95% CI ellipses)
 
 ### Unimputed (filtered) PCA and Imputed (filtered) PCA
 ![Unimputed (filtered) PCA and Imputed (filtered) PCA](figs/all_figs/PCA.png)
@@ -604,8 +563,6 @@ Principal component analysis (PCA) is designed to capture genome-wide ancestry a
 (B) PCA of the **filtered, imputed** callset using the same PCA workflow (QC + LD pruning), showing tighter clustering and reduced dispersion after imputation. Axes show PC2 and PC3 scores. Ellipses indicate **95% confidence intervals** for each group.
 
 ---
-
-## Results
 
 Clear group-level structure is evident in both PCA panels and is concordant with the four teosinte taxa labels (Zd, Zl, Zv, Zx). The separation among clusters indicates that, even under low-pass sequencing, the dataset preserves a strong genome-wide ancestry signal once standard quality control and LD pruning are applied. The imputed dataset displays noticeably tighter and more coherent clustering. This pattern is expected because imputation reduces noise arising from missing data and stabilizes allele count estimates across individuals by leveraging haplotype structure. Consequently, it reduces the scatter attributable to stochastic genotype uncertainty at low sequencing depth. As a result, group boundaries are more sharply defined and the point clouds contract around their central tendency in principal component space.
 
@@ -736,9 +693,10 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
 
 ---
 
-# QTL mapping of flowering time in BZea Population
+## STEP 9 QTL mapping of flowering time in BZea Population
 
 ## Introduction
+
 We analyzed a **B73 × teosinte backcross-derived population advanced to the BC₂S₃ generation**, hereafter referred to as BZea, consisting of four families (*Zd, Zx, Zl,* and *Zv*). At any given locus, only two allelic states—**the B73 allele and the teosinte donor allele**—are segregating. Consequently, the appropriate analytical framework is a **two-allele additive introgression model**. Conceptually, this model is analogous to the *bi-allelic SNP model* commonly employed in genome-wide association studies (GWAS) and can be regarded as a simplified instance of the multi-allelic quantitative trait locus (QTL) models developed for multi-founder populations such as multi-parent advanced generation inter-cross (MAGIC) populations.
 
 This framework follows the pipeline presented by **Odell et al. (2019, *Genetics* 213: 1367–1383, “Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci”)**. In that study, Odell and colleagues compared three models for QTL detection in multi-parent populations:
@@ -761,7 +719,6 @@ where,
 $$
 P(\text{HET}) = P(BT), \qquad P(\text{TEO}) = P(TT)
 $$
-
 
 
 This approach is analogous to the *haplotype probability* framework of Odell et al., but replaces founder-state probabilities with **local ancestry posterior probabilities inferred by RTIGER**. Conceptually, we generalize the multi-allelic founder-probability formulation to a **biparental introgression population**, in which state probabilities are derived from local ancestry inference rather than explicit founder-haplotype reconstruction.

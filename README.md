@@ -678,19 +678,19 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
 # QTL mapping of flowering time in BZea Population
 
 ## Introduction
-We analyzed a **B73 × teosinte backcross-derived population advanced to BC₂S₃**, or BZea, composed of four families (*Zd, Zx, Zl, Zv*). At any locus, only two allelic states segregate—**B73 vs. teosinte donor**—so the appropriate mapping framework is a **two-allele additive introgression model**. Conceptually, this corresponds to the *bi-allelic SNP model* used in GWAS and represents a simplified form of the multi-allelic QTL models developed for multi-founder populations such as MAGIC.
+We analyzed a **B73 × teosinte backcross-derived population advanced to the BC₂S₃ generation**, hereafter referred to as BZea, consisting of four families (*Zd, Zx, Zl,* and *Zv*). At any given locus, only two allelic states—**the B73 allele and the teosinte donor allele**—are segregating. Consequently, the appropriate analytical framework is a **two-allele additive introgression model**. Conceptually, this model is analogous to the *bi-allelic SNP model* commonly employed in genome-wide association studies (GWAS) and can be regarded as a simplified instance of the multi-allelic quantitative trait locus (QTL) models developed for multi-founder populations such as multi-parent advanced generation inter-cross (MAGIC) populations.
 
-This framework follows the logic presented by **Odell et al. (2019, *Genetics* 213: 1367–1383, “Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci”)**. In that study, Odell and colleagues compared three models for QTL detection in multi-parent populations:
+This framework follows the pipeline presented by **Odell et al. (2019, *Genetics* 213: 1367–1383, “Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci”)**. In that study, Odell and colleagues compared three models for QTL detection in multi-parent populations:
 
-1. **GWAS_SNP model** – a *bi-allelic* model where each marker is treated as a single SNP effect (reference vs. alternate allele).  
-2. **Founder model (QTLF)** – a *multi-allelic* model assigning a separate effect to each founder’s allele, parameterized by the probability of inheriting that founder’s haplotype.  
-3. **Haplotype model (QTLH)** – an *ancestral haplotype* model that clusters founders sharing identical-by-descent segments, reducing the number of allelic states relative to the founder model.
+1. **GWAS_SNP model** – a *bi-allelic* parameterization in which each marker is modeled as the effect of a single nucleotide polymorphism, contrasting the reference and alternative allelic states.  
+2. **Founder model (QTLF)** – a *multi-allelic* parameterization that assigns a distinct effect to each founder allele, with effects expressed as a function of the probability of inheriting the corresponding founder haplotype.  
+3. **Haplotype model (QTLH)** – an *ancestral haplotype–based* parameterization that groups founders sharing identical-by-descent (IBD) segments into haplotype clusters, thereby reducing the effective number of allelic states relative to the founder model.
 
-Odell et al. demonstrated that model choice depends on the population’s allelic diversity. **GWAS_SNP** has the highest power when loci are effectively bi-allelic. **QTLF** is most appropriate when each founder contributes a unique allele. **QTLH** provides a balance by collapsing founders with shared haplotypes, improving power when allelic diversity is intermediate.
+Odell et al. demonstrated that optimal model choice is contingent on the underlying allelic diversity within the population. **GWAS_SNP** exhibits maximal statistical power when causal loci are effectively bi-allelic. In contrast, the **QTLF** framework is most appropriate when each founder line contributes a distinct functional allele. The **QTLH** approach occupies an intermediate position by aggregating founders that share common haplotypes, thereby enhancing power in settings characterized by moderate allelic diversity.
 
-In our **biparental BC₂S₃ population**, these three frameworks collapse naturally into the bi-allelic case: **B73 and teosinte represent the only two founders**, and thus the founder (QTLF) and haplotype (QTLH) formulations both reduce to a single additive effect of the **teosinte allele**. The theoretical equivalence of these models in this setting justifies treating each locus as a *bi-allelic SNP*, where genotype is represented by the **expected teosinte allele dosage**.
+In our **biparental BC₂S₃ population**, these three modeling frameworks naturally converge to the bi-allelic case: **B73 and teosinte constitute the only two founders**, so both the founder-based (QTLF) and haplotype-based (QTLH) parameterizations collapse to a single additive effect corresponding to the **teosinte allele**. The theoretical equivalence of these models in this specific context justifies treating each locus as a *bi-allelic SNP*, with genotype encoded as the **expected dosage of the teosinte allele**.
 
-Following Odell et al., who parameterized founder and haplotype effects as **haplotype probabilities** derived from hidden Markov models (e.g. implemented in *R/qtl2*), we similarly used **probabilistic genotype states** estimated from low-pass sequence data via **RTIGER**. RTIGER outputs per-line, per-position posterior probabilities (*γ*) for each ancestry state—B73, heterozygous, or teosinte.  
+Building on the framework of Odell et al., who modeled founder and haplotype effects using **haplotype probabilities** inferred from hidden Markov models (as implemented, for example, in *R/qtl2*), we analogously employed **probabilistic genotype states** estimated from low-pass whole-genome sequencing data using **RTIGER**. RTIGER yields, for each line and each genomic position, posterior probabilities (*γ*) corresponding to the three possible ancestry states: B73, heterozygous, or teosinte.
 We converted these posteriors to an additive dosage as:
 
 $$
@@ -703,11 +703,11 @@ $$
 
 
 
-This parallels the *haplotype probability* framework of Odell et al., substituting founder probabilities with **ancestry posteriors from RTIGER**. In essence, we extended the multi-allelic founder-probability concept to a **biparental introgression design**, where state probabilities arise from local ancestry inference rather than founder haplotype reconstruction.
+This approach is analogous to the *haplotype probability* framework of Odell et al., but replaces founder-state probabilities with **local ancestry posterior probabilities inferred by RTIGER**. Conceptually, we generalize the multi-allelic founder-probability formulation to a **biparental introgression population**, in which state probabilities are derived from local ancestry inference rather than explicit founder-haplotype reconstruction.
 
-While Odell et al. used per-founder probabilities or genotype likelihoods (GL) from their simulations, our implementation used RTIGER posteriors as the equivalent probabilistic genotype source. The same statistical principle applies: rather than treating genotypes as hard calls, the mapping model integrates the **expected allele dosage** to account for uncertainty in local ancestry.
+Whereas Odell et al. employed per-founder probabilities or genotype likelihoods (GLs) generated from their simulations, our implementation uses RTIGER posterior probabilities as the corresponding probabilistic representation of genotype state. The same statistical rationale is retained: instead of modeling genotypes as discrete, error-free calls, the association framework incorporates the **expected allele dosage** to propagate uncertainty in local ancestry into the mapping analysis.
 
-We then conducted genome-wide association scans using **GridLMM**, fitting **linear mixed models (LMMs)** with **LOCO kinship matrices** to control for relatedness and the shared B73 background. Two complementary analyses were performed:
+Subsequently, we carried out genome-wide association scans using **GridLMM**, fitting **linear mixed models (LMMs)** with **leave-one-chromosome-out (LOCO) kinship matrices** to account for population structure, relatedness, and the shared B73 genetic background. We performed two complementary analyses:
 
 - **(i) Combined analysis:** pooling all families with *Family* as a fixed covariate to identify QTL consistent across backgrounds.  
 - **(ii) Family-wise analysis:** running separate scans within each family to detect background-specific or context-dependent QTL.
@@ -760,7 +760,7 @@ In summary, this study extends the probabilistic, founder-based QTL modeling fra
 ---
 
 ## Phenotypes: spatial correction and BLUEs
-Flowering time was measured with replication and spatial field heterogeneity. Replicate-level observations were modeled with a spatial correction procedure to obtain a **single BLUE per line** (Best Linear Unbiased Estimate), which serves as the response for downstream mapping. Spatial correction and spline-based field-trial modeling are standard to reduce micro-environmental noise and improve genetic signal prior to QTL mapping. (In practice, this is what you achieved by generating a BLUE table after spatial adjustment.) :contentReference[oaicite:1]{index=1}
+Flowering time was measured with replication and spatial field heterogeneity. Replicate-level observations were modeled with a spatial correction procedure to obtain a **single BLUE per line** (Best Linear Unbiased Estimate), which serves as the response for downstream mapping. Spatial correction and spline-based field-trial modeling are standard to reduce micro-environmental noise and improve genetic signal prior to QTL mapping. (In practice, this is what you achieved by generating a BLUE table after spatial adjustment.)
 
 **Key point:** because BLUEs already represent a line-level estimate, downstream mapping is conducted on one phenotype value per line (no explicit environment term in the mapping model here).
 
@@ -768,7 +768,9 @@ Flowering time was measured with replication and spatial field heterogeneity. Re
 
 ## Genotypes: probabilistic ancestry inference from low-pass data (RTIGER)
 ### RTIGER output (posterior state probabilities, `gamma`)
-Rather than relying on hard genotype calls (which are often unreliable under low-pass coverage), local ancestry along the genome was inferred using a hidden Markov model (HMM)-style framework that returns **posterior state probabilities** at each marker position stored as `gamma` which is a matrix of size **nstates × nmarkers**, where each column sums to 1 (posterior probabilities of each hidden state at that position).
+
+Instead of relying on hard genotype calls—which are frequently unreliable under low-pass sequencing coverage—local ancestry along the genome was inferred using a hidden Markov model (HMM)-based framework. This approach yields **posterior state probabilities** at each marker position, stored in the object `gamma`, a matrix of dimensions **nstates × nmarkers**, in which each column represents the posterior probability distribution over hidden states at a given marker and thus sums to 1.
+
 
 RTIGER documentation and software descriptions emphasize this probabilistic representation for recombinant/introgression genomes, enabling downstream analyses to propagate uncertainty instead of forcing discrete calls.
 
@@ -792,8 +794,7 @@ $$
 
 This produces a continuous predictor (0–2) that uses all the information in the 3-state posterior, preserves uncertainty (values are not forced to 0/1/2), and implements the **additive** introgression model (the default for QTL mapping unless dominance is strongly suspected).
 
-**Why not run a full 3-state (2-df) test everywhere?**  
-A 3-state “genotypic” model is effectively a 2-degree-of-freedom test (separate parameters for HET and TEO relative to B73), which can reduce power when one class (often TEO/TEO) is rare. The additive dosage model is the standard first-pass in such designs; dominance can be tested later at top loci by adding a dominance term (see below).
+A three-state “genotypic” parameterization corresponds to a statistical test with two degrees of freedom, in which distinct effects are estimated for the heterozygous class (HET) and the teosinte homozygote (TEO/TEO) relative to the B73 homozygote. This increased model complexity can reduce statistical power, particularly when one genotype class (commonly TEO/TEO) is infrequent in the sample. In contrast, an additive dosage model is typically employed as the primary analytical framework in such experimental designs; putative deviations from additivity (dominance effects) can then be evaluated in a secondary step at the most strongly associated loci by incorporating an explicit dominance term into the model (see below).
 
 ### Optional dominance follow-up (only at peaks)
 At a peak locus/window, you can test dominance deviation with two predictors:
@@ -818,14 +819,14 @@ We fit both only for a short list of significant peaks, not genome-wide.
 ## Binning/smoothing: genome-wide window dosage matrix
 To reduce noise and the multiple-testing burden, we summarized marker-level dosage into fixed genomic bins (e.g., 100 kb steps across the genome, producing columns labeled like `chr1:50000`, `chr1:150000`, …). Each bin’s value per line represents the **average expected teosinte dosage / ancestry proportion** within that window.
 
-This “bin mapping” approach is especially useful when (i) genotype density is high, (ii) local ancestry is piecewise-constant between crossovers, and (iii) per-marker uncertainty is nontrivial (low-pass). It also tends to produce cleaner, more interpretable QTL intervals (windows rather than single-SNP spikes).
+This “bin mapping” strategy is particularly advantageous under the following conditions: (i) genotype marker density is high, (ii) local ancestry can be reasonably modeled as piecewise constant between recombination breakpoints, and (iii) per-marker genotype calls exhibit substantial uncertainty, as is typical in low-pass sequencing or genotyping scenarios. In addition, this approach frequently yields quantitatively trait locus (QTL) intervals that are cleaner and more interpretable, manifesting as broader genomic windows rather than isolated, single–nucleotide polymorphism (SNP)–level peaks.
 
 ---
 
 ## Relatedness control: LOCO kinship matrices
-Because these lines share substantial B73 background and are not independent, QTL scans used a **linear mixed model (LMM)** with a polygenic random effect whose covariance is the realized kinship matrix \(K\).
+Given that these lines share a substantial proportion of the B73 genetic background and thus cannot be considered statistically independent, quantitative trait locus (QTL) scans were performed using a **linear mixed model (LMM)** incorporating a polygenic random effect whose covariance structure was specified by the realized kinship matrix \(K\).
 
-To avoid proximal contamination (the tested chromosome influencing kinship and reducing apparent signal), we used **leave-one-chromosome-out (LOCO)** kinship: when scanning chromosome \(c\), the kinship matrix $$K_{-c}$$ is computed from markers on all other chromosomes. LOCO is widely recommended in mixed-model GWAS/QTL scans to prevent over-correction at true loci on the tested chromosome.
+To mitigate proximal contamination—i.e., the inflation of the kinship contribution by markers on the focal chromosome, which can diminish the apparent association signal—we implemented a **leave-one-chromosome-out (LOCO)** kinship approach. Specifically, when scanning chromosome \(c\), the kinship matrix \(K_{-c}\) was estimated using markers from all chromosomes except \(c\). The LOCO framework is widely recommended in mixed-model genome-wide association studies (GWAS) and QTL mapping to avoid over-correction and loss of power at true causal loci on the chromosome under test.
 
 Kinship matrices were generated externally (e.g., PLINK), then imported and **re-keyed** to match line IDs. PLINK remains a standard toolkit for constructing relatedness matrices and GWAS/QC workflows.
 

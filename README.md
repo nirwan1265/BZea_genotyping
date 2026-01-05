@@ -33,7 +33,7 @@ Then:
 
 ---
 
-## Step 1 — After two backcrosses (BC2)
+### Step 1 — After two backcrosses (BC2)
 
 At an informative locus:
 
@@ -55,7 +55,7 @@ This also matches the ancestry expectation: teosinte allele fraction is **12.5%*
 
 ---
 
-## Step 2 — Effect of selfing: how heterozygosity decays
+### Step 2 — Effect of selfing: how heterozygosity decays
 
 If you self a heterozygote **BT** for *s* generations, heterozygosity halves each generation:
 
@@ -70,7 +70,7 @@ For **s = 3** (three selfs), starting from BT:
 
 ---
 
-## Step 3 — Final genotype proportions after BC2 + 3 selfs
+### Step 3 — Final genotype proportions after BC2 + 3 selfs
 
 At BC2, only **25%** of loci are heterozygous (BT). The other **75%** are already BB and remain BB through selfing.
 

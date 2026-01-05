@@ -1,12 +1,81 @@
-# BZea low-pass genotyping: FASTQ → BAM → GLs (bcftools)
+# BZea Analysis
 
-This repository documents the end-to-end processing for **low-pass sequencing** data, starting from raw paired-end FASTQ files and proceeding through:
-1) demultiplexing by barcode (sabre)
-2) adapter/primer trimming and quality filtering (Trimmomatic)
-3) (downstream, required before GL calling) alignment + BAM processing (sort, markdup, index)
-4) genotype likelihood generation and genotype calling (bcftools mpileup/call)
+This repository documents the end-to-end processing for **low-pass sequencing** data, starting from raw paired-end FASTQ files and proceeding through a reproducible genotype + ancestry + association workflow.
 
-> This repo stores **scripts + documentation only** (no large FASTQ/BAM/VCF files).
+## Genotyping
+
+### 1) Demultiplexing by barcode (sabre)
+- Split pooled FASTQs into per-sample FASTQs using barcode/index definitions using `sabre`.
+- Outputs: `sample_R1.fastq.gz`, `sample_R2.fastq.gz` (+ reports/logs)
+
+### 2) Adapter/primer trimming + quality filtering (Trimmomatic)
+- Remove adapter/primer contamination and low-quality bases.
+- Outputs: trimmed paired FASTQs (+ unpaired reads, trimming logs)
+
+### 3) Alignment + BAM processing (required before GL calling)
+- Align to the **B73 reference** (e.g., B73 Ref v5) using `bwa mem`.
+- Post-processing:
+  - sort BAM
+  - mark duplicates
+  - index BAM
+  - basic QC (mapping %, coverage summaries)
+- Outputs: `sample.sorted.markdup.bam` + `.bai` (+ QC summaries)
+
+### 4) Genotype likelihood generation + genotype calling (bcftools mpileup/call)
+- Generate genotype likelihoods from low-pass BAMs (`bcftools mpileup`).
+- Joint genotype calling across samples (`bcftools call`) to produce cohort VCF/BCF.
+-  Filtering and normalization:
+  - variant-level filters (DP, QUAL, missingness)
+  - biallelic SNP selection
+- Outputs: cohort VCF/BCF (raw + filtered)
+
+### 5) Imputation
+- Impute missing genotypes using `Beagle`.
+- Outputs: imputed VCF + quality tables
+
+---
+
+## Introgression analysis (RTIGER)
+
+We infer **local ancestry states** along the genome for each line (B73 vs teosinte ancestry) using **RTIGER** R package, leveraging low-pass information through allele counts / genotype likelihood–compatible inputs.
+
+**Inputs**
+- Per-sample allele-count
+
+**Outputs**
+- Posterior probabilities per marker per sample:
+  - `gamma` matrices (state posterior; typically 2-state or 3-state, e.g. B73 / HET / TEO)
+- Segment-level introgression summaries:
+  - introgression boundaries, lengths
+
+---
+
+## QTL / association mapping
+
+We perform genome scans using **GridLMM** with **LOCO (leave-one-chromosome-out) kinship** to control relatedness while preserving power on the tested chromosome.
+
+### 6) Kinship matrix construction (PLINK2 LOCO)
+- Build pruned marker set (LD pruning) for stable kinship estimation.
+- Compute LOCO relationship matrices per chromosome.
+- Outputs (per chromosome):
+  - `LOCO_chrN.rel` + `LOCO_chrN.rel.id`
+
+### 7) GridLMM GWAS / QTL scans
+We developed multiple predictor modes:
+
+**A) SNP GWAS (standard)**
+- Uses SNP dosages (from VCF/PLINK/Beagle export) with LOCO K.
+
+**B) RTIGER dosage GWAS (ancestry dosage model)**
+- Predictor: expected teosinte allele dosage derived from RTIGER posteriors.
+- Tests whether teosinte ancestry dosage at each bin/marker associates with phenotype.
+- NOTE: this looked pretty similar to (C) so did not do more of this. 
+
+**C) RTIGER state-probability GWAS (multi-df ancestry model)**
+- Predictor: state probabilities (e.g., B73 vs HET/TEO probability predictors).
+
+**Outputs**
+- Per-chromosome results tables with p-values, effect estimates, model diagnostics
 
 ---
 

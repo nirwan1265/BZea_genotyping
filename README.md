@@ -79,44 +79,44 @@ We developed multiple predictor modes:
 
 ---
 
-## Project assumptions
-
-- **Compute:** LSF (`bsub`) cluster
-- **Shell:** tcsh for historical consistency with existing jobs
-- **Data:** paired-end lanes (e.g., `S1_L002` style)
-- **Low-pass:** downstream calling uses **genotype likelihoods (GLs)** rather than “hard” genotypes early.
-
----
-
 ## Dependencies
 
-- `sabre` (demultiplexing by barcode)
-- `Trimmomatic` (adapter/primer trimming)
-- (Downstream) `bwa-mem2` or `bwa`, `samtools`, `picard` (or `samtools markdup`)
-- (Calling) `bcftools` (+ reference FASTA indexed with `.fai`)
+### Core command-line tools (LINUX)
+
+- **sabre** — demultiplexing by barcode (FASTQ splitting)
+- **Trimmomatic** — adapter/primer trimming + quality filtering
+- **bwa-mem2** *(recommended)* or **bwa** — read alignment to reference genome
+- **samtools** — BAM/SAM manipulation (sort, index, stats, depth)
+- **picard** — duplicate marking
+- **bcftools** — genotype likelihoods + variant calling + querying
+- **vcftools**  — quick VCF filters / summaries
+- **bgzip / tabix** *(htslib)* — compress + index VCF/BCF outputs
+
+
+### Imputation and Variant handling
+
+- **plink2** — variant QC, LD pruning, PCA, relationship matrices, LOCO kinship (`.rel/.rel.id`)
+- **Beagle** (Java) — genotype imputation
+
+### Introgression inference (RTIGER)
+
+- **R** (>= 4.1 recommended)
+- **RTIGER** R package (+ its dependencies)
+- **Julia** (1.0.5 recommended)
+
+### QTL / association mapping
+
+- **R**
+- **GridLMM** R package
+- **plink2** *(for LOCO kinship files)*:
+
+### Gene annotation resources
+
+- **GFF3 annotation** for the reference build (we used v5 annotation - `Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3`)
 
 ---
 
-## Directory conventions (recommended)
-
-These paths are examples. On HPC we typically keep data outside the git repo:
-
-- Raw FASTQs (not tracked):  
-  `/.../BZea/raw_file/.../BZeaS1_S1_L002_R1_001.fastq.gz` etc.
-
-- Demultiplexed output (not tracked):  
-  `/.../BZea/S1_L2/`
-
-- Trimmed output (not tracked):  
-  `/.../BZea/filtered_S/filtered_S17/`
-
-This repo contains the **reproducible scripts** to generate those outputs.
-
----
-
----
-
-## Step 1 — Demultiplex pooled FASTQs (sabre)
+## Step 1 — Demultiplex pooled FASTQs
 
 **Goal:** Split pooled lane-level paired-end FASTQs into per-sample FASTQs using a barcode map.
 
@@ -124,24 +124,23 @@ This repo contains the **reproducible scripts** to generate those outputs.
 - Pooled lane FASTQs:
   - `..._R1_001.fastq.gz`
   - `..._R2_001.fastq.gz`
-- Barcode map file (`.tsv` / `.txt`)
+- Barcode map file (`.txt`)
 
 ### Barcode file format (required)
 Tab-separated **2 columns**:
 
 1. **BARCODE** (exact barcode sequence)
-2. **OUTPUT_PREFIX** (sample name / file prefix sabre will write)
+2. **OUTPUT_PREFIX** (sample name)
 
 Example:
 
-```tsv
+```txt
 ACGTACGT    Sample_001
 TGCATGCA    Sample_002
 GATCTAGA    Sample_003
 ```
 
-> sabre will write outputs using the `OUTPUT_PREFIX` names (paired R1/R2 per barcode).  
-> Unmatched reads are written to the `no_bc_match_*` files.
+Unmatched reads are written to the `no_bc_match_*` files.
 
 ### Outputs
 - Per-sample paired FASTQs written by sabre (based on column 2 of the barcode file)

@@ -693,9 +693,15 @@ In our **biparental BC₂S₃ population**, these three frameworks collapse natu
 Following Odell et al., who parameterized founder and haplotype effects as **haplotype probabilities** derived from hidden Markov models (e.g. implemented in *R/qtl2*), we similarly used **probabilistic genotype states** estimated from low-pass sequence data via **RTIGER**. RTIGER outputs per-line, per-position posterior probabilities (*γ*) for each ancestry state—B73, heterozygous, or teosinte.  
 We converted these posteriors to an additive dosage as:
 
-\[
-E[\text{Teosinte dosage}] = P(\text{HET}) + 2P(\text{TEO})
-\]
+$$
+E[\text{Teosinte dosage}] \=\ P(\text{HET}) \+\ 2 \cdot P(\text{TEO})
+$$
+where, 
+$$
+P(\text{HET}) = P(BT), \qquad P(\text{TEO}) = P(TT)
+$$
+
+
 
 This parallels the *haplotype probability* framework of Odell et al., substituting founder probabilities with **ancestry posteriors from RTIGER**. In essence, we extended the multi-allelic founder-probability concept to a **biparental introgression design**, where state probabilities arise from local ancestry inference rather than founder haplotype reconstruction.
 
@@ -724,11 +730,14 @@ For these, each locus was encoded as:
 This representation allows direct comparison between **probability-weighted dosage models** (which retain uncertainty) and **discrete hard-call models** (which treat each state deterministically).  
 Both were analyzed using the same **LOCO-kinship mixed model framework** in *GridLMM*:
 
-\[
-y = \mu + \text{Family} + \beta X + u + \epsilon
-\]
-where  
-\(u \sim N(0, \sigma_g^2 K_{-chr})\) and \( \epsilon \sim N(0, \sigma_e^2 I) \).
+$$
+y = \mu + \text{Family} + \beta X + u + \epsilon,
+\qquad
+u \sim \mathcal{N}\!\left(0,\ \sigma_g^2\,K_{-chr}\right),
+\qquad
+\epsilon \sim \mathcal{N}\!\left(0,\ \sigma_e^2\,I\right).
+$$
+
 
 **Dosage-based hard calls** were also computed (e.g., treating 0, 1, 2 as additive dosage), allowing a unified test of additive introgression effects across both genotype encoding strategies.
 
@@ -773,13 +782,13 @@ The `gamma` has **3 states** per locus, which in a two-founder cross are typical
 
 Even if donor homozygotes are rare (as you observed), the cleanest way to use the full posterior is to compute an **expected teosinte allele dosage** per locus:
 
-\[
-E[\text{Teo dosage}] \;=\; 0\cdot P(\text{B73}) \;+\; 1\cdot P(\text{HET}) \;+\; 2\cdot P(\text{TEO})
-\]
+$$
+E[\text{Teo dosage}] = 0\cdot P(\text{B73}) + 1\cdot P(\text{HET}) + 2\cdot P(\text{TEO}).
+$$
 i.e.
-\[
-X \;=\; P(\text{HET}) \;+\; 2P(\text{TEO})
-\]
+$$
+X = P(\text{HET}) + 2\cdot P(\text{TEO}).
+$$
 
 This produces a continuous predictor (0–2) that uses all the information in the 3-state posterior, preserves uncertainty (values are not forced to 0/1/2), and implements the **additive** introgression model (the default for QTL mapping unless dominance is strongly suspected).
 
@@ -788,8 +797,19 @@ A 3-state “genotypic” model is effectively a 2-degree-of-freedom test (separ
 
 ### Optional dominance follow-up (only at peaks)
 At a peak locus/window, you can test dominance deviation with two predictors:
-- additive: \(A = P(\text{HET}) + 2P(\text{TEO})\)
-- dominance-like: \(D = P(\text{HET})\) (or \(P(\text{HET}) - 2P(\text{B73})P(\text{TEO})\) depending on parameterization)
+- additive:
+
+$$
+A = P(\text{HET}) + 2\cdot P(\text{TEO})
+$$
+
+- dominance-like:
+
+$$
+D = P(\text{HET}) 
+(\text{or } P(\text{HET}) - 2\cdot P(\text{B73}) P(\text{TEO}),\ \text{depending on parameterization})
+$$
+
 
 We fit both only for a short list of significant peaks, not genome-wide.
 
@@ -805,9 +825,10 @@ This “bin mapping” approach is especially useful when (i) genotype density i
 ## Relatedness control: LOCO kinship matrices
 Because these lines share substantial B73 background and are not independent, QTL scans used a **linear mixed model (LMM)** with a polygenic random effect whose covariance is the realized kinship matrix \(K\).
 
-To avoid proximal contamination (the tested chromosome influencing kinship and reducing apparent signal), we used **leave-one-chromosome-out (LOCO)** kinship: when scanning chromosome \(c\), the kinship matrix \(K_{-c}\) is computed from markers on all other chromosomes. LOCO is widely recommended in mixed-model GWAS/QTL scans to prevent over-correction at true loci on the tested chromosome. :contentReference[oaicite:4]{index=4}
+To avoid proximal contamination (the tested chromosome influencing kinship and reducing apparent signal), we used **leave-one-chromosome-out (LOCO)** kinship: when scanning chromosome \(c\), the kinship matrix $$K_{-c}$$ is computed from markers on all other chromosomes. LOCO is widely recommended in mixed-model GWAS/QTL scans to prevent over-correction at true loci on the tested chromosome.
 
-Kinship matrices were generated externally (e.g., PLINK), then imported and **re-keyed** to match line IDs. PLINK remains a standard toolkit for constructing relatedness matrices and GWAS/QC workflows. :contentReference[oaicite:5]{index=5}
+Kinship matrices were generated externally (e.g., PLINK), then imported and **re-keyed** to match line IDs. PLINK remains a standard toolkit for constructing relatedness matrices and GWAS/QC workflows.
+
 
 ---
 
@@ -817,26 +838,43 @@ We used **GridLMM**, which accelerates LMM inference by evaluating likelihoods o
 ### Combined (all-family) scan
 For the combined analysis, we fit:
 
-\[
-y = \mu + \text{Family} + \beta X_{w} + u + \epsilon
-\]
+$$
+y = \mu + \text{Family} + \beta X_w + u + \epsilon
+$$
 
 where:
-- \(y\) is flowering time BLUE,
+
+- **y** is flowering time BLUE,
 - **Family** is a fixed-effect factor capturing baseline shifts among families,
-- \(X_w\) is the teosinte dosage (or ancestry proportion) for window/marker \(w\),
-- \(u \sim N(0, \sigma_g^2 K_{-c})\) is the polygenic random effect with LOCO kinship,
-- \(\epsilon \sim N(0, \sigma_e^2 I)\).
+- **X_w** is the teosinte dosage (or ancestry proportion) for window or marker w,
+- **u** is the polygenic random effect with LOCO kinship,
+- **ε** is the residual error term.
+
+
+The random effects are defined as:
+
+$$
+u \sim \mathcal{N}(0,\ \sigma_g^2 K_{-c})
+$$
+
+$$
+\epsilon \sim \mathcal{N}(0,\ \sigma_e^2 I)
+$$
 
 This yields a p-value per tested marker/window reflecting evidence that teosinte introgression at that locus is associated with flowering time after controlling for family structure and genome-wide relatedness.
 
 ### Family-wise scans
 For each family, we fit the same model **without** the family covariate (because it is constant within a family):
 
-\[
-y = \mu + \beta X_{w} + u + \epsilon
-\]
-with \(K_{-c}\) restricted to that family’s lines.
+$$
+y = \mu + \beta X_w + u + \epsilon
+$$
+
+with the kinship matrix restricted to that family’s lines
+
+$$
+K_{-c}
+$$
 
 Family-wise scans help distinguish:
 - QTL consistent across families (replicable),
@@ -850,19 +888,21 @@ We used **maximum likelihood (ML)** during scanning because likelihood ratio com
 ## Peak definition and intervals
 After producing genome-wide p-values, we summarized signals as “QTL peaks” by:
 1) identifying the most significant window/marker per chromosome (or per region),
-2) defining a support interval around the peak using a pragmatic “drop” rule on \(-\log_{10}(p)\) (e.g., keep positions within 1 unit of the peak’s \(-\log_{10}(p)\)).
+2) defining a support interval around the peak using a pragmatic “drop” rule on $$-\log_{10}(p)$$ (e.g., keep positions within 1 unit of the peak’s $$-\log_{10}(p)$$.
 
 This produces an interpretable genomic interval that can be reported as a candidate QTL region. (In classical QTL mapping this is analogous in spirit to LOD-drop support intervals; here it is a convenient operational definition for window-based scans.)
+
 
 ---
 
 ## Hard-call ancestry (for sensitivity checks)
 If you want a “hard call” version, you can assign each locus/window to the max-posterior state:
 
-\[
-\hat{s} = \arg\max_{s \in \{\text{B73,HET,TEO}\}} P(s)
-\]
-then encode as 0/1/2 (B73/HET/TEO). This is easy to interpret but discards uncertainty and can be noisy under low-pass. Use it as a sensitivity analysis, not the primary mapping genotype.
+$$
+\hat{s} = \arg\max_{s \in \{\text{B73}, \text{HET}, \text{TEO}\}} P(s)
+$$
+
+Then encode as 0/1/2 (B73/HET/TEO). This is easy to interpret but discards uncertainty and can be noisy under low-pass. Use it as a sensitivity analysis, not the primary mapping genotype.
 
 ## Dosage from non-RTIGER sources (GL, GP, imputation)
 The same mapping framework works with any probabilistic genotype representation, e.g.:
@@ -870,7 +910,7 @@ The same mapping framework works with any probabilistic genotype representation,
 - posterior genotype probabilities (GP) from imputation,
 - expected allele dosage (DS) directly from imputation outputs.
 
-In each case, the recommended mapping covariate is the **expected allele dosage** (continuous), which propagates uncertainty and typically improves calibration/power relative to forced hard calls in low-coverage settings. :contentReference[oaicite:10]{index=10}
+In each case, the recommended mapping covariate is the **expected allele dosage** (continuous), which propagates uncertainty and typically improves calibration/power relative to forced hard calls in low-coverage settings. 
 
 ---
 

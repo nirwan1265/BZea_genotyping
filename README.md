@@ -748,14 +748,23 @@ getOption("repos")
 install.packages(c("JuliaCall", "remotes"), lib = target)
 
 # Restart R and force JuliaCall to use the env Julia + env depot
+# env vars (as you already do)
 Sys.setenv(
-  JULIA_HOME = file.path(Sys.getenv("CONDA_PREFIX"), "bin"),
+  JULIA_HOME       = file.path(Sys.getenv("CONDA_PREFIX"), "bin"),
   JULIA_DEPOT_PATH = file.path(Sys.getenv("CONDA_PREFIX"), "julia_depot")
 )
 
 library(RTIGER)
 
-setupJulia(JULIA_HOME = Sys.getenv("JULIA_HOME"))
+# ---- BYPASS THE ANNOYING ">" / PRINTING ----
+invisible(capture.output(
+  setupJulia(JULIA_HOME = Sys.getenv("JULIA_HOME"))
+))
+cat("\n")   # forces the next prompt onto a clean new line
+
+# continue normally
+sourceJulia()
+
 
 ```
 

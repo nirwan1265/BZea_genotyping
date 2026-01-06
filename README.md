@@ -661,9 +661,7 @@ Clear group-level structure is evident in both PCA panels and is concordant with
 
 By contrast, the unimputed dataset exhibits greater dispersion and more elongated group geometries. Under low coverage, missing genotypes are unevenly distributed across both individuals and loci, which can distort estimated genetic distances in a non-uniform manner and inflate variance along major principal components. Residual genotype uncertainty (and, for some individuals, low-complexity or low-yield libraries) can therefore stretch clusters and accentuate distribution tails, making within-group spread appear larger than it would under complete or imputed genotype data. The particularly elongated ellipses (notably for Zl in the unimputed panel) likely reflect a combination of genuine within-group genetic diversity and technical heterogeneity, including heterogeneous coverage and missingness patterns within that taxon.
 
-In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned or overlapping in a two-dimensional projection become more clearly separated once PC3 is included. Samples that share similar coordinates on PC1 and PC2 can still differ substantially along PC3. The 3D representation therefore provides additional visual confirmation that the four taxa form separable clusters in multi-PC space,
-
-*Optional caption (Nature-style):* **Figure X (supplementary) | 3D PCA of population structure.** Scatterplot of individuals across PC1, PC2, and PC3 using the LD-pruned SNP set. The 3D representation highlights separation along PC3 for groups that appear partially overlapping in 2D projections, supporting robust multi-axis structure among taxa.
+In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned or overlapping in a two-dimensional projection become more clearly separated once PC3 is included. Samples that share similar coordinates on PC1 and PC2 can still differ substantially along PC3. The 3D representation therefore provides additional visual confirmation that the four taxa form separable clusters in multi-PC space. (Download the html file to view the 3D PC1 vs PC2 vs PC3 figure)
 
 ---
 
@@ -1037,6 +1035,11 @@ In contrast, the Zv family scan (Panel D) exhibits the weakest overall signal, w
 These results support the presence of a major introgression-associated QTL—most prominently on chromosome 10 that is consistently detected in the combined analysis and in at least one family-specific scan. Although this locus appears to be broadly shared across genetic backgrounds, the magnitude of its effect varies among families. 
 
 
+Among the significant loci detected in the combined analysis, we identified a MADS-box transcription factor gene, Zm00001eb409460. This gene has previously been reported as a candidate associated with ear height in maize (Li et al., 2025) which matches with our DTS phenotype that we used. 
+
+For Zd, we identified several genes of particular interest. One such locus encodes the glucose‑6‑phosphate/phosphate translocator 1 (Zm00001eb413160). Functional analysis of its Arabidopsis homolog, AT1G61800, in a background with impaired starch biosynthesis demonstrated that loss of function of this gene compromises plant growth under short‑day photoperiods (Kunz et al., 2010). The top candidate, a glycine‑rich protein 2 gene (Zm00001eb409440), has been implicated in the regulation of flowering time based on studies of its Arabidopsis ortholog AT1G74230 (Shi et al., 2016).
+
+For Zl, we identified a single candidate locus, Zm00001eb343000, which encodes an indole-3-acetate β-glucosyltransferase. Functional studies of its Arabidopsis homolog (UGT84A2, AT3G21560) have demonstrated that ectopic expression of UGT84A2 delays the floral transition through indole-3-butyric acid–mediated transcriptional repression of the ARF6 and ARF8 genes (Zhang et al., 2017).
 
 
 

@@ -667,7 +667,7 @@ In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned
 
 ---
 
-### Section 9 - INTROGRESSION analysis using RTIGER
+## Section 9 - INTROGRESSION analysis using RTIGER
 
 ### 9.1 Installation
 

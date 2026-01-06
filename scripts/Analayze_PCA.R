@@ -223,3 +223,10 @@ scree_unim
 ggsave("/Users/nirwantandukar/Documents/Github/BZea_genotyping/data/pca/Scree_imputed.png",  scree_imp,  width = 7, height = 5, dpi = 300)
 ggsave("/Users/nirwantandukar/Documents/Github/BZea_genotyping/data/pca/Scree_unimputed.png", scree_unim, width = 7, height = 5, dpi = 300)
 
+
+
+
+
+x=readRDS("/Users/nirwantandukar/Library/Mobile Documents/com~apple~CloudDocs/Github/BZea_Introgression_Finder/results_list_new_name.rds")
+str(x)
+x["Zh.0030_P4_P5_P2.2.1.1.B"]

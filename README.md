@@ -234,7 +234,7 @@ We developed multiple predictor modes:
 
 ---
 
-## Step 1 — Demultiplex pooled FASTQs
+## Section 1 — Demultiplex pooled FASTQs
 
 **Goal:** Split pooled lane-level paired-end FASTQs into per-sample FASTQs using a barcode map.
 
@@ -275,7 +275,7 @@ bsub < scripts/01_demultiplex_sabre.tcsh
 
 ---
 
-## Step 2 — Trim adapters/primers + quality filter (Trimmomatic PE)
+## Section 2 — Trim adapters/primers + quality filter (Trimmomatic PE)
 
 **Goal:** Remove adapters/primers 
 
@@ -306,7 +306,7 @@ bsub < scripts/02_trim_trimmomatic.tcsh
 
 ---
 
-## Step 3 — BAM preprocessing (sort → mark/remove duplicates → index)
+## Section 3 — BAM preprocessing (sort → mark/remove duplicates → index)
 
 **Goal:** Ensure each sample BAM is **coordinate-sorted**, **deduplicated**, and **indexed** before genotype likelihood (GL) generation with `bcftools mpileup`.
 
@@ -335,7 +335,7 @@ bash scripts/03_bam_sort_dedup_index.sh
 
 ---
 
-## Step 4 — Genotype likelihoods (GL) genotyping at SNPVersity sites (bcftools)
+## Section 4 — Genotype likelihoods (GL) genotyping at SNPVersity sites (bcftools)
 
 **Goal:** Generate genotype likelihood–based calls **only at known SNP sites** using SNPVersity, by running `bcftools mpileup | bcftools call` in parallel across **chromosomes × BAM-chunks**, then merging outputs.
 
@@ -470,7 +470,7 @@ Figure 1 summarizes per-sample QC metrics for the *unfiltered* genotype calls (i
 
 ---
 
-## Step 5 — Post-calling cleanup (biallelic SNP-only VCF)
+## Section 5 — Post-calling cleanup (biallelic SNP-only VCF)
 
 **Goal:** Convert the genome-wide BCF into a biallelic SNP-only VCF.gz for downstream **filtering + imputation**.
 
@@ -496,7 +496,7 @@ bsub < 10_bialleles_remove_empty_alts.sh
 
 ---
 
-## Step 6 — Filtering (DP → fill-tags → MAF + missingness)
+## Section 6 — Filtering (DP → fill-tags → MAF + missingness)
 
 **Goal:** Starting from the biallelic SNP-only VCF, apply:
 1) genotype depth (DP) filter (set low-DP genotypes to missing),
@@ -577,7 +577,7 @@ Figure 2 summarizes per-sample quality metrics for the unimputed callset and sho
 ---
 
 
-## Step 7 — Split by chromosome + imputation (Beagle)
+## Section 7 — Split by chromosome + imputation (Beagle)
 
 **Goal:** Split the filtered VCF into chr-specific VCFs and run Beagle inmputation per chromosome using a genetic map.
 
@@ -647,7 +647,7 @@ bsub < 15_beagle_impute.sh
 
 ---
 
-## Step 8 — Population structure visualization using PCA
+## Section 8 — Population structure visualization using PCA
 
 ## 8.1 Introduction
 
@@ -692,7 +692,7 @@ In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned
 
 ---
 
-### Step 9 - INTROGRESSION analysis using RTIGER
+### Section 9 - INTROGRESSION analysis using RTIGER
 
 ### 9.1 Installation
 
@@ -789,7 +789,7 @@ sourceJulia()
 ```
 ---
 
-## STEP 10 — QTL mapping of flowering time in BZea Population
+## Section 10 — QTL mapping of flowering time in BZea Population
 
 ### 10.1 Introduction
 

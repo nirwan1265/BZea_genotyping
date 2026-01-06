@@ -8,22 +8,22 @@ B73 was crossed with teosinte lines for 2 backcrosses and 3 selfs. (Need more de
 
 ## Expected genotype proportions after BC2 + 3 selfing generations (per locus)
 
-This section gives the **expected fraction of genotypes** at any SNP where the recurrent parent (B73) and the donor (teosinte) carry different alleles, assuming:
+We calcualte the **expected fraction of genotypes** at any SNP where the recurrent parent (B73) and the donor (teosinte) carry different alleles, assuming:
 - B73 is homozygous **BB**
 - the teosinte donor is homozygous **TT**
 - random mating, no segregation distortion, no selection, and perfect marker informativeness.
 
-This expectation applies **separately within each donor family** you used:
+This expectation applies **separately within each donor family** we used:
 - **Zd** = *Zea diploperennis* (donor allele = T)
 - **Zl** = *Zea luxurians* (donor allele = T)
 - **Zx** = *Zea mexicana* (donor allele = T)
 - **Zv** = *Zea parviglumis* (donor allele = T)
 
-> Important: the only thing that changes across Zd/Zl/Zx/Zv is which teosinte allele is present and how divergent it is from B73. The Mendelian expectations below are the same for all families.
+The Mendelian expectations shown below are the same for all families.
 
 ---
 
-### Breeding scheme
+## Allelic scheme
 B73 (BB) × Teo (TT) → **F1 = 100% BT**
 
 Then:
@@ -35,7 +35,7 @@ Then:
 
 ### Step 1 — After two backcrosses (BC2)
 
-At an informative locus:
+At a locus:
 
 **BC1 (BT × BB):**
 - 1/2 BB
@@ -51,13 +51,13 @@ So at BC2:
 - **BT = 0.25**
 - **TT = 0.00**
 
-This also matches the ancestry expectation: teosinte allele fraction is **12.5%** at BC2 (because BT loci carry one donor allele copy).
+This also matches the ancestry expectation. Teosinte allele fraction is **12.5%** at BC2 (because BT loci carry one donor allele copy).
 
 ---
 
-### Step 2 — Effect of selfing: how heterozygosity decays
+### Step 2 — Heterozygosity decay through selfing
 
-If you self a heterozygote **BT** for *s* generations, heterozygosity halves each generation:
+After selfing a heterozygote **BT** for *s* generations, heterozygosity halves each generation as:
 
 - **P(BT after s selfs) = (1/2)^s**
 - The remaining probability becomes homozygous, split equally:
@@ -67,6 +67,7 @@ If you self a heterozygote **BT** for *s* generations, heterozygosity halves eac
 For **s = 3** (three selfs), starting from BT:
 - BT = (1/2)^3 = **1/8 = 0.125**
 - BB = TT = (1 − 1/8)/2 = **7/16 = 0.4375**
+
 
 ---
 
@@ -80,46 +81,20 @@ So final expectations:
 - **P(BT) = 0.25×0.125 = 0.03125 = 3.13%**
 - **P(TT) = 0.25×0.4375 = 0.109375 = 10.94%**
 
-✅ **Genome-wide at informative loci (BC2 → S3):**
+- **Genome-wide at informative loci (BC2 → S3):**
 - **~85.94% homozygous B73 (BB)**
 - **~3.13% heterozygous (BT)**
 - **~10.94% homozygous teosinte (TT)**
 
-A key sanity check:
-- The **teosinte allele fraction stays 12.5%** overall (expected for BC2), but selfing shifts donor ancestry from **heterozygous → homozygous**.
-
 ---
 
-## “Out of the teosinte introgression, how much is het vs homo teosinte?”
-
-There are two common ways to report this:
-
-### A) Among loci that carry *any* teosinte allele (BT or TT)
-Fraction of loci with donor present:
-- BT + TT = 3.13% + 10.94% = **14.06%**
-
-Within those “introgressed loci”:
-- Het share = 3.13 / 14.06 = **22.22%**
-- Homo-teo share = 10.94 / 14.06 = **77.78%**
-
-### B) Among teosinte **allele copies** (the 12.5%)
-Count donor allele copies:
-- BT contributes **1** donor copy per locus (at 3.13% loci)
-- TT contributes **2** donor copies per locus (at 10.94% loci)
-
-Donor allele copies:
-- From BT: 0.03125 × 1 = 0.03125
-- From TT: 0.109375 × 2 = 0.21875
-Total donor allele copies = 0.25 (which corresponds to **12.5%** of all allele copies)
-
-So the donor allele copies are:
-- **12.5% of donor alleles are in heterozygotes (BT)**
-- **87.5% of donor alleles are in homozygous TT**
-
----
-
-### Practical implication for low-pass genotyping
+### Implication for low-pass genotyping
 With low-pass depth, **heterozygotes are harder to call confidently**, and the expected heterozygote fraction after BC2+S3 is small (~3.1% of loci). Most donor ancestry is expected to appear as **homozygous TT** at loci where donor segments are fixed within a line, which is why imputation / probabilistic ancestry methods are helpful when coverage is low.
+
+---
+
+# General Overview of BZea genotyping, introgression and QTL analysis
+
 ## Genotyping
 
 ### 1) Demultiplexing by barcode (sabre)

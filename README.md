@@ -793,7 +793,7 @@ sourceJulia()
 
 ### 10.1 Introduction
 
-We analyzed a **B73 × teosinte backcross-derived population advanced to the BC₂S₃ generation**, hereafter referred to as BZea, consisting of four families (*Zd, Zx, Zl,* and *Zv*). At any given locus, only two allelic states—**the B73 allele and the teosinte donor allele**—are segregating. Consequently, the appropriate analytical framework is a **two-allele additive introgression model**. Conceptually, this model is analogous to the *bi-allelic SNP model* commonly employed in genome-wide association studies (GWAS) and can be regarded as a simplified instance of the multi-allelic quantitative trait locus (QTL) models developed for multi-founder populations such as multi-parent advanced generation inter-cross (MAGIC) populations.
+We analyzed a **B73 × teosinte backcross-derived population advanced to the BC₂S₃ generation**, hereafter referred to as BZea, consisting of four families (*Zd, Zx, Zl,* and *Zv*). At any given locus, only two allelic states, **the B73 allele and the teosinte donor allele**, are segregating. Consequently, the appropriate analytical framework is a **two-allele additive introgression model**. Conceptually, this model is analogous to the *bi-allelic SNP model* commonly employed in genome-wide association studies (GWAS) and can be regarded as a simplified instance of the multi-allelic quantitative trait locus (QTL) models developed for multi-founder populations such as multi-parent advanced generation inter-cross (MAGIC) populations.
 
 This framework follows the pipeline presented by **Odell et al. (2019, *Genetics* 213: 1367–1383, “Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci”)**. In that study, Odell and colleagues compared three models for QTL detection in multi-parent populations:
 
@@ -817,16 +817,22 @@ P(\text{HET}) = P(BT), \qquad P(\text{TEO}) = P(TT)
 $$
 
 
-This approach is analogous to the *haplotype probability* framework of Odell et al., but replaces founder-state probabilities with **local ancestry posterior probabilities inferred by RTIGER**. Conceptually, we generalize the multi-allelic founder-probability formulation to a **biparental introgression population**, in which state probabilities are derived from local ancestry inference rather than explicit founder-haplotype reconstruction.
+This approach is analogous to the *haplotype probability* framework of Odell et al., but replaces founder-state probabilities with **local ancestry posterior probabilities inferred by RTIGER**. Conceptually, we generalize the multi-allelic founder-probability formulation to a **biparental introgression population**, in which state probabilities are derived from local ancestry inference rather than explicit founder-haplotype reconstruction. Odell et al. employed per-founder probabilities or genotype likelihoods (GLs) generated from their simulations, our implementation uses RTIGER posterior probabilities as the corresponding probabilistic representation of genotype state. The same statistical rationale is preserverd. Instead of modeling genotypes as discrete, error-free calls, the association analysis incorporates the **expected allele dosage** to propagate uncertainty in local ancestry into the mapping analysis.
 
-Whereas Odell et al. employed per-founder probabilities or genotype likelihoods (GLs) generated from their simulations, our implementation uses RTIGER posterior probabilities as the corresponding probabilistic representation of genotype state. The same statistical rationale is retained: instead of modeling genotypes as discrete, error-free calls, the association framework incorporates the **expected allele dosage** to propagate uncertainty in local ancestry into the mapping analysis.
+Subsequently, we performed genome-wide scans in **GridLMM** using **linear mixed models (LMMs)** with **leave-one-chromosome-out (LOCO) kinship matrices** to control for relatedness, population structure, and the shared B73 genetic background. We implemented the scans at two  **resolutions**:
 
-Subsequently, we carried out genome-wide association scans using **GridLMM**, fitting **linear mixed models (LMMs)** with **leave-one-chromosome-out (LOCO) kinship matrices** to account for population structure, relatedness, and the shared B73 genetic background. We performed two complementary analyses:
+1. **Single-marker scans**, where each test corresponds to a single genomic position (an RTIGER posterior dosage at a site, or a hard-called 0/1/2 genotype). Here, the model is fit once per marker using that marker’s dosage as the predictor.
+2. **Windowed (bin) scans**, where the genome is partitioned into fixed physical windows (e.g., 100 kb). For each line and each window, we computed a summary introgression covariate (e.g., the **mean expected teosinte dosage** across all RTIGER positions falling within the window) and tested this window-level predictor in the same LMM framework.
 
-- **(i) Combined analysis:** pooling all families with *Family* as a fixed covariate to identify QTL consistent across backgrounds.  
-- **(ii) Family-wise analysis:** running separate scans within each family to detect background-specific or context-dependent QTL.
+The windowed approach is less sensitive to sparse coverage and local uncertainty in low-pass sequencing, and it better reflects the biology of **contiguous introgression tracts**. We treat the windowed scans as the primary analysis and use single-marker scans as a higher-resolution follow-up around detected peaks.
 
-Thus, our mapping framework is conceptually aligned with the multi-allelic models of Odell et al., but adapted for a biparental, introgression-probabilistic context where **RTIGER posterior probabilities replace founder haplotype probabilities** as genotype covariates.
+Across both resolutions, we carried out two complementary **analysis stratifications**:
+
+- **Combined analysis:** pooling all families and including *Family* as a fixed effect to identify QTL that are consistent across genetic backgrounds.
+- **Family-wise analysis:** running separate scans within each family to detect background-specific or context-dependent QTL.
+
+Thus, our final GridLMM mapping framework evaluates introgression effects using (i) single-marker vs windowed predictors and (ii) combined vs family-wise models, all while accounting for genome-wide relatedness via LOCO kinship.
+
 
 ---
 
@@ -847,36 +853,37 @@ Both were analyzed using the same **LOCO-kinship mixed model framework** in *Gri
 $$
 y = \mu + \text{Family} + \beta X + u + \epsilon,
 \qquad
-u \sim \mathcal{N}\!\left(0,\ \sigma_g^2\,K_{-chr}\right),
+u \sim \mathcal{N}\!\left(0,\ \sigma_g^2K_{-chr}\right),
 \qquad
-\epsilon \sim \mathcal{N}\!\left(0,\ \sigma_e^2\,I\right).
+\epsilon \sim \mathcal{N}\!\left(0,\ \sigma_e^2I\right).
 $$
 
-
-**Dosage-based hard calls** were also computed (e.g., treating 0, 1, 2 as additive dosage), allowing a unified test of additive introgression effects across both genotype encoding strategies.
 
 ---
 
 ### 10.3 Summary of analyses performed
 
-| Analysis Type | Genotype Source | Covariates | Model | Purpose |
-|----------------|----------------|-------------|---------|----------|
-| Combined (Probabilistic) | RTIGER posterior dosage (`E[Teo] = P(HET)+2P(TEO)`) | Family (fixed), Kinship (random) | Additive LMM (GridLMM) | Detect shared QTL across all families |
-| Family-wise (Probabilistic) | RTIGER posterior dosage | Kinship (per-family LOCO) | Additive LMM | Identify family-specific or background-dependent QTL |
-| Combined (Hard-call) | RTIGER max-state calls (0/1/2) | Family (fixed), Kinship (random) | Additive LMM | Validate probabilistic results under deterministic genotypes |
-| Family-wise (Hard-call) | RTIGER max-state calls | Kinship (per-family LOCO) | Additive LMM | Assess consistency of QTL across genotype encodings |
-
+| Analysis Type | Scan Resolution | Genotype Source | Covariates | Model | Purpose |
+|---|---|---|---|---|---|
+| Combined (Probabilistic) | **Windowed** (e.g., 100 kb bins) | RTIGER posterior dosage (`E[Teo]=P(HET)+2P(TEO)`), aggregated within bin (mean) | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Primary scan to detect shared QTL across families using ancestry-trait structure |
+| Combined (Probabilistic) | **Single-marker** | RTIGER posterior dosage at each RTIGER position | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Higher-resolution follow-up / confirmation near peaks |
+| Family-wise (Probabilistic) | **Windowed** | RTIGER posterior dosage aggregated within bin | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Detect background-specific introgression QTL with robust low-pass behavior |
+| Family-wise (Probabilistic) | **Single-marker** | RTIGER posterior dosage per position | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Fine-scale follow-up within each family |
+| Combined (Hard-call) | **Windowed** | RTIGER max-state calls (0/1/2) aggregated within bin (mean dosage) | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Validate probabilistic results under deterministic genotypes at the segment scale |
+| Combined (Hard-call) | **Single-marker** | RTIGER max-state calls (0/1/2) per position | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Marker-level check of direction/consistency |
+| Family-wise (Hard-call) | **Windowed** | RTIGER max-state calls aggregated within bin | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Family-specific validation at segment scale |
+| Family-wise (Hard-call) | **Single-marker** | RTIGER max-state calls per position | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Marker-level check within families |
 All scans were performed using **maximum likelihood (ML)** fits within *GridLMM* to ensure valid likelihood-ratio-based inference for marker effects, followed by summarization of peak loci and confidence intervals based on *−log₁₀(p)* drop support.
 
 
-In summary, this study extends the probabilistic, founder-based QTL modeling framework of Odell et al. (2019) to a biparental introgression population using **RTIGER ancestry posteriors** as genotype probabilities.   Both **probability-weighted** and **hard-called dosage** representations were tested using **LOCO-kinship mixed models (GridLMM)** to identify introgression-derived QTL influencing flowering time, in combined and family-specific contexts.
+In summary, this study extends the probabilistic, founder-based QTL modeling framework of Odell et al. (2019) to a biparental introgression population using **RTIGER ancestry posteriors** as genotype probabilities.   Both **probability-weighted** and **hard-called dosage** representations were tested using **LOCO-kinship mixed models (GridLMM)** to identify introgression-derived QTL influencing flowering time, in single, combined and family-specific contexts.
 
 ---
 
 ### 10.4 Phenotypes: spatial correction and BLUEs
-Flowering time was measured with replication and spatial field heterogeneity. Replicate-level observations were modeled with a spatial correction procedure to obtain a **single BLUE per line** (Best Linear Unbiased Estimate), which serves as the response for downstream mapping. Spatial correction and spline-based field-trial modeling are standard to reduce micro-environmental noise and improve genetic signal prior to QTL mapping. (In practice, this is what you achieved by generating a BLUE table after spatial adjustment.)
+Flowering time was measured with replication and spatial field heterogeneity. Replicate-level observations were modeled with a spatial correction procedure using R package SpATS to obtain a **single BLUE per line** (Best Linear Unbiased Estimate), which serves as the response for downstream analysis. 
 
-**Key point:** because BLUEs already represent a line-level estimate, downstream mapping is conducted on one phenotype value per line (no explicit environment term in the mapping model here).
+
 
 ---
 

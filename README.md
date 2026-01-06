@@ -1014,6 +1014,29 @@ Flowering time was measured with replication and spatial field heterogeneity. Re
 
 ### 10.10 Results
 
+### Overview of the introgression-bin QTL scans
+
+![Overview of the introgression-bin QTL scans](figs/Fig_manhattan.png)
+
+**Figure 3 | Introgression-bin association mapping across teosinte introgression families.**  
+Manhattan-style plots summarizing introgression-bin association analyses performed using GridLMM, where each point represents a genomic bin capturing the local dosage or probability of teosinte introgression rather than individual SNP effects. The y-axis shows −log₁₀(p) values from mixed-model tests, and the x-axis indicates chromosomal position across the ten maize chromosomes. The solid horizontal line denotes the genome-wide significance threshold (−log₁₀(p) = 5.6), while the dashed line indicates a suggestive threshold. Genomic regions exceeding the genome-wide threshold are annotated with nearby or overlapping genes; the top ten candidate genes are labeled where present.
+
+**(A)** Combined analysis across all introgression families (Zd, Zl, and Zv; n = 250 lines), identifying loci with effects consistent across genetic backgrounds.  
+**(B)** Family-specific analysis in Zd (n = 100 lines).  
+**(C)** Family-specific analysis in Zl (n = 100 lines).  
+**(D)** Family-specific analysis in Zv (n = 50 lines).
+
+The figure summarizes introgression-bin association mapping conducted using GridLMM, in which each statistical test corresponds to a genomic bin (100K) representing the local probability or dosage of teosinte introgression along the genome. Although visualized in a Manhattan-style format, these analyses constitute quantitative trait locus (QTL) scans across introgressed haplotype bins rather than conventional single-nucleotide polymorphism (SNP)-based genome-wide association studies (GWAS). A genome-wide significance threshold of −log₁₀(p) = 5.6 was applied uniformly across all panels (solid horizontal line), and an additional, more permissive suggestive threshold of −log₁₀(p) = 3 is indicated by a dashed line. Genomic bins surpassing the genome-wide threshold were annotated with nearby or overlapping genes, and the top 10 candidate genes per panel were highlighted.
+
+The dataset comprises 250 introgression lines derived from three families: Zd (100 lines), Zl (100 lines), and Zv (50 lines). Panel A presents the joint analysis across all families, designed to detect QTL with effects shared across genetic backgrounds while controlling for relatedness via a linear mixed-model framework. Multiple strong association peaks are observed, most prominently toward the region of chromosome 10, where several contiguous bins exceed the genome-wide threshold.
+
+Panels B–D display family-specific scans for Zd, Zl, and Zv, respectively. In the Zd family (Panel B), the strongest associations again map to chromosome 10 and overlap the locus identified in the combined analysis, indicating that this QTL segregates within this genetic background and is not an artifact of pooling across families. The Zl family (Panel C) exhibits a qualitatively similar but attenuated signal at the same locus, suggesting partial sharing of the underlying effect, potentially with differences in effect size, allele frequency, or introgression dosage. Additional suggestive peaks at other genomic locations may represent background-dependent or smaller-effect QTL.
+
+In contrast, the Zv family scan (Panel D) exhibits the weakest overall signal, with no bins clearly surpassing the genome-wide significance threshold. This outcome is expected given the reduced sample size (n = 50), which considerably diminishes statistical power, and may also reflect distinct introgression architectures or recombination patterns specific to this family.
+
+These results support the presence of a major introgression-associated QTL—most prominently on chromosome 10 that is consistently detected in the combined analysis and in at least one family-specific scan. Although this locus appears to be broadly shared across genetic backgrounds, the magnitude of its effect varies among families. 
+
+
 
 
 

@@ -1,0 +1,2415 @@
+	-> angsd version: 0.940-dirty (htslib: 1.20) build(Apr  3 2024 04:57:10)
+	-> angsd -bam /rsstu/users/r/rrellan/DOE_CAREER/BZea/dedup_filtered/bam_list.txt -ref /rsstu/users/r/rrellan/sara/ref/Zm-B73-REFERENCE-NAM-5.0.fa -r chr3:1-11900889 -GL 1 -doMajorMinor 1 -doMaf 1 -doBcf 1 -SNP_pval 1e-8 -minMapQ 30 -minQ 20 -uniqueOnly 1 -remove_bads 1 -only_proper_pairs 1 -baq 1 -C 50 -minInd 5 -skipTriallelic 1 -setMinDepthInd 2 -P 4 -out /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/BZea_chr3.part1.1_11900889 
+	-> Inputtype is BAM/CRAM
+[multiReader] 1535 samples in 1535 input files
+	-> Reading fasta: /rsstu/users/r/rrellan/sara/ref/Zm-B73-REFERENCE-NAM-5.0.fa
+	-> SNP-filter using a pvalue: 1.000000e-08 correspond to 32.841253 likelihood units
+
+[bcfoutput] 	Please add the following parameters 
+		 '-gl 1 -dopost 1 -domajorminor 1 -domaf 1 -dobcf 1 --ignore-RG 0 -dogeno 1 -docounts 1'
+
+
+Potential problem. -doBcf is a wrapper around -doMajorMinor -doPost and -gl. These values must therefore be set
+
+	-> Inputtype is BAM/CRAM
+	-> Parsing 1535 number of samples 
+	-> Region lookup 1/1
+
+	-> Allocated ~ 10 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 20 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 30 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 40 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 50 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 60 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 70 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 80 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 90 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 1990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 2990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 3990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 4990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 5990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 6990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 7990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 8990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 9990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10960 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10970 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10980 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 10990 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11000 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11010 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11020 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11030 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11040 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11050 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11060 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11070 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11080 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11090 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11100 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11110 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11120 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11130 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11140 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11150 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11160 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11170 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11180 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11190 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11200 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11210 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11220 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11230 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11240 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11250 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11260 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11270 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11280 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11290 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11300 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11310 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11320 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11330 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11340 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11350 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11360 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11370 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11380 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11390 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11400 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11410 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11420 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11430 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11440 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11450 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11460 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11470 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11480 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11490 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11500 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11510 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11520 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11530 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11540 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11550 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11560 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11570 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11580 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11590 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11600 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11610 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11620 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11630 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11640 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11650 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11660 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11670 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11680 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11690 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11700 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11710 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11720 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11730 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11740 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11750 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11760 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11770 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11780 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11790 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11800 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11810 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11820 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11830 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11840 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11850 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11860 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11870 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11880 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11890 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11900 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11910 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11920 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11930 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11940 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11950 million nodes to the nodepool, this is not an estimate of the memory usage
+
+	-> Allocated ~ 11960 million nodes to the nodepool, this is not an estimate of the memory usage
+	-> Printing at chr: chr3 pos:1397598 chunknumber 100 contains 3102 sites
+	-> Printing at chr: chr3 pos:3085980 chunknumber 200 contains 8207 sites
+	-> Printing at chr: chr3 pos:4842155 chunknumber 300 contains 11375 sites
+	-> Printing at chr: chr3 pos:6900440 chunknumber 400 contains 6520 sites
+	-> Printing at chr: chr3 pos:8354480 chunknumber 500 contains 2560 sites
+	-> Printing at chr: chr3 pos:9697775 chunknumber 600 contains 17442 sites
+/home/ntanduk/.lsbatch/1769565968.52149.1.shell: line 91: 2602739 Killed                  angsd -bam "${BAMLIST}" -ref "${REF}" -r "${INTERVAL}" -GL 1 -doMajorMinor 1 -doMaf 1 -doBcf 1 -SNP_pval "${SNP_PVAL}" -minMapQ "${MINMAPQ}" -minQ "${MINQ}" -uniqueOnly 1 -remove_bads 1 -only_proper_pairs 1 -baq 1 -C 50 -minInd "${MININD}" -skipTriallelic 1 -setMinDepthInd 2 -P "${P}" -out "${OUT}"

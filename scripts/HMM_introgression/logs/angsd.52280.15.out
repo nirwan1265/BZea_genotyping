@@ -1,0 +1,98 @@
+CHR=chr9  CHR_LEN=163004744
+PART=15/20  INTERVAL=chr9:114103333-122253570
+OUT=/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/BZea_chr9.part15.114103333_122253570
+DONE: /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/BZea_chr9.part15.114103333_122253570
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c207n06>
+Subject: Job 52280[15]: <angsd_chr_parts[1-20]%20> in cluster <Hazel> Done
+
+Job <angsd_chr_parts[1-20]%20> was submitted from host <login02.hpc.ncsu.edu> by user <ntanduk> in cluster <Hazel> at Tue Jan 27 22:45:15 2026
+Job was executed on host(s) <4*c207n06>, in queue <single_chassis>, as user <ntanduk> in cluster <Hazel> at Wed Jan 28 00:53:05 2026
+</home/ntanduk> was used as the home directory.
+</share/maize/ntanduk/angsd_genotyping/HMM_introgression> was used as the working directory.
+Started at Wed Jan 28 00:53:05 2026
+Terminated at Wed Jan 28 02:02:06 2026
+Results reported at Wed Jan 28 02:02:06 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/bash
+#BSUB -J "angsd_chr_parts[1-20]%20"
+#BSUB -n 4
+#BSUB -W 5000
+#BSUB -R "span[hosts=1]"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -o logs/angsd.%J.%I.out
+#BSUB -e logs/angsd.%J.%I.err
+
+set -euo pipefail
+
+# ---------------- USER EDITS ----------------
+BAMLIST=/rsstu/users/r/rrellan/DOE_CAREER/BZea/dedup_filtered/bam_list.txt
+REF=/rsstu/users/r/rrellan/sara/ref/Zm-B73-REFERENCE-NAM-5.0.fa
+
+# CHANGE THIS MANUALLY (no loop):
+CHR="chr9"     # or "chr2", ... depending on your reference naming
+
+# Output prefix directory
+OUTDIR=/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps
+OUTPREFIX="BZea_${CHR}"
+
+# SNP calling stringency + filters
+SNP_PVAL="1e-8"
+MINMAPQ=30
+MINQ=20
+MININD=5          # IMPORTANT: raise this if you want less sparse/noisy SNP set
+P=4               # threads
+# -------------------------------------------
+
+mkdir -p "${OUTDIR}" logs
+
+# Check .fai exists
+if [[ ! -f "${REF}.fai" ]]; then
+  echo "ERROR: Missing reference index ${REF}.fai (run: samtools faidx ${REF})" >&2
+  exit 2
+fi
+
+# Get chromosome length from .fai
+CHR_LEN=$(awk -v c="${CHR}" '$1==c{print $2}' "${REF}.fai")
+if [[ -z "${CHR_LEN}" ]]; then
+  echo "ERROR: CHR=${CHR} not found in ${REF}.fai" >&2
+  exit 2
+fi
+
+# Split into 20 parts
+NPARTS=20
+PART=${LSB_JOBINDEX}
+
+# ceil(CHR_LEN/NPARTS)
+
+(... more ...)
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   13067.77 sec.
+    Max Memory :                                 20 GB
+    Average Memory :                             13.28 GB
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -4.00 GB
+    Max Swap :                                   1 GB
+    Max Processes :                              4
+    Max Threads :                                9
+    Run time :                                   4143 sec.
+    Turnaround time :                            11811 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file <logs/angsd.52280.15.err> for stderr output of this job.
+

@@ -1,0 +1,98 @@
+CHR=chr1
+INBCF=/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/per_chr/BZea_chr1.full.bcf
+OUTBCF=/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/per_chr_renamed/BZea_chr1.full.renamed.bcf
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c018n04>
+Subject: Job 55164[1]: <rehead_full[1-10]%10> in cluster <Hazel> Exited
+
+Job <rehead_full[1-10]%10> was submitted from host <login02.hpc.ncsu.edu> by user <ntanduk> in cluster <Hazel> at Wed Jan 28 12:50:27 2026
+Job was executed on host(s) <c018n04>, in queue <serial>, as user <ntanduk> in cluster <Hazel> at Wed Jan 28 12:50:28 2026
+</home/ntanduk> was used as the home directory.
+</share/maize/ntanduk/angsd_genotyping/HMM_introgression> was used as the working directory.
+Started at Wed Jan 28 12:50:28 2026
+Terminated at Wed Jan 28 12:50:45 2026
+Results reported at Wed Jan 28 12:50:45 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/bash
+#BSUB -J "rehead_full[1-10]%10"
+#BSUB -n 1
+#BSUB -W 12:00
+#BSUB -R "span[hosts=1]"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -o logs/rehead_full.%J.%I.out
+#BSUB -e logs/rehead_full.%J.%I.err
+
+
+
+
+#DO THIS ONCE
+
+#cd /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps
+
+#BCF=per_chr/BZea_chr1.full.bcf
+
+# old names exactly as stored in the BCF (full BAM paths in your case)
+#bcftools query -l "$BCF" > rename.old.list
+
+# new names: extract PN*_SID### from anywhere in the string
+# (works even if basename has extra suffixes, as long as PN..._SID... exists)
+#awk '{
+#  if (match($0, /(PN[0-9]+_SID[0-9]+)/, m)) print m[1];
+#  else {
+#    # fallback: basename without .bam
+#    n=$0; sub(/^.*\//,"",n); sub(/\.bam$/,"",n); print n
+#  }
+#}' rename.old.list > rename.new.list
+
+# sanity check
+#paste rename.old.list rename.new.list | head
+
+
+set -euo pipefail
+
+ROOT=/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps
+INDIR=${ROOT}/per_chr
+OUTDIR=${ROOT}/per_chr_renamed
+
+OLDLIST=${INDIR}/rename.old.list
+NEWLIST=${INDIR}/rename.new.list
+
+mkdir -p "${OUTDIR}" "${ROOT}/logs"
+
+CHR="chr${LSB_JOBINDEX}"
+
+INBCF="${INDIR}/BZea_${CHR}.full.bcf"
+OUTBCF="${OUTDIR}/BZea_${CHR}.full.renamed.bcf"
+
+(... more ...)
+------------------------------------------------------------
+
+TERM_OWNER: job killed by owner.
+Exited with exit code 130.
+
+Resource usage summary:
+
+    CPU time :                                   14.57 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     16.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   30 sec.
+    Turnaround time :                            18 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file <logs/rehead_full.55164.1.err> for stderr output of this job.
+

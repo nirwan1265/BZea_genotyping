@@ -1,0 +1,61 @@
+Wrote:
+  Tracts per sample: /rsstu/users/r/rrellan/BZea/angsd_genotyping/clean/final_bcf/HMM_outputs/introgression_cmBridge
+  Combined tracts:   /rsstu/users/r/rrellan/BZea/angsd_genotyping/clean/final_bcf/HMM_outputs/introgression_cmBridge/all_samples.alt_het.tracts.cmBridge.tsv.gz
+  Summary perc:      /rsstu/users/r/rrellan/BZea/angsd_genotyping/clean/final_bcf/HMM_outputs/introgression_cmBridge/all_samples.ref_alt_het_perc.cmBridge.tsv
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c054n02>
+Subject: Job 55208: <Intro_stats> in cluster <Hazel> Done
+
+Job <Intro_stats> was submitted from host <login02.hpc.ncsu.edu> by user <ntanduk> in cluster <Hazel> at Wed Jan 28 12:55:44 2026
+Job was executed on host(s) <c054n02>, in queue <sara>, as user <ntanduk> in cluster <Hazel> at Wed Jan 28 12:55:45 2026
+</home/ntanduk> was used as the home directory.
+</share/maize/ntanduk/angsd_genotyping/HMM_introgression> was used as the working directory.
+Started at Wed Jan 28 12:55:45 2026
+Terminated at Wed Jan 28 12:59:26 2026
+Results reported at Wed Jan 28 12:59:26 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/bash
+#BSUB -n 1
+#BSUB -W 14400
+#BSUB -q sara 
+#BSUB -R "span[hosts=1]"
+#BSUB -R "rusage[mem=20GB]"
+#BSUB -J Intro_stats
+#BSUB -o stdout.%J
+#BSUB -e stderr.%J
+
+
+
+#conda activate /rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/env_RTIGER
+Rscript introgression_stats.R
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   177.51 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     20.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              6
+    Max Threads :                                7
+    Run time :                                   224 sec.
+    Turnaround time :                            222 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file <stderr.55208> for stderr output of this job.
+

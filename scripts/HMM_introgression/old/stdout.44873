@@ -1,0 +1,61 @@
+Wrote:
+  Tracts per sample: /rsstu/users/r/rrellan/BZea/angsd_genotyping/clean/final_bcf/HMM_outputs/introgression_cmBridge
+  Combined tracts:   /rsstu/users/r/rrellan/BZea/angsd_genotyping/clean/final_bcf/HMM_outputs/introgression_cmBridge/all_samples.alt_het.tracts.cmBridge.tsv.gz
+  Summary perc:      /rsstu/users/r/rrellan/BZea/angsd_genotyping/clean/final_bcf/HMM_outputs/introgression_cmBridge/all_samples.ref_alt_het_perc.cmBridge.tsv
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@c049n02>
+Subject: Job 44873: <Intro_stats> in cluster <Hazel> Done
+
+Job <Intro_stats> was submitted from host <login04> by user <ntanduk> in cluster <Hazel> at Mon Jan 26 21:47:36 2026
+Job was executed on host(s) <c049n02>, in queue <sara>, as user <ntanduk> in cluster <Hazel> at Mon Jan 26 21:47:38 2026
+</home/ntanduk> was used as the home directory.
+</share/maize/ntanduk/angsd_genotyping/HMM_introgression> was used as the working directory.
+Started at Mon Jan 26 21:47:38 2026
+Terminated at Mon Jan 26 21:53:54 2026
+Results reported at Mon Jan 26 21:53:54 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/bash
+#BSUB -n 1
+#BSUB -W 14400
+#BSUB -q sara 
+#BSUB -R "span[hosts=1]"
+#BSUB -R "rusage[mem=20GB]"
+#BSUB -J Intro_stats
+#BSUB -o stdout.%J
+#BSUB -e stderr.%J
+
+
+
+
+Rscript introgression_stats.R
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   319.39 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     20.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              6
+    Max Threads :                                7
+    Run time :                                   379 sec.
+    Turnaround time :                            378 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file <stderr.44873> for stderr output of this job.
+

@@ -661,9 +661,7 @@ Clear group-level structure is evident in both PCA panels and is concordant with
 
 By contrast, the unimputed dataset exhibits greater dispersion and more elongated group geometries. Under low coverage, missing genotypes are unevenly distributed across both individuals and loci, which can distort estimated genetic distances in a non-uniform manner and inflate variance along major principal components. Residual genotype uncertainty (and, for some individuals, low-complexity or low-yield libraries) can therefore stretch clusters and accentuate distribution tails, making within-group spread appear larger than it would under complete or imputed genotype data. The particularly elongated ellipses (notably for Zl in the unimputed panel) likely reflect a combination of genuine within-group genetic diversity and technical heterogeneity, including heterogeneous coverage and missingness patterns within that taxon.
 
-In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned or overlapping in a two-dimensional projection become more clearly separated once PC3 is included. Samples that share similar coordinates on PC1 and PC2 can still differ substantially along PC3. The 3D representation therefore provides additional visual confirmation that the four taxa form separable clusters in multi-PC space,
-
-*Optional caption (Nature-style):* **Figure X (supplementary) | 3D PCA of population structure.** Scatterplot of individuals across PC1, PC2, and PC3 using the LD-pruned SNP set. The 3D representation highlights separation along PC3 for groups that appear partially overlapping in 2D projections, supporting robust multi-axis structure among taxa.
+In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned or overlapping in a two-dimensional projection become more clearly separated once PC3 is included. Samples that share similar coordinates on PC1 and PC2 can still differ substantially along PC3. The 3D representation therefore provides additional visual confirmation that the four taxa form separable clusters in multi-PC space. (Download the html file to view the 3D PC1 vs PC2 vs PC3 figure)
 
 ---
 
@@ -1014,6 +1012,34 @@ Flowering time was measured with replication and spatial field heterogeneity. Re
 
 ### 10.10 Results
 
+### Overview of the introgression-bin QTL scans
+
+![Overview of the introgression-bin QTL scans](figs/Fig_manhattan.png)
+
+**Figure 3 | Introgression-bin association mapping across teosinte introgression families.**  
+Manhattan-style plots summarizing introgression-bin (100k) association analyses performed using GridLMM, where each point represents a genomic bin capturing the local dosage or probability of teosinte introgression. The y-axis shows −log₁₀(p) values, and the x-axis indicates chromosomal position. The solid horizontal line denotes the genome-wide significance threshold (−log₁₀(p) = 5.6), while the dashed line (−log₁₀(p) = 3) indicates a suggestive threshold. Genomic regions exceeding the genome-wide threshold are annotated with nearby or overlapping genes; the top ten candidate genes are labeled where present.
+
+**(A)** Combined analysis across all introgression families (Zd, Zl, and Zv; n = 250 lines), identifying loci with effects consistent across genetic backgrounds.  
+**(B)** Family-specific analysis in Zd (n = 130 lines).  
+**(C)** Family-specific analysis in Zl (n = 70 lines).  
+**(D)** Family-specific analysis in Zv (n = 50 lines).
+
+The figure summarizes introgression-bin association mapping conducted using GridLMM, in which each statistical test corresponds to a genomic bin (100K) representing the local probability or dosage of teosinte introgression along the genome. Although visualized in a Manhattan-style format, these analyses constitute quantitative trait locus (QTL) scans across introgressed haplotype bins rather than conventional single-nucleotide polymorphism (SNP)-based genome-wide association studies (GWAS). A genome-wide significance threshold of −log₁₀(p) = 5.6 was applied uniformly across all panels (solid horizontal line), and an additional, more permissive suggestive threshold of −log₁₀(p) = 3 is indicated by a dashed line. Genomic bins surpassing the genome-wide threshold were annotated with nearby or overlapping genes, and the top 10 candidate genes per panel were highlighted.
+
+The dataset comprises 250 introgression lines derived from three families: Zd (130 lines), Zl (70 lines), and Zv (50 lines). Panel A presents the joint analysis across all families, designed to detect QTL with effects shared across genetic backgrounds while controlling for relatedness via a linear mixed-model framework. Multiple strong association peaks are observed, most prominently toward the region of chromosome 10, where several contiguous bins exceed the genome-wide threshold.
+
+Panels B–D display family-specific scans for Zd, Zl, and Zv, respectively. In the Zd family (Panel B), the strongest associations again map to chromosome 10 and overlap the locus identified in the combined analysis, indicating that this QTL segregates within this genetic background and is not an artifact of pooling across families. The Zl family (Panel C) exhibits a qualitatively similar but attenuated signal at the same locus, suggesting partial sharing of the underlying effect, potentially with differences in effect size, allele frequency, or introgression dosage. Additional suggestive peaks at other genomic locations may represent background-dependent or smaller-effect QTL.
+
+In contrast, the Zv family scan (Panel D) exhibits the weakest overall signal, with no bins clearly surpassing the genome-wide significance threshold. This outcome is expected given the reduced sample size (n = 50), which considerably diminishes statistical power, and may also reflect distinct introgression architectures or recombination patterns specific to this family.
+
+These results support the presence of a major introgression-associated QTL—most prominently on chromosome 10 that is consistently detected in the combined analysis and in at least one family-specific scan. Although this locus appears to be broadly shared across genetic backgrounds, the magnitude of its effect varies among families. 
+
+
+Among the significant loci detected in the combined analysis, we identified a MADS-box transcription factor gene, Zm00001eb409460. This gene has previously been reported as a candidate associated with ear height in maize (Li et al., 2025) which matches with our DTS phenotype that we used. 
+
+For Zd, we identified several genes of particular interest. One such locus encodes the glucose‑6‑phosphate/phosphate translocator 1 (Zm00001eb413160). Functional analysis of its Arabidopsis homolog, AT1G61800, in a background with impaired starch biosynthesis demonstrated that loss of function of this gene compromises plant growth under short‑day photoperiods (Kunz et al., 2010). The top candidate, a glycine‑rich protein 2 gene (Zm00001eb409440), has been implicated in the regulation of flowering time based on studies of its Arabidopsis ortholog AT1G74230 (Shi et al., 2016).
+
+For Zl, we identified a single candidate locus, Zm00001eb343000, which encodes an indole-3-acetate β-glucosyltransferase. Functional studies of its Arabidopsis homolog (UGT84A2, AT3G21560) have demonstrated that ectopic expression of UGT84A2 delays the floral transition through indole-3-butyric acid–mediated transcriptional repression of the ARF6 and ARF8 genes (Zhang et al., 2017).
 
 
 

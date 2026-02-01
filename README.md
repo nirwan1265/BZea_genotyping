@@ -114,13 +114,19 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
   - basic QC (mapping %, coverage summaries)
 - Outputs: `sample.sorted.markdup.bam` + `.bai` (+ QC summaries)
 
-### 4) Genotype likelihood generation + genotype calling (bcftools mpileup/call)
+### 4) Genotype likelihood generation + genotype calling
+Two parallel pipelines:
+
+**A) bcftools pipeline** (for imputation + GWAS)
 - Generate genotype likelihoods from low-pass BAMs (`bcftools mpileup`).
 - Joint genotype calling across samples (`bcftools call`) to produce cohort VCF/BCF.
--  Filtering and normalization:
-  - variant-level filters (DP, QUAL, missingness)
-  - biallelic SNP selection
+- Filtering and normalization
 - Outputs: cohort VCF/BCF (raw + filtered)
+
+**B) ANGSD pipeline** (for HMM introgression calling)
+- Generate genotype likelihoods using ANGSD with de novo SNP discovery
+- Per-sample GL extraction for HMM input
+- Outputs: per-sample GL TSV files
 
 ### 5) Imputation
 - Impute missing genotypes using `Beagle`.
@@ -128,18 +134,18 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
 
 ---
 
-## Introgression analysis (RTIGER)
+## Introgression analysis (HMM-based)
 
-We infer **local ancestry states** along the genome for each line (B73 vs teosinte ancestry) using **RTIGER** R package, leveraging low-pass information through allele counts / genotype likelihood–compatible inputs.
+We infer **local ancestry states** along the genome for each line (B73 vs teosinte ancestry) using a custom **Hidden Markov Model (HMM)** with RTIGER-style rigidity, leveraging genotype likelihoods from ANGSD.
 
 **Inputs**
-- Per-sample allele-count
+- Per-sample genotype likelihood TSV files (from ANGSD)
+- Genetic maps (cM positions per chromosome)
 
 **Outputs**
-- Posterior probabilities per marker per sample:
-  - `gamma` matrices (state posterior; typically 2-state or 3-state, e.g. B73 / HET / TEO)
-- Segment-level introgression summaries:
-  - introgression boundaries, lengths
+- Per-marker state calls with posterior probabilities
+- Introgression tract BED files
+- Summary statistics and chromosome paintings
 
 ---
 
@@ -147,28 +153,7 @@ We infer **local ancestry states** along the genome for each line (B73 vs teosin
 
 We perform genome scans using **GridLMM** with **LOCO (leave-one-chromosome-out) kinship** to control relatedness while preserving power on the tested chromosome.
 
-### 6) Kinship matrix construction (PLINK2 LOCO)
-- Build pruned marker set (LD pruning) for stable kinship estimation.
-- Compute LOCO relationship matrices per chromosome.
-- Outputs (per chromosome):
-  - `LOCO_chrN.rel` + `LOCO_chrN.rel.id`
-
-### 7) GridLMM GWAS / QTL scans
-We developed multiple predictor modes:
-
-**A) SNP GWAS (standard)**
-- Uses SNP dosages (from VCF/PLINK/Beagle export) with LOCO K.
-
-**B) RTIGER dosage GWAS (ancestry dosage model)**
-- Predictor: expected teosinte allele dosage derived from RTIGER posteriors.
-- Tests whether teosinte ancestry dosage at each bin/marker associates with phenotype.
-- NOTE: this looked pretty similar to (C) so did not do more of this. 
-
-**C) RTIGER state-probability GWAS (multi-df ancestry model)**
-- Predictor: state probabilities (e.g., B73 vs HET/TEO probability predictors).
-
-**Outputs**
-- Per-chromosome results tables with p-values, effect estimates, model diagnostics
+(Details in Section 10)
 
 ---
 
@@ -182,6 +167,7 @@ We developed multiple predictor modes:
 - **samtools** — BAM/SAM manipulation (sort, index, stats, depth)
 - **picard** — duplicate marking
 - **bcftools** — genotype likelihoods + variant calling + querying
+- **ANGSD** — genotype likelihood estimation + SNP calling for low-pass data
 - **vcftools**  — quick VCF filters / summaries
 - **bgzip / tabix** *(htslib)* — compress + index VCF/BCF outputs
 
@@ -191,11 +177,12 @@ We developed multiple predictor modes:
 - **plink2** — variant QC, LD pruning, PCA, relationship matrices, LOCO kinship (`.rel/.rel.id`)
 - **Beagle** (Java) — genotype imputation
 
-### Introgression inference (RTIGER)
+### Introgression inference (HMM)
 
-- **R** (>= 4.1 recommended)
-- **RTIGER** R package (+ its dependencies)
-- **Julia** (1.0.5 recommended)
+- **Python** (>= 3.8)
+- **optuna** — Bayesian optimization for parameter tuning
+- **R** (>= 4.1)
+- **data.table** — R package for post-processing
 
 ### QTL / association mapping
 
@@ -246,13 +233,13 @@ Unmatched reads are written to the `no_bc_match_*` files.
 bsub < scripts/01_demultiplex_sabre.tcsh
 ```
 
-📜 Script: [`scripts/01_demultiplex_sabre.sh`](scripts/01_demultiplex_sabre.sh)
+Script: [`scripts/01_demultiplex_sabre.sh`](scripts/01_demultiplex_sabre.sh)
 
 ---
 
 ## Section 2 — Trim adapters/primers + quality filter (Trimmomatic PE)
 
-**Goal:** Remove adapters/primers 
+**Goal:** Remove adapters/primers
 
 ### Inputs
 - Demultiplexed paired FASTQs:
@@ -277,7 +264,7 @@ bsub < scripts/01_demultiplex_sabre.tcsh
 bsub < scripts/02_trim_trimmomatic.tcsh
 ```
 
-📜 Script: [`scripts/02_trim_trimmomatic.sh`](scripts/02_trim_trimmomatic.sh)  
+Script: [`scripts/02_trim_trimmomatic.sh`](scripts/02_trim_trimmomatic.sh)
 
 ---
 
@@ -286,7 +273,7 @@ bsub < scripts/02_trim_trimmomatic.tcsh
 **Goal:** Ensure each sample BAM is **coordinate-sorted**, **deduplicated**, and **indexed** before genotype likelihood (GL) generation with `bcftools mpileup`.
 
 Ensure the files are:
-- sorted 
+- sorted
 - Mark/remove duplicates
 - Index BAMs files
 
@@ -306,27 +293,181 @@ For each input `PN*_SID*.bam`
 bash scripts/03_bam_sort_dedup_index.sh
 ```
 
-📜 Script: [`scripts/03_bam_sort_dedup_index.sh`](scripts/03_bam_sort_dedup_index.sh)  
+Script: [`scripts/03_bam_sort_dedup_index.sh`](scripts/03_bam_sort_dedup_index.sh)
 
 ---
 
-## Section 4 — Genotype likelihoods (GL) genotyping at SNPVersity sites (bcftools)
+## Section 4 — ANGSD Genotype Likelihood Calling (for HMM Introgression)
+
+**Goal:** Generate per-sample genotype likelihoods using ANGSD with de novo SNP discovery, optimized for downstream HMM-based introgression calling.
+
+### Why ANGSD for introgression analysis?
+
+ANGSD is particularly well-suited for low-pass sequencing data because it:
+- Performs probabilistic SNP calling without requiring a known SNP panel
+- Outputs genotype likelihoods (GL) that preserve uncertainty
+- Handles low-depth data gracefully by not forcing hard genotype calls
+
+---
+
+### 4.1 ANGSD SNP calling + GL generation (per chromosome, parallelized)
+
+**Goal:** Run ANGSD on each chromosome, split into 20 parts for parallelization.
+
+**Key parameters:**
+- `-GL 1`: SAMtools GL model
+- `-doMajorMinor 1`: Infer major/minor alleles from GL
+- `-doMaf 1`: Estimate allele frequencies
+- `-doBcf 1`: Output BCF with GL fields
+- `-SNP_pval 1e-8`: SNP calling p-value threshold
+- `-minMapQ 30`: Minimum mapping quality
+- `-minQ 20`: Minimum base quality
+- `-minInd 5`: Minimum individuals with data at a site
+- `-skipTriallelic 1`: Keep only biallelic sites
+- `-setMinDepthInd 2`: Minimum depth per individual
+
+**Outputs:**
+- `BZea_chrN.partM.START_END.bcf` (per chromosome part)
+
+**Run:**
+```bash
+bsub < scripts/HMM_introgression/0.0_angsd_genotyping.sh
+```
+
+Script: [`scripts/HMM_introgression/0.0_angsd_genotyping.sh`](scripts/HMM_introgression/0.0_angsd_genotyping.sh)
+
+---
+
+### 4.2 Handle failed jobs (optional)
+
+**Goal:** Identify and re-run any failed ANGSD jobs.
+
+**Run:**
+```bash
+bash scripts/HMM_introgression/0.1_find_failed_runs.sh
+bsub < scripts/HMM_introgression/0.2_run_failed_parts.sh
+```
+
+Scripts:
+- [`scripts/HMM_introgression/0.1_find_failed_runs.sh`](scripts/HMM_introgression/0.1_find_failed_runs.sh)
+- [`scripts/HMM_introgression/0.2_run_failed_parts.sh`](scripts/HMM_introgression/0.2_run_failed_parts.sh)
+
+---
+
+### 4.3 Combine sub-parts (if jobs were split further)
+
+**Goal:** Merge any sub-parts created from failed job re-runs.
+
+**Outputs:**
+- Merged BCF files with correct coordinate ordering
+
+**Run:**
+```bash
+bsub < scripts/HMM_introgression/0.3_combine_sub_parts.sh
+```
+
+Script: [`scripts/HMM_introgression/0.3_combine_sub_parts.sh`](scripts/HMM_introgression/0.3_combine_sub_parts.sh)
+
+---
+
+### 4.4 Concatenate parts into per-chromosome BCFs
+
+**Goal:** Merge all 20 parts for each chromosome into a single BCF.
+
+**Outputs:**
+- `per_chr/BZea_chrN.full.bcf` (+ `.csi` index)
+
+**Run:**
+```bash
+bsub < scripts/HMM_introgression/0.4_combine_parts_chrom.sh
+```
+
+Script: [`scripts/HMM_introgression/0.4_combine_parts_chrom.sh`](scripts/HMM_introgression/0.4_combine_parts_chrom.sh)
+
+---
+
+### 4.5 Rename sample headers (BAM paths → sample IDs)
+
+**Goal:** Replace full BAM paths in BCF headers with clean sample IDs (e.g., `PN9_SID857`).
+
+**Outputs:**
+- `per_chr_renamed/BZea_chrN.full.renamed.bcf`
+
+**Run:**
+```bash
+bsub < scripts/HMM_introgression/0.5_rename_headers_files.sh
+```
+
+Script: [`scripts/HMM_introgression/0.5_rename_headers_files.sh`](scripts/HMM_introgression/0.5_rename_headers_files.sh)
+
+---
+
+### 4.6 Filter BCFs for HMM input
+
+**Goal:** Apply quality filters to create a clean SNP set for introgression calling.
+
+**Filters applied:**
+- `QUAL >= 20`: Minimum variant quality
+- `F_MISSING <= 0.2`: Maximum 20% missing data
+- Biallelic SNPs only
+- `AF >= 0.05 AND AF <= 0.95`: Remove fixed/nearly-fixed sites
+- `NS >= 100`: Minimum number of samples with data
+
+**Outputs:**
+- `filtered/BZea_chrN.filtered.bcf`
+
+**Run:**
+```bash
+bash scripts/HMM_introgression/0.6_filter_bcf.sh
+```
+
+Script: [`scripts/HMM_introgression/0.6_filter_bcf.sh`](scripts/HMM_introgression/0.6_filter_bcf.sh)
+
+---
+
+### 4.7 Extract per-sample GL for HMM input
+
+**Goal:** Extract genotype likelihoods for each sample into a TSV format suitable for the HMM.
+
+**Output format:**
+```
+CHROM   POS     REF     ALT     glRR    glRH    glHH
+chr1    12345   A       G       -0.5    -2.3    -15.1
+```
+
+Where `glRR`, `glRH`, `glHH` are log10 genotype likelihoods for RR (Ref/Ref), RH (Ref/Het), HH (Alt/Alt).
+
+**Outputs:**
+- `sample.chr1-10.GL.tsv.gz` (per sample, all chromosomes)
+
+**Run:**
+```bash
+bsub < scripts/HMM_introgression/1_extract_GL_emissions.sh
+```
+
+Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_introgression/1_extract_GL_emissions.sh)
+
+---
+
+## Section 5 — bcftools Genotype Calling at SNPVersity Sites
 
 **Goal:** Generate genotype likelihood–based calls **only at known SNP sites** using SNPVersity, by running `bcftools mpileup | bcftools call` in parallel across **chromosomes × BAM-chunks**, then merging outputs.
 
-### What you need before running Step 4
-- Reference FASTA + index:  
-  - `Zm-B73-REFERENCE-NAM-5.0.fa`  
+(This section is used for imputation and GWAS, parallel to the ANGSD pipeline above)
+
+### What you need before running Step 5
+- Reference FASTA + index:
+  - `Zm-B73-REFERENCE-NAM-5.0.fa`
   - `Zm-B73-REFERENCE-NAM-5.0.fa.fai`  (create with `samtools faidx ref.fa`)
-- SNPVersity per-chromosome VCFs (indexed):  
+- SNPVersity per-chromosome VCFs (indexed):
   - `chr1_high_coverage.vcf.gz` … `chr10_high_coverage.vcf.gz` (+ `.tbi`)
 - BAMs are **sorted + (deduped recommended) + indexed** (`.bai`)
 
 ---
 
-### 4.1 Build SNPVersity allele-target files (biallelic SNPs only)
+### 5.1 Build SNPVersity allele-target files (biallelic SNPs only)
 
-**Goal:** Convert each SNPVersity VCF into a **tabix-indexed target file** that contains:  
+**Goal:** Convert each SNPVersity VCF into a **tabix-indexed target file** that contains:
 `CHROM  POS  REF,ALT`
 
 **Outputs (per chromosome):**
@@ -337,11 +478,11 @@ bash scripts/03_bam_sort_dedup_index.sh
 ```bash
 bsub < 04_SNPVersity_bialleles.sh
 ```
-📜 Script: `04_SNPVersity_bialleles.sh`
+Script: `04_SNPVersity_bialleles.sh`
 
 ---
 
-### 4.2 Create BAM list (absolute paths)
+### 5.2 Create BAM list (absolute paths)
 
 **Goal:** Generate a sorted list of all BAMs used for genotyping.
 
@@ -352,11 +493,11 @@ bsub < 04_SNPVersity_bialleles.sh
 ```bash
 bsub < 05_BAM_list.sh
 ```
-📜 Script: `05_BAM_list.sh`
+Script: `05_BAM_list.sh`
 
 ---
 
-### 4.3 Split BAM list into chunks (controls open file handles)
+### 5.3 Split BAM list into chunks (controls open file handles)
 
 **Goal:** Split BAM list into manageable chunks (you used `CHUNK=100`) so each mpileup job opens fewer BAMs.
 
@@ -369,11 +510,11 @@ bsub < 05_BAM_list.sh
 ```bash
 bsub < 05_create_chunks.sh
 ```
-📜 Script: `05_create_chunks.sh`
+Script: `05_create_chunks.sh`
 
 ---
 
-### 4.4 Compute GL-based calls per (chromosome × BAM-chunk)
+### 5.4 Compute GL-based calls per (chromosome × BAM-chunk)
 
 **Goal:** For each chromosome and BAM chunk:
 - run `bcftools mpileup` restricted to:
@@ -389,11 +530,11 @@ bsub < 05_create_chunks.sh
 ```bash
 bsub < 06_GL.sh
 ```
-📜 Script: `06_GL.sh`
+Script: `06_GL.sh`
 
 ---
 
-### 4.5 Merge chunk-BCFs into one BCF per chromosome
+### 5.5 Merge chunk-BCFs into one BCF per chromosome
 
 **Goal:** Each `chrN.chunk###.bcf` contains a **subset of samples**. This step merges all chunk outputs into a single multi-sample chromosome BCF.
 
@@ -405,11 +546,11 @@ bsub < 06_GL.sh
 ```bash
 bsub < 07_combine_bcf.sh
 ```
-📜 Script: `07_combine_bcf.sh`
+Script: `07_combine_bcf.sh`
 
 ---
 
-### 4.6 Concatenate chr1–chr10 into one genome-wide BCF
+### 5.6 Concatenate chr1–chr10 into one genome-wide BCF
 
 **Goal:** Concatenate chromosome BCFs into a single file.
 
@@ -421,35 +562,15 @@ bsub < 07_combine_bcf.sh
 ```bash
 bsub < 08_merge_one_chr.sh
 ```
-📜 Script: `08_merge_one_chr.sh`
+Script: `08_merge_one_chr.sh`
 
 ---
 
-## Results
-
-### Unfiltered genotype QC summary
-
-![Sample-level genotype statistics for the unfiltered post-calling dataset](figs/all_figs/Fig_genotype_statistics_unfiltered.png)
-
-**Figure 1 | Sample-level genotype statistics for the unfiltered post-calling dataset.**  
-(A) Distribution of mean read depth (DP) per sample averaged across variant sites.  
-(B) Density of per-sample alternate allele frequency (fraction of called alleles that are non-reference).  
-(C) Distribution of per-sample missing genotype rate.  
-(D) Distribution of residual heterozygosity per sample, calculated as nHets / nCalled.  
-(E) Relationship between residual heterozygosity and alternate allele burden (2×AltHom + Het), computed across called sites.  
-(F) Distribution of per-sample transition/transversion (Ts/Tv) ratio.  
-This panel set reflects raw calls prior to downstream QC filters; outliers in missingness, heterozygosity, ALT burden, or Ts/Tv flag samples for exclusion or closer inspection. Known controls/checks (e.g., B73 and repeated check lines) may occupy distribution extremes due to reference similarity and/or coverage differences and are assessed separately from the primary study panel.
-
-
-Figure 1 summarizes per-sample QC metrics for the *unfiltered* genotype calls (immediately after variant calling, prior to any sample- or site-level filtering) and highlights the expected properties of a raw low-pass dataset along with a small set of clear outliers. Mean depth per sample is narrowly centered around ~1.4–1.7× (Panel A), consistent with uniformly low sequencing depth across the cohort at this stage. The per-sample alternate allele fraction is strongly concentrated at low values with a right-skewed tail (Panel B), indicating that most individuals contribute relatively few non-reference calls while a minority of samples show elevated ALT fractions that merit follow-up (e.g., higher divergence from the reference, contamination/mixture, or mapping artifacts). Missing genotype rate is high and broadly distributed (Panel C), with most samples in the ~60–80% missing range and a tail approaching complete missingness for a subset of individuals, consistent with incomplete site coverage before imputation and before enforcing call-rate thresholds. Residual heterozygosity (nHets / called) is generally low (Panel D) but includes outliers extending to markedly higher values; these same individuals tend to carry a larger overall alternate allele burden (2×AltHom + Het), producing the positive association between heterozygosity and non-reference load (Panel E). The Ts/Tv ratio distribution (Panel F) shows a dominant mode around ~3.4–3.6 with a broader right shoulder, suggesting that most samples share a consistent SNP spectrum while a subset display atypical spectra that often coincide with the missingness and heterozygosity outliers. As with the unimputed QC summaries, known controls/checks can disproportionately populate distribution tails due to reference similarity and/or depth differences, and are interpreted separately when assessing cohort-wide QC thresholds.
-
----
-
-## Section 5 — Post-calling cleanup (biallelic SNP-only VCF)
+## Section 6 — Post-calling cleanup (biallelic SNP-only VCF)
 
 **Goal:** Convert the genome-wide BCF into a biallelic SNP-only VCF.gz for downstream **filtering + imputation**.
 
-### 5.1 Keep only biallelic SNPs
+### 6.1 Keep only biallelic SNPs
 
 **Output:**
 - `BZea.chr1_10.biallelic_snps.vcf.gz` (+ `.tbi`)
@@ -458,29 +579,29 @@ Figure 1 summarizes per-sample QC metrics for the *unfiltered* genotype calls (i
 ```bash
 bsub < 7_bialleles.sh
 ```
-📜 Script: `09_bialleles.sh`
+Script: `09_bialleles.sh`
 
 ---
 
-### 5.2 Remove sites with empty ALT (recommended fix)
+### 6.2 Remove sites with empty ALT (recommended fix)
 
 ```bash
 bsub < 10_bialleles_remove_empty_alts.sh
 ```
-📜 Script: `10_bialleles_remove_empty_alts.sh`
+Script: `10_bialleles_remove_empty_alts.sh`
 
 ---
 
-## Section 6 — Filtering (DP → fill-tags → MAF + missingness)
+## Section 7 — Filtering (DP → fill-tags → MAF + missingness)
 
 **Goal:** Starting from the biallelic SNP-only VCF, apply:
 1) genotype depth (DP) filter (set low-DP genotypes to missing),
 2) compute site-level tags (AN/AC/AF/MAF/NS/F_MISSING),
 3) filter sites by MAF and missingness to create an imputation-ready VCF.
 
-For PCA we used the filters described below. For RTIGER introgression analysis, we used a more relaxed filtering parameters. 
+For PCA we used the filters described below. For RTIGER introgression analysis, we used a more relaxed filtering parameters.
 
-### 6.1 DP filter (set low-DP genotypes to missing)
+### 7.1 DP filter (set low-DP genotypes to missing)
 
 **Input**
 - `BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz`
@@ -496,11 +617,11 @@ For PCA we used the filters described below. For RTIGER introgression analysis, 
 ```bash
 bsub < 11_filter_DP.sh
 ```
-📜 Script: `11_filter_DP.sh`
+Script: `11_filter_DP.sh`
 
 ---
 
-### 6.2 Add site-level summary tags (AN/AC/AF/MAF/NS/F_MISSING)
+### 7.2 Add site-level summary tags (AN/AC/AF/MAF/NS/F_MISSING)
 
 **Input**
 - `BZea.biallelic_snps.DP5.vcf.gz`
@@ -512,11 +633,11 @@ bsub < 11_filter_DP.sh
 ```bash
 bsub < 12_add_AF_AC_AN_MAF_NS_F_missing.sh
 ```
-📜 Script: `12_add_AF_AC_AN_MAF_NS_F_missing.sh`
+Script: `12_add_AF_AC_AN_MAF_NS_F_missing.sh`
 
 ---
 
-### 6.3 Filter by MAF and missingness
+### 7.3 Filter by MAF and missingness
 
 **Goal** Keeps variants with `MAF >= 0.005` and `F_MISSING <= 0.5` for PCA and imputation
 
@@ -527,37 +648,16 @@ bsub < 12_add_AF_AC_AN_MAF_NS_F_missing.sh
 ```bash
 bsub < 13_filter_MAF_F_missing.sh
 ```
-📜 Script: `13_filter_MAF_F_missing.sh`
+Script: `13_filter_MAF_F_missing.sh`
 
 ---
 
-## Results
+## Section 8 — Split by chromosome + imputation (Beagle)
 
-### Unimputed filtered callset QC summary
-
-![Sample-level genotype statistics for the unimputed filtered callset](figs/all_figs/Fig_genotype_statistics_filtered_DP2_FMissing50perc_unimputed.png)
-
-**Figure 2 | Sample-level genotype statistics for the unimputed callset.**  
-(A) Distribution of mean read depth (DP) per sample averaged across variant sites.  
-(B) Density of per-sample alternate allele frequency (fraction of called alleles that are non-reference).  
-(C) Distribution of per-sample missing genotype rate.  
-(D) Distribution of residual heterozygosity per sample, calculated as nHets / nCalled.  
-(E) Relationship between residual heterozygosity and alternate allele burden (2×AltHom + Het), computed across called sites.  
-(F) Distribution of per-sample transition/transversion (Ts/Tv) ratio.  
-Known controls/checks (including B73 and additional check lines) are expected to appear at distribution extremes in some panels due to reference similarity and/or depth differences and are interpreted separately from the main study panel.
+**Goal:** Split the filtered VCF into chr-specific VCFs and run Beagle imputation per chromosome using a genetic map.
 
 
-Figure 2 summarizes per-sample quality metrics for the unimputed callset and shows that most accessions cluster tightly while a small subset of samples drive the distribution tails. Mean sequencing depth per sample is low-pass, with the majority of individuals centered around ~2–3× mean DP across variant sites and a smaller right tail reflecting deeper sequenced libraries (Panel A). The per-sample alternate allele fraction is strongly concentrated near low values with a long tail (Panel B), consistent with a predominantly reference-like callset in which only a subset of samples are more divergent or exhibit elevated non-reference calls. Missing genotype rate varies widely across samples (Panel C), as expected for unimputed low-coverage genotyping, with a subset of individuals approaching very high missingness indicative of weak libraries and/or insufficient coverage. Residual heterozygosity (nHets / called) is generally low but includes clear outliers (Panel D); these same samples tend to show higher alternate allele burden (2×AltHom + Het), producing a positive relationship between heterozygosity and overall non-reference load (Panel E). Finally, the per-sample Ts/Tv ratio is broadly consistent across most individuals (Panel F), supporting a coherent SNP spectrum for the bulk of the dataset while highlighting a small number of samples with atypical variant spectra. Known controls/checks (e.g., B73 and other repeated check lines) plausibly contribute to the extreme ends of several panels due to their distinct genetic background relative to the reference and/or differences in sequencing depth, and therefore can disproportionately influence cohort-wide tails without reflecting the typical behavior of the study panel.
-
----
-
-
-## Section 7 — Split by chromosome + imputation (Beagle)
-
-**Goal:** Split the filtered VCF into chr-specific VCFs and run Beagle inmputation per chromosome using a genetic map.
-
-
-### 7.1 Split genome-wide VCF into per-chromosome files (chr1–chr10)
+### 8.1 Split genome-wide VCF into per-chromosome files (chr1–chr10)
 
 **Input**
 - `BZea.DP2.MAF005.MISS50.vcf.gz`
@@ -571,15 +671,15 @@ Figure 2 summarizes per-sample quality metrics for the unimputed callset and sho
 ```bash
     bsub < 14_separate_chr.sh
 ```
-📜 Script: `scripts/14_separate_chr.sh`
+Script: `scripts/14_separate_chr.sh`
 
 ---
 
-### 7.2 Beagle imputation per chromosome (using NAM genetic maps)
+### 8.2 Beagle imputation per chromosome (using NAM genetic maps)
 
 
 **Inputs**
-- Per-chromosome VCFs from Step 7.1
+- Per-chromosome VCFs from Step 8.1
 - Beagle software:
   - `beagle.27Feb25.75f.jar`
 - Genetic map per chromosome:
@@ -594,11 +694,11 @@ Figure 2 summarizes per-sample quality metrics for the unimputed callset and sho
 ```bash
 bsub < 15_beagle_impute.sh
 ```
-📜 Script: `scripts/15_beagle_impute.sh`
+Script: `scripts/15_beagle_impute.sh`
 
 ---
 
-### 7.3 Add original FORMAT tags back to Beagle output + concatenate all chromosomes
+### 8.3 Add original FORMAT tags back to Beagle output + concatenate all chromosomes
 
 **Goal:** After Beagle imputation, re-attach useful per-genotype fields (e.g. `AD/DP/PL`) from the **pre-imputation** chr-specific VCFs, then concatenate chr1–chr10 into one imputed genome-wide VCF.
 
@@ -618,429 +718,233 @@ bsub < 15_beagle_impute.sh
 ```bash
     bsub < 16_add_tags_back_and_concat.sh
 ```
-📜 Script: `scripts/16_add_tags_back_and_concat.sh`
+Script: `scripts/16_add_tags_back_and_concat.sh`
 
 ---
 
-## Section 8 — Population structure visualization using PCA
+## Section 9 — HMM-based Introgression Analysis
 
-## 8.1 Introduction
-
-Principal component analysis (PCA) is designed to capture genome-wide ancestry and population structure. A central requirement is to prevent a small number of long haplotype blocks from disproportionately influencing the eigenvectors. In BZea introgression panels,LD can be both strong and highly heterogeneous across the genome. Consequently, LD pruning is essential prior to performing PCA, because PCA conducted on dense, unpruned SNP data can produce clusters that primarily reflect local regions of elevated LD rather than broad-scale genetic structure. By removing highly correlated markers, LD pruning reduces redundancy in the dataset, enabling PCA to more faithfully represent genome-wide structure instead of local clusters of correlated SNPs. In the specific context of introgression lines, LD pruning also mitigates the risk that a small number of introgressed haplotype segments exert an outsized influence on the leading principal components. Thus, LD pruning is a prerequisite for interpreting PCA plots as depictions of genome-wide ancestry patterns. In the absence of pruning, extended LD blocks—especially those corresponding to introgressed haplotypes—can contribute many tightly correlated variants, thereby over-representing those genomic regions and disproportionately shaping the first few principal components. Applying an r²-based pruning threshold (here, r² = 0.2) decreases marker redundancy such that the resulting PCA more accurately reflects distributed ancestry signals across the genome, rather than artifacts arising from local haplotype structure.
-
-
-### Inputs
-- **Imputed VCF (filtered):** `BZea.DP2.MAF005.MISS50.allchr.vcf.gz` ( or `BZea.DP1.MAF005.MISS50.allchr.vcf.gz` for more markers)
-- **Unimputed VCF (filtered):** corresponding filtered, unimputed callset (same SNP set / similar filters)
-
-**Parameters used in PLINK2 for PCA**
-- `--maf 0.01`: removes very rare variants (rare SNPs add noise to PCA and are more sensitive to genotyping errors in low-pass data).
-- `--geno 0.2`: removes SNPs missing in >20% of samples (high missingness SNPs distort distance relationships).
-- `--mind 0.5`: removes samples missing in >50% of SNPs (important for unimputed low-pass; missingness can dominate PCs if not controlled).
-- `--indep-pairwise 50 5 0.2` 
-  - `50` = window size in **variants** (not bp by default; PLINK slides a window of 50 SNPs)
-  - `5`  = step size (shift window by 5 SNPs each iteration)
-  - `0.2` = LD threshold (remove SNPs until remaining pairs in the window have **r² < 0.2**)
-
-
-## 8.2 Results
-
-### PCA figures (95% CI ellipses)
-
-### Unimputed (filtered) PCA and Imputed (filtered) PCA
-![Unimputed (filtered) PCA and Imputed (filtered) PCA](figs/all_figs/PCA.png)
-
-
-**Figure X | Population structure PCA for the filtered BZea panel before and after imputation.**  
-(A) PCA of the **filtered, unimputed** callset computed from an LD-pruned SNP set; points represent individuals colored by teosinte taxon group (Zd, Zl, Zv, Zx).
-(B) PCA of the **filtered, imputed** callset using the same PCA workflow (QC + LD pruning), showing tighter clustering and reduced dispersion after imputation. Axes show PC2 and PC3 scores. Ellipses indicate **95% confidence intervals** for each group.
+We infer **local ancestry states** along the genome for each BC2S3 line using a custom Hidden Markov Model (HMM) with RTIGER-style rigidity constraints. This approach uses genotype likelihoods (GLs) rather than hard genotype calls, preserving uncertainty from low-pass sequencing.
 
 ---
 
-Clear group-level structure is evident in both PCA panels and is concordant with the four teosinte taxa labels (Zd, Zl, Zv, Zx). The separation among clusters indicates that, even under low-pass sequencing, the dataset preserves a strong genome-wide ancestry signal once standard quality control and LD pruning are applied. The imputed dataset displays noticeably tighter and more coherent clustering. This pattern is expected because imputation reduces noise arising from missing data and stabilizes allele count estimates across individuals by leveraging haplotype structure. Consequently, it reduces the scatter attributable to stochastic genotype uncertainty at low sequencing depth. As a result, group boundaries are more sharply defined and the point clouds contract around their central tendency in principal component space.
+### 9.1 HMM Model Overview
 
-By contrast, the unimputed dataset exhibits greater dispersion and more elongated group geometries. Under low coverage, missing genotypes are unevenly distributed across both individuals and loci, which can distort estimated genetic distances in a non-uniform manner and inflate variance along major principal components. Residual genotype uncertainty (and, for some individuals, low-complexity or low-yield libraries) can therefore stretch clusters and accentuate distribution tails, making within-group spread appear larger than it would under complete or imputed genotype data. The particularly elongated ellipses (notably for Zl in the unimputed panel) likely reflect a combination of genuine within-group genetic diversity and technical heterogeneity, including heterogeneous coverage and missingness patterns within that taxon.
+**Goal:** Call local ancestry states (RR, RH, HH) across the genome.
 
-In the three-dimensional PCA (PC1/PC2/PC3), groups that appear partially aligned or overlapping in a two-dimensional projection become more clearly separated once PC3 is included. Samples that share similar coordinates on PC1 and PC2 can still differ substantially along PC3. The 3D representation therefore provides additional visual confirmation that the four taxa form separable clusters in multi-PC space. (Download the html file to view the 3D PC1 vs PC2 vs PC3 figure)
+| State | Meaning | Genotype |
+|-------|---------|----------|
+| RR | Homozygous Reference (B73/B73) | AA |
+| RH | Heterozygous (B73/Teosinte) | AB |
+| HH | Homozygous Teosinte (Teo/Teo) | BB |
+
+**Key features:**
+- Uses genotype likelihoods (GL) as emissions, not hard calls
+- Genetic map-based transition probabilities (Haldane function)
+- RTIGER-style rigidity: requires R consecutive markers supporting a state change
+- Prevents noisy single-SNP state switches
 
 ---
 
-## Section 9 - INTROGRESSION analysis using RTIGER
+### 9.2 HMM Parameters
 
-### 9.1 Installation
+| Parameter | Description | Optimized Value |
+|-----------|-------------|-----------------|
+| `--rigidity` / `-R` | Consecutive markers needed to switch | **41** |
+| `--rho` | Transition stickiness multiplier | **0.023** |
+| `--eta_hh_from_rh` | HH rescue from RH emissions | **0.012** |
+| `--prior_rr` | Prior probability of RR state | 0.85 |
+| `--prior_rh` | Prior probability of RH state | 0.05 |
+| `--prior_hh` | Prior probability of HH state | 0.10 |
+| `--decode` | Decoding method | `posterior_hysteresis` |
 
-First we have to install the package in HPC server.
+---
 
-First create a conda environment:
-```R
-conda create --prefix /usr/local/usrapps/$GROUP/$USER/env_RTIGER \
-  -c conda-forge -c bioconda --strict-channel-priority \
-  r-base=4.4.* r-remotes r-biocmanager r-devtools \
-  r-ggplot2 r-gviz r-reshape2 r-e1071 r-extradistr r-juliacall r-qpdf \
-  qpdf
+### 9.3 Parameter Optimization (Stability-based)
 
-conda activate /usr/local/usrapps/$GROUP/$USER/env_RTIGER
+Since we have **no labeled ground truth**, we optimize parameters by maximizing **stability under marker thinning**:
+
+1. Run HMM on full data → baseline results
+2. Create K thinned replicates (drop 10% markers randomly)
+3. Run HMM on each replicate
+4. Score = similarity between baseline and replicates
+   - Jaccard similarity of donor blocks
+   - State concordance at shared markers
+   - Fragmentation penalty
+
+**Run optimization:**
+```bash
+cd scripts/HMM_introgression
+
+export HMM_PY="$(pwd)/hmm_viterbi_bc2s3.py"
+export MAPDIR="$(pwd)/genetic_maps"
+export POST_R="$(pwd)/batch_introgression_analysis.R"
+export OUTROOT="$(pwd)/optuna_tuning_runs"
+export MAX_GAP_KB=10000
+export MIN_BLOCK_KB=5000
+export DROP_FRAC=0.10
+export K_REPS=3
+
+conda activate hmm
+python tune_hmm_optuna.py calib_samples.txt 100
 ```
 
-Then in shell:
-```shell
-CONDA_PREFIX=/usr/local/usrapps/$GROUP/$USER/
+**Outputs:**
+- `optuna_tuning_runs/best_params.txt`
+- `optuna_tuning_runs/optuna_study.db`
 
-conda activate "$CONDA_PREFIX"
+Scripts:
+- [`scripts/HMM_introgression/tune_hmm_optuna.py`](scripts/HMM_introgression/tune_hmm_optuna.py)
 
-# keep all Julia packages inside the conda env
-export JULIA_DEPOT_PATH="$CONDA_PREFIX/julia_depot"
-mkdir -p "$JULIA_DEPOT_PATH"
+---
 
-# Export Julia
-export JULIA_HOME="$CONDA_PREFIX/bin"
-export PATH="$JULIA_HOME:$PATH"
+### 9.4 Run HMM per sample
 
-# Or if you have Julia 1.0.5
-export JULIA_HOME="$HOME/software/julia-1.0.5/bin"
-export PATH="$JULIA_HOME:$PATH"
-
-# Check which julia you are using
-which julia
-julia -v
-
-# Install RCall into that Julia depot
-julia -e 'ENV["R_HOME"]="'$CONDA_PREFIX'/lib/R"; import Pkg; Pkg.add("RCall"); Pkg.build("RCall")'
-# SANITY CHECK
-julia -e 'ENV["R_HOME"]="'$CONDA_PREFIX'/lib/R"; using RCall; println("RCall OK")'
-# Should print RCALL ok
+**Run:**
+```bash
+bsub < scripts/HMM_introgression/2_run_hmm_bySample.sh
 ```
 
-Inside R do this:
-```R
-# After conda activate
-target <- file.path(Sys.getenv("CONDA_PREFIX"), "lib/R/library")
-dir.create(target, recursive = TRUE, showWarnings = FALSE)
-.libPaths(c(target, .libPaths()))
+**Command (single sample):**
+```bash
+python hmm_viterbi_bc2s3.py \
+  --in_gl_tsv_gz sample.GL.tsv.gz \
+  --map_dir genetic_maps/ \
+  --out_statepath_gz sample.statepath.tsv.gz \
+  --out_tracts_bed_gz sample.tracts.bed.gz \
+  --prior_rr 0.85 --prior_rh 0.05 --prior_hh 0.10 \
+  --min_morgan 1e-12 \
+  --eta_hh_from_rh 0.012 \
+  --rh_penalty 0 \
+  --decode posterior_hysteresis \
+  --rho 0.023 \
+  --rigidity 41 \
+  --min_run_hh 3 \
+  --min_run_rh 5
+```
 
-library(RTIGER)
+**Outputs per sample:**
+1. `sample.statepath.tsv.gz` - Per-marker state calls + posteriors
+   ```
+   CHROM  POS    REF  ALT  DP  STATE  P_RR   P_RH   P_HH   THETA
+   chr1   12345  A    G    15  RR     0.95   0.04   0.01   0.0001
+   ```
 
-# Load Julia
-setupJulia(JULIA_HOME = )
-# if you want to use Julia 1.0.5
-setupJulia(JULIA_HOME = "/home/youruser/software/julia-1.0.5/bin")
+2. `sample.tracts.bed.gz` - Merged segments
+   ```
+   chrom  start    end      state
+   chr1   0        5000000  RR
+   chr1   5000001  8000000  RH
+   ```
 
-#If the error shows that you are calling Julia from somewhere else do this (which you will almost certainly get):
-# Run this in R
+Scripts:
+- [`scripts/HMM_introgression/hmm_viterbi_bc2s3.py`](scripts/HMM_introgression/hmm_viterbi_bc2s3.py)
+- [`scripts/HMM_introgression/2_run_hmm_bySample.sh`](scripts/HMM_introgression/2_run_hmm_bySample.sh)
 
-options(repos = c(CRAN = "https://cloud.r-project.org"))
+---
 
-target <- file.path(Sys.getenv("CONDA_PREFIX"), "lib/R/library")
-dir.create(target, recursive = TRUE, showWarnings = FALSE)
-.libPaths(c(target))
+### 9.5 Post-analysis: Block merging + visualization
 
-# sanity
-R.version.string
-getOption("repos")
-.libPaths()
-install.packages(c("JuliaCall", "remotes"), lib = target)
+**Goal:**
+- Merge adjacent same-state blocks
+- Bridge small gaps between same-state blocks
+- Filter out tiny blocks
+- Generate summary statistics and chromosome paintings
 
-# Restart R and force JuliaCall to use the env Julia + env depot
-# env vars (as you already do)
-Sys.setenv(
-  JULIA_HOME       = file.path(Sys.getenv("CONDA_PREFIX"), "bin"),
-  JULIA_DEPOT_PATH = file.path(Sys.getenv("CONDA_PREFIX"), "julia_depot")
-)
+**Parameters:**
+| Parameter | Description | Value |
+|-----------|-------------|-------|
+| `max_gap_kb` | Max gap to bridge between same-state blocks | 10000 kb |
+| `min_block_kb` | Minimum block size to keep | 5000 kb |
 
-library(RTIGER)
+**Run:**
+```bash
+Rscript batch_introgression_analysis.R input_folder/ 10000 5000 output_folder/
+```
 
-# ---- BYPASS THE ANNOYING ">" / PRINTING ----
-invisible(capture.output(
-  setupJulia(JULIA_HOME = Sys.getenv("JULIA_HOME"))
-))
-cat("\n")   # forces the next prompt onto a clean new line
+**Outputs per sample:**
+- `sample.complete_blocks.bed` - Final introgression blocks
+- `sample.complete_blocks.png` - Chromosome painting visualization
+- `sample.block_summary.tsv` - Block counts by genotype
+- `sample.chr_summary.tsv` - Per-chromosome statistics
 
-# continue normally
-sourceJulia()
+**Aggregate outputs:**
+- `introgression_summary_total.tsv` - Ref%, Het%, Teo%, Donor% per sample
+- `introgression_summary_per_chr_donor.tsv` - Donor% by chromosome
+- `introgression_summary_per_chr_het.tsv` - Het% by chromosome
+- `introgression_summary_per_chr_teo.tsv` - Teo% by chromosome
 
+Scripts:
+- [`scripts/HMM_introgression/batch_introgression_analysis.R`](scripts/HMM_introgression/batch_introgression_analysis.R)
+- [`scripts/HMM_introgression/plot_introgression_blocks.R`](scripts/HMM_introgression/plot_introgression_blocks.R)
+
+---
+
+### 9.6 Chromosome painting color scheme
+
+- **Blue (AA)** = B73/B73 (Reference)
+- **Purple (AB)** = Heterozygous
+- **Red (BB)** = Teo/Teo (Donor)
+
+---
+
+### 9.7 Complete HMM workflow
 
 ```
----
-
-## Section 10 — QTL mapping of flowering time in BZea Population
-
-### 10.1 Introduction
-
-We analyzed a **B73 × teosinte backcross-derived population advanced to the BC₂S₃ generation**, hereafter referred to as BZea, consisting of four families (*Zd, Zx, Zl,* and *Zv*). At any given locus, only two allelic states, **the B73 allele and the teosinte donor allele**, are segregating. Consequently, the appropriate analytical framework is a **two-allele additive introgression model**. Conceptually, this model is analogous to the *bi-allelic SNP model* commonly employed in genome-wide association studies (GWAS) and can be regarded as a simplified instance of the multi-allelic quantitative trait locus (QTL) models developed for multi-founder populations such as multi-parent advanced generation inter-cross (MAGIC) populations.
-
-This framework follows the pipeline presented by **Odell et al. (2019, *Genetics* 213: 1367–1383, “Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci”)**. In that study, Odell and colleagues compared three models for QTL detection in multi-parent populations:
-
-1. **GWAS_SNP model** – a *bi-allelic* parameterization in which each marker is modeled as the effect of a single nucleotide polymorphism, contrasting the reference and alternative allelic states.  
-2. **Founder model (QTLF)** – a *multi-allelic* parameterization that assigns a distinct effect to each founder allele, with effects expressed as a function of the probability of inheriting the corresponding founder haplotype.  
-3. **Haplotype model (QTLH)** – an *ancestral haplotype–based* parameterization that groups founders sharing identical-by-descent (IBD) segments into haplotype clusters, thereby reducing the effective number of allelic states relative to the founder model.
-
-Odell et al. demonstrated that optimal model choice is contingent on the underlying allelic diversity within the population. **GWAS_SNP** exhibits maximal statistical power when causal loci are effectively bi-allelic. In contrast, the **QTLF** framework is most appropriate when each founder line contributes a distinct functional allele. The **QTLH** approach occupies an intermediate position by aggregating founders that share common haplotypes, thereby enhancing power in settings characterized by moderate allelic diversity.
-
-In our **biparental BC₂S₃ population**, these three modeling frameworks naturally converge to the bi-allelic case: **B73 and teosinte constitute the only two founders**, so both the founder-based (QTLF) and haplotype-based (QTLH) parameterizations collapse to a single additive effect corresponding to the **teosinte allele**. The theoretical equivalence of these models in this specific context justifies treating each locus as a *bi-allelic SNP*, with genotype encoded as the **expected dosage of the teosinte allele**.
-
----
-
-### 10.2 Genotype probability modeling
-
-Building on the framework of Odell et al., who modeled founder and haplotype effects using **haplotype probabilities** inferred from hidden Markov models (as implemented, for example, in *R/qtl2*), we analogously employed **probabilistic genotype states** estimated from low-pass whole-genome sequencing data using **RTIGER**. RTIGER yields, for each line and each genomic position, posterior probabilities (*γ*) corresponding to the three possible ancestry states: B73, heterozygous, or teosinte.
-We converted these posteriors to an additive dosage as:
-
-$$
-E[\text{Teosinte dosage}] \=\ P(\text{HET}) \+\ 2 \cdot P(\text{TEO})
-$$
-where, 
-$$
-P(\text{HET}) = P(BT), \qquad P(\text{TEO}) = P(TT)
-$$
-
-
-This approach is analogous to the *haplotype probability* framework of Odell et al., but replaces founder-state probabilities with **local ancestry posterior probabilities inferred by RTIGER**. Conceptually, we generalize the multi-allelic founder-probability formulation to a **biparental introgression population**, in which state probabilities are derived from local ancestry inference rather than explicit founder-haplotype reconstruction. Odell et al. employed per-founder probabilities or genotype likelihoods (GLs) generated from their simulations, our implementation uses RTIGER posterior probabilities as the corresponding probabilistic representation of genotype state. The same statistical rationale is preserverd. Instead of modeling genotypes as discrete, error-free calls, the association analysis incorporates the **expected allele dosage** to propagate uncertainty in local ancestry into the mapping analysis.
-
-Subsequently, we performed genome-wide scans in **GridLMM** using **linear mixed models (LMMs)** with **leave-one-chromosome-out (LOCO) kinship matrices** to control for relatedness, population structure, and the shared B73 genetic background. We implemented the scans at two  **resolutions**:
-
-1. **Single-marker scans**, where each test corresponds to a single genomic position (an RTIGER posterior dosage at a site, or a hard-called 0/1/2 genotype). Here, the model is fit once per marker using that marker’s dosage as the predictor.
-2. **Windowed (bin) scans**, where the genome is partitioned into fixed physical windows (e.g., 100 kb). For each line and each window, we computed a summary introgression covariate (e.g., the **mean expected teosinte dosage** across all RTIGER positions falling within the window) and tested this window-level predictor in the same LMM framework.
-
-The windowed approach is less sensitive to sparse coverage and local uncertainty in low-pass sequencing, and it better reflects the biology of **contiguous introgression tracts**. We treat the windowed scans as the primary analysis and use single-marker scans as a higher-resolution follow-up around detected peaks.
-
-Across both resolutions, we carried out two complementary **analysis stratifications**:
-
-- **Combined analysis:** pooling all families and including *Family* as a fixed effect to identify QTL that are consistent across genetic backgrounds.
-- **Family-wise analysis:** running separate scans within each family to detect background-specific or context-dependent QTL.
-
-Thus, our final GridLMM mapping framework evaluates introgression effects using (i) single-marker vs windowed predictors and (ii) combined vs family-wise models, all while accounting for genome-wide relatedness via LOCO kinship.
+┌─────────────────────────────────────────────────────────────┐
+│  1. ANGSD GL CALLING (Section 4)                            │
+│     0.0 - 0.6 scripts → per-sample GL TSV files             │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  2. PARAMETER OPTIMIZATION (once)                           │
+│     tune_hmm_optuna.py → best_params.txt                    │
+│     (R=41, rho=0.023, eta=0.012)                            │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  3. RUN HMM (per sample)                                    │
+│     2_run_hmm_bySample.sh                                   │
+│     → sample.statepath.tsv.gz                               │
+│     → sample.tracts.bed.gz                                  │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  4. POST-ANALYSIS                                           │
+│     batch_introgression_analysis.R                          │
+│     → sample.complete_blocks.bed                            │
+│     → sample.complete_blocks.png                            │
+│     → introgression_summary_total.tsv                       │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  5. DOWNSTREAM ANALYSIS                                     │
+│     - GWAS on introgression bins                            │
+│     - Population-level introgression patterns               │
+│     - QTL mapping                                           │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-### 10.2.1 Probabilistic ancestry inference from low-pass data using RTIGER
-### 10.2.1.1 RTIGER output (posterior state probabilities, `gamma`)
+### 9.8 HMM File Reference
 
-Instead of relying on hard genotype calls, which are frequently unreliable under low-pass sequencing coverage, local ancestry along the genome was inferred using a recursive hidden Markov model (rHMM)-based framework. This approach yields **posterior state probabilities** at each marker position, stored in the object `gamma`, a matrix of dimensions **nstates × nmarkers**, in which each column represents the posterior probability distribution over hidden states at a given marker and thus sums to 1.
+| File | Purpose |
+|------|---------|
+| `hmm_viterbi_bc2s3.py` | Main HMM script |
+| `batch_introgression_analysis.R` | Post-processing + plotting |
+| `tune_hmm_optuna.py` | Parameter optimization |
+| `split_genetic_map.py` | Split NAM map into chr*.map |
+| `genetic_maps/chr*.map` | Per-chromosome genetic maps |
+| `calib_samples.txt` | Sample list for optimization |
+| `best_params.txt` | Optimized parameters |
 
-
-RTIGER documentation and software descriptions emphasize this probabilistic representation for recombinant/introgression genomes, enabling downstream analyses to propagate uncertainty instead of forcing discrete calls.
-
----
-
-### 10.2.1.2 Collapsing 3-state posteriors to an additive teosinte dosage (recommended primary model)
-The `gamma` has **3 states** per locus, which in a two-founder cross are typically interpreted as:
-1) B73/B73 (no donor allele)
-2) B73/Teo (heterozygous introgression)
-3) Teo/Teo (donor homozygote)
-
-Even if donor homozygotes are rare (as we observed), the best way to use the full posterior is to compute an **expected teosinte allele dosage** per locus:
-
-$$
-E[\text{Teo dosage}] = 0\cdot P(\text{B73}) + 1\cdot P(\text{HET}) + 2\cdot P(\text{TEO}).
-$$
-i.e.
-$$
-X = P(\text{HET}) + 2\cdot P(\text{TEO}).
-$$
-
-This produces a continuous predictor (0–2) that uses all the information in the 3-state posterior, preserves uncertainty (values are not forced to 0/1/2), and implements the **additive** introgression model (the default for QTL mapping unless dominance is strongly suspected).
-
-A three-state “genotypic” parameterization corresponds to a statistical test with two degrees of freedom, in which distinct effects are estimated for the heterozygous class (HET) and the teosinte homozygote (TEO/TEO) relative to the B73 homozygote. This increased model complexity can reduce statistical power, particularly when one genotype class (commonly TEO/TEO) is infrequent in the sample. In contrast, an additive dosage model is typically employed as the primary analytical framework in such experimental designs. Putative deviations from additivity (dominance effects) can then be evaluated in a secondary step at the most strongly associated loci by incorporating an explicit dominance term into the model (see below).
-
-### Dominance follow-up (only at peaks)
-At a peak locus/window, you can test dominance deviation with two predictors:
-- additive:
-
-$$
-A = P(\text{HET}) + 2\cdot P(\text{TEO})
-$$
-
-- dominance-like:
-
-$$
-D = P(\text{HET}) 
-(\text{or } P(\text{HET}) - 2\cdot P(\text{B73}) P(\text{TEO}),\ \text{depending on parameterization})
-$$
-
-
-We fit both only for a short list of significant peaks, not genome-wide.
+For detailed documentation, see: [`scripts/HMM_introgression/README.md`](scripts/HMM_introgression/README.md)
 
 ---
 
-### 10.3 Genotype hard-call analysis
+## Section 10 — QTL / Association Mapping
 
-In addition to the **probabilistic (state-dosage)** models, we conducted parallel analyses using **hard-called genotypes** derived from bcftools genotype likelihood pipeline.  
-For these, each locus was encoded as:
-
-| Genotype state | Code | Dosage |
-|----------------|------|---------|
-| B73 | 0 | 0 |
-| Heterozygous | 1 | 1 |
-| Teosinte | 2 | 2 |
-
-This representation allows direct comparison between **probability-weighted dosage models** (which retain uncertainty) and **discrete hard-call models** (which treat each state deterministically).  
-Both were analyzed using the same **LOCO-kinship mixed model framework** in *GridLMM* explained in detail in section 10.6.
-
----
-
-### 10.3.1 Hard-call ancestry (for sensitivity checks)
-
-We assigned each locus/window to the max-posterior state:
-
-$$
-\hat{s} = \arg\max_{s \in \{\text{B73}, \text{HET}, \text{TEO}\}} P(s)
-$$
-
-Then encoded them as 0/1/2 (B73/HET/TEO). This is easy to interpret but discards uncertainty and can be noisy under low-pass. We cautiously use it as a sensitivity analysis, and not the primary mapping genotype.
-
-## 10.3.2 Dosage from non-RTIGER sources (GL, GP, imputation)
-The same mapping framework works with any probabilistic genotype representation, e.g.:
-- genotype likelihoods (GL) from low-pass pipelines like ANGSD GL analysis,
-- posterior genotype probabilities (GP) from imputation,
-- expected allele dosage (DS) directly from imputation outputs.
-
-In each case, the recommended mapping covariate is the **expected allele dosage** (continuous), which leads to uncertainty and typically improves calibration/power relative to forced hard calls in low-coverage sequences. 
-
----
-
-### 10.4 Binning/smoothing: genome-wide window dosage matrix
-To reduce noise and the multiple-testing burden, we summarized marker-level dosage into fixed genomic bins (e.g., 100 kb steps across the genome). Each bin’s value per line represents the **average expected teosinte dosage / ancestry proportion** within that window.
-
-This “bin mapping” strategy is particularly advantageous under the following conditions: 
-(i) genotype marker density is high, 
-(ii) local ancestry can be reasonably modeled as piecewise constant between recombination breakpoints, and 
-(iii) per-marker genotype calls exhibit substantial uncertainty, as is typical in low-pass sequencing or genotyping scenarios. 
-
-In addition, this approach frequently yields QTL intervals that are cleaner and more interpretable, indicating broader genomic-windows rather than SNP–level peaks.
-
----
-
-### 10.5 Relatedness control: LOCO kinship matrices
-Given that these lines share a substantial proportion of the B73 genetic background and thus cannot be considered statistically independent, QTL scans were performed using a **linear mixed model (LMM)** incorporating a polygenic random effect whose covariance structure was specified by the realized kinship matrix \(K\).
-
-To mitigate proximal contamination, i.e., the inflation of the kinship contribution by markers on the focal chromosome, which can diminish the apparent association signal, we implemented a **leave-one-chromosome-out (LOCO)** kinship approach as in Odell et al. Specifically, when scanning chromosome \(c\), the kinship matrix $$K_{-c}$$ was estimated using markers from all chromosomes except \(c\). The LOCO framework is widely recommended in mixed-model genome-wide association studies (GWAS) and QTL mapping to avoid over-correction and loss of power at true causal loci on the chromosome under test.
-
-Kinship matrices were generated externally (e.g., PLINK), for QTL analysis.
-
----
-
-### 10.6 GridLMM mixed-model association
-We used **GridLMM**, which accelerates LMM inference by evaluating likelihoods over a grid of variance-component proportions, enabling efficient genome scans while retaining mixed-model structure. 
-
-### Combined (all-family) scan
-For the combined analysis, we fit:
-
-$$
-y = \mu + \text{Family} + \beta X_w + u + \epsilon
-$$
-
-where:
-
-- **y** is flowering time BLUE,
-- **Family** is a fixed-effect factor capturing baseline shifts among families,
-- **$$X_{w}$$** is the teosinte dosage (or ancestry proportion) for window or marker w,
-- **\mu** is the polygenic random effect with LOCO kinship,
-- **ε** is the residual error term.
-
-
-The random effects are defined as:
-
-$$
-u \sim \mathcal{N}(0,\ \sigma_g^2 K_{-c})
-$$
-
-$$
-\epsilon \sim \mathcal{N}(0,\ \sigma_e^2 I)
-$$
-
-This yields a p-value per tested marker/window reflecting evidence that teosinte introgression at that locus is associated with flowering time after controlling for family structure and genome-wide relatedness.
-
-### Family-wise scans
-For each family, we fit the same model **without** the family covariate:
-
-$$
-y = \mu + \beta X_w + u + \epsilon
-$$
-
-with the kinship matrix restricted to that family’s lines
-
-$$
-K_{-c}
-$$
-
-Family-wise scans help distinguish:
-- QTL consistent across families (replicable),
-- QTL driven by one family/background (potential epistasis or segregating modifiers),
-- QTL masked in the combined scan by heterogeneity.
-
-We used **maximum likelihood (ML)** during scanning because likelihood ratio comparisons across models differing in fixed effects (marker included vs excluded) require ML for valid LRT-style inference.
-
----
-
-### 10.7 Peak definition and intervals
-After producing genome-wide p-values, we summarized signals as “QTL peaks” by:
-1) identifying the most significant window/marker per chromosome (or per region),
-2) defining a support interval around the peak using a pragmatic “drop” rule on $$-\log_{10}(p)$$ (e.g., keep positions within 1 unit of the peak’s $$-\log_{10}(p)$$.
-
-This produces an interpretable genomic interval that can be reported as a candidate QTL region. In classical QTL mapping this is analogous to LOD-drop support intervals.
-
-
----
-
-
-### 10.8 Summary of analyses performed
-
-| Analysis Type | Scan Resolution | Genotype Source | Covariates | Model | Purpose |
-|---|---|---|---|---|---|
-| Combined (Probabilistic) | **Windowed** (e.g., 100 kb bins) | RTIGER posterior dosage (`E[Teo]=P(HET)+2P(TEO)`), aggregated within bin (mean) | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Primary scan to detect shared QTL across families using ancestry-trait structure |
-| Combined (Probabilistic) | **Single-marker** | RTIGER posterior dosage at each RTIGER position | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Higher-resolution follow-up / confirmation near peaks |
-| Family-wise (Probabilistic) | **Windowed** | RTIGER posterior dosage aggregated within bin | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Detect background-specific introgression QTL with robust low-pass behavior |
-| Family-wise (Probabilistic) | **Single-marker** | RTIGER posterior dosage per position | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Fine-scale follow-up within each family |
-| Combined (Hard-call) | **Windowed** | RTIGER max-state calls (0/1/2) aggregated within bin (mean dosage) | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Validate probabilistic results under deterministic genotypes at the segment scale |
-| Combined (Hard-call) | **Single-marker** | RTIGER max-state calls (0/1/2) per position | Family (fixed), Kinship (random; LOCO) | Additive LMM (GridLMM) | Marker-level check of direction/consistency |
-| Family-wise (Hard-call) | **Windowed** | RTIGER max-state calls aggregated within bin | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Family-specific validation at segment scale |
-| Family-wise (Hard-call) | **Single-marker** | RTIGER max-state calls per position | Kinship (per-family LOCO) | Additive LMM (GridLMM) | Marker-level check within families |
-
-In summary, this study extends the probabilistic, founder-based QTL modeling framework of Odell et al. (2019) to a biparental introgression population using **RTIGER ancestry posteriors** as genotype probabilities.   Both **probability-weighted** and **hard-called dosage** representations were tested using **LOCO-kinship mixed models (GridLMM)** to identify introgression-derived QTL influencing flowering time, in single, combined and family-specific contexts.
-
----
-
-### 10.9 Phenotypes: spatial correction and BLUEs
-Flowering time was measured with replication and spatial field heterogeneity. Replicate-level observations were modeled with a spatial correction procedure using R package SpATS to obtain a **single BLUE per line** (Best Linear Unbiased Estimate), which serves as the response for downstream analysis. 
-
-
-
-
----
-
-
-
-### 10.10 Results
-
-### Overview of the introgression-bin QTL scans
-
-![Overview of the introgression-bin QTL scans](figs/Fig_manhattan.png)
-
-**Figure 3 | Introgression-bin association mapping across teosinte introgression families.**  
-Manhattan-style plots summarizing introgression-bin (100k) association analyses performed using GridLMM, where each point represents a genomic bin capturing the local dosage or probability of teosinte introgression. The y-axis shows −log₁₀(p) values, and the x-axis indicates chromosomal position. The solid horizontal line denotes the genome-wide significance threshold (−log₁₀(p) = 5.6), while the dashed line (−log₁₀(p) = 3) indicates a suggestive threshold. Genomic regions exceeding the genome-wide threshold are annotated with nearby or overlapping genes; the top ten candidate genes are labeled where present.
-
-**(A)** Combined analysis across all introgression families (Zd, Zl, and Zv; n = 250 lines), identifying loci with effects consistent across genetic backgrounds.  
-**(B)** Family-specific analysis in Zd (n = 130 lines).  
-**(C)** Family-specific analysis in Zl (n = 70 lines).  
-**(D)** Family-specific analysis in Zv (n = 50 lines).
-
-The figure summarizes introgression-bin association mapping conducted using GridLMM, in which each statistical test corresponds to a genomic bin (100K) representing the local probability or dosage of teosinte introgression along the genome. Although visualized in a Manhattan-style format, these analyses constitute quantitative trait locus (QTL) scans across introgressed haplotype bins rather than conventional single-nucleotide polymorphism (SNP)-based genome-wide association studies (GWAS). A genome-wide significance threshold of −log₁₀(p) = 5.6 was applied uniformly across all panels (solid horizontal line), and an additional, more permissive suggestive threshold of −log₁₀(p) = 3 is indicated by a dashed line. Genomic bins surpassing the genome-wide threshold were annotated with nearby or overlapping genes, and the top 10 candidate genes per panel were highlighted.
-
-The dataset comprises 250 introgression lines derived from three families: Zd (130 lines), Zl (70 lines), and Zv (50 lines). Panel A presents the joint analysis across all families, designed to detect QTL with effects shared across genetic backgrounds while controlling for relatedness via a linear mixed-model framework. Multiple strong association peaks are observed, most prominently toward the region of chromosome 10, where several contiguous bins exceed the genome-wide threshold.
-
-Panels B–D display family-specific scans for Zd, Zl, and Zv, respectively. In the Zd family (Panel B), the strongest associations again map to chromosome 10 and overlap the locus identified in the combined analysis, indicating that this QTL segregates within this genetic background and is not an artifact of pooling across families. The Zl family (Panel C) exhibits a qualitatively similar but attenuated signal at the same locus, suggesting partial sharing of the underlying effect, potentially with differences in effect size, allele frequency, or introgression dosage. Additional suggestive peaks at other genomic locations may represent background-dependent or smaller-effect QTL.
-
-In contrast, the Zv family scan (Panel D) exhibits the weakest overall signal, with no bins clearly surpassing the genome-wide significance threshold. This outcome is expected given the reduced sample size (n = 50), which considerably diminishes statistical power, and may also reflect distinct introgression architectures or recombination patterns specific to this family.
-
-These results support the presence of a major introgression-associated QTL—most prominently on chromosome 10 that is consistently detected in the combined analysis and in at least one family-specific scan. Although this locus appears to be broadly shared across genetic backgrounds, the magnitude of its effect varies among families. 
-
-
-Among the significant loci detected in the combined analysis, we identified a MADS-box transcription factor gene, Zm00001eb409460. This gene has previously been reported as a candidate associated with ear height in maize (Li et al., 2025) which matches with our DTS phenotype that we used. 
-
-For Zd, we identified several genes of particular interest. One such locus encodes the glucose‑6‑phosphate/phosphate translocator 1 (Zm00001eb413160). Functional analysis of its Arabidopsis homolog, AT1G61800, in a background with impaired starch biosynthesis demonstrated that loss of function of this gene compromises plant growth under short‑day photoperiods (Kunz et al., 2010). The top candidate, a glycine‑rich protein 2 gene (Zm00001eb409440), has been implicated in the regulation of flowering time based on studies of its Arabidopsis ortholog AT1G74230 (Shi et al., 2016).
-
-For Zl, we identified a single candidate locus, Zm00001eb343000, which encodes an indole-3-acetate β-glucosyltransferase. Functional studies of its Arabidopsis homolog (UGT84A2, AT3G21560) have demonstrated that ectopic expression of UGT84A2 delays the floral transition through indole-3-butyric acid–mediated transcriptional repression of the ARF6 and ARF8 genes (Zhang et al., 2017).
-
-
+(To be added)
 
 ---

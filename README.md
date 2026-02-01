@@ -463,7 +463,7 @@ We infer **local ancestry states** along the genome for each BC2S3 line using a 
 | HH | Homozygous Teosinte (Teo/Teo) | BB |
 
 **Key features:**
-- Uses genotype likelihoods (GL) as emissions, not hard calls
+- Uses genotype likelihoods (GL) as emissions, not hard calls nor allele counts
 - Genetic map-based transition probabilities (Haldane function)
 - RTIGER-style rigidity: requires R consecutive markers supporting a state change
 - Prevents noisy single-SNP state switches

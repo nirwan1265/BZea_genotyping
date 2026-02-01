@@ -114,14 +114,18 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
   - basic QC (mapping %, coverage summaries)
 - Outputs: `sample.sorted.markdup.bam` + `.bai` (+ QC summaries)
 
-### 4) Genotype likelihood generation + genotype calling using ANGSD pipeline**
+### 4) Genotype likelihood generation + genotype calling (ANGSD)
 - Generate genotype likelihoods using ANGSD with de novo SNP discovery
 - Per-sample GL extraction for HMM input
 - Outputs: per-sample GL TSV files
 
-### 5) Imputation
+### 5) HMM introgression analysis
+
+### 6) Imputation
 - Impute missing genotypes using `Beagle`.
 - Outputs: imputed VCF + quality tables
+
+### Section 7 — QTL / Association Mapping
 
 ---
 
@@ -663,7 +667,11 @@ For detailed documentation, see: [`scripts/HMM_introgression/README.md`](scripts
 
 ---
 
-## Section 6 — QTL / Association Mapping
+## Section 6 — Imputation
+
+---
+
+## Section 7 — QTL / Association Mapping
 
 (To be added)
 

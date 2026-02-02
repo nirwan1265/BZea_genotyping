@@ -119,18 +119,13 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
 - Per-sample GL extraction for HMM input
 - Outputs: per-sample GL TSV files
 
-### 5) HMM introgression analysis
-
-### 6) Imputation
+### 5) Imputation
 - Impute missing genotypes using `Beagle`.
 - Outputs: imputed VCF + quality tables
 
-### Section 7 — QTL / Association Mapping
+## HMM introgression analysis
 
----
-
-## Introgression analysis (HMM-based)
-
+### 6) HMM introgression analysis
 We infer **local ancestry states** along the genome for each line (B73 vs teosinte ancestry) using a custom **Hidden Markov Model (HMM)** with RTIGER-style rigidity, leveraging genotype likelihoods from ANGSD.
 
 **Inputs**
@@ -142,15 +137,13 @@ We infer **local ancestry states** along the genome for each line (B73 vs teosin
 - Introgression tract BED files
 - Summary statistics and chromosome paintings
 
----
 
-## QTL / association mapping
-
+##  QTL / Association Mapping
 We perform genome scans using **GridLMM** with **LOCO (leave-one-chromosome-out) kinship** to control relatedness while preserving power on the tested chromosome.
 
 (Details in Section 10)
-
----
+ 
+ ---
 
 ## Software and packages
 
@@ -161,11 +154,10 @@ We perform genome scans using **GridLMM** with **LOCO (leave-one-chromosome-out)
 - **bwa-mem2** *(recommended)* or **bwa** — read alignment to reference genome
 - **samtools** — BAM/SAM manipulation (sort, index, stats, depth)
 - **picard** — duplicate marking
-- **bcftools** — genotype likelihoods + variant calling + querying
+- **bcftools** — querying
 - **ANGSD** — genotype likelihood estimation + SNP calling for low-pass data
 - **vcftools**  — quick VCF filters / summaries
 - **bgzip / tabix** *(htslib)* — compress + index VCF/BCF outputs
-
 
 ### Imputation and Variant handling
 
@@ -177,7 +169,6 @@ We perform genome scans using **GridLMM** with **LOCO (leave-one-chromosome-out)
 - **Python** (>= 3.8)
 - **optuna** — Bayesian optimization for parameter tuning
 - **R** (>= 4.1)
-- **data.table** — R package for post-processing
 
 ### QTL / association mapping
 

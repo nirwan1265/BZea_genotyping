@@ -541,7 +541,7 @@ $$
 To improve robustness (especially at low depth), we apply optional emission adjustments:
 
 **HH rescue from RH (`eta_hh_from_rh`)**  
-We allow HH to “borrow” likelihood mass from RH:
+We incorporated a standard emission-error/robustness model by allowing limited “borrowing” of likelihood mass between states, analogous to the genotyping-error parameters commonly used in HMM-based genotyping and imputation. Specifically, the homozygous-donor emission was replaced by a mixture:
 
 $$
 \ell'_t(\mathrm{HH}) = \ln\left[(1-\eta)\exp(\ell_t(\mathrm{HH}))+\eta\exp(\ell_t(\mathrm{RH}))\right],
@@ -565,7 +565,7 @@ $$
 
 where $\lambda$ = `rh_penalty`.
 
-The adjusted emissions $\ell'_t(\cdot)$ are used throughout inference and decoding.
+This is equivalent to adding a state-specific prior/regularization term that makes RH harder to call unless strongly supported. In low-pass data, RH can be spuriously favored in noisy regions (or, depending on bias, can be unreliable), so a state-specific emission weight is a standard robustness trick rather than a conceptual novelty. The adjusted emissions $\ell'_t(\cdot)$ are used throughout inference and decoding.
 
 ---
 

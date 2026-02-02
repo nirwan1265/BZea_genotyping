@@ -440,7 +440,7 @@ Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_intr
 
 ## Section 6 — HMM-based Introgression Analysis
 
-We infer **local ancestry states** along the genome for each BC2S3 line using a custom 3-state Hidden Markov Model (HMM) with **RTIGER-style rigidity constraints**. The model operates directly on **genotype likelihoods (GLs)** rather than hard genotype calls or allele counts, preserving uncertainty typical of low-pass sequencing. This work has been based on the ideds of:
+We infer **local ancestry states** along the genome for each BC2S3 line using a custom 3-state Hidden Markov Model (HMM) with **RTIGER-style rigidity constraints**. The model operates directly on **genotype likelihoods (GLs)** rather than hard genotype calls or allele counts, preserving uncertainty typical of low-pass sequencing. This work has been based on the concepts of:
 1. [Rodrigo Campos-Martin et al.](https://onlinelibrary.wiley.com/doi/abs/10.1111/tpj.70228?__cf_chl_tk=5zTbSbdSXATkLokN_736zpzXM3YinFmcIfnOx.XocvE-1770040213-1.0.1.1-29GVGsgjLWa9m5QvoBj3dsiiC5oqq9Pt7nFiAQy706Y) - HMM-based recombinant genotyping for “robust” handling of noisy/ambiguous markers; RTIGER-style algorithm that motivates stabilizing RH/HH calls (the concepts for eta_hh_from_rh, rh_penalty, rigidity-style smoothing parameters explained below).
 2. [Tao Zhong et al.](https://onlinelibrary.wiley.com/doi/full/10.1111/tpj.70228) - the BC/NIL design logic, expectations about donor/recipient structure, and why RR/RH/HH segmentation is meaningful in this panel.
 

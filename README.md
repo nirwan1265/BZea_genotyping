@@ -433,6 +433,7 @@ bsub < scripts/HMM_introgression/1_extract_GL_emissions.sh
 
 Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_introgression/1_extract_GL_emissions.sh)
 
+---
 
 ## Section 5 — Imputation
 
@@ -501,6 +502,11 @@ $$
 \ell'_t(\mathrm{HH}) = \ln\left[(1-\eta)\exp(\ell_t(\mathrm{HH}))+\eta\exp(\ell_t(\mathrm{RH}))\right],
 $$
 
+$$
+\ell'_t(\mathrm{HH}) = \ln\left[(1-\eta_{hh})\exp(\ell_t(\mathrm{HH}))+\eta_{rr}\exp(\ell_t(\mathrm{RH}))\right].
+$$
+
+
 where $\eta$ = `eta_hh_from_rh`.
 
 **Optional RR borrow from RH (`eta_rr_from_rh`, default 0)**  
@@ -509,6 +515,8 @@ Analogous mixture for RR (typically left at 0):
 $$
 \ell'_t(\mathrm{RR}) = \ln\left[(1-\eta_{rr})\exp(\ell_t(\mathrm{RR}))+\eta_{rr}\exp(\ell_t(\mathrm{RH}))\right].
 $$
+
+If the true hidden state is HH at marker 𝑡, then with probability (1−$\eta$), the emission behaves like HH, but with probability $\eta$ it behaves like RH. So the HH emission distribution is “contaminated” by RH with weight $\eta$.
 
 **RH penalty (`rh_penalty`)**  
 We can downweight RH to reduce spurious heterozygote calls:
@@ -519,7 +527,7 @@ $$
 
 where $\lambda$ = `rh_penalty`.
 
-This is equivalent to adding a state-specific prior/regularization term that makes RH harder to call unless strongly supported. In low-pass data, RH can be spuriously favored in noisy regions (or, depending on bias, can be unreliable), so a state-specific emission weight is a standard robustness trick rather than a conceptual novelty. The adjusted emissions $\ell'_t(\cdot)$ are used throughout inference and decoding.
+This is equivalent to adding a state-specific prior/regularization term that makes RH harder to call unless strongly supported. In low-pass data, RH can be spuriously favored in noisy regions (or, depending on bias, can be unreliable). The adjusted emissions $\ell'_t(\cdot)$ are used throughout inference and decoding.
 
 ---
 

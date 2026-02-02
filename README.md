@@ -578,8 +578,8 @@ $$
 
 Convert to Morgans:
 
-$$
-d_t = \max(\Delta cM_t / 100,\; \text{min\_morgan}).
+$$                                                                                                                                                                                                       
+  d_t = \max(\Delta cM_t / 100\; \mathrm{min\_morgan}).                                                                                                                                                   
 $$
 
 Compute recombination fraction via Haldane:
@@ -597,14 +597,14 @@ $$
 with $\rho$ = `rho` controlling global switching propensity. For numerical stability, $s_t$ is bounded (implementation detail):
 
 $$
-s_t \leftarrow \min(0.25,\; \max(10^{-12}, s_t)).
+s_t \leftarrow \min(0.25\; \max(10^{-12}, s_t)).
 $$
 
 Let $\pi = (\pi_{RR},\pi_{RH},\pi_{HH})$ be the stationary state probabilities derived from user priors:
 
-$$
-\pi_s = \frac{\text{prior\_s}}{\sum_{s'}\text{prior\_s'}}.
-$$
+$$                                                                                                                                                                                                       
+  \pi_s = \frac{\mathrm{prior\_s}}{\sum_{s'}\mathrm{prior\_s'}}.                                                                                                                                           
+$$ 
 
 The per-step transition matrix $A_t$ is defined as:
 - Self-transition:

@@ -465,13 +465,13 @@ We infer **local ancestry states** along the genome for each BC2S3 line using a 
 
 ### 6.2 HMM Model Specification (paper-ready detail)
 
-Let markers be indexed by \(t = 1, \lsdots, T\), ordered by chromosome and position. The hidden state at marker \(t\) is
+Let markers be indexed by $t = 1, \ldots, T$, ordered by chromosome and position. The hidden state at marker $t$ is
 
 $$
 z_t \in \{\mathrm{RR},\mathrm{RH},\mathrm{HH}\}.
 $$
 
-The observed data at marker \(t\) is the vector of genotype likelihoods:
+The observed data at marker $t$ is the vector of genotype likelihoods:
 
 $$
 x_t = (GL_t(\mathrm{RR}), GL_t(\mathrm{RH}), GL_t(\mathrm{HH})),
@@ -499,7 +499,7 @@ $$
 \ell'_t(\mathrm{HH}) = \ln\left[(1-\eta)\exp(\ell_t(\mathrm{HH}))+\eta\exp(\ell_t(\mathrm{RH}))\right],
 $$
 
-where \(\eta = \texttt{eta\_hh\_from\_rh}\).
+where $\eta$ = `eta_hh_from_rh`.
 
 **Optional RR borrow from RH (`eta_rr_from_rh`, default 0)**  
 Analogous mixture for RR (typically left at 0):
@@ -515,14 +515,14 @@ $$
 \ell'_t(\mathrm{RH}) = \ell_t(\mathrm{RH}) - \lambda,
 $$
 
-where \(\lambda = \texttt{rh\_penalty}\).
+where $\lambda$ = `rh_penalty`.
 
-The adjusted emissions \(\ell'_t(\cdot)\) are used throughout inference and decoding.
+The adjusted emissions $\ell'_t(\cdot)$ are used throughout inference and decoding.
 
 ---
 
 #### 6.2.2 Transition model (genetic map + sticky switching)
-Each chromosome has a genetic map providing \((bp \rightarrow cM)\). We interpolate each marker to a genetic position \(cM_t\), then compute genetic distance between consecutive markers:
+Each chromosome has a genetic map providing $(bp \rightarrow cM)$. We interpolate each marker to a genetic position $cM_t$, then compute genetic distance between consecutive markers:
 
 $$
 \Delta cM_t = |cM_t - cM_{t-1}|.
@@ -531,7 +531,7 @@ $$
 Convert to Morgans:
 
 $$
-d_t = \max(\Delta cM_t / 100,\; \texttt{min\_morgan}).
+d_t = \max(\Delta cM_t / 100,\; \text{min\_morgan}).
 $$
 
 Compute recombination fraction via Haldane:
@@ -546,26 +546,26 @@ $$
 s_t = \rho\cdot \theta_t,
 $$
 
-with \(\rho = \texttt{rho}\) controlling global switching propensity. For numerical stability, \(s_t\) is bounded (implementation detail):
+with $\rho$ = `rho` controlling global switching propensity. For numerical stability, $s_t$ is bounded (implementation detail):
 
 $$
 s_t \leftarrow \min(0.25,\; \max(10^{-12}, s_t)).
 $$
 
-Let \(\pi = (\pi_{RR},\pi_{RH},\pi_{HH})\) be the stationary state probabilities derived from user priors:
+Let $\pi = (\pi_{RR},\pi_{RH},\pi_{HH})$ be the stationary state probabilities derived from user priors:
 
 $$
-\pi_s = \frac{\texttt{prior\_s}}{\sum_{s'}\texttt{prior\_s'}}.
+\pi_s = \frac{\text{prior\_s}}{\sum_{s'}\text{prior\_s'}}.
 $$
 
-The per-step transition matrix \(A_t\) is defined as:
+The per-step transition matrix $A_t$ is defined as:
 - Self-transition:
 
 $$
 A_t(i\rightarrow i) = 1 - s_t
 $$
 
-- Off-diagonals distributed proportional to \(\pi\) (excluding self):
+- Off-diagonals distributed proportional to $\pi$ (excluding self):
 
 $$
 A_t(i\rightarrow j) = s_t \cdot \frac{\pi_j}{1-\pi_i},\quad j\neq i.
@@ -582,7 +582,7 @@ $$
 P(z_t=s \mid x_{1:T})
 $$
 
-using the forward–backward algorithm in log space (with per-position normalization to prevent underflow). These posteriors are emitted in the **statepath** output as \(P_{RR}, P_{RH}, P_{HH}\) per marker.
+using the forward–backward algorithm in log space (with per-position normalization to prevent underflow). These posteriors are emitted in the **statepath** output as $P_{RR}, P_{RH}, P_{HH}$ per marker.
 
 ---
 
@@ -606,10 +606,10 @@ $$
 \delta_t(j)=\ell'_t(j)+\max_i\left[\delta_{t-1}(i)+\ln A_t(i\rightarrow j)\right].
 $$
 
-Backpointers store the argmax to reconstruct \(\hat{z}_{1:T}\) in \(O(TS^2)\), with \(S=3\).
+Backpointers store the argmax to reconstruct $\hat{z}_{1:T}$ in $O(TS^2)$, with $S=3$.
 
 **(B) Posterior + hysteresis (`posterior_hysteresis`) — used here**  
-Compute posteriors \(P(z_t=s|x)\), form a per-marker best state:
+Compute posteriors $P(z_t=s|x)$, form a per-marker best state:
 
 $$
 b_t=\arg\max_s P(z_t=s|x),
@@ -618,15 +618,15 @@ $$
 then apply RTIGER-style rigidity (below). This preserves linkage information (via posteriors) and adds robustness against noisy switches.
 
 **(C) Emission argmax + hysteresis (`emission_hysteresis`)**  
-Set \(b_t=\arg\max_s \ell'_t(s)\) (ignores transitions), then apply rigidity. Fast but less principled.
+Set $b_t=\arg\max_s \ell'_t(s)$ (ignores transitions), then apply rigidity. Fast but less principled.
 
 ---
 
 #### 6.2.5 RTIGER-style rigidity via hysteresis (`--rigidity / -R`)
-After obtaining a “best state” sequence \(b_t\) (from posteriors or emissions), we apply a hysteresis rule:
+After obtaining a "best state" sequence $b_t$ (from posteriors or emissions), we apply a hysteresis rule:
 
-- Maintain current output state \(c_t\).
-- A change to a new state \(u\neq c\) is only accepted after **R consecutive markers** support \(u\).
+- Maintain current output state $c_t$.
+- A change to a new state $u \neq c$ is only accepted after **R consecutive markers** support $u$.
 - Chromosome boundaries reset the hysteresis counters.
 
 This suppresses isolated single-marker flips while allowing genuine state changes supported over a stretch of markers.
@@ -650,8 +650,8 @@ Below are the key parameters commonly tuned or reported.
 | Parameter | Meaning | Notes |
 |-----------|---------|------|
 | `--prior_rr`, `--prior_rh`, `--prior_hh` | Stationary/initial state priors | Normalized to π; also used to distribute off-diagonal transition mass |
-| `--rho` | Sticky transition multiplier | Scales switching \(s_t=\rho\theta_t\); higher → more switching |
-| `--min_morgan` | Lower bound on Morgan distance | Prevents \(\theta_t\) from becoming exactly zero when ΔcM≈0 |
+| `--rho` | Sticky transition multiplier | Scales switching $s_t=\rho\theta_t$; higher → more switching |
+| `--min_morgan` | Lower bound on Morgan distance | Prevents $\theta_t$ from becoming exactly zero when ΔcM≈0 |
 | `--eta_hh_from_rh` | HH rescue from RH emissions | GL-mixture: HH borrows mass from RH; stabilizes HH in low-information regions |
 | `--eta_rr_from_rh` | RR borrow from RH emissions | Usually 0; included for completeness |
 | `--rh_penalty` | Penalize RH emission | Downweights RH likelihood by a constant |
@@ -680,7 +680,7 @@ Below are the key parameters commonly tuned or reported.
 Since we do not have labeled local ancestry truth at each marker, we optimize parameters by maximizing **stability under marker thinning**:
 
 1. Run the full pipeline on the full marker set → **baseline**
-2. Create \(K\) thinned replicates (randomly drop ~10% markers)
+2. Create $K$ thinned replicates (randomly drop ~10% markers)
 3. Run the pipeline on each replicate
 4. Compute stability score = similarity between baseline and replicate outputs
 

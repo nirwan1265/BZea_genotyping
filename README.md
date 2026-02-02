@@ -440,55 +440,9 @@ Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_intr
 
 ## Section 6 — HMM-based Introgression Analysis
 
-We infer **local ancestry states** along the genome for each BC2S3 line using a custom 3-state Hidden Markov Model (HMM) with **RTIGER-style rigidity constraints**. The model operates directly on **genotype likelihoods (GLs)** rather than hard genotype calls or allele counts, preserving uncertainty typical of low-pass sequencing. This work has been adapted from:
-1. Rodrigo Campos-Martin et al. Reliable genotyping of recombinant genomes using a robust hidden Markov model. Plant Physiology (2023) 192:821–836. DOI: 10.1093/plphys/kiad191.
-Cite for: HMM-based recombinant genotyping; “robust” handling of noisy/ambiguous markers; RTIGER-style thinking that motivates stabilizing RH/HH calls (the conceptual parent of your eta_hh_from_rh, rh_penalty, rigidity-style smoothing).
-2. Your maize NIL population context (why these states/priors/population design make biological sense)
-Tao Zhong et al. A maize near-isogenic line population designed for gene discovery and characterization of allelic effects. The Plant Journal (2025) 122:e70228. DOI: 10.1111/tpj.70228.
-Cite for: the BC/NIL design logic, expectations about donor/recipient structure, and why RR/RH/HH segmentation is meaningful in this panel.
-
-Additional citation:
-Viterbi decoding (your viterbi_standard)
-
-Andrew J. Viterbi. Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. IEEE Transactions on Information Theory (1967) 13(2):260–269.
-Cite for: the Viterbi algorithm as the canonical DP decoding of the most likely state path.
-
-Forward–backward / posterior probabilities (your forward_backward)
-
-Leonard E. Baum et al. A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. Annals of Mathematical Statistics (1970) 41(1):164–171.
-Cite for: forward–backward foundations (Baum–Welch/related HMM inference), i.e. why computing posteriors per marker is standard.
-
-General HMM reference everyone cites (nice because it’s explicitly “a tutorial”)
-
-Lawrence R. Rabiner. A tutorial on hidden Markov models and selected applications in speech recognition. Proceedings of the IEEE (1989) 77(2):257–286.
-Cite for: standard HMM definitions, log-space recursions, decoding vs posterior inference.
-
-A shorter HMM intro that is already cited inside the RTIGER/robust-HMM ecosystem (and reviewers won’t complain about it)
-
-Lawrence R. Rabiner & Juang. An introduction to hidden Markov models. IEEE ASSP Magazine (1986) 3(1):4–16. DOI: 10.1109/MASSP.1986.1165342.
-Cite for: quick “what is an HMM” grounding (often used when your paper isn’t mainly about HMM theory).
-
-Haldane mapping function (your haldane_theta)
-
-J. B. S. Haldane. The combination of linkage values and the calculation of distances between the loci of linked factors. Journal of Genetics (1919).
-Cite for: 
-haldance function
- transition-from-distance model (exactly what you coded).
-
-TIGER-style genotyping-by-sequencing for crossover localization
-
-Benjamin A. Rowan et al. Rapid and inexpensive whole-genome genotyping-by-sequencing for crossover localization and fine-scale genetic mapping. G3: Genes|Genomes|Genetics (2015) 5(3):385–398. DOI: 10.1534/g3.114.016501.
-Cite for: the broader “recombinant genome genotyping with noisy markers” tradition that RTIGER builds on.
-
-ANGSD (if your emissions are fed by ANGSD genotype likelihoods)
-
-Thorfinn Sand Korneliussen et al. ANGSD: Analysis of Next Generation Sequencing Data. BMC Bioinformatics (2014) 15:356. DOI: 10.1186/s12859-014-0356-4.
-Cite for: the GL framework / using genotype likelihoods instead of hard genotype calls (which is exactly why your emissions are log-likelihoods).
-
-Where your eta_hh_from_rh, eta_rr_from_rh, and rh_penalty fit (how to cite it cleanly)
-
-If you’re describing those as “robustness knobs inspired by RTIGER/robust-HMM principles”, cite Campos-Martin et al. 2023 (and optionally Rowan et al. 2015) and say something like:
-“We implemented an RTIGER-inspired robust-emission adjustment that allows ambiguous heterozygous-like observations to partially support adjacent ancestry/genotype states, improving stability under low-coverage noise.”
+We infer **local ancestry states** along the genome for each BC2S3 line using a custom 3-state Hidden Markov Model (HMM) with **RTIGER-style rigidity constraints**. The model operates directly on **genotype likelihoods (GLs)** rather than hard genotype calls or allele counts, preserving uncertainty typical of low-pass sequencing. This work has been based on the ideds of:
+1. [Rodrigo Campos-Martin et al.](https://onlinelibrary.wiley.com/doi/abs/10.1111/tpj.70228?__cf_chl_tk=5zTbSbdSXATkLokN_736zpzXM3YinFmcIfnOx.XocvE-1770040213-1.0.1.1-29GVGsgjLWa9m5QvoBj3dsiiC5oqq9Pt7nFiAQy706Y) - HMM-based recombinant genotyping for “robust” handling of noisy/ambiguous markers; RTIGER-style algorithm that motivates stabilizing RH/HH calls (the concepts for eta_hh_from_rh, rh_penalty, rigidity-style smoothing parameters explained below).
+2. [Tao Zhong et al.](https://onlinelibrary.wiley.com/doi/full/10.1111/tpj.70228) - the BC/NIL design logic, expectations about donor/recipient structure, and why RR/RH/HH segmentation is meaningful in this panel.
 
 ---
 
@@ -919,3 +873,48 @@ For detailed documentation, see: [`scripts/HMM_introgression/README.md`](scripts
 (To be added)
 
 ---
+
+
+## Section 8 — References
+
+Viterbi decoding (your viterbi_standard)
+
+Andrew J. Viterbi. Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. IEEE Transactions on Information Theory (1967) 13(2):260–269.
+Cite for: the Viterbi algorithm as the canonical DP decoding of the most likely state path.
+
+Forward–backward / posterior probabilities (your forward_backward)
+
+Leonard E. Baum et al. A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. Annals of Mathematical Statistics (1970) 41(1):164–171.
+Cite for: forward–backward foundations (Baum–Welch/related HMM inference), i.e. why computing posteriors per marker is standard.
+
+General HMM reference everyone cites (nice because it’s explicitly “a tutorial”)
+
+Lawrence R. Rabiner. A tutorial on hidden Markov models and selected applications in speech recognition. Proceedings of the IEEE (1989) 77(2):257–286.
+Cite for: standard HMM definitions, log-space recursions, decoding vs posterior inference.
+
+A shorter HMM intro that is already cited inside the RTIGER/robust-HMM ecosystem (and reviewers won’t complain about it)
+
+Lawrence R. Rabiner & Juang. An introduction to hidden Markov models. IEEE ASSP Magazine (1986) 3(1):4–16. DOI: 10.1109/MASSP.1986.1165342.
+Cite for: quick “what is an HMM” grounding (often used when your paper isn’t mainly about HMM theory).
+
+Haldane mapping function (your haldane_theta)
+
+J. B. S. Haldane. The combination of linkage values and the calculation of distances between the loci of linked factors. Journal of Genetics (1919).
+Cite for: 
+haldance function
+ transition-from-distance model (exactly what you coded).
+
+TIGER-style genotyping-by-sequencing for crossover localization
+
+Benjamin A. Rowan et al. Rapid and inexpensive whole-genome genotyping-by-sequencing for crossover localization and fine-scale genetic mapping. G3: Genes|Genomes|Genetics (2015) 5(3):385–398. DOI: 10.1534/g3.114.016501.
+Cite for: the broader “recombinant genome genotyping with noisy markers” tradition that RTIGER builds on.
+
+ANGSD (if your emissions are fed by ANGSD genotype likelihoods)
+
+Thorfinn Sand Korneliussen et al. ANGSD: Analysis of Next Generation Sequencing Data. BMC Bioinformatics (2014) 15:356. DOI: 10.1186/s12859-014-0356-4.
+Cite for: the GL framework / using genotype likelihoods instead of hard genotype calls (which is exactly why your emissions are log-likelihoods).
+
+Where your eta_hh_from_rh, eta_rr_from_rh, and rh_penalty fit (how to cite it cleanly)
+
+If you’re describing those as “robustness knobs inspired by RTIGER/robust-HMM principles”, cite Campos-Martin et al. 2023 (and optionally Rowan et al. 2015) and say something like:
+“We implemented an RTIGER-inspired robust-emission adjustment that allows ambiguous heterozygous-like observations to partially support adjacent ancestry/genotype states, improving stability under low-coverage noise.”

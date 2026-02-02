@@ -465,7 +465,7 @@ We infer **local ancestry states** along the genome for each BC2S3 line using a 
 
 ### 6.2 HMM Model Specification (paper-ready detail)
 
-Let markers be indexed by \(t = 1, \dots, T\), ordered by chromosome and position. The hidden state at marker \(t\) is
+Let markers be indexed by \(t = 1, \lsdots, T\), ordered by chromosome and position. The hidden state at marker \(t\) is
 
 $$
 z_t \in \{\mathrm{RR},\mathrm{RH},\mathrm{HH}\}.
@@ -487,7 +487,7 @@ $$
 The emission log-likelihoods are:
 
 $$
-\ell_t(\mathrm{RR}), \; \ell_t(\mathrm{RH}), \; \ell_t(\mathrm{HH}).
+\ell_t(\mathrm{RR}) \; \ell_t(\mathrm{RH}) \; \ell_t(\mathrm{HH}).
 $$
 
 To improve robustness (especially at low depth), we apply optional emission adjustments:
@@ -545,6 +545,7 @@ We then define a **sticky** switching probability:
 $$
 s_t = \rho\cdot \theta_t,
 $$
+
 with \(\rho = \texttt{rho}\) controlling global switching propensity. For numerical stability, \(s_t\) is bounded (implementation detail):
 
 $$
@@ -658,7 +659,7 @@ Below are the key parameters commonly tuned or reported.
 | `--rigidity` / `-R` | Hysteresis rigidity | Require R consecutive markers supporting a switch |
 | `--min_run_hh`, `--min_run_rh` | Post-decoding cleanup | Removes short HH/RH runs by collapsing them toward less “donor-like” states |
 
-**Example optimized values (replace with your final Optuna results):**
+**Example optimized values:**
 
 | Parameter | Description | Example optimized value |
 |-----------|-------------|--------------------------|
@@ -676,7 +677,7 @@ Below are the key parameters commonly tuned or reported.
 
 ### 6.4 Parameter Optimization (Stability-based; no ground truth)
 
-Because we do not have labeled local ancestry truth at each marker, we optimize parameters by maximizing **stability under marker thinning**:
+Since we do not have labeled local ancestry truth at each marker, we optimize parameters by maximizing **stability under marker thinning**:
 
 1. Run the full pipeline on the full marker set → **baseline**
 2. Create \(K\) thinned replicates (randomly drop ~10% markers)

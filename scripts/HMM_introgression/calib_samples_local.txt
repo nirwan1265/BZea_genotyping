@@ -1,0 +1,4 @@
+# Local calibration samples for HMM parameter tuning
+/Users/nirwantandukar/Documents/Github/BZea_genotyping/scripts/HMM_introgression/examples/PN5_SID440.chr1-10.GL.filtered.tsv.gz
+/Users/nirwantandukar/Documents/Github/BZea_genotyping/scripts/HMM_introgression/examples/PN6_SID519.chr1-10.GL.filtered.tsv.gz
+/Users/nirwantandukar/Documents/Github/BZea_genotyping/scripts/HMM_introgression/examples/PN6_SID570.chr1-10.GL.filtered.tsv.gz

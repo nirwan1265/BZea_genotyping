@@ -711,7 +711,7 @@ summarize_annotations <- function(ann_long, keep_all_overlaps = TRUE) {
 ## ---------------------------
 annotate_introgression_gwas <- function(res_all,
                                         gff_file,
-                                        window_bp = 25000L,
+                                        window_bp = 10000L,
                                         chr_style = c("chr","nochr"),
                                         sig_thr_mlog10 = NULL,
                                         keep_all_overlaps = TRUE,
@@ -737,11 +737,11 @@ annotate_introgression_gwas <- function(res_all,
 ## ============================================================
 gff_file <- "/Users/nirwantandukar/Library/Mobile Documents/com~apple~CloudDocs/Research/Data/Maize/Maize.annotation/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3"
 
-window_bp <- 50000L
+window_bp <- 25000L
 sig_thr_mlog10 <- 3
 
 ann <- annotate_introgression_gwas(
-  res_all = res_all,
+  res_all = fit$res_all,
   gff_file = gff_file,
   window_bp = window_bp,
   chr_style = "chr",              # your GWAS uses chr1..chr10
@@ -749,57 +749,67 @@ ann <- annotate_introgression_gwas(
   keep_all_overlaps = TRUE,
   keep_chr = 1:10
 )
-str(res_all)
 
 # results
 ann$summary %>% dplyr::arrange(p) %>% head(20)
 
 # save the results
-write.csv(ann$summary, file = "GridLMM_Combined_DTS_GWAS_annotation_summary_100kwindow.csv", row.names = FALSE)
+write.csv(ann$summary, file = "GridLMM_Combined_DTS_GWAS_annotation_summary_100kwindow_chr1_2.csv", row.names = FALSE)
 
 
 # Annotation family
 ann_Zd <- annotate_introgression_gwas(
-  res_all = res_by_family$Zd,
+  res_all = fit$res_by_family$Zd,
   gff_file = gff_file,
   window_bp = window_bp,
   chr_style = "chr",              # your GWAS uses chr1..chr10
-  sig_thr_mlog10 = sig_thr_mlog10,
+  sig_thr_mlog10 = 1,
   keep_all_overlaps = TRUE,
   keep_chr = 1:10
 )
 
 # save the results
-write.csv(ann_Zd$summary, file = "GridLMM_Zd_DTS_GWAS_annotation_summary_100kwindow.csv", row.names = FALSE)
+write.csv(ann_Zd$summary, file = "GridLMM_Zd_DTS_GWAS_annotation_summary_100kwindow_chr1_2.csv", row.names = FALSE)
 
 
 ann_Zl <- annotate_introgression_gwas(
-  res_all = res_by_family$Zl,
+  res_all = fit$res_by_family$Zl,
   gff_file = gff_file,
   window_bp = window_bp,
   chr_style = "chr",              # your GWAS uses chr1..chr10
-  sig_thr_mlog10 = sig_thr_mlog10,
+  sig_thr_mlog10 = 1,
   keep_all_overlaps = TRUE,
   keep_chr = 1:10
 )
 
 # save the results
-write.csv(ann_Zl$summary, file = "GridLMM_Zl_DTS_GWAS_annotation_summary_100kwindow.csv", row.names = FALSE)
+write.csv(ann_Zl$summary, file = "GridLMM_Zl_DTS_GWAS_annotation_summary_100kwindow_chr1_2.csv", row.names = FALSE)
 
 ann_Zv <- annotate_introgression_gwas(
-  res_all = res_by_family$Zv,
+  res_all = fit$res_by_family$Zv,
   gff_file = gff_file,
   window_bp = window_bp,
   chr_style = "chr",              # your GWAS uses chr1..chr10
-  sig_thr_mlog10 = sig_thr_mlog10,
+  sig_thr_mlog10 = 1,
   keep_all_overlaps = TRUE,
   keep_chr = 1:10
 )
 
 # save the results
-write.csv(ann_Zv$summary, file = "GridLMM_Zv_DTS_GWAS_annotation_summary_100kwindow.csv", row.names = FALSE)
+write.csv(ann_Zv$summary, file = "GridLMM_Zv_DTS_GWAS_annotation_summary_100kwindow_chr1_2.csv", row.names = FALSE)
 
+ann_Zx <- annotate_introgression_gwas(
+  res_all = fit$res_by_family$Zx,
+  gff_file = gff_file,
+  window_bp = window_bp,
+  chr_style = "chr",              # your GWAS uses chr1..chr10
+  sig_thr_mlog10 = 1,
+  keep_all_overlaps = TRUE,
+  keep_chr = 1:10
+)
 
+# save the results
+write.csv(ann_Zx$summary, file = "GridLMM_Zx_DTS_GWAS_annotation_summary_100kwindow_chr1_2.csv", row.names = FALSE)
 
 ## ============================================================
 ## Count SNPs table
@@ -814,7 +824,7 @@ suppressPackageStartupMessages({
 ## 1) Clean / standardize GWAS table from res_all
 ##    Output columns: Marker, chr, CHR, BP, p, logp
 ## ------------------------------------------------------------
-gwas <- res_all %>%
+gwas <- fit$res_all %>%
   mutate(
     Marker = dplyr::coalesce(.data$Marker, .data$X_ID),
     
@@ -1093,12 +1103,12 @@ plot_introgression_manhattan <- function(res_all,
 
 # Option A: no gene labels (just bins)
 out0 <- plot_introgression_manhattan(
-  res_all = res_all,
+  res_all = fit$res_all,
   ann_summary = NULL,
   chr_len = NULL,              # or readRDS(".../chr_len.rds")
-  thr_main = 7,
-  thr_sugg = 5,
-  label_thr = 7,
+  thr_main = 5,
+  thr_sugg = 3,
+  label_thr = 5,
   label_top_n = 20,
   label_mode = "marker",
   out_png = "GridLMM_introgression_bins_manhattan.png"
@@ -1106,21 +1116,104 @@ out0 <- plot_introgression_manhattan(
 quartz()
 print(out0$plot)
 
+
+
 # Option B: with gene labels (use your annotation)
 # ann <- annotate_introgression_gwas(...)  # from your working code
 out1 <- plot_introgression_manhattan(
-  res_all = res_all,
+  res_all = fit$res_all,
   ann_summary = ann$summary,    # <-- gene annotation table
   chr_len = readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/genotype/chr_len.rds"),
-  thr_main = 5,
+  thr_main = 3,
   thr_sugg = 3,
-  label_thr = 5,
-  label_top_n = 20,
+  label_thr = 3,
+  label_top_n = 10,
   label_mode = "nearest_gene",
   out_png = "GridLMM_introgression_bins_manhattan_labeled.png"
 )
 quartz()
 print(out1$plot)
+
+## Save the plot
+ggsave("GridLMM_introgression_bins_manhattan_Combined_DTS_labeled_chr1_2.png", out1$plot, width = 14, height = 6, dpi = 300)
+
+
+zd_plot <- plot_introgression_manhattan(
+  res_all = fit$res_by_family$Zd,
+  ann_summary = ann_Zd$summary,    # <-- gene annotation table
+  chr_len = readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/genotype/chr_len.rds"),
+  thr_main = 3,
+  thr_sugg = 3,
+  label_thr = 3,
+  label_top_n = 10,
+  label_mode = "nearest_gene",
+  out_png = "GridLMM_introgression_bins_manhattan_Zd_labeled.png"
+)
+quartz()
+print(zd_plot$plot)
+
+# Save the plot
+ggsave("GridLMM_introgression_bins_manhattan_Zd_DTS_labeled_chr1_2.png", zd_plot$plot, width = 14, height = 6, dpi = 300)
+
+
+Zv_plot <- plot_introgression_manhattan(
+  res_all = fit$res_by_family$Zv,
+  ann_summary = ann_Zv$summary,    # <-- gene annotation table
+  chr_len = readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/genotype/chr_len.rds"),
+  thr_main = 3,
+  thr_sugg = 3,
+  label_thr = 3,
+  label_top_n = 10,
+  label_mode = "nearest_gene",
+  out_png = "GridLMM_introgression_bins_manhattan_Zv_labeled.png"
+)
+quartz()
+print(Zv_plot$plot)
+
+# Save the plot
+ggsave("GridLMM_introgression_bins_manhattan_Zv_DTS_labeled_chr1_2.png", Zv_plot$plot, width = 14, height = 6, dpi = 300)
+
+
+Zl_plot <- plot_introgression_manhattan(
+  res_all = fit$res_by_family$Zl,
+  ann_summary = ann_Zl$summary,    # <-- gene annotation table
+  chr_len = readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/genotype/chr_len.rds"),
+  thr_main = 3,
+  thr_sugg = 3,
+  label_thr = 3,
+  label_top_n = 10,
+  label_mode = "nearest_gene",
+  out_png = "GridLMM_introgression_bins_manhattan_Zl_labeled.png"
+)
+
+quartz()
+print(Zl_plot$plot)
+
+# Save the plot
+ggsave("GridLMM_introgression_bins_manhattan_Zl_DTS_labeled_chr1_2.png", Zl_plot$plot, width = 14, height = 6, dpi = 300)
+
+
+
+
+Zx_plot <- plot_introgression_manhattan(
+  res_all = fit$res_by_family$Zx,
+  ann_summary = ann_Zx$summary,    # <-- gene annotation table
+  chr_len = readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/genotype/chr_len.rds"),
+  thr_main = 3,
+  thr_sugg = 3,
+  label_thr = 3,
+  label_top_n = 10,
+  label_mode = "nearest_gene",
+  out_png = "GridLMM_introgression_bins_manhattan_Zx_labeled.png"
+)
+
+quartz()
+print(Zx_plot$plot)
+# Save the plot
+ggsave("GridLMM_introgression_bins_manhattan_Zx_DTS_labeled_chr1_2.png", Zx_plot$plot, width = 14, height = 6, dpi = 300)
+
+
+getwd()
 
 
 # # 6. Combined analysis: Scan each chromosome using GridLMM

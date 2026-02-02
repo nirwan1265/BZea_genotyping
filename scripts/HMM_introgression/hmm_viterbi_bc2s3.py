@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
-import argparse, gzip, math
+import argparse
+import gzip
+import math
 from bisect import bisect_right
 
 STATES = ["RR", "RH", "HH"]
 
+# -----------------------------
+# Genetic map utilities
+# -----------------------------
 def read_map(map_path: str):
     bp, cm = [], []
     with open(map_path, "r") as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith("#") or line.startswith("locus"):
+            if (not line) or line.startswith("#") or line.startswith("locus"):
                 continue
             p = line.split()
             if len(p) < 2:
                 continue
             try:
                 b = int(float(p[0]))
-                c = float(p[-1])  # last col as cM
+                c = float(p[-1])
             except ValueError:
                 continue
             bp.append(b)
@@ -27,6 +32,7 @@ def read_map(map_path: str):
     bp = [x for x, _ in z]
     cm = [y for _, y in z]
     return bp, cm
+
 
 def interp_cm(bp_map, cm_map, pos: int) -> float:
     i = bisect_right(bp_map, pos) - 1
@@ -42,15 +48,25 @@ def interp_cm(bp_map, cm_map, pos: int) -> float:
     y0, y1 = cm_map[i], cm_map[i + 1]
     return y0 if x1 == x0 else y0 + (pos - x0) * (y1 - y0) / (x1 - x0)
 
+
 def haldane_theta(d_morgan: float) -> float:
     return 0.5 * (1.0 - math.exp(-2.0 * d_morgan))
 
+
+# -----------------------------
+# Log-space helpers
+# -----------------------------
 def logsumexp3(a, b, c):
     m = max(a, b, c)
     return m + math.log(math.exp(a - m) + math.exp(b - m) + math.exp(c - m))
 
+
+def slog(x):
+    return -1e300 if x <= 0 else math.log(x)
+
+
 def mix_log(a, b, eta):
-    # log((1-eta)exp(a) + eta exp(b))
+    # log((1-eta)*exp(a) + eta*exp(b))
     if eta <= 0:
         return a
     if eta >= 1:
@@ -58,22 +74,24 @@ def mix_log(a, b, eta):
     m = max(a, b)
     return m + math.log((1 - eta) * math.exp(a - m) + eta * math.exp(b - m))
 
+
 def apply_emission_adjustments(lRR, lRH, lHH, eta_hh_from_rh, eta_rr_from_rh, rh_penalty):
-    # HH rescue
+    # HH rescue from RH
     lHH2 = mix_log(lHH, lRH, eta_hh_from_rh)
-    # optional RR tolerance (usually small)
+    # optional RR borrow from RH
     lRR2 = mix_log(lRR, lRH, eta_rr_from_rh)
     # RH penalty
     lRH2 = lRH - rh_penalty
     return lRR2, lRH2, lHH2
 
+
+# -----------------------------
+# HMM transitions (sticky + stationary)
+# -----------------------------
 def build_A(theta, pi, rho):
-    # sticky + stationary transitions
+    # s is switch probability (bounded)
     s = rho * theta
-    if s > 0.25:
-        s = 0.25
-    if s < 1e-12:
-        s = 1e-12
+    s = max(1e-12, min(0.25, s))
     A = [[0.0] * 3 for _ in range(3)]
     for i in range(3):
         A[i][i] = 1.0 - s
@@ -84,12 +102,12 @@ def build_A(theta, pi, rho):
             A[i][j] = s * (pi[j] / denom)
     return A
 
+
+# -----------------------------
+# Forward-backward for posteriors
+# -----------------------------
 def forward_backward(obs_ll, thetas, pi, rho):
     n = len(obs_ll)
-
-    def slog(x):
-        return -1e300 if x <= 0 else math.log(x)
-
     alpha = [[-1e300] * 3 for _ in range(n)]
     c = [0.0] * n
 
@@ -114,9 +132,9 @@ def forward_backward(obs_ll, thetas, pi, rho):
     for t in range(n - 2, -1, -1):
         A = build_A(thetas[t + 1], pi, rho)
         for i in range(3):
-            v0 = math.log(max(A[i][0], 1e-300)) + obs_ll[t + 1][0] + beta[t + 1][0]
-            v1 = math.log(max(A[i][1], 1e-300)) + obs_ll[t + 1][1] + beta[t + 1][1]
-            v2 = math.log(max(A[i][2], 1e-300)) + obs_ll[t + 1][2] + beta[t + 1][2]
+            v0 = slog(A[i][0]) + obs_ll[t + 1][0] + beta[t + 1][0]
+            v1 = slog(A[i][1]) + obs_ll[t + 1][1] + beta[t + 1][1]
+            v2 = slog(A[i][2]) + obs_ll[t + 1][2] + beta[t + 1][2]
             beta[t][i] = logsumexp3(v0, v1, v2) - c[t + 1]
 
     post = [[0.0] * 3 for _ in range(n)]
@@ -130,12 +148,12 @@ def forward_backward(obs_ll, thetas, pi, rho):
         post[t][2] = math.exp(v2 - z)
     return post
 
-def viterbi(obs_ll, thetas, pi, rho):
+
+# -----------------------------
+# Standard Viterbi (no rigidity)
+# -----------------------------
+def viterbi_standard(obs_ll, thetas, pi, rho):
     n = len(obs_ll)
-
-    def slog(x):
-        return -1e300 if x <= 0 else math.log(x)
-
     dp = [[-1e300] * 3 for _ in range(n)]
     ptr = [[0] * 3 for _ in range(n)]
 
@@ -163,12 +181,67 @@ def viterbi(obs_ll, thetas, pi, rho):
     path.reverse()
     return path
 
-def run_filter(path, chroms, positions, min_run_hh, min_run_rh):
-    # Flip short runs:
-    # - HH run < min_run_hh -> RH
-    # - RH run < min_run_rh -> RR
+
+# -----------------------------
+# RTIGER-ish rigidity via hysteresis
+# -----------------------------
+def decode_hysteresis(best_state, chroms, R):
+    """
+    Require R consecutive markers supporting a new state before switching.
+
+    best_state: list[int] in {0,1,2} (per marker)
+    R: int >=1
+    """
+    n = len(best_state)
+    if n == 0:
+        return []
+    if R <= 1:
+        return best_state[:]
+
+    out = [best_state[0]]
+    cur = best_state[0]
+    run_state = None
+    run_len = 0
+
+    for t in range(1, n):
+        # reset at chromosome boundary
+        if chroms[t] != chroms[t - 1]:
+            cur = best_state[t]
+            out.append(cur)
+            run_state = None
+            run_len = 0
+            continue
+
+        s = best_state[t]
+        if s == cur:
+            run_state = None
+            run_len = 0
+            out.append(cur)
+            continue
+
+        # candidate switch run
+        if run_state is None or s != run_state:
+            run_state = s
+            run_len = 1
+        else:
+            run_len += 1
+
+        if run_len >= R:
+            cur = run_state
+            run_state = None
+            run_len = 0
+
+        out.append(cur)
+
+    return out
+
+
+# -----------------------------
+# Post-run min-run filter (optional)
+# -----------------------------
+def run_filter(path, chroms, min_run_hh, min_run_rh):
     out = path[:]
-    n = len(path)
+    n = len(out)
     i = 0
     while i < n:
         j = i
@@ -176,15 +249,19 @@ def run_filter(path, chroms, positions, min_run_hh, min_run_rh):
             j += 1
         run_len = j - i + 1
         st = out[i]
-        if st == 2 and run_len < min_run_hh:  # HH
+        if st == 2 and run_len < min_run_hh:  # HH -> RH
             for k in range(i, j + 1):
                 out[k] = 1
-        if st == 1 and run_len < min_run_rh:  # RH
+        if st == 1 and run_len < min_run_rh:  # RH -> RR
             for k in range(i, j + 1):
                 out[k] = 0
         i = j + 1
     return out
 
+
+# -----------------------------
+# Main
+# -----------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in_gl_tsv_gz", required=True)
@@ -192,31 +269,47 @@ def main():
     ap.add_argument("--out_statepath_gz", required=True)
     ap.add_argument("--out_tracts_bed_gz", required=True)
 
-    ap.add_argument("--prior_rr", type=float, default=0.92)
+    ap.add_argument("--prior_rr", type=float, default=0.88)
     ap.add_argument("--prior_rh", type=float, default=0.02)
-    ap.add_argument("--prior_hh", type=float, default=0.06)
+    ap.add_argument("--prior_hh", type=float, default=0.10)
 
     ap.add_argument("--min_morgan", type=float, default=1e-8)
+    ap.add_argument("--rho", type=float, default=0.2)
 
-    ap.add_argument("--rho", type=float, default=10.0, help="rigidity: lower = fewer switches, higher = more switches")
-    ap.add_argument("--eta_hh_from_rh", type=float, default=0.20, help="HH rescue: HH borrows from RH (0-0.5 typical)")
-    ap.add_argument("--eta_rr_from_rh", type=float, default=0.00, help="optional RR borrow from RH (usually 0)")
-    ap.add_argument("--rh_penalty", type=float, default=1.0, help="RH penalty in NATURAL log units (try 0.5-2.0)")
+    ap.add_argument("--eta_hh_from_rh", type=float, default=0.5)
+    ap.add_argument("--eta_rr_from_rh", type=float, default=0.0)
+    ap.add_argument("--rh_penalty", type=float, default=0.3)
 
-    ap.add_argument("--min_run_hh", type=int, default=3, help="post-filter: HH run must be >= this many SNPs")
-    ap.add_argument("--min_run_rh", type=int, default=3, help="post-filter: RH run must be >= this many SNPs")
+    # decoding choice
+    ap.add_argument(
+        "--decode",
+        choices=["posterior_hysteresis", "emission_hysteresis", "viterbi"],
+        default="posterior_hysteresis",
+        help=(
+            "posterior_hysteresis: HMM posteriors then RTIGER-like hysteresis (recommended)\n"
+            "emission_hysteresis: argmax emission then hysteresis (fast, ignores transitions)\n"
+            "viterbi: standard HMM viterbi (no rigidity)"
+        ),
+    )
+    ap.add_argument("--rigidity", "-R", type=int, default=50, help="R consecutive markers before switching (for *_hysteresis)")
+
+    # optional extra cleanup
+    ap.add_argument("--min_run_hh", type=int, default=1)
+    ap.add_argument("--min_run_rh", type=int, default=1)
+
     args = ap.parse_args()
 
+    # normalize priors
     s = args.prior_rr + args.prior_rh + args.prior_hh
     pi = [args.prior_rr / s, args.prior_rh / s, args.prior_hh / s]
 
-    # Load maps
+    # load maps
     maps = {}
     for c in range(1, 11):
         chrom = f"chr{c}"
         maps[chrom] = read_map(f"{args.map_dir}/{chrom}.map")
 
-    # Read GL rows (supports 7-col or 8-col formats)
+    # read GL rows (accept 7-col or 8-col with DP)
     rows = []
     with gzip.open(args.in_gl_tsv_gz, "rt") as f:
         for line in f:
@@ -235,20 +328,12 @@ def main():
                 pos = int(p[1])
                 ref = p[2]
                 alt = p[3]
-
-                # 8+ columns: chrom pos ref alt dp gl0 gl1 gl2
                 if len(p) >= 8:
                     dp = int(p[4])
-                    gl0 = float(p[5])
-                    gl1 = float(p[6])
-                    gl2 = float(p[7])
-                # 7 columns: chrom pos ref alt gl0 gl1 gl2
+                    gl0, gl1, gl2 = float(p[5]), float(p[6]), float(p[7])
                 else:
                     dp = -1
-                    gl0 = float(p[4])
-                    gl1 = float(p[5])
-                    gl2 = float(p[6])
-
+                    gl0, gl1, gl2 = float(p[4]), float(p[5]), float(p[6])
             except ValueError:
                 continue
 
@@ -261,11 +346,11 @@ def main():
             out.write("")
         return
 
+    # sort rows
     chr_order = {f"chr{i}": i for i in range(1, 11)}
     rows.sort(key=lambda x: (chr_order.get(x[0], 99), x[1]))
 
     chroms = []
-    poss = []
     meta = []
     obs_ll = []
     thetas = [0.0]
@@ -273,18 +358,16 @@ def main():
     prev_cm = None
 
     for i, (chrom, pos, ref, alt, dp, gl0, gl1, gl2) in enumerate(rows):
-        # convert log10 GL to ln-likelihood (relative ok)
+        # GL are log10 relative likelihoods => convert to ln scale
         lRR = gl0 * math.log(10.0)
         lRH = gl1 * math.log(10.0)
         lHH = gl2 * math.log(10.0)
 
         lRR, lRH, lHH = apply_emission_adjustments(
-            lRR,
-            lRH,
-            lHH,
-            eta_hh_from_rh=args.eta_hh_from_rh,
-            eta_rr_from_rh=args.eta_rr_from_rh,
-            rh_penalty=args.rh_penalty,
+            lRR, lRH, lHH,
+            args.eta_hh_from_rh,
+            args.eta_rr_from_rh,
+            args.rh_penalty
         )
         obs_ll.append([lRR, lRH, lHH])
 
@@ -297,43 +380,50 @@ def main():
             d_cm = abs(cm_here - prev_cm)
             d_m = max(d_cm / 100.0, args.min_morgan)
             th = haldane_theta(d_m)
-            if th < 1e-8:
-                th = 1e-8
-            thetas.append(th)
+            thetas.append(max(th, 1e-8))
 
         prev_chr = chrom
         prev_cm = cm_here
         chroms.append(chrom)
-        poss.append(pos)
         meta.append((chrom, pos, ref, alt, dp))
 
-    post = forward_backward(obs_ll, thetas, pi, rho=args.rho)
-    path = viterbi(obs_ll, thetas, pi, rho=args.rho)
+    # posteriors (always compute so output has probs)
+    post = forward_backward(obs_ll, thetas, pi, args.rho)
 
-    # post-run filter (“r sites”)
-    path2 = run_filter(path, chroms, poss, args.min_run_hh, args.min_run_rh)
+    # decode
+    if args.decode == "viterbi":
+        path = viterbi_standard(obs_ll, thetas, pi, args.rho)
+
+    elif args.decode == "emission_hysteresis":
+        best = [max(range(3), key=lambda s: obs_ll[t][s]) for t in range(len(obs_ll))]
+        path = decode_hysteresis(best, chroms, args.rigidity)
+
+    else:  # posterior_hysteresis (recommended)
+        best = [max(range(3), key=lambda s: post[t][s]) for t in range(len(post))]
+        path = decode_hysteresis(best, chroms, args.rigidity)
+
+    # optional min-run cleanup
+    path = run_filter(path, chroms, args.min_run_hh, args.min_run_rh)
 
     # write statepath
     with gzip.open(args.out_statepath_gz, "wt") as out:
         out.write("CHROM\tPOS\tREF\tALT\tDP\tSTATE\tP_RR\tP_RH\tP_HH\tTHETA\n")
         for i, (chrom, pos, ref, alt, dp) in enumerate(meta):
-            st = STATES[path2[i]]
+            st = STATES[path[i]]
             pRR, pRH, pHH = post[i]
-            out.write(
-                f"{chrom}\t{pos}\t{ref}\t{alt}\t{dp}\t{st}\t{pRR:.6g}\t{pRH:.6g}\t{pHH:.6g}\t{thetas[i+1]:.6g}\n"
-            )
+            out.write(f"{chrom}\t{pos}\t{ref}\t{alt}\t{dp}\t{st}\t{pRR:.6g}\t{pRH:.6g}\t{pHH:.6g}\t{thetas[i+1]:.6g}\n")
 
     # write tracts
     with gzip.open(args.out_tracts_bed_gz, "wt") as out:
         out.write("chrom\tstart\tend\tstate\n")
         cur_chr = meta[0][0]
-        cur_state = path2[0]
+        cur_state = path[0]
         cur_start = meta[0][1]
         cur_end = meta[0][1]
+
         for i in range(1, len(meta)):
-            chrom = meta[i][0]
-            pos = meta[i][1]
-            st = path2[i]
+            chrom, pos = meta[i][0], meta[i][1]
+            st = path[i]
             if chrom != cur_chr or st != cur_state:
                 out.write(f"{cur_chr}\t{max(cur_start-1,0)}\t{cur_end}\t{STATES[cur_state]}\n")
                 cur_chr = chrom
@@ -342,7 +432,9 @@ def main():
                 cur_end = pos
             else:
                 cur_end = pos
+
         out.write(f"{cur_chr}\t{max(cur_start-1,0)}\t{cur_end}\t{STATES[cur_state]}\n")
+
 
 if __name__ == "__main__":
     main()

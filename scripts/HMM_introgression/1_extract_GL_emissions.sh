@@ -1,19 +1,29 @@
 #!/bin/bash
-#BSUB -J "GL_bySample[1428-1460]%50"
+#BSUB -J "GL_bySample[520-599]%32"
 #BSUB -n 1
-##BSUB -q sara
+#BSUB -q sara
 #BSUB -W 5000
 #BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=6GB]"
+#BSUB -R "rusage[mem=10GB]"
 #BSUB -o /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/logs/GL_bySample.%J.%I.out
 #BSUB -e /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/logs/GL_bySample.%J.%I.err
 
+
+
+# Do this once:
+#BCF="/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/5_filtered_bcf/BZea_chr1.filtered.bcf"
+
+#bcftools query -l "$BCF" > /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/5_filtered_bcf/samples.chr1.txt
+
+#wc -l /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/5_filtered_bcf/samples.chr1.txt
+#head /rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/5_filtered_bcf/samples.chr1.txt
+
 set -euo pipefail
 
-BCFDIR="/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/4_per_chr_renamed"
+BCFDIR="/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/5_filtered_bcf"
 SAMPLELIST="${BCFDIR}/samples.chr1.txt"
 
-OUTDIR="/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/5_HMM_inputs_GL"
+OUTDIR="/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/6_HMM_inputs_GL"
 LOGDIR="/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/logs"
 
 mkdir -p "${OUTDIR}" "${LOGDIR}"
@@ -33,7 +43,7 @@ echo "OUT=${OUT}"
 
 for c in {1..10}; do
   CHR="chr${c}"
-  BCF="${BCFDIR}/BZea_${CHR}.full.renamed.bcf"
+  BCF="${BCFDIR}/BZea_${CHR}.filtered.bcf"
 
   [[ -f "${BCF}" ]] || { echo "ERROR missing: ${BCF}" >&2; exit 2; }
 

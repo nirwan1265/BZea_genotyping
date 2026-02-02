@@ -209,6 +209,7 @@ run_bzea_gridlmm_scan <- function(
     geno_file,                     # first col IDs, remaining cols markers "chr:pos"
     scan_mode = c("single", "window"),
     step_bp = 100000L,             # only if window
+    single_bin_bp = NULL, # for single-mode when geno_file is ALREADY binned (so we can set bin_start/bin_end correctly)
     window_agg = c("mean", "median"),
     min_markers_per_window = 1L,
     
@@ -285,13 +286,46 @@ run_bzea_gridlmm_scan <- function(
   
   marker_map <- parse_marker_map(colnames(geno_mat))
   
-  ## ---- choose X (single vs window)  <<<< THIS is the selector
+  ## ---- choose X (single vs window)  
+  # if (scan_mode == "single") {
+  #   X_all <- geno_mat
+  #   map_use <- marker_map
+  #   map_use$bin_start <- map_use$pos
+  #   map_use$bin_end   <- map_use$pos
+  #   map_use$n_markers <- 1L
+  # } else {
+  #   win <- make_windowed_X(
+  #     geno_mat = geno_mat,
+  #     marker_map = marker_map,
+  #     step_bp = as.integer(step_bp),
+  #     agg = window_agg,
+  #     min_markers = as.integer(min_markers_per_window)
+  #   )
+  #   X_all <- win$X
+  #   map_use <- win$map
+  # }
+  
+  ### this single scan mode is if you already have a binned genotype:
+  ## ---- choose X (single vs window)
   if (scan_mode == "single") {
     X_all <- geno_mat
     map_use <- marker_map
-    map_use$bin_start <- map_use$pos
-    map_use$bin_end   <- map_use$pos
-    map_use$n_markers <- 1L
+    
+    if (!is.null(single_bin_bp)) {
+      bw <- as.integer(single_bin_bp)
+      stopifnot1(bw >= 1L, "single_bin_bp must be >= 1")
+      
+      # infer bin bounds from midpoint pos and known bin width
+      bin_id <- (pmax(map_use$pos, 1L) - 1L) %/% bw
+      map_use$bin_start <- bin_id * bw + 1L
+      map_use$bin_end   <- map_use$bin_start + bw - 1L
+      map_use$n_markers <- NA_integer_
+    } else {
+      map_use$bin_start <- map_use$pos
+      map_use$bin_end   <- map_use$pos
+      map_use$n_markers <- 1L
+    }
+    
   } else {
     win <- make_windowed_X(
       geno_mat = geno_mat,
@@ -303,6 +337,8 @@ run_bzea_gridlmm_scan <- function(
     X_all <- win$X
     map_use <- win$map
   }
+  
+  
   
   ## ---- keep chr_set
   map_use$chr <- as.character(map_use$chr)
@@ -454,7 +490,7 @@ fit <- run_bzea_gridlmm_scan(
   pheno_file = "/Users/nirwantandukar/Documents/Github/BZea_genotyping/data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv",
   trait_col  = "DTS",
   id_col     = 1,
-  geno_file  = "RTiger_binned_dosage_genome_step1e+05.csv",
+  geno_file  = "RTiger_binned_dosage_genome_step1e+05_chr1_2.csv",
   scan_mode  = "window",
   step_bp    = 100000L,
   window_agg = "mean",
@@ -484,4 +520,27 @@ names(fit_fam$res_by_family)
 lapply(fit_fam$res_by_family, function(df) head(df[, c("Family","Marker","p","mlog10p")], 3))
 
 
+# C) If you already have a binned genotype file use single scan mode with the single_bin_bp argument
+fit <- run_bzea_gridlmm_scan(
+  pheno_file = "/Users/nirwantandukar/Documents/Github/BZea_genotyping/data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv",
+  trait_col  = "DTS",
+  id_col     = 1,
+  geno_file  = "RTiger_binned_dosage_genome_step25000_chr1_2.csv",
+  
+  scan_mode  = "single",
+  single_bin_bp = 25000,   
+  
+  K_dir      = "/Users/nirwantandukar/Documents/Research/data/BZea/genotype/LOCO_K/tmp",
+  K_format   = "plink2_rel",
+  analysis_mode = "both",
+  include_family_fixed = TRUE,
+  cores = 8
+)
 
+
+
+
+
+str(fit)
+fit$res_all
+fit$res_by_family

@@ -1,0 +1,7 @@
+# Best HMM parameters from Optuna tuning
+# Score: 1.4707
+# Trials: 50
+
+R=74
+rho=0.20483114926698603
+eta=0.46678881553104173

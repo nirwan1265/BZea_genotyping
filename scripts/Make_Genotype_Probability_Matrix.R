@@ -2,15 +2,22 @@ library(dplyr)
 library(data.table)
 library(stringr)
 
-obj <- readRDS("Samples_1_100_RTIGER_results.rds")
-obj2 <- readRDS("Samples_101_120_RTIGER_results.rds")
-obj3 <- readRDS("Samples_121_200_RTIGER_results.rds")
-obj4 <- readRDS("Samples_350_400_RTIGER_results.rds")
+obj <- readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/RTIGER_RDS/Samples_chr1_2_1_100_RTIGER_results.rds")
+obj2 <- readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/RTIGER_RDS/Samples_chr1_2_101_200_RTIGER_results.rds")
+#obj3 <- readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/RTIGER_RDS/Samples_chr1_2_201_300_RTIGER_results.rds")
+obj3 <- readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/RTIGER_RDS/Samples_chr1_2_301_400_RTIGER_results.rds")
+obj4 <- readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/RTIGER_RDS/Samples_chr1_2_401_500_RTIGER_results.rds")
+obj5 <- readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/RTIGER_RDS/Samples_chr1_2_501_611_RTIGER_results.rds")
+
 
 gamma <- obj@Probabilities[["gamma"]]
 gamma2 <- obj2@Probabilities[["gamma"]]
 gamma3 <- obj3@Probabilities[["gamma"]]
 gamma4 <- obj4@Probabilities[["gamma"]]
+gamma5 <- obj5@Probabilities[["gamma"]]
+#gamma6 <- obj6@Probabilities[["gamma"]]
+
+
 
 
 # expDesign is a list, each element is a data.frame (or a list of dfs)
@@ -19,24 +26,29 @@ ed <- obj@info$expDesign
 ed2 <- obj2@info$expDesign
 ed3 <- obj3@info$expDesign
 ed4 <- obj4@info$expDesign
+ed5 <- obj5@info$expDesign
+
 
 # If expDesign is a list of data.frames, bind them:
 ed_df <- ed
 ed_df2 <- ed2
 ed_df3 <- ed3
 ed_df4 <- ed4
+ed_df5 <- ed5
 
 # keep only what we need
 ed_df <- ed_df[, c("name", "OName")]
 ed_df2 <- ed_df2[, c("name", "OName")]
 ed_df3 <- ed_df3[, c("name", "OName")]
 ed_df4 <- ed_df4[, c("name", "OName")]
+ed_df5 <- ed_df5[, c("name", "OName")]
 
 # build mapping: Sample_# -> real sample ID
 map <- setNames(ed_df$OName, ed_df$name)
 map2 <- setNames(ed_df2$OName, ed_df2$name)
 map3 <- setNames(ed_df3$OName, ed_df3$name)
 map4 <- setNames(ed_df4$OName, ed_df4$name)
+map5 <- setNames(ed_df5$OName, ed_df5$name)
 
 # sanity check: do all gamma names exist in map?
 missing <- setdiff(names(gamma), names(map))
@@ -50,12 +62,14 @@ names(gamma) <- unname(map[names(gamma)])
 names(gamma2) <- unname(map2[names(gamma2)])
 names(gamma3) <- unname(map3[names(gamma3)])
 names(gamma4) <- unname(map4[names(gamma4)])
+names(gamma5) <- unname(map5[names(gamma5)])
 
 # assign back
 obj@Probabilities[["gamma"]] <- gamma
 obj2@Probabilities[["gamma"]] <- gamma2
 obj3@Probabilities[["gamma"]] <- gamma3
 obj4@Probabilities[["gamma"]] <- gamma4
+obj5@Probabilities[["gamma"]] <- gamma5
 
 # optional: also rename alpha/beta/psi consistently
 for (slot in c("alpha","beta","psi")) {
@@ -102,6 +116,17 @@ for (slot in c("alpha","beta","psi") ) {
   }
 }
 
+for (slot in c("alpha","beta","psi") ) {
+  x5 <- obj5@Probabilities[[slot]]
+  if (!is.null(x5)) {
+    miss5 <- setdiff(names(x5), names(map5))
+    if (length(miss5) == 0) {
+      names(x5) <- unname(map5[names(x5)])
+      obj5@Probabilities[[slot]] <- x5
+    }
+  }
+}
+
 
 
 # quick check: show first few names
@@ -109,17 +134,16 @@ head(names(obj@Probabilities[["gamma"]]))
 head(names(obj2@Probabilities[["gamma"]]))
 head(names(obj3@Probabilities[["gamma"]]))
 head(names(obj4@Probabilities[["gamma"]]))
-
+head(names(obj5@Probabilities[["gamma"]]))
 
 
 # save
-saveRDS(obj, "Samples_1_100_RTIGER_results_renamed.rds")
+saveRDS(obj, "Samples_chr1_2_RTIGER_results_renamed.rds")
 
 
 
 
 # Get df 
-
 get_file_map <- function(obj) {
   # returns named character vector: names = sample IDs (OName), values = TSV file paths
   
@@ -154,6 +178,7 @@ file_map <- get_file_map(obj)
 file_map2 <- get_file_map(obj2)
 file_map3 <- get_file_map(obj3)
 file_map4 <- get_file_map(obj4)
+file_map5 <- get_file_map(obj5)
 
 head(file_map)
 head(file_map2)
@@ -260,10 +285,10 @@ chr_len <- readRDS("/Users/nirwantandukar/Documents/Research/data/BZea/genotype/
 
 
 # All chromosomes
-step_bp <- 100000
+step_bp <- 10000
 allX <- list()
 
-for (cc in paste0("chr", 1:10)) {
+for (cc in paste0("chr", 1:2)) {
   out <- make_binned_dosage_chr(
     obj     = obj,
     chr     = cc,
@@ -279,7 +304,7 @@ geno_mat <- do.call(cbind, allX)   # rows=samples, cols=chr#:pos bins
 geno_df  <- data.frame(Line = rownames(geno_mat), geno_mat, check.names = FALSE)
 
 allX2 <- list()
-for (cc in paste0("chr", 1:10)) {
+for (cc in paste0("chr", 1:2)) {
   out2 <- make_binned_dosage_chr(
     obj     = obj2,
     chr     = cc,
@@ -296,7 +321,7 @@ geno_df2  <- data.frame(Line = rownames(geno_mat2), geno_mat2, check.names = FAL
 
 
 allX3 <- list()
-for (cc in paste0("chr", 1:10)) {
+for (cc in paste0("chr", 1:2)) {
   out3 <- make_binned_dosage_chr(
     obj     = obj3,
     chr     = cc,
@@ -313,7 +338,7 @@ geno_df3  <- data.frame(Line = rownames(geno_mat3), geno_mat3, check.names = FAL
 
 
 allX4 <- list()
-for (cc in paste0("chr", 1:10)) {
+for (cc in paste0("chr", 1:2)) {
   out4 <- make_binned_dosage_chr(
     obj     = obj4,
     chr     = cc,
@@ -327,11 +352,23 @@ for (cc in paste0("chr", 1:10)) {
 geno_mat4 <- do.call(cbind, allX4)   # rows=samples, cols=chr#:pos bins
 geno_df4  <- data.frame(Line = rownames(geno_mat4), geno_mat4, check.names = FALSE)
 
-
-
+allX5 <- list()
+for (cc in paste0("chr", 1:2)) {
+  out5 <- make_binned_dosage_chr(
+    obj     = obj5,
+    chr     = cc,
+    chr_len = chr_len[[cc]],
+    step_bp = step_bp,
+    iHET    = 2,
+    iTEO    = 3
+  )
+  allX5[[cc]] <- out5$X
+}
+geno_mat5 <- do.call(cbind, allX5)   # rows=samples, cols=chr#:pos bins
+geno_df5  <- data.frame(Line = rownames(geno_mat5), geno_mat5, check.names = FALSE)
 
 # Combine the geno_dfs 
-geno_df <- bind_rows(geno_df, geno_df2, geno_df3, geno_df4)
+geno_df <- bind_rows(geno_df, geno_df2, geno_df3, geno_df4, geno_df5)
 
-fwrite(geno_df, sprintf("RTiger_binned_dosage_genome_step%s.csv", step_bp))
+fwrite(geno_df, sprintf("RTiger_binned_dosage_genome_step%s_chr1_2.csv", step_bp))
 

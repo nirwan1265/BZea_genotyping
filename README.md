@@ -114,23 +114,18 @@ With low-pass depth, **heterozygotes are harder to call confidently**, and the e
   - basic QC (mapping %, coverage summaries)
 - Outputs: `sample.sorted.markdup.bam` + `.bai` (+ QC summaries)
 
-### 4) Genotype likelihood generation + genotype calling
-Two parallel pipelines:
-
-**A) bcftools pipeline** (for imputation + GWAS)
-- Generate genotype likelihoods from low-pass BAMs (`bcftools mpileup`).
-- Joint genotype calling across samples (`bcftools call`) to produce cohort VCF/BCF.
-- Filtering and normalization
-- Outputs: cohort VCF/BCF (raw + filtered)
-
-**B) ANGSD pipeline** (for HMM introgression calling)
+### 4) Genotype likelihood generation + genotype calling (ANGSD)
 - Generate genotype likelihoods using ANGSD with de novo SNP discovery
 - Per-sample GL extraction for HMM input
 - Outputs: per-sample GL TSV files
 
-### 5) Imputation
+### 5) HMM introgression analysis
+
+### 6) Imputation
 - Impute missing genotypes using `Beagle`.
 - Outputs: imputed VCF + quality tables
+
+### Section 7 — QTL / Association Mapping
 
 ---
 
@@ -449,286 +444,15 @@ Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_intr
 
 ---
 
-## Section 5 — bcftools Genotype Calling at SNPVersity Sites
-
-**Goal:** Generate genotype likelihood–based calls **only at known SNP sites** using SNPVersity, by running `bcftools mpileup | bcftools call` in parallel across **chromosomes × BAM-chunks**, then merging outputs.
-
-(This section is used for imputation and GWAS, parallel to the ANGSD pipeline above)
-
-### What you need before running Step 5
-- Reference FASTA + index:
-  - `Zm-B73-REFERENCE-NAM-5.0.fa`
-  - `Zm-B73-REFERENCE-NAM-5.0.fa.fai`  (create with `samtools faidx ref.fa`)
-- SNPVersity per-chromosome VCFs (indexed):
-  - `chr1_high_coverage.vcf.gz` … `chr10_high_coverage.vcf.gz` (+ `.tbi`)
-- BAMs are **sorted + (deduped recommended) + indexed** (`.bai`)
-
 ---
 
-### 5.1 Build SNPVersity allele-target files (biallelic SNPs only)
-
-**Goal:** Convert each SNPVersity VCF into a **tabix-indexed target file** that contains:
-`CHROM  POS  REF,ALT`
-
-**Outputs (per chromosome):**
-- `SNPversity/targets_als/chrN.als.tsv.gz`
-- `SNPversity/targets_als/chrN.als.tsv.gz.tbi`
-
-**Run**
-```bash
-bsub < 04_SNPVersity_bialleles.sh
-```
-Script: `04_SNPVersity_bialleles.sh`
-
----
-
-### 5.2 Create BAM list (absolute paths)
-
-**Goal:** Generate a sorted list of all BAMs used for genotyping.
-
-**Output:**
-- `GL_work/bamlist.txt`
-
-**Run:**
-```bash
-bsub < 05_BAM_list.sh
-```
-Script: `05_BAM_list.sh`
-
----
-
-### 5.3 Split BAM list into chunks (controls open file handles)
-
-**Goal:** Split BAM list into manageable chunks (you used `CHUNK=100`) so each mpileup job opens fewer BAMs.
-
-**Outputs:**
-- `GL_work/bam_chunks/bamlist.chunk.000`
-- `GL_work/bam_chunks/bamlist.chunk.001`
-- `...`
-
-**Run:**
-```bash
-bsub < 05_create_chunks.sh
-```
-Script: `05_create_chunks.sh`
-
----
-
-### 5.4 Compute GL-based calls per (chromosome × BAM-chunk)
-
-**Goal:** For each chromosome and BAM chunk:
-- run `bcftools mpileup` restricted to:
-  - chromosome: `-r chrN`
-  - target sites: `-T chrN.als.tsv.gz`
-- then call genotypes with `bcftools call` using `-C alleles` to force SNPVersity alleles
-
-**Outputs:**
-- `GL_work/GL_by_chr_chunks/chrN.chunk###.bcf`
-- `GL_work/GL_by_chr_chunks/chrN.chunk###.bcf.csi`
-
-**Run**
-```bash
-bsub < 06_GL.sh
-```
-Script: `06_GL.sh`
-
----
-
-### 5.5 Merge chunk-BCFs into one BCF per chromosome
-
-**Goal:** Each `chrN.chunk###.bcf` contains a **subset of samples**. This step merges all chunk outputs into a single multi-sample chromosome BCF.
-
-**Outputs (per chromosome):**
-- `GL_work/GL_by_chr_merged/chrN.merged_withGT.bcf`
-- `GL_work/GL_by_chr_merged/chrN.merged_withGT.bcf.csi`
-
-**Run:**
-```bash
-bsub < 07_combine_bcf.sh
-```
-Script: `07_combine_bcf.sh`
-
----
-
-### 5.6 Concatenate chr1–chr10 into one genome-wide BCF
-
-**Goal:** Concatenate chromosome BCFs into a single file.
-
-**Outputs:**
-- `GL_work/final_genotypes/BZea.chr1_10.bcf`
-- `GL_work/final_genotypes/BZea.chr1_10.bcf.csi`
-
-**Run:**
-```bash
-bsub < 08_merge_one_chr.sh
-```
-Script: `08_merge_one_chr.sh`
-
----
-
-## Section 6 — Post-calling cleanup (biallelic SNP-only VCF)
-
-**Goal:** Convert the genome-wide BCF into a biallelic SNP-only VCF.gz for downstream **filtering + imputation**.
-
-### 6.1 Keep only biallelic SNPs
-
-**Output:**
-- `BZea.chr1_10.biallelic_snps.vcf.gz` (+ `.tbi`)
-
-**Run:**
-```bash
-bsub < 7_bialleles.sh
-```
-Script: `09_bialleles.sh`
-
----
-
-### 6.2 Remove sites with empty ALT (recommended fix)
-
-```bash
-bsub < 10_bialleles_remove_empty_alts.sh
-```
-Script: `10_bialleles_remove_empty_alts.sh`
-
----
-
-## Section 7 — Filtering (DP → fill-tags → MAF + missingness)
-
-**Goal:** Starting from the biallelic SNP-only VCF, apply:
-1) genotype depth (DP) filter (set low-DP genotypes to missing),
-2) compute site-level tags (AN/AC/AF/MAF/NS/F_MISSING),
-3) filter sites by MAF and missingness to create an imputation-ready VCF.
-
-For PCA we used the filters described below. For RTIGER introgression analysis, we used a more relaxed filtering parameters.
-
-### 7.1 DP filter (set low-DP genotypes to missing)
-
-**Input**
-- `BZea.chr1_10.biallelic_snps_no_missing_alts.vcf.gz`
-
-**Parameters**
-- Uses `bcftools filter -S . -e 'FMT/DP<5'`
-- Any genotype with DP < 5 becomes `./.` (missing), but the variant record is retained.
-
-**Output**
-- `BZea.biallelic_snps.DP5.vcf.gz` (+ `.tbi`)
-
-**Run**
-```bash
-bsub < 11_filter_DP.sh
-```
-Script: `11_filter_DP.sh`
-
----
-
-### 7.2 Add site-level summary tags (AN/AC/AF/MAF/NS/F_MISSING)
-
-**Input**
-- `BZea.biallelic_snps.DP5.vcf.gz`
-
-**Output**
-- `BZea.biallelic_snps.DP5.tags.vcf.gz` (+ `.tbi`)
-
-**Run**
-```bash
-bsub < 12_add_AF_AC_AN_MAF_NS_F_missing.sh
-```
-Script: `12_add_AF_AC_AN_MAF_NS_F_missing.sh`
-
----
-
-### 7.3 Filter by MAF and missingness
-
-**Goal** Keeps variants with `MAF >= 0.005` and `F_MISSING <= 0.5` for PCA and imputation
-
-**Output**
-- `BZea.DP1.MAF005.MISS50.vcf.gz` (+ `.tbi`)
-
-**Run**
-```bash
-bsub < 13_filter_MAF_F_missing.sh
-```
-Script: `13_filter_MAF_F_missing.sh`
-
----
-
-## Section 8 — Split by chromosome + imputation (Beagle)
-
-**Goal:** Split the filtered VCF into chr-specific VCFs and run Beagle imputation per chromosome using a genetic map.
-
-
-### 8.1 Split genome-wide VCF into per-chromosome files (chr1–chr10)
-
-**Input**
-- `BZea.DP2.MAF005.MISS50.vcf.gz`
-
-**Outputs**
-- `BZea.DP2.MAF005.MISS50.chr1.vcf.gz` (+ `.tbi`)
-- …
-- `BZea.DP2.MAF005.MISS50.chr10.vcf.gz` (+ `.tbi`)
-
-**Run**
-```bash
-    bsub < 14_separate_chr.sh
-```
-Script: `scripts/14_separate_chr.sh`
-
----
-
-### 8.2 Beagle imputation per chromosome (using NAM genetic maps)
-
-
-**Inputs**
-- Per-chromosome VCFs from Step 8.1
-- Beagle software:
-  - `beagle.27Feb25.75f.jar`
-- Genetic map per chromosome:
-  - `NAM_genetic_map/beagle/chrN.plink.map` or anything similar
-
-**Outputs**
-- `BZea.beagle.chr1.vcf.gz` (+ `.tbi`)
-- …
-- `BZea.beagle.chr10.vcf.gz` (+ `.tbi`)
-
-**Run**
-```bash
-bsub < 15_beagle_impute.sh
-```
-Script: `scripts/15_beagle_impute.sh`
-
----
-
-### 8.3 Add original FORMAT tags back to Beagle output + concatenate all chromosomes
-
-**Goal:** After Beagle imputation, re-attach useful per-genotype fields (e.g. `AD/DP/PL`) from the **pre-imputation** chr-specific VCFs, then concatenate chr1–chr10 into one imputed genome-wide VCF.
-
-**Inputs**
-- Pre-imputation VCF:
-  - `BZea.DP2.MAF005.MISS50.chr${chr}.vcf.gz`
-- Beagle output VCF:
-  - `BZea.beagle.chr${chr}.vcf.gz`
-
-**Outputs**
-- Beagle VCF with tags added back:
-  - `BZea.beagle.chr${chr}.withPL.vcf.gz` (+ `.tbi`)
-- Concatenated genome-wide imputed VCF:
-  - `BZea.beagle.imputed.allchr.vcf.gz` (+ `.tbi`)
-
-**Run**
-```bash
-    bsub < 16_add_tags_back_and_concat.sh
-```
-Script: `scripts/16_add_tags_back_and_concat.sh`
-
----
-
-## Section 9 — HMM-based Introgression Analysis
+## Section 5 — HMM-based Introgression Analysis
 
 We infer **local ancestry states** along the genome for each BC2S3 line using a custom Hidden Markov Model (HMM) with RTIGER-style rigidity constraints. This approach uses genotype likelihoods (GLs) rather than hard genotype calls, preserving uncertainty from low-pass sequencing.
 
 ---
 
-### 9.1 HMM Model Overview
+### 5.1 HMM Model Overview
 
 **Goal:** Call local ancestry states (RR, RH, HH) across the genome.
 
@@ -739,14 +463,14 @@ We infer **local ancestry states** along the genome for each BC2S3 line using a 
 | HH | Homozygous Teosinte (Teo/Teo) | BB |
 
 **Key features:**
-- Uses genotype likelihoods (GL) as emissions, not hard calls
+- Uses genotype likelihoods (GL) as emissions, not hard calls nor allele counts
 - Genetic map-based transition probabilities (Haldane function)
 - RTIGER-style rigidity: requires R consecutive markers supporting a state change
 - Prevents noisy single-SNP state switches
 
 ---
 
-### 9.2 HMM Parameters
+### 5.2 HMM Parameters
 
 | Parameter | Description | Optimized Value |
 |-----------|-------------|-----------------|
@@ -760,7 +484,7 @@ We infer **local ancestry states** along the genome for each BC2S3 line using a 
 
 ---
 
-### 9.3 Parameter Optimization (Stability-based)
+### 5.3 Parameter Optimization (Stability-based)
 
 Since we have **no labeled ground truth**, we optimize parameters by maximizing **stability under marker thinning**:
 
@@ -798,7 +522,7 @@ Scripts:
 
 ---
 
-### 9.4 Run HMM per sample
+### 5.4 Run HMM per sample
 
 **Run:**
 ```bash
@@ -843,7 +567,7 @@ Scripts:
 
 ---
 
-### 9.5 Post-analysis: Block merging + visualization
+### 5.5 Post-analysis: Block merging + visualization
 
 **Goal:**
 - Merge adjacent same-state blocks
@@ -880,7 +604,7 @@ Scripts:
 
 ---
 
-### 9.6 Chromosome painting color scheme
+### 5.6 Chromosome painting color scheme
 
 - **Blue (AA)** = B73/B73 (Reference)
 - **Purple (AB)** = Heterozygous
@@ -888,7 +612,7 @@ Scripts:
 
 ---
 
-### 9.7 Complete HMM workflow
+### 5.7 Complete HMM workflow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -927,7 +651,7 @@ Scripts:
 
 ---
 
-### 9.8 HMM File Reference
+### 5.8 HMM File Reference
 
 | File | Purpose |
 |------|---------|
@@ -943,7 +667,11 @@ For detailed documentation, see: [`scripts/HMM_introgression/README.md`](scripts
 
 ---
 
-## Section 10 — QTL / Association Mapping
+## Section 6 — Imputation
+
+---
+
+## Section 7 — QTL / Association Mapping
 
 (To be added)
 

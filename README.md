@@ -433,61 +433,244 @@ bsub < scripts/HMM_introgression/1_extract_GL_emissions.sh
 
 Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_introgression/1_extract_GL_emissions.sh)
 
----
+
+## Section 5 — Imputation
 
 ---
 
-## Section 5 — HMM-based Introgression Analysis
+---
 
-We infer **local ancestry states** along the genome for each BC2S3 line using a custom Hidden Markov Model (HMM) with RTIGER-style rigidity constraints. This approach uses genotype likelihoods (GLs) rather than hard genotype calls, preserving uncertainty from low-pass sequencing.
+## Section 6 — HMM-based Introgression Analysis
+
+We infer **local ancestry states** along the genome for each BC2S3 line using a custom 3-state Hidden Markov Model (HMM) with **RTIGER-style rigidity constraints**. The model operates directly on **genotype likelihoods (GLs)** rather than hard genotype calls, preserving uncertainty typical of low-pass sequencing.
 
 ---
 
-### 5.1 HMM Model Overview
+### 6.1 HMM Model Overview
 
 **Goal:** Call local ancestry states (RR, RH, HH) across the genome.
 
-| State | Meaning | Genotype |
-|-------|---------|----------|
+| State | Meaning | Genotype label |
+|-------|---------|----------------|
 | RR | Homozygous Reference (B73/B73) | AA |
 | RH | Heterozygous (B73/Teosinte) | AB |
-| HH | Homozygous Teosinte (Teo/Teo) | BB |
+| HH | Homozygous Donor (Teo/Teo) | BB |
 
-**Key features:**
-- Uses genotype likelihoods (GL) as emissions, not hard calls nor allele counts
-- Genetic map-based transition probabilities (Haldane function)
-- RTIGER-style rigidity: requires R consecutive markers supporting a state change
-- Prevents noisy single-SNP state switches
+**Key features**
+- Uses **genotype likelihoods (GL)** as emissions (not allele counts, not hard calls)
+- **Genetic map–based transitions** via the **Haldane mapping function**
+- **Sticky transition model** controlled by a global scaling parameter (`rho`)
+- **RTIGER-style rigidity (hysteresis):** requires **R consecutive markers** supporting a state change before switching
+- Reduces noisy single-marker switches and yields coherent introgressed tracts
+- Outputs both **per-marker posteriors** and **merged tract segments** for downstream block-based analysis
 
 ---
 
-### 5.2 HMM Parameters
+### 6.2 HMM Model Specification (paper-ready detail)
 
-| Parameter | Description | Optimized Value |
-|-----------|-------------|-----------------|
+Let markers be indexed by \(t = 1, \dots, T\), ordered by chromosome and position. The hidden state at marker \(t\) is
+\[
+z_t \in \{\mathrm{RR},\mathrm{RH},\mathrm{HH}\}.
+\]
+The observed data at marker \(t\) is the vector of genotype likelihoods:
+\[
+x_t = (GL_t(\mathrm{RR}), GL_t(\mathrm{RH}), GL_t(\mathrm{HH})),
+\]
+provided on the **log10** scale. These are converted to natural log scale:
+\[
+\ell_t(s) = GL_t(s)\cdot \ln(10).
+\]
+
+#### 6.2.1 Emission model (GL-based)
+The emission log-likelihoods are:
+\[
+\ell_t(\mathrm{RR}), \; \ell_t(\mathrm{RH}), \; \ell_t(\mathrm{HH}).
+\]
+
+To improve robustness (especially at low depth), we apply optional emission adjustments:
+
+**HH rescue from RH (`eta_hh_from_rh`)**  
+We allow HH to “borrow” likelihood mass from RH:
+\[
+\ell'_t(\mathrm{HH}) = \ln\left[(1-\eta)\exp(\ell_t(\mathrm{HH}))+\eta\exp(\ell_t(\mathrm{RH}))\right],
+\]
+where \(\eta = \texttt{eta\_hh\_from\_rh}\).
+
+**Optional RR borrow from RH (`eta_rr_from_rh`, default 0)**  
+Analogous mixture for RR (typically left at 0):
+\[
+\ell'_t(\mathrm{RR}) = \ln\left[(1-\eta_{rr})\exp(\ell_t(\mathrm{RR}))+\eta_{rr}\exp(\ell_t(\mathrm{RH}))\right].
+\]
+
+**RH penalty (`rh_penalty`)**  
+We can downweight RH to reduce spurious heterozygote calls:
+\[
+\ell'_t(\mathrm{RH}) = \ell_t(\mathrm{RH}) - \lambda,
+\]
+where \(\lambda = \texttt{rh\_penalty}\).
+
+The adjusted emissions \(\ell'_t(\cdot)\) are used throughout inference and decoding.
+
+---
+
+#### 6.2.2 Transition model (genetic map + sticky switching)
+Each chromosome has a genetic map providing \((bp \rightarrow cM)\). We interpolate each marker to a genetic position \(cM_t\), then compute genetic distance between consecutive markers:
+\[
+\Delta cM_t = |cM_t - cM_{t-1}|.
+\]
+Convert to Morgans:
+\[
+d_t = \max(\Delta cM_t / 100,\; \texttt{min\_morgan}).
+\]
+Compute recombination fraction via Haldane:
+\[
+\theta_t = 0.5\left(1-\exp(-2d_t)\right).
+\]
+
+We then define a **sticky** switching probability:
+\[
+s_t = \rho\cdot \theta_t,
+\]
+with \(\rho = \texttt{rho}\) controlling global switching propensity. For numerical stability, \(s_t\) is bounded (implementation detail):
+\[
+s_t \leftarrow \min(0.25,\; \max(10^{-12}, s_t)).
+\]
+
+Let \(\pi = (\pi_{RR},\pi_{RH},\pi_{HH})\) be the stationary state probabilities derived from user priors:
+\[
+\pi_s = \frac{\texttt{prior\_s}}{\sum_{s'}\texttt{prior\_s'}}.
+\]
+
+The per-step transition matrix \(A_t\) is defined as:
+- Self-transition:
+\[
+A_t(i\rightarrow i) = 1 - s_t
+\]
+- Off-diagonals distributed proportional to \(\pi\) (excluding self):
+\[
+A_t(i\rightarrow j) = s_t \cdot \frac{\pi_j}{1-\pi_i},\quad j\neq i.
+\]
+This favors persistence but allows switching in proportion to genetic distance and prior expectations.
+
+---
+
+#### 6.2.3 Forward–backward posteriors
+We compute posterior state probabilities:
+\[
+P(z_t=s \mid x_{1:T})
+\]
+using the forward–backward algorithm in log space (with per-position normalization to prevent underflow). These posteriors are emitted in the **statepath** output as \(P_{RR}, P_{RH}, P_{HH}\) per marker.
+
+---
+
+#### 6.2.4 Decoding modes (including Viterbi)
+The implementation supports three decoding strategies (`--decode`):
+
+**(A) Viterbi (`viterbi`)**  
+Find the maximum a posteriori path:
+\[
+\hat{z}_{1:T} = \arg\max_{z_{1:T}}\left[\ln \pi_{z_1}+\sum_{t=1}^T \ell'_t(z_t)+\sum_{t=2}^T \ln A_t(z_{t-1}\rightarrow z_t)\right].
+\]
+Dynamic programming recursion:
+\[
+\delta_1(j)=\ln\pi_j+\ell'_1(j)
+\]
+\[
+\delta_t(j)=\ell'_t(j)+\max_i\left[\delta_{t-1}(i)+\ln A_t(i\rightarrow j)\right].
+\]
+Backpointers store the argmax to reconstruct \(\hat{z}_{1:T}\) in \(O(TS^2)\), with \(S=3\).
+
+**(B) Posterior + hysteresis (`posterior_hysteresis`) — used here**  
+Compute posteriors \(P(z_t=s|x)\), form a per-marker best state:
+\[
+b_t=\arg\max_s P(z_t=s|x),
+\]
+then apply RTIGER-style rigidity (below). This preserves linkage information (via posteriors) and adds robustness against noisy switches.
+
+**(C) Emission argmax + hysteresis (`emission_hysteresis`)**  
+Set \(b_t=\arg\max_s \ell'_t(s)\) (ignores transitions), then apply rigidity. Fast but less principled.
+
+---
+
+#### 6.2.5 RTIGER-style rigidity via hysteresis (`--rigidity / -R`)
+After obtaining a “best state” sequence \(b_t\) (from posteriors or emissions), we apply a hysteresis rule:
+
+- Maintain current output state \(c_t\).
+- A change to a new state \(u\neq c\) is only accepted after **R consecutive markers** support \(u\).
+- Chromosome boundaries reset the hysteresis counters.
+
+This suppresses isolated single-marker flips while allowing genuine state changes supported over a stretch of markers.
+
+---
+
+#### 6.2.6 Post-decoding minimum-run cleanup (`--min_run_hh`, `--min_run_rh`)
+After decoding (including hysteresis), we apply a run-length filter:
+
+- HH runs shorter than `min_run_hh` are reassigned to RH (HH→RH),
+- RH runs shorter than `min_run_rh` are reassigned to RR (RH→RR),
+
+applied within each chromosome. This removes extremely short segments that are unlikely to represent true introgression at the marker density used.
+
+---
+
+### 6.3 HMM Parameters
+
+Below are the key parameters commonly tuned or reported.
+
+| Parameter | Meaning | Notes |
+|-----------|---------|------|
+| `--prior_rr`, `--prior_rh`, `--prior_hh` | Stationary/initial state priors | Normalized to π; also used to distribute off-diagonal transition mass |
+| `--rho` | Sticky transition multiplier | Scales switching \(s_t=\rho\theta_t\); higher → more switching |
+| `--min_morgan` | Lower bound on Morgan distance | Prevents \(\theta_t\) from becoming exactly zero when ΔcM≈0 |
+| `--eta_hh_from_rh` | HH rescue from RH emissions | GL-mixture: HH borrows mass from RH; stabilizes HH in low-information regions |
+| `--eta_rr_from_rh` | RR borrow from RH emissions | Usually 0; included for completeness |
+| `--rh_penalty` | Penalize RH emission | Downweights RH likelihood by a constant |
+| `--decode` | Decoding strategy | `posterior_hysteresis` recommended for robustness |
+| `--rigidity` / `-R` | Hysteresis rigidity | Require R consecutive markers supporting a switch |
+| `--min_run_hh`, `--min_run_rh` | Post-decoding cleanup | Removes short HH/RH runs by collapsing them toward less “donor-like” states |
+
+**Example optimized values (replace with your final Optuna results):**
+
+| Parameter | Description | Example optimized value |
+|-----------|-------------|--------------------------|
 | `--rigidity` / `-R` | Consecutive markers needed to switch | **41** |
 | `--rho` | Transition stickiness multiplier | **0.023** |
 | `--eta_hh_from_rh` | HH rescue from RH emissions | **0.012** |
-| `--prior_rr` | Prior probability of RR state | 0.85 |
-| `--prior_rh` | Prior probability of RH state | 0.05 |
-| `--prior_hh` | Prior probability of HH state | 0.10 |
+| `--prior_rr` | Prior probability of RR | 0.85 |
+| `--prior_rh` | Prior probability of RH | 0.05 |
+| `--prior_hh` | Prior probability of HH | 0.10 |
 | `--decode` | Decoding method | `posterior_hysteresis` |
+| `--min_run_hh` | Minimum HH run length (markers) | 3 |
+| `--min_run_rh` | Minimum RH run length (markers) | 5 |
 
 ---
 
-### 5.3 Parameter Optimization (Stability-based)
+### 6.4 Parameter Optimization (Stability-based; no ground truth)
 
-Since we have **no labeled ground truth**, we optimize parameters by maximizing **stability under marker thinning**:
+Because we do not have labeled local ancestry truth at each marker, we optimize parameters by maximizing **stability under marker thinning**:
 
-1. Run HMM on full data → baseline results
-2. Create K thinned replicates (drop 10% markers randomly)
-3. Run HMM on each replicate
-4. Score = similarity between baseline and replicates
-   - Jaccard similarity of donor blocks
-   - State concordance at shared markers
-   - Fragmentation penalty
+1. Run the full pipeline on the full marker set → **baseline**
+2. Create \(K\) thinned replicates (randomly drop ~10% markers)
+3. Run the pipeline on each replicate
+4. Compute stability score = similarity between baseline and replicate outputs
 
-**Run optimization:**
+**Stability metrics (objective components)**
+- **Donor-block Jaccard similarity** after post-analysis (donor = AB+BB):
+  \[
+  J = \frac{bp(\text{baseline} \cap \text{replicate})}{bp(\text{baseline} \cup \text{replicate})}
+  \]
+- **State concordance** at shared markers:
+  fraction of shared (CHROM,POS) with identical state calls
+- **Fragmentation penalty**:
+  penalize excessive donor breakpoints or overly fragmented donor tracts per Mb
+
+We search parameter space using Bayesian optimization (Optuna), typically tuning:
+- `R` (rigidity, integer),
+- `rho` (transition scaling),
+- `eta_hh_from_rh` (emission rescue strength),
+while keeping priors and post-run filters fixed unless there is strong evidence they require tuning.
+
+**Run optimization**
 ```bash
 cd scripts/HMM_introgression
 
@@ -504,16 +687,9 @@ conda activate hmm
 python tune_hmm_optuna.py calib_samples.txt 100
 ```
 
-**Outputs:**
-- `optuna_tuning_runs/best_params.txt`
-- `optuna_tuning_runs/optuna_study.db`
-
-Scripts:
-- [`scripts/HMM_introgression/tune_hmm_optuna.py`](scripts/HMM_introgression/tune_hmm_optuna.py)
-
 ---
 
-### 5.4 Run HMM per sample
+### 6.4 Run HMM per sample
 
 **Run:**
 ```bash
@@ -558,7 +734,7 @@ Scripts:
 
 ---
 
-### 5.5 Post-analysis: Block merging + visualization
+### 6.5 Post-analysis: Block merging + visualization
 
 **Goal:**
 - Merge adjacent same-state blocks
@@ -595,7 +771,7 @@ Scripts:
 
 ---
 
-### 5.6 Chromosome painting color scheme
+### 6.6 Chromosome painting color scheme
 
 - **Blue (AA)** = B73/B73 (Reference)
 - **Purple (AB)** = Heterozygous
@@ -603,7 +779,7 @@ Scripts:
 
 ---
 
-### 5.7 Complete HMM workflow
+### 6.7 Complete HMM workflow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -642,7 +818,7 @@ Scripts:
 
 ---
 
-### 5.8 HMM File Reference
+### 6.8 HMM File Reference
 
 | File | Purpose |
 |------|---------|
@@ -655,10 +831,6 @@ Scripts:
 | `best_params.txt` | Optimized parameters |
 
 For detailed documentation, see: [`scripts/HMM_introgression/README.md`](scripts/HMM_introgression/README.md)
-
----
-
-## Section 6 — Imputation
 
 ---
 

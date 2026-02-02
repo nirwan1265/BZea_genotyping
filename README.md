@@ -438,11 +438,9 @@ Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_intr
 
 ---
 
----
-
 ## Section 6 — HMM-based Introgression Analysis
 
-We infer **local ancestry states** along the genome for each BC2S3 line using a custom 3-state Hidden Markov Model (HMM) with **RTIGER-style rigidity constraints**. The model operates directly on **genotype likelihoods (GLs)** rather than hard genotype calls, preserving uncertainty typical of low-pass sequencing.
+We infer **local ancestry states** along the genome for each BC2S3 line using a custom 3-state Hidden Markov Model (HMM) with **RTIGER-style rigidity constraints**. The model operates directly on **genotype likelihoods (GLs)** rather than hard genotype calls or allele counts, preserving uncertainty typical of low-pass sequencing.
 
 ---
 
@@ -460,53 +458,63 @@ We infer **local ancestry states** along the genome for each BC2S3 line using a 
 - Uses **genotype likelihoods (GL)** as emissions (not allele counts, not hard calls)
 - **Genetic map–based transitions** via the **Haldane mapping function**
 - **Sticky transition model** controlled by a global scaling parameter (`rho`)
-- **RTIGER-style rigidity (hysteresis):** requires **R consecutive markers** supporting a state change before switching
+- **RTIGER-style rigidity (hysteresis):** requires **R consecutive markers** supporting a state change before switching which can be calculated through Bayesian optimization
 - Reduces noisy single-marker switches and yields coherent introgressed tracts
-- Outputs both **per-marker posteriors** and **merged tract segments** for downstream block-based analysis
 
 ---
 
 ### 6.2 HMM Model Specification (paper-ready detail)
 
 Let markers be indexed by \(t = 1, \dots, T\), ordered by chromosome and position. The hidden state at marker \(t\) is
-\[
+
+$$
 z_t \in \{\mathrm{RR},\mathrm{RH},\mathrm{HH}\}.
-\]
+$$
+
 The observed data at marker \(t\) is the vector of genotype likelihoods:
-\[
+
+$$
 x_t = (GL_t(\mathrm{RR}), GL_t(\mathrm{RH}), GL_t(\mathrm{HH})),
-\]
+$$
+
 provided on the **log10** scale. These are converted to natural log scale:
-\[
+
+$$
 \ell_t(s) = GL_t(s)\cdot \ln(10).
-\]
+$$
 
 #### 6.2.1 Emission model (GL-based)
 The emission log-likelihoods are:
-\[
+
+$$
 \ell_t(\mathrm{RR}), \; \ell_t(\mathrm{RH}), \; \ell_t(\mathrm{HH}).
-\]
+$$
 
 To improve robustness (especially at low depth), we apply optional emission adjustments:
 
 **HH rescue from RH (`eta_hh_from_rh`)**  
 We allow HH to “borrow” likelihood mass from RH:
-\[
+
+$$
 \ell'_t(\mathrm{HH}) = \ln\left[(1-\eta)\exp(\ell_t(\mathrm{HH}))+\eta\exp(\ell_t(\mathrm{RH}))\right],
-\]
+$$
+
 where \(\eta = \texttt{eta\_hh\_from\_rh}\).
 
 **Optional RR borrow from RH (`eta_rr_from_rh`, default 0)**  
 Analogous mixture for RR (typically left at 0):
-\[
+
+$$
 \ell'_t(\mathrm{RR}) = \ln\left[(1-\eta_{rr})\exp(\ell_t(\mathrm{RR}))+\eta_{rr}\exp(\ell_t(\mathrm{RH}))\right].
-\]
+$$
 
 **RH penalty (`rh_penalty`)**  
 We can downweight RH to reduce spurious heterozygote calls:
-\[
+
+$$
 \ell'_t(\mathrm{RH}) = \ell_t(\mathrm{RH}) - \lambda,
-\]
+$$
+
 where \(\lambda = \texttt{rh\_penalty}\).
 
 The adjusted emissions \(\ell'_t(\cdot)\) are used throughout inference and decoding.
@@ -515,50 +523,64 @@ The adjusted emissions \(\ell'_t(\cdot)\) are used throughout inference and deco
 
 #### 6.2.2 Transition model (genetic map + sticky switching)
 Each chromosome has a genetic map providing \((bp \rightarrow cM)\). We interpolate each marker to a genetic position \(cM_t\), then compute genetic distance between consecutive markers:
-\[
+
+$$
 \Delta cM_t = |cM_t - cM_{t-1}|.
-\]
+$$
+
 Convert to Morgans:
-\[
+
+$$
 d_t = \max(\Delta cM_t / 100,\; \texttt{min\_morgan}).
-\]
+$$
+
 Compute recombination fraction via Haldane:
-\[
+
+$$
 \theta_t = 0.5\left(1-\exp(-2d_t)\right).
-\]
+$$
 
 We then define a **sticky** switching probability:
-\[
+
+$$
 s_t = \rho\cdot \theta_t,
-\]
+$$
 with \(\rho = \texttt{rho}\) controlling global switching propensity. For numerical stability, \(s_t\) is bounded (implementation detail):
-\[
+
+$$
 s_t \leftarrow \min(0.25,\; \max(10^{-12}, s_t)).
-\]
+$$
 
 Let \(\pi = (\pi_{RR},\pi_{RH},\pi_{HH})\) be the stationary state probabilities derived from user priors:
-\[
+
+$$
 \pi_s = \frac{\texttt{prior\_s}}{\sum_{s'}\texttt{prior\_s'}}.
-\]
+$$
 
 The per-step transition matrix \(A_t\) is defined as:
 - Self-transition:
-\[
+
+$$
 A_t(i\rightarrow i) = 1 - s_t
-\]
+$$
+
 - Off-diagonals distributed proportional to \(\pi\) (excluding self):
-\[
+
+$$
 A_t(i\rightarrow j) = s_t \cdot \frac{\pi_j}{1-\pi_i},\quad j\neq i.
-\]
+$$
+
 This favors persistence but allows switching in proportion to genetic distance and prior expectations.
 
 ---
 
 #### 6.2.3 Forward–backward posteriors
 We compute posterior state probabilities:
-\[
+
+$$
 P(z_t=s \mid x_{1:T})
-\]
+$$
+
 using the forward–backward algorithm in log space (with per-position normalization to prevent underflow). These posteriors are emitted in the **statepath** output as \(P_{RR}, P_{RH}, P_{HH}\) per marker.
 
 ---
@@ -568,23 +590,30 @@ The implementation supports three decoding strategies (`--decode`):
 
 **(A) Viterbi (`viterbi`)**  
 Find the maximum a posteriori path:
-\[
+
+$$
 \hat{z}_{1:T} = \arg\max_{z_{1:T}}\left[\ln \pi_{z_1}+\sum_{t=1}^T \ell'_t(z_t)+\sum_{t=2}^T \ln A_t(z_{t-1}\rightarrow z_t)\right].
-\]
+$$
+
 Dynamic programming recursion:
-\[
+
+$$
 \delta_1(j)=\ln\pi_j+\ell'_1(j)
-\]
-\[
+$$
+
+$$
 \delta_t(j)=\ell'_t(j)+\max_i\left[\delta_{t-1}(i)+\ln A_t(i\rightarrow j)\right].
-\]
+$$
+
 Backpointers store the argmax to reconstruct \(\hat{z}_{1:T}\) in \(O(TS^2)\), with \(S=3\).
 
 **(B) Posterior + hysteresis (`posterior_hysteresis`) — used here**  
 Compute posteriors \(P(z_t=s|x)\), form a per-marker best state:
-\[
+
+$$
 b_t=\arg\max_s P(z_t=s|x),
-\]
+$$
+
 then apply RTIGER-style rigidity (below). This preserves linkage information (via posteriors) and adds robustness against noisy switches.
 
 **(C) Emission argmax + hysteresis (`emission_hysteresis`)**  
@@ -656,9 +685,11 @@ Because we do not have labeled local ancestry truth at each marker, we optimize 
 
 **Stability metrics (objective components)**
 - **Donor-block Jaccard similarity** after post-analysis (donor = AB+BB):
-  \[
+
+  $$
   J = \frac{bp(\text{baseline} \cap \text{replicate})}{bp(\text{baseline} \cup \text{replicate})}
-  \]
+  $$
+  
 - **State concordance** at shared markers:
   fraction of shared (CHROM,POS) with identical state calls
 - **Fragmentation penalty**:

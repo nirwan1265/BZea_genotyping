@@ -1,11 +1,11 @@
 #!/bin/bash
 # =============================================================================
 # 08_check_unfinished.sh — list step-08 array indices without a .done marker and
-#                          print the bsub command that resubmits only those.
+#                          print the sbatch command that resubmits only those.
 #   Run on a login node:  bash 08_check_unfinished.sh
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
 todo=()
 ntot=$(( ${#CHROMS[@]} * NPARTS ))
@@ -19,5 +19,5 @@ echo "finished: $(( ntot - ${#todo[@]} )) / ${ntot}"
 if (( ${#todo[@]} )); then
   list=$(IFS=,; echo "${todo[*]}")
   echo "unfinished indices: ${list}"
-  echo "resubmit: bsub -J \"angsd_counts[${list}]\" < 08_angsd_counts_by_part.sh"
+  echo "resubmit: sbatch --array=${list} 08_angsd_counts_by_part.sh"
 fi

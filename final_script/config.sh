@@ -2,7 +2,7 @@
 # =============================================================================
 # config.sh — shared settings for every numbered script in final_script/.
 # Edit paths HERE only. All scripts are submitted from inside final_script/:
-#     cd final_script && mkdir -p logs && bsub < 01_....sh
+#     cd final_script && mkdir -p logs && sbatch 07_make_site_tables.sh
 # =============================================================================
 
 # ---------- software ----------
@@ -17,7 +17,7 @@ SAMPLE_META=/share/maize/ntanduk/BZea_genotyping/data/name_change/name_change_fi
 
 # ---------- genome split ----------
 CHROMS=(chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10)
-NPARTS=20          # parts per chromosome. LSF arrays in 01 and 08 are sized 10 x 20 = 200.
+NPARTS=20          # parts per chromosome. Slurm arrays in 01 and 08 are sized 10 x 20 = 200.
 
 # ---------- outputs ----------
 WORK=/rsstu/users/r/rrellan/BZea/angsd_genotyping/final
@@ -36,7 +36,7 @@ DISCOVERY_BCF_DIR=/rsstu/users/r/rrellan/BZea/angsd_genotyping/angsd_full_snps/4
 discovery_bcf() { echo "${DISCOVERY_BCF_DIR}/BZea_${1}.full.renamed.bcf"; }
 
 # ---------- ANGSD ----------
-THREADS=4
+THREADS=${SLURM_CPUS_PER_TASK:-4}   # follows --cpus-per-task
 # Read filters shared by discovery (01/03) and counting (08), so counts come from the same reads.
 READ_FILTERS=(-minMapQ 30 -minQ 20 -uniqueOnly 1 -remove_bads 1 -only_proper_pairs 1 -baq 1 -C 50)
 
@@ -59,7 +59,7 @@ KEEP_RAW_COUNTS=0
 # =============================================================================
 # helpers (no edits needed below)
 # =============================================================================
-FINAL_DIR="${LS_SUBCWD:-$PWD}"
+FINAL_DIR="${SLURM_SUBMIT_DIR:-$PWD}"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
@@ -70,7 +70,7 @@ chr_len() {
   echo "$len"
 }
 
-# LSF array index (1 .. nchrom*NPARTS) -> "CHR PART"
+# Slurm array index (1 .. nchrom*NPARTS) -> "CHR PART"
 index_to_chr_part() {
   local i=$1 n=${#CHROMS[@]}
   if (( i < 1 || i > n * NPARTS )); then

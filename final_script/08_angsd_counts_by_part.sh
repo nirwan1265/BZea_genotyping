@@ -1,11 +1,14 @@
 #!/bin/bash
-#BSUB -J "angsd_counts[1-200]%40"
-#BSUB -n 4
-#BSUB -W 5000
-#BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=32GB]"
-#BSUB -o logs/08_counts.%J.%I.out
-#BSUB -e logs/08_counts.%J.%I.err
+#SBATCH --job-name=angsd_counts
+#SBATCH --array=1-200%40
+#SBATCH --output=logs/08_counts.%A_%a.out
+#SBATCH --error=logs/08_counts.%A_%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=3-11:20:00
+#SBATCH --mem=32G
+##SBATCH --partition=compute   # uncomment and set if your account needs a partition
 # =============================================================================
 # 08 — Per-pool B73/ALT read counts at the step-07 sites, one job per part.
 #
@@ -22,13 +25,13 @@
 #     .sampleqc.tsv        per-pool totals for this part
 #     .pos.gz .arg .done   ANGSD bookkeeping (.counts.gz deleted unless KEEP_RAW_COUNTS=1)
 #
-#   Submit after 07 finishes:  bsub -w "done(sites)" < 08_angsd_counts_by_part.sh
+#   Submit after 07 finishes:  sbatch --dependency=afterok:<07 job id> 08_angsd_counts_by_part.sh
 #   Test one part:             bash 08_angsd_counts_by_part.sh 1
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
-IDX=${LSB_JOBINDEX:-${1:?usage: bash $0 <index 1-200>}}
+IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <index 1-200>}}
 read -r CHR PART <<< "$(index_to_chr_part "$IDX")"
 read -r START END <<< "$(part_interval "$CHR" "$PART")"
 

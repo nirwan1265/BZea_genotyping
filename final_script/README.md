@@ -9,30 +9,47 @@ All paths are set in `config.sh`, and every script reads them from there.
 
 ## Run
 
+All jobs are Slurm (`sbatch`). Submit them from inside `final_script/`. Slurm needs the `logs/` folder to exist before a job starts, or the job fails without writing a log.
+
 ```bash
 cd final_script
-mkdir -p logs                      # LSF writes logs here; the folder must exist before submitting
+mkdir -p logs
 
 # ---- read counts (run these now) ----
-bsub < 07_make_site_tables.sh                                   # 10 jobs, one per chromosome
-bsub -w "done(sites)"          < 08_angsd_counts_by_part.sh     # 200 jobs, 10 chr x 20 parts
-bsub -w "done(angsd_counts)"   < 09_concat_counts_by_chr.sh     # 10 jobs
-bsub -w "done(concat_counts)"  < 10_counts_qc.sh                # 1 job
+bash submit_counts.sh test     # 07 (10 tasks) + part 1 of 08; check its log and sacct
+bash submit_counts.sh rest     # 08 parts 2-200, then 09 and 10, chained with --dependency=afterok
 
 # if any 08 part was killed: list them and get the resubmit command
-bash 08_check_unfinished.sh
+bash 08_check_unfinished.sh    # prints e.g.: sbatch --array=37,112 08_angsd_counts_by_part.sh
+
+# the same steps by hand:
+sbatch 07_make_site_tables.sh                                    # array 1-10, one per chromosome
+sbatch --dependency=afterok:<07 jobid> 08_angsd_counts_by_part.sh   # array 1-200 (10 chr x 20 parts)
+sbatch --dependency=afterok:<08 jobid> 09_concat_counts_by_chr.sh   # array 1-10
+sbatch --dependency=afterok:<09 jobid> 10_counts_qc.sh
 
 # ---- site discovery (ALREADY RUN; only needed to redo it) ----
-bsub < 01_angsd_discovery_by_part.sh            # 200 jobs
-bash 02_find_failed_parts.sh                    # prints the bsub line for 03
-bsub -J "angsd_rerun[1-N]%60" < 03_angsd_rerun_failed_split.sh
-bsub < 04_merge_subparts.sh
-bsub < 05_concat_parts_by_chr.sh                # 10 jobs
-bsub < 06_rename_samples.sh                     # 10 jobs
+sbatch 01_angsd_discovery_by_part.sh            # array 1-200
+bash 02_find_failed_parts.sh                    # prints the sbatch line for 03
+sbatch --array=1-N%60 03_angsd_rerun_failed_split.sh
+sbatch 04_merge_subparts.sh
+sbatch 05_concat_parts_by_chr.sh                # array 1-10
+sbatch 06_rename_samples.sh                     # array 1-10
 # then set DISCOVERY_BCF_DIR=${D06} in config.sh
 ```
 
+Options given on the `sbatch` command line override the `#SBATCH` lines. For example, `sbatch --array=5 --mem=64G 08_angsd_counts_by_part.sh` reruns part 5 with more memory.
+
 Every job skips work that already finished (a `.done` marker), so resubmitting the same command is safe. To test one part interactively, pass the index: `bash 08_angsd_counts_by_part.sh 1`.
+
+**Resources** (in each script's `#SBATCH` lines):
+
+| Steps | CPUs | Memory | Time |
+|---|---|---|---|
+| ANGSD (01, 03, 08) | 4 | 16 / 48 / 32 G | 3 days 11 h |
+| Others | 1 | 8–20 G | 2 h – 10 days |
+
+No partition is set. If your account needs one, uncomment `##SBATCH --partition=...` in each script.
 
 ## Steps
 
@@ -115,7 +132,7 @@ These figures come from a test of the awk converter at 1,500 pools with ~0.8 rea
 - **Storage:** the AD BCF takes about 0.5 kB per site, roughly 4.6 GB per 10 M sites.
 - **Raw counts:** ANGSD's A/C/G/T table is deleted after conversion unless `KEEP_RAW_COUNTS=1`.
 
-Memory is set to 32 GB per part in 08. If parts get killed, raise it in the `#BSUB` line, or set `NPARTS=40` in `config.sh` and resize the arrays in 01 and 08 to 400.
+Memory is set to 32 GB per part in 08. If parts get killed, resubmit them with `sbatch --array=<ids> --mem=64G 08_angsd_counts_by_part.sh`, or set `NPARTS=40` in `config.sh` and change `--array` in 01 and 08 to `1-400%40`.
 
 ## Requirements
 

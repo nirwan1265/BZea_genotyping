@@ -1,11 +1,14 @@
 #!/bin/bash
-#BSUB -J "angsd_disc[1-200]%40"
-#BSUB -n 4
-#BSUB -W 5000
-#BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=16GB]"
-#BSUB -o logs/01_angsd_disc.%J.%I.out
-#BSUB -e logs/01_angsd_disc.%J.%I.err
+#SBATCH --job-name=angsd_disc
+#SBATCH --array=1-200%40
+#SBATCH --output=logs/01_angsd_disc.%A_%a.out
+#SBATCH --error=logs/01_angsd_disc.%A_%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=3-11:20:00
+#SBATCH --mem=16G
+##SBATCH --partition=compute   # uncomment and set if your account needs a partition
 # =============================================================================
 # 01 — ANGSD SNP discovery + genotype likelihoods, one job per chromosome part.
 #      (replaces scripts/HMM_introgression/0.0_angsd_genotyping.sh; no manual CHR edits)
@@ -16,13 +19,13 @@
 #   STATUS: already run (outputs in .../angsd_full_snps). Kept for reproducibility.
 #   NOTE:   ANGSD's BCF alleles are MAJOR,MINOR (not B73 REF,ALT). Step 07 re-polarizes.
 #
-#   Submit:  bsub < 01_angsd_discovery_by_part.sh
+#   Submit:  sbatch 01_angsd_discovery_by_part.sh
 #   Test one part interactively:  bash 01_angsd_discovery_by_part.sh 1
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
-IDX=${LSB_JOBINDEX:-${1:?usage: bash $0 <index 1-200>}}
+IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <index 1-200>}}
 read -r CHR PART <<< "$(index_to_chr_part "$IDX")"
 read -r START END <<< "$(part_interval "$CHR" "$PART")"
 

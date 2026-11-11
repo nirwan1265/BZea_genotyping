@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # 02 — Find discovery parts that did not finish and split each into sub-intervals.
-#      (replaces 0.1_find_failed_runs.sh; checks outputs instead of grepping LSF logs)
+#      (replaces 0.1_find_failed_runs.sh; checks outputs instead of grepping job logs)
 #
 #   A part counts as finished if <prefix>.done exists, or the .bcf exists and
 #   ANGSD wrote "[ALL done]" to <prefix>.arg (works for the original run too).
@@ -11,7 +11,7 @@
 #   Run on a login/interactive node (fast):  bash 02_find_failed_parts.sh
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
 mkdir -p "$D03"
 LIST=${D03}/failed_subintervals.tsv
@@ -44,5 +44,5 @@ nsub=$(wc -l < "$LIST")
 echo "Unfinished parts: ${nfail} / ${ntot}"
 echo "Sub-intervals:    ${nsub}  -> ${LIST}"
 if (( nsub > 0 )); then
-  echo "Next: bsub -J \"angsd_rerun[1-${nsub}]%60\" < 03_angsd_rerun_failed_split.sh"
+  echo "Next: sbatch --array=1-${nsub}%60 03_angsd_rerun_failed_split.sh"
 fi

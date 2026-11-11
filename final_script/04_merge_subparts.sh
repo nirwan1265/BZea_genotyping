@@ -1,22 +1,23 @@
 #!/bin/bash
-#BSUB -J merge_subparts
-#BSUB -n 1
-#BSUB -W 14400
-#BSUB -q sara
-#BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=20GB]"
-#BSUB -o logs/04_merge_subparts.%J.out
-#BSUB -e logs/04_merge_subparts.%J.err
+#SBATCH --job-name=merge_subparts
+#SBATCH --output=logs/04_merge_subparts.%j.out
+#SBATCH --error=logs/04_merge_subparts.%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=10-00:00:00
+#SBATCH --mem=20G
+##SBATCH --partition=compute   # uncomment and set if your account needs a partition
 # =============================================================================
 # 04 — Concatenate the sub-interval BCFs from 03 back into whole-part BCFs and
 #      put them next to the step-01 parts, so step 05 sees a complete set.
 #      (replaces 0.3_combine_sub_parts.sh; handles any number of sub-intervals)
 #
 #   Output: ${D01}/BZea_<chr>.part<k>.<start>_<end>.bcf (+ .csi, .done)
-#   Submit: bsub < 04_merge_subparts.sh
+#   Submit: sbatch 04_merge_subparts.sh
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
 LIST=${D03}/failed_subintervals.tsv
 [[ -s $LIST ]] || { echo "No ${LIST}; nothing to merge."; exit 0; }

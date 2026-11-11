@@ -1,12 +1,14 @@
 #!/bin/bash
-#BSUB -J "concat_counts[1-10]%10"
-#BSUB -n 1
-#BSUB -W 12:00
-#BSUB -q sara
-#BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=8GB]"
-#BSUB -o logs/09_concat_counts.%J.%I.out
-#BSUB -e logs/09_concat_counts.%J.%I.err
+#SBATCH --job-name=concat_counts
+#SBATCH --array=1-10
+#SBATCH --output=logs/09_concat_counts.%A_%a.out
+#SBATCH --error=logs/09_concat_counts.%A_%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=12:00:00
+#SBATCH --mem=8G
+##SBATCH --partition=compute   # uncomment and set if your account needs a partition
 # =============================================================================
 # 09 — Join the 20 count parts of each chromosome (one job per chromosome).
 #
@@ -17,12 +19,12 @@
 #     BZea_<chr>.siteqc.tsv        one-line site summary for step 10
 #
 #   Quick look:  bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%AD]\n' BZea_chr1.AD.bcf | head
-#   Submit after 08 finishes:  bsub -w "done(angsd_counts)" < 09_concat_counts_by_chr.sh
+#   Submit after 08 finishes:  sbatch --dependency=afterok:<08 job id> 09_concat_counts_by_chr.sh
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
-IDX=${LSB_JOBINDEX:-${1:?usage: bash $0 <chrom index 1-10>}}
+IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <chrom index 1-10>}}
 CHR=${CHROMS[$(( IDX - 1 ))]}
 mkdir -p "$D09"
 OUT=${D09}/BZea_${CHR}

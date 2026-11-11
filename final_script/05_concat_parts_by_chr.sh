@@ -1,12 +1,14 @@
 #!/bin/bash
-#BSUB -J "concat_chr[1-10]%10"
-#BSUB -n 1
-#BSUB -W 14400
-#BSUB -q sara
-#BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=20GB]"
-#BSUB -o logs/05_concat_chr.%J.%I.out
-#BSUB -e logs/05_concat_chr.%J.%I.err
+#SBATCH --job-name=concat_chr
+#SBATCH --array=1-10
+#SBATCH --output=logs/05_concat_chr.%A_%a.out
+#SBATCH --error=logs/05_concat_chr.%A_%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=10-00:00:00
+#SBATCH --mem=20G
+##SBATCH --partition=compute   # uncomment and set if your account needs a partition
 # =============================================================================
 # 05 — Concatenate the 20 discovery parts of each chromosome, in coordinate order.
 #      (replaces 0.4_combine_parts_chrom.sh; one array job per chromosome)
@@ -15,12 +17,12 @@
 #   duplicated part stops the job instead of leaving a silent gap.
 #
 #   Output: ${D05}/BZea_<chr>.full.bcf (+ .csi)
-#   Submit: bsub < 05_concat_parts_by_chr.sh
+#   Submit: sbatch 05_concat_parts_by_chr.sh
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
-IDX=${LSB_JOBINDEX:-${1:?usage: bash $0 <chrom index 1-10>}}
+IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <chrom index 1-10>}}
 CHR=${CHROMS[$(( IDX - 1 ))]}
 mkdir -p "$D05"
 OUT=${D05}/BZea_${CHR}.full.bcf

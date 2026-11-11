@@ -1,12 +1,14 @@
 #!/bin/bash
-#BSUB -J "sites[1-10]%10"
-#BSUB -n 1
-#BSUB -W 12:00
-#BSUB -q sara
-#BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=8GB]"
-#BSUB -o logs/07_sites.%J.%I.out
-#BSUB -e logs/07_sites.%J.%I.err
+#SBATCH --job-name=sites
+#SBATCH --array=1-10
+#SBATCH --output=logs/07_sites.%A_%a.out
+#SBATCH --error=logs/07_sites.%A_%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=12:00:00
+#SBATCH --mem=8G
+##SBATCH --partition=compute   # uncomment and set if your account needs a partition
 # =============================================================================
 # 07 — Build the site list for read counting, one job per chromosome.
 #
@@ -24,12 +26,12 @@
 #     b73_controls.idx    1-based positions of the B73 control pools in samples.txt
 #     ad_header.vcf       VCF header used by step 08
 #
-#   Submit: bsub < 07_make_site_tables.sh
+#   Submit: sbatch 07_make_site_tables.sh
 # =============================================================================
 set -euo pipefail
-source "${LS_SUBCWD:-$PWD}/config.sh"
+source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 
-IDX=${LSB_JOBINDEX:-${1:?usage: bash $0 <chrom index 1-10>}}
+IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <chrom index 1-10>}}
 CHR=${CHROMS[$(( IDX - 1 ))]}
 BCF=$(discovery_bcf "$CHR")
 [[ -s $BCF ]] || die "missing discovery BCF ${BCF} (check DISCOVERY_BCF_DIR in config.sh)"

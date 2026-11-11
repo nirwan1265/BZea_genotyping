@@ -2,6 +2,10 @@
 
 This repository documents the end-to-end processing for **low-pass sequencing** data, starting from raw paired-end FASTQ files and proceeding through a reproducible genotype + ancestry + association workflow.
 
+> **Current pipeline:** [`final_script/`](final_script/README.md) — numbered ANGSD site discovery (01–06) and per-pool B73/ALT read counts (07–10). Each sample is a pool of plants from one BC2S3 family, so introgression is called from read counts, not diploid genotype likelihoods.
+>
+> **Previous pipeline:** [`old_scripts/HMM_introgression/`](old_scripts/HMM_introgression/README.md) — the GL-based HMM workflow described in Sections 4 and 6 below. Kept for reference; its outputs are superseded (see `final_script/README.md`, "Notes on decisions").
+
 ## BZea Breeding Scheme:
 
 B73 was crossed with teosinte lines for 2 backcrosses and 3 selfs. (Need more details here)
@@ -317,10 +321,10 @@ ANGSD is particularly well-suited for low-pass sequencing data because it:
 
 **Run:**
 ```bash
-bsub < scripts/HMM_introgression/0.0_angsd_genotyping.sh
+bsub < old_scripts/HMM_introgression/0.0_angsd_genotyping.sh
 ```
 
-Script: [`scripts/HMM_introgression/0.0_angsd_genotyping.sh`](scripts/HMM_introgression/0.0_angsd_genotyping.sh)
+Script: [`old_scripts/HMM_introgression/0.0_angsd_genotyping.sh`](old_scripts/HMM_introgression/0.0_angsd_genotyping.sh)
 
 ---
 
@@ -330,13 +334,13 @@ Script: [`scripts/HMM_introgression/0.0_angsd_genotyping.sh`](scripts/HMM_introg
 
 **Run:**
 ```bash
-bash scripts/HMM_introgression/0.1_find_failed_runs.sh
-bsub < scripts/HMM_introgression/0.2_run_failed_parts.sh
+bash old_scripts/HMM_introgression/0.1_find_failed_runs.sh
+bsub < old_scripts/HMM_introgression/0.2_run_failed_parts.sh
 ```
 
 Scripts:
-- [`scripts/HMM_introgression/0.1_find_failed_runs.sh`](scripts/HMM_introgression/0.1_find_failed_runs.sh)
-- [`scripts/HMM_introgression/0.2_run_failed_parts.sh`](scripts/HMM_introgression/0.2_run_failed_parts.sh)
+- [`old_scripts/HMM_introgression/0.1_find_failed_runs.sh`](old_scripts/HMM_introgression/0.1_find_failed_runs.sh)
+- [`old_scripts/HMM_introgression/0.2_run_failed_parts.sh`](old_scripts/HMM_introgression/0.2_run_failed_parts.sh)
 
 ---
 
@@ -349,10 +353,10 @@ Scripts:
 
 **Run:**
 ```bash
-bsub < scripts/HMM_introgression/0.3_combine_sub_parts.sh
+bsub < old_scripts/HMM_introgression/0.3_combine_sub_parts.sh
 ```
 
-Script: [`scripts/HMM_introgression/0.3_combine_sub_parts.sh`](scripts/HMM_introgression/0.3_combine_sub_parts.sh)
+Script: [`old_scripts/HMM_introgression/0.3_combine_sub_parts.sh`](old_scripts/HMM_introgression/0.3_combine_sub_parts.sh)
 
 ---
 
@@ -365,10 +369,10 @@ Script: [`scripts/HMM_introgression/0.3_combine_sub_parts.sh`](scripts/HMM_intro
 
 **Run:**
 ```bash
-bsub < scripts/HMM_introgression/0.4_combine_parts_chrom.sh
+bsub < old_scripts/HMM_introgression/0.4_combine_parts_chrom.sh
 ```
 
-Script: [`scripts/HMM_introgression/0.4_combine_parts_chrom.sh`](scripts/HMM_introgression/0.4_combine_parts_chrom.sh)
+Script: [`old_scripts/HMM_introgression/0.4_combine_parts_chrom.sh`](old_scripts/HMM_introgression/0.4_combine_parts_chrom.sh)
 
 ---
 
@@ -381,10 +385,10 @@ Script: [`scripts/HMM_introgression/0.4_combine_parts_chrom.sh`](scripts/HMM_int
 
 **Run:**
 ```bash
-bsub < scripts/HMM_introgression/0.5_rename_headers_files.sh
+bsub < old_scripts/HMM_introgression/0.5_rename_headers_files.sh
 ```
 
-Script: [`scripts/HMM_introgression/0.5_rename_headers_files.sh`](scripts/HMM_introgression/0.5_rename_headers_files.sh)
+Script: [`old_scripts/HMM_introgression/0.5_rename_headers_files.sh`](old_scripts/HMM_introgression/0.5_rename_headers_files.sh)
 
 ---
 
@@ -404,10 +408,10 @@ Script: [`scripts/HMM_introgression/0.5_rename_headers_files.sh`](scripts/HMM_in
 
 **Run:**
 ```bash
-bash scripts/HMM_introgression/0.6_filter_bcf.sh
+bash old_scripts/HMM_introgression/0.6_filter_bcf.sh
 ```
 
-Script: [`scripts/HMM_introgression/0.6_filter_bcf.sh`](scripts/HMM_introgression/0.6_filter_bcf.sh)
+Script: [`old_scripts/HMM_introgression/0.6_filter_bcf.sh`](old_scripts/HMM_introgression/0.6_filter_bcf.sh)
 
 ---
 
@@ -428,10 +432,10 @@ Where `glRR`, `glRH`, `glHH` are log10 genotype likelihoods for RR (Ref/Ref), RH
 
 **Run:**
 ```bash
-bsub < scripts/HMM_introgression/1_extract_GL_emissions.sh
+bsub < old_scripts/HMM_introgression/1_extract_GL_emissions.sh
 ```
 
-Script: [`scripts/HMM_introgression/1_extract_GL_emissions.sh`](scripts/HMM_introgression/1_extract_GL_emissions.sh)
+Script: [`old_scripts/HMM_introgression/1_extract_GL_emissions.sh`](old_scripts/HMM_introgression/1_extract_GL_emissions.sh)
 
 ---
 
@@ -714,7 +718,7 @@ while keeping priors and post-run filters fixed unless there is strong evidence 
 
 **Run optimization**
 ```bash
-cd scripts/HMM_introgression
+cd old_scripts/HMM_introgression
 
 export HMM_PY="$(pwd)/hmm_viterbi_bc2s3.py"
 export MAPDIR="$(pwd)/genetic_maps"
@@ -735,7 +739,7 @@ python tune_hmm_optuna.py calib_samples.txt 100
 
 **Run:**
 ```bash
-bsub < scripts/HMM_introgression/2_run_hmm_bySample.sh
+bsub < old_scripts/HMM_introgression/2_run_hmm_bySample.sh
 ```
 
 **Command (single sample):**
@@ -771,8 +775,8 @@ python hmm_viterbi_bc2s3.py \
    ```
 
 Scripts:
-- [`scripts/HMM_introgression/hmm_viterbi_bc2s3.py`](scripts/HMM_introgression/hmm_viterbi_bc2s3.py)
-- [`scripts/HMM_introgression/2_run_hmm_bySample.sh`](scripts/HMM_introgression/2_run_hmm_bySample.sh)
+- [`old_scripts/HMM_introgression/hmm_viterbi_bc2s3.py`](old_scripts/HMM_introgression/hmm_viterbi_bc2s3.py)
+- [`old_scripts/HMM_introgression/2_run_hmm_bySample.sh`](old_scripts/HMM_introgression/2_run_hmm_bySample.sh)
 
 ---
 
@@ -808,8 +812,8 @@ Rscript batch_introgression_analysis.R input_folder/ 10000 5000 output_folder/
 - `introgression_summary_per_chr_teo.tsv` - Teo% by chromosome
 
 Scripts:
-- [`scripts/HMM_introgression/batch_introgression_analysis.R`](scripts/HMM_introgression/batch_introgression_analysis.R)
-- [`scripts/HMM_introgression/plot_introgression_blocks.R`](scripts/HMM_introgression/plot_introgression_blocks.R)
+- [`old_scripts/HMM_introgression/batch_introgression_analysis.R`](old_scripts/HMM_introgression/batch_introgression_analysis.R)
+- [`old_scripts/HMM_introgression/plot_introgression_blocks.R`](old_scripts/HMM_introgression/plot_introgression_blocks.R)
 
 ---
 
@@ -872,7 +876,7 @@ Scripts:
 | `calib_samples.txt` | Sample list for optimization |
 | `best_params.txt` | Optimized parameters |
 
-For detailed documentation, see: [`scripts/HMM_introgression/README.md`](scripts/HMM_introgression/README.md)
+For detailed documentation, see: [`old_scripts/HMM_introgression/README.md`](old_scripts/HMM_introgression/README.md)
 
 ---
 

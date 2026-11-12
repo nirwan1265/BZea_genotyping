@@ -11,7 +11,8 @@
 #     which angsd bcftools bgzip Rscript
 #     conda env list            # an env that has bcftools/angsd?
 #     module avail 2>&1 | grep -i -E "bcftools|angsd|htslib|samtools"
-# Examples (uncomment / edit ONE):
+export PATH=/rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/seqanal/bin:$PATH   # conda env "seqanal"
+# Alternatives:
 # source "$(conda info --base)/etc/profile.d/conda.sh" && conda activate hmm
 # module load bcftools angsd htslib R
 # export PATH=/path/to/angsd:/path/to/bcftools/bin:$PATH

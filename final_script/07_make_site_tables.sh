@@ -21,7 +21,7 @@
 #     BZea_<chr>.alleles.tsv.gz   CHROM POS B73 ALT SWAP   (no header)
 #     BZea_<chr>.sites (+ .bin/.idx)  ANGSD -sites file
 #     BZea_<chr>.polarize.log     kept / swapped / dropped counts
-#   Shared (identical in every job):
+#   Shared (written by array task 1 only):
 #     samples.txt         PN*_SID* in ANGSD column order (checked against the BCF)
 #     b73_controls.idx    1-based positions of the B73 control pools in samples.txt
 #     ad_header.vcf       VCF header used by step 08
@@ -40,46 +40,53 @@ BCF=$(discovery_bcf "$CHR")
 [[ -s $SAMPLE_META ]] || die "missing ${SAMPLE_META}"
 mkdir -p "$D07"
 
-# write stdin to $1 atomically (every array job writes the same shared files)
-write_atomic() { local tmp="$1.tmp.$$"; cat > "$tmp"; mv -f "$tmp" "$1"; }
+# Each task works on its own chromosome-specific copies. Only array task 1
+# (chr1) writes the three shared files, so tasks never replace a file another
+# task is reading (that caused "Stale file handle" on the network filesystem).
+TMP=${D07}/.tmp_${CHR}
+mkdir -p "$TMP"
+trap 'rm -rf "$TMP"' EXIT
 
 # ---- samples: ANGSD column order = BAM-list order --------------------------
-sample_names_from_bamlist | write_atomic "${D07}/samples.txt"
-bcftools query -l "$BCF" > "${D07}/.bcf_samples.${CHR}.txt"
-if ! cmp -s "${D07}/.bcf_samples.${CHR}.txt" "${D07}/samples.txt"; then
-  echo "BCF samples: $(wc -l < "${D07}/.bcf_samples.${CHR}.txt")   BAM list samples: $(wc -l < "${D07}/samples.txt")" >&2
+sample_names_from_bamlist > "${TMP}/samples.txt"
+bcftools query -l "$BCF" > "${TMP}/bcf_samples.txt"
+if ! cmp -s "${TMP}/bcf_samples.txt" "${TMP}/samples.txt"; then
+  echo "BCF samples: $(wc -l < "${TMP}/bcf_samples.txt")   BAM list samples: $(wc -l < "${TMP}/samples.txt")" >&2
   echo "first differences (< BCF, > BAM list):" >&2
-  diff "${D07}/.bcf_samples.${CHR}.txt" "${D07}/samples.txt" | head -n 10 >&2 || true
+  diff "${TMP}/bcf_samples.txt" "${TMP}/samples.txt" | head -n 10 >&2 || true
   die "sample names/order in ${BCF} differ from the BAM list ${BAMLIST}"
 fi
-rm -f "${D07}/.bcf_samples.${CHR}.txt"
-NIND=$(wc -l < "${D07}/samples.txt")
+NIND=$(wc -l < "${TMP}/samples.txt")
+echo "pools: ${NIND} (BCF and BAM list agree)"
 
-# ---- B73 control pools (metadata column 2 == "B73"; file has CRLF endings) --
-tr -d '\r' < "$SAMPLE_META" | awk -F'\t' 'NR > 1 && $2 == "B73" {print $1}' | sort -u > "${D07}/.b73_ids.$$"
-awk 'NR == FNR {c[$1] = 1; next} ($1 in c) {print FNR}' "${D07}/.b73_ids.$$" "${D07}/samples.txt" \
-  | write_atomic "${D07}/b73_controls.idx"
-NCTRL_META=$(wc -l < "${D07}/.b73_ids.$$")
-NCTRL=$(wc -l < "${D07}/b73_controls.idx")
-rm -f "${D07}/.b73_ids.$$"
-echo "B73 control pools: ${NCTRL} found in BAM list (${NCTRL_META} in metadata)"
-(( NCTRL > 0 )) || die "no B73 control pools found"
+if (( IDX == 1 )); then
+  cp "${TMP}/samples.txt" "${D07}/samples.txt"
 
-# ---- VCF header for step 08 --------------------------------------------------
-{
-  echo '##fileformat=VCFv4.2'
-  echo "##reference=file://${REF}"
-  awk '{printf "##contig=<ID=%s,length=%s>\n", $1, $2}' "${REF}.fai"
-  echo '##INFO=<ID=DP,Number=1,Type=Integer,Description="Reads at this site over all pools (A+C+G+T, after ANGSD read filters)">'
-  echo '##INFO=<ID=OTH,Number=1,Type=Integer,Description="Reads with a base that is neither B73 nor ALT, all pools">'
-  echo '##INFO=<ID=NCOV,Number=1,Type=Integer,Description="Pools with >=1 B73 or ALT read">'
-  echo '##INFO=<ID=NALT,Number=1,Type=Integer,Description="Pools with >=1 ALT read">'
-  echo '##INFO=<ID=SWAP,Number=0,Type=Flag,Description="ANGSD major allele was not the B73 base; alleles re-polarized">'
-  echo '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Read counts: B73 (REF) allele, ALT allele">'
-  echo '##source=BZea_genotyping/final_script/08 (ANGSD -doCounts 1 -dumpCounts 4)'
-  printf '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT'
-  awk '{printf "\t%s", $0} END {printf "\n"}' "${D07}/samples.txt"
-} | write_atomic "${D07}/ad_header.vcf"
+  # ---- B73 control pools (metadata column 2 == "B73"; file has CRLF endings) --
+  tr -d '\r' < "$SAMPLE_META" | awk -F'\t' 'NR > 1 && $2 == "B73" {print $1}' | sort -u > "${TMP}/b73_ids.txt"
+  awk 'NR == FNR {c[$1] = 1; next} ($1 in c) {print FNR}' "${TMP}/b73_ids.txt" "${D07}/samples.txt" \
+    > "${D07}/b73_controls.idx"
+  NCTRL=$(wc -l < "${D07}/b73_controls.idx")
+  echo "B73 control pools: ${NCTRL} in BAM list ($(wc -l < "${TMP}/b73_ids.txt") in metadata)"
+  (( NCTRL > 0 )) || die "no B73 control pools found"
+
+  # ---- VCF header for step 08 ------------------------------------------------
+  {
+    echo '##fileformat=VCFv4.2'
+    echo "##reference=file://${REF}"
+    awk '{printf "##contig=<ID=%s,length=%s>\n", $1, $2}' "${REF}.fai"
+    echo '##INFO=<ID=DP,Number=1,Type=Integer,Description="Reads at this site over all pools (A+C+G+T, after ANGSD read filters)">'
+    echo '##INFO=<ID=OTH,Number=1,Type=Integer,Description="Reads with a base that is neither B73 nor ALT, all pools">'
+    echo '##INFO=<ID=NCOV,Number=1,Type=Integer,Description="Pools with >=1 B73 or ALT read">'
+    echo '##INFO=<ID=NALT,Number=1,Type=Integer,Description="Pools with >=1 ALT read">'
+    echo '##INFO=<ID=SWAP,Number=0,Type=Flag,Description="ANGSD major allele was not the B73 base; alleles re-polarized">'
+    echo '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Read counts: B73 (REF) allele, ALT allele">'
+    echo '##source=BZea_genotyping/final_script/08 (ANGSD -doCounts 1 -dumpCounts 4)'
+    printf '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT'
+    awk '{printf "\t%s", $0} END {printf "\n"}' "${D07}/samples.txt"
+  } > "${D07}/ad_header.vcf"
+  echo "wrote shared files: samples.txt b73_controls.idx ad_header.vcf"
+fi
 
 # ---- per-chromosome site table ----------------------------------------------
 ALLELES=${D07}/BZea_${CHR}.alleles.tsv.gz

@@ -25,6 +25,7 @@
 # =============================================================================
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
+need angsd bcftools
 
 LIST=${D03}/failed_subintervals.tsv
 [[ -s $LIST ]] || die "missing or empty ${LIST} (run 02 first)"

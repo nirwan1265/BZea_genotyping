@@ -16,6 +16,7 @@
 # =============================================================================
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
+need Rscript
 
 for c in "${CHROMS[@]}"; do
   [[ -s ${D09}/BZea_${c}.sampleqc.tsv ]] || die "missing ${D09}/BZea_${c}.sampleqc.tsv (run 09)"

@@ -30,6 +30,7 @@
 # =============================================================================
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
+need bcftools bgzip angsd python3
 
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <chrom index 1-10>}}
 CHR=${CHROMS[$(( IDX - 1 ))]}
@@ -44,8 +45,14 @@ write_atomic() { local tmp="$1.tmp.$$"; cat > "$tmp"; mv -f "$tmp" "$1"; }
 
 # ---- samples: ANGSD column order = BAM-list order --------------------------
 sample_names_from_bamlist | write_atomic "${D07}/samples.txt"
-bcftools query -l "$BCF" | cmp -s - "${D07}/samples.txt" \
-  || die "sample names/order in ${BCF} differ from the BAM list"
+bcftools query -l "$BCF" > "${D07}/.bcf_samples.${CHR}.txt"
+if ! cmp -s "${D07}/.bcf_samples.${CHR}.txt" "${D07}/samples.txt"; then
+  echo "BCF samples: $(wc -l < "${D07}/.bcf_samples.${CHR}.txt")   BAM list samples: $(wc -l < "${D07}/samples.txt")" >&2
+  echo "first differences (< BCF, > BAM list):" >&2
+  diff "${D07}/.bcf_samples.${CHR}.txt" "${D07}/samples.txt" | head -n 10 >&2 || true
+  die "sample names/order in ${BCF} differ from the BAM list ${BAMLIST}"
+fi
+rm -f "${D07}/.bcf_samples.${CHR}.txt"
 NIND=$(wc -l < "${D07}/samples.txt")
 
 # ---- B73 control pools (metadata column 2 == "B73"; file has CRLF endings) --

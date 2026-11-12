@@ -18,6 +18,7 @@
 # =============================================================================
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
+need bcftools
 
 LIST=${D03}/failed_subintervals.tsv
 [[ -s $LIST ]] || { echo "No ${LIST}; nothing to merge."; exit 0; }

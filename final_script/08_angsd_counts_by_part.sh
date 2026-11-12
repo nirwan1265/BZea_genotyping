@@ -30,6 +30,7 @@
 # =============================================================================
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
+need angsd bcftools
 
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <index 1-200>}}
 read -r CHR PART <<< "$(index_to_chr_part "$IDX")"

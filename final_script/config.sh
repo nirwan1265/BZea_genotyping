@@ -6,9 +6,26 @@
 # =============================================================================
 
 # ---------- software ----------
-# Load whatever provides angsd, bcftools, bgzip, python3, Rscript on Hazel, e.g.:
-# module load angsd bcftools htslib R
-# source ~/.bashrc && conda activate angsd
+# Batch jobs need angsd, bcftools, bgzip, python3 and Rscript on the PATH.
+# Put the line(s) that load them here. Find them on the login node with:
+#     which angsd bcftools bgzip Rscript
+#     conda env list            # an env that has bcftools/angsd?
+#     module avail 2>&1 | grep -i -E "bcftools|angsd|htslib|samtools"
+# Examples (uncomment / edit ONE):
+# source "$(conda info --base)/etc/profile.d/conda.sh" && conda activate hmm
+# module load bcftools angsd htslib R
+# export PATH=/path/to/angsd:/path/to/bcftools/bin:$PATH
+
+# stop early with a clear message if a tool is missing
+need() {
+  local t
+  for t in "$@"; do
+    command -v "$t" > /dev/null 2>&1 || {
+      echo "ERROR: '$t' not found in PATH inside the job. Load it in the software section of config.sh." >&2
+      exit 1
+    }
+  done
+}
 
 # ---------- inputs ----------
 BAMLIST=/rsstu/users/r/rrellan/DOE_CAREER/BZea/dedup_filtered/bam_list.txt

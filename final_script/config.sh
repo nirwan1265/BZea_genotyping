@@ -71,6 +71,10 @@ RERUN_MININD=20
 RERUN_SETMINDEPTHIND=4
 RERUN_NSUB=2
 
+# 08: max BAMs per ANGSD run. Empty = as many as the node's open-file limit allows
+#     (all 1,535 in one run if the limit is high enough; otherwise split + merged).
+BAMS_PER_RUN=
+
 # 08: keep ANGSD's raw A/C/G/T table (~4x larger than the AD BCF)? 1 = keep
 KEEP_RAW_COUNTS=0
 

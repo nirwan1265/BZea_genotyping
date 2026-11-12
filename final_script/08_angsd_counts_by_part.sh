@@ -30,7 +30,7 @@
 # =============================================================================
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
-need angsd bcftools
+need angsd bcftools python3
 
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <index 1-200>}}
 read -r CHR PART <<< "$(index_to_chr_part "$IDX")"
@@ -69,11 +69,12 @@ if (( NSITES == 0 )); then
 fi
 
 # ---- 1) ANGSD read counts ----------------------------------------------------
-if angsd_finished "$OUT" && [[ -s ${OUT}.counts.gz ]]; then
-  echo "ANGSD counts already finished; converting only."
-else
+# ANGSD keeps every BAM open at once. Raise the open-file limit to the node's
+# hard limit; if that is still too low for all BAMs, run ANGSD on consecutive
+# slices of the BAM list and merge (08_merge_batches.py), keeping column order.
+run_angsd_counts() {   # $1 = BAM list, $2 = output prefix
   angsd \
-    -bam "$BAMLIST" \
+    -bam "$1" \
     -ref "$REF" \
     -r "${CHR}:${START}-${END}" \
     -sites "$SITES" \
@@ -81,8 +82,46 @@ else
     -dumpCounts 4 \
     "${READ_FILTERS[@]}" \
     -P "$THREADS" \
-    -out "$OUT"
-  angsd_finished "$OUT" || die "ANGSD did not finish (no [ALL done] in ${OUT}.arg)"
+    -out "$2"
+  angsd_finished "$2" || die "ANGSD did not finish (no [ALL done] in $2.arg)"
+}
+
+if [[ -f ${OUT}.counts_ok && -s ${OUT}.counts.gz ]]; then
+  echo "ANGSD counts already finished; converting only."
+else
+  BAMS_CLEAN=${OUT}.bams.txt
+  tr -d '\r' < "$BAMLIST" | grep -v '^[[:space:]]*$' > "$BAMS_CLEAN"
+  (( $(wc -l < "$BAMS_CLEAN") == NIND )) || die "BAM list and samples.txt have different lengths"
+
+  ulimit -n "$(ulimit -Hn)" 2> /dev/null || true
+  FDLIM=$(ulimit -n)
+  if [[ $FDLIM == unlimited ]]; then PER=$NIND; else PER=$(( (FDLIM - 100) / 2 )); fi
+  if [[ -n ${BAMS_PER_RUN:-} ]] && (( BAMS_PER_RUN < PER )); then PER=$BAMS_PER_RUN; fi
+  (( PER >= 1 )) || die "open-file limit ${FDLIM} is too low to open any BAMs"
+  if (( PER > NIND )); then PER=$NIND; fi
+  NB=$(( (NIND + PER - 1) / PER ))
+  echo "open-file limit: ${FDLIM} -> ${NB} ANGSD run(s) of <= ${PER} BAMs"
+
+  if (( NB == 1 )); then
+    run_angsd_counts "$BAMS_CLEAN" "$OUT"
+  else
+    split -d -a 3 -l "$PER" "$BAMS_CLEAN" "${OUT}.batch"
+    merge_args=()
+    for (( k = 0; k < NB; k++ )); do
+      B=$(printf "%s.batch%03d" "$OUT" "$k")
+      echo "-- batch $((k + 1))/${NB}: $(wc -l < "$B") BAMs"
+      if angsd_finished "$B" && [[ -s ${B}.counts.gz ]]; then
+        echo "   already finished"
+      else
+        run_angsd_counts "$B" "$B"
+      fi
+      merge_args+=(--batch "$B" "$(wc -l < "$B")")
+    done
+    python3 "${FINAL_DIR}/08_merge_batches.py" --out "$OUT" "${merge_args[@]}"
+    rm -f "${OUT}".batch???.{pos.gz,counts.gz,arg} "${OUT}".batch???
+  fi
+  rm -f "$BAMS_CLEAN"
+  touch "${OUT}.counts_ok"
 fi
 
 # ---- 2) A/C/G/T -> AD (B73,ALT) ---------------------------------------------
@@ -105,6 +144,6 @@ echo "sites requested: ${NSITES} ; with reads (ANGSD): ${N_ANGSD} ; written: ${N
 (( N_BCF == N_ANGSD )) || echo "WARNING: $(( N_ANGSD - N_BCF )) ANGSD sites not in the allele table"
 [[ $(( $(wc -l < "${OUT}.sampleqc.tsv") - 1 )) -eq $NIND ]] || die "sample QC has wrong number of rows"
 
-if [[ ${KEEP_RAW_COUNTS} != 1 ]]; then rm -f "${OUT}.counts.gz"; fi
+if [[ ${KEEP_RAW_COUNTS} != 1 ]]; then rm -f "${OUT}.counts.gz" "${OUT}.counts_ok"; fi
 touch "${OUT}.done"
 echo "DONE: ${OUT}.AD.bcf"

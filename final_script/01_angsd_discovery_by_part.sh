@@ -38,6 +38,10 @@ echo "OUT=${OUT}"
 [[ -f ${OUT}.done ]] && { echo "Already done; skipping."; exit 0; }
 [[ -f ${REF}.fai ]] || die "missing ${REF}.fai (samtools faidx ${REF})"
 
+# ANGSD opens every BAM at once: raise the open-file limit to the node maximum
+ulimit -n "$(ulimit -Hn)" 2> /dev/null || true
+echo "open-file limit: $(ulimit -n)"
+
 angsd \
   -bam "$BAMLIST" \
   -ref "$REF" \

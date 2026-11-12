@@ -132,6 +132,8 @@ These figures come from a test of the awk converter at 1,500 pools with ~0.8 rea
 - **Storage:** the AD BCF takes about 0.5 kB per site, roughly 4.6 GB per 10 M sites.
 - **Raw counts:** ANGSD's A/C/G/T table is deleted after conversion unless `KEEP_RAW_COUNTS=1`.
 
+**Open files.** ANGSD keeps every BAM open at once, about 1,535 files. Steps 01, 03 and 08 raise the open-file limit to the node's hard limit. If that is still too low, 08 splits the BAM list into batches that fit, runs ANGSD on each batch, and merges the counts back in the original column order (`08_merge_batches.py`). The result is identical to a single run. To force smaller batches, set `BAMS_PER_RUN=500` in `config.sh`.
+
 Memory is set to 32 GB per part in 08. If parts get killed, resubmit them with `sbatch --array=<ids> --mem=64G 08_angsd_counts_by_part.sh`, or set `NPARTS=40` in `config.sh` and change `--array` in 01 and 08 to `1-400%40`.
 
 ## Requirements

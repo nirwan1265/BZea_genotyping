@@ -133,8 +133,10 @@ class GLPoolEmission:
         lf = [max(a * L0 + b * L1 + d * L2, self.floor) for a, b, d in self.w]
         return (max(L0, 1e-300), sum(lf) / len(lf), L2)
 
-    def c_of(self, a, kappa):
-        return min(max(kappa * a, self.c_min), 1.0 - self.c_min)
+    def c_of(self, a, kappa, fc=None):
+        """fc = family donor-allele probability (PALT, step 13c) if known, else panel freq x kappa"""
+        c = fc if fc is not None else kappa * a
+        return min(max(c, self.c_min), 1.0 - self.c_min)
 
     def __call__(self, L, c):
         L0, Ls, L2 = L
@@ -310,6 +312,8 @@ def main():
     ap.add_argument("--fai", required=True, help="reference .fai (chromosome lengths for tracts)")
     ap.add_argument("--out_prefix", required=True)
     ap.add_argument("--chroms", default=",".join(f"chr{i}" for i in range(1, 11)))
+    ap.add_argument("--donor_dir", default=None, help="step-13c folder: <donor_dir>/<family>/<chr>.tsv.gz (family-informed run)")
+    ap.add_argument("--family", default=None, help="this pool's BC1 family, e.g. Zd.0010_P2")
 
     ap.add_argument("--prior_b73", type=float, default=0.844)
     ap.add_argument("--prior_seg", type=float, default=0.0625)
@@ -338,7 +342,7 @@ def main():
             chr_len[p[0]] = int(p[1])
 
     sp = gzip.open(args.out_prefix + ".statepath.tsv.gz", "wt")
-    sp.write("CHROM\tPOS\tB73\tALT\tGL_0\tGL_1\tGL_2\tPANEL_AC\tPANEL_AN\tSTATE\tP_B73\tP_SEG\tP_DONOR\tTHETA\n")
+    sp.write("CHROM\tPOS\tB73\tALT\tGL_0\tGL_1\tGL_2\tPANEL_AC\tPANEL_AN\tSTATE\tP_B73\tP_SEG\tP_DONOR\tTHETA\tC\tC_SOURCE\n")
     tr = gzip.open(args.out_prefix + ".tracts.bed.gz", "wt")
     tr.write("chrom\tstart\tend\tstate\n")
     tot = {"B73": 0, "SEG": 0, "DONOR": 0}
@@ -347,6 +351,7 @@ def main():
 
     # ---- load every chromosome (markers, GL-derived likelihoods, panel freq, thetas) ----
     data = {}
+    n_family = 0
     for chrom in chroms:
         fn = os.path.join(args.in_dir, chrom, args.sample + ".tsv.gz")
         rows = []
@@ -358,8 +363,32 @@ def main():
                         continue
                     rows.append((int(p[1]), p[2], p[3], float(p[4]), float(p[5]), float(p[6]), int(p[7]), int(p[8])))
         rows.sort()
+        # family donor alleles (family-informed run): PALT where REF/ALT match this marker
+        fam = {}
+        if args.donor_dir and args.family:
+            ff = os.path.join(args.donor_dir, args.family, chrom + ".tsv.gz")
+            if os.path.exists(ff):
+                want = {r[0] for r in rows}
+                with gzip.open(ff, "rt") as f:
+                    for line in f:
+                        p = line.split("\t")
+                        pos = int(p[0])
+                        if pos in want:
+                            fam[pos] = (p[1], p[2], float(p[3]))
+        kept, fcs = [], []
+        for r in rows:
+            pos, b73, alt, ac, an = r[0], r[1], r[2], r[6], r[7]
+            fx = fam.get(pos)
+            fc = fx[2] if (fx is not None and fx[0] == b73 and fx[1] == alt) else None
+            if fc is None and an <= 0:
+                continue                                  # non-panel site without family info: no use
+            kept.append(r)
+            fcs.append(fc)
+        rows = kept
         if not rows:                                      # no data: leave chromosome uncalled
             continue
+        n_family += sum(fc is not None for fc in fcs)
+
         bp_map, cm_map = read_map(os.path.join(args.map_dir, chrom + ".map"))
         Ls, af, thetas = [], [], []
         prev_cm = None
@@ -373,7 +402,7 @@ def main():
                 d_m = max(abs(cm_here - prev_cm) / 100.0, args.min_morgan)
                 thetas.append(max(haldane_theta(d_m), 1e-8))
             prev_cm = cm_here
-        data[chrom] = (rows, Ls, af, thetas)
+        data[chrom] = (rows, Ls, af, thetas, fcs)
 
     # ---- EM for kappa (how often this pool's donor carries the panel's ALT alleles) ----
     # SEG at kappa k and DONOR at kappa k/2 look alike at 1 read per site, so EM can stop
@@ -383,8 +412,8 @@ def main():
 
     def run_all(kap):
         out, ll = {}, 0.0
-        for chrom, (rows, Ls, af, thetas) in data.items():
-            cs = [emis.c_of(a, kap) for a in af]
+        for chrom, (rows, Ls, af, thetas, fcs) in data.items():
+            cs = [emis.c_of(a, kap, fc) for a, fc in zip(af, fcs)]
             post, l = forward_backward([emis(L, c) for L, c in zip(Ls, cs)], thetas, pi, args.rho)
             out[chrom] = (cs, post); ll += l
         return out, ll
@@ -395,8 +424,10 @@ def main():
             res, ll = run_all(kap)
             num, den = 0.0, 0.0
             for chrom, (cs, post) in res.items():
-                Ls, af = data[chrom][1], data[chrom][2]
-                for (L0, Lseg, L2), c, a, (pB, pS, pD) in zip(Ls, cs, af, post):
+                Ls, af, fcs = data[chrom][1], data[chrom][2], data[chrom][4]
+                for (L0, Lseg, L2), c, a, fc, (pB, pS, pD) in zip(Ls, cs, af, fcs, post):
+                    if fc is not None:
+                        continue                          # family-known sites do not inform kappa
                     num += pS * c * Lseg / (c * Lseg + (1 - c) * L0) + pD * c * L2 / (c * L2 + (1 - c) * L0)
                     den += (pS + pD) * a
             new = min(max((num + PRIOR_W * 0.3) / (den + PRIOR_W * 0.3), 0.02), 1.5)
@@ -415,9 +446,9 @@ def main():
     kappa, _, em_used, kappa_start = best
 
     # ---- final run, decode, write ----
-    for chrom, (rows, Ls, af, thetas) in data.items():
+    for chrom, (rows, Ls, af, thetas, fcs) in data.items():
         L = chr_len[chrom]
-        cs = [emis.c_of(a, kappa) for a in af]
+        cs = [emis.c_of(a, kappa, fc) for a, fc in zip(af, fcs)]
         obs_ll = [emis(Lx, c) for Lx, c in zip(Ls, cs)]
         post, _ = forward_backward(obs_ll, thetas, pi, args.rho)
         if args.decode == "viterbi":
@@ -429,7 +460,7 @@ def main():
 
         for i, (pos, b73, alt, g0, g1, g2, ac, an) in enumerate(rows):
             pB, pS, pD = post[i]
-            sp.write(f"{chrom}\t{pos}\t{b73}\t{alt}\t{g0:g}\t{g1:g}\t{g2:g}\t{ac}\t{an}\t{STATES[path[i]]}\t{pB:.4g}\t{pS:.4g}\t{pD:.4g}\t{thetas[i]:.4g}\n")
+            sp.write(f"{chrom}\t{pos}\t{b73}\t{alt}\t{g0:g}\t{g1:g}\t{g2:g}\t{ac}\t{an}\t{STATES[path[i]]}\t{pB:.4g}\t{pS:.4g}\t{pD:.4g}\t{thetas[i]:.4g}\t{cs[i]:.4g}\t{'family' if fcs[i] is not None else 'panel'}\n")
         n_markers += len(rows)
 
         # tracts cover the whole chromosome: boundary = midpoint between neighbouring markers
@@ -447,12 +478,12 @@ def main():
     tr.close()
     g = sum(tot.values())
     with open(args.out_prefix + ".summary.tsv", "w") as f:
-        f.write("SAMPLE\tMARKERS\tCALLED_BP\tFRAC_B73\tFRAC_SEG\tFRAC_DONOR\tDONOR_SHARE\tN_TRACTS\tKAPPA\tEM_ROUNDS\tKAPPA_START\n")
+        f.write("SAMPLE\tMARKERS\tCALLED_BP\tFRAC_B73\tFRAC_SEG\tFRAC_DONOR\tDONOR_SHARE\tN_TRACTS\tKAPPA\tEM_ROUNDS\tKAPPA_START\tFAMILY\tFAMILY_MARKERS\n")
         if g:
             f.write(f"{args.sample}\t{n_markers}\t{g}\t{tot['B73']/g:.4f}\t{tot['SEG']/g:.4f}\t{tot['DONOR']/g:.4f}\t"
-                    f"{(tot['DONOR'] + 0.5 * tot['SEG'])/g:.4f}\t{n_tracts}\t{kappa:.3f}\t{em_used}\t{kappa_start:g}\n")
+                    f"{(tot['DONOR'] + 0.5 * tot['SEG'])/g:.4f}\t{n_tracts}\t{kappa:.3f}\t{em_used}\t{kappa_start:g}\t{args.family or "NA"}\t{n_family}\n")
         else:
-            f.write(f"{args.sample}\t0\t0\tNA\tNA\tNA\tNA\t0\tNA\t0\tNA\n")
+            f.write(f"{args.sample}\t0\t0\tNA\tNA\tNA\tNA\t0\tNA\t0\tNA\t{args.family or "NA"}\t0\n")
 
 
 if __name__ == "__main__":

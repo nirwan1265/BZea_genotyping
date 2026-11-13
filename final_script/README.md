@@ -37,6 +37,12 @@ sbatch 13_extract_pool_gl.sh                    # array 1-10
 sbatch --dependency=afterok:<13 jobid> 14_run_hmm.sh      # array 1-143 (10 pools each)
 sbatch --dependency=afterok:<14 jobid> 15_collect_hmm.sh
 
+# ---- version 2: family-informed HMM (run alongside 13-15) ----
+sbatch 13b_extract_pool_gl_all.sh               # array 1-10
+sbatch 13c_family_donor_alleles.sh              # array 1-10 (independent of 13b)
+sbatch --dependency=afterok:<13b jobid>:<13c jobid> 14b_run_hmm_family.sh   # array 1-143
+sbatch --dependency=afterok:<14b jobid> 15b_collect_hmm_family.sh           # after 15 too, for the family check
+
 # ---- site discovery (ALREADY RUN; only needed to redo it) ----
 sbatch 01_angsd_discovery_by_part.sh            # array 1-200
 bash 02_find_failed_parts.sh                    # prints the sbatch line for 03
@@ -80,6 +86,10 @@ No partition is set. If your account needs one, uncomment `##SBATCH --partition=
 | 13 | `13_extract_pool_gl.sh` (bcftools + awk) | 10 | Per-pool GL files for the HMM: ANGSD GLs from the discovery BCF at PASS teosinte-panel sites, flipped to B73 orientation | `13_pool_gl/` |
 | 14 | `14_run_hmm.sh` + `14_hmm_pooled.py` | 143 | Nirwan's BC2S3 HMM adapted to pools: GL emissions for B73 / SEG / DONOR, NAM genetic-map transitions, per-pool κ by EM | `14_hmm/` |
 | 15 | `15_collect_hmm.sh` + `.R` | 1 | Collects all pools: summary table and all tracts | `15_introgression/` |
+| 13b | `13b_extract_pool_gl_all.sh` | 10 | Same as 13, but at all PASS sites (panel + non-panel); panel AC/AN = −1 where not in the panel | `13b_pool_gl_all/` |
+| 13c | `13c_family_donor_alleles.sh` | 10 | Donor allele probability (PALT) per BC1 family from the sister-based `union/<chr>.donor_alleles.vcf.gz` | `13c_family_donor/<FAMILY>/` |
+| 14b | `14b_run_hmm_family.sh` + `14_hmm_pooled.py` | 143 | Same HMM, with `c` = the family's PALT where known | `14b_hmm_family/` |
+| 15b | `15b_collect_hmm_family.sh` + `15_collect_hmm.R` | 1 | Collects 14b; flags pools whose family run disagrees with step 15 | `15b_introgression/` |
 
 ## Final outputs (`09_counts_by_chr/`)
 
@@ -242,4 +252,44 @@ The HMM is `old_scripts/HMM_introgression/hmm_viterbi_bc2s3.py`, adapted in `14_
 
 **Run time:** about 9 s per pool in the simulation (~54k markers). Real pools have ~1 M markers, so expect roughly 3–4 min per pool and about 35 min per array task of 10 pools.
 
-**BC1 sisters (later):** a 10x sister from the same F1 shows exactly which ALT alleles that F1's donor carries. It can replace `c = κ × panel AC/AN` for that family.
+## Steps 13b–15b: family-informed HMM (version 2)
+
+Same HMM and same settings as 14. The one change is `c`, the chance the donor carries the ALT allele:
+
+- **Version 1 (13–15):** `c` = κ × teosinte panel AC/AN, at panel sites only.
+- **Version 2 (13b–15b):** `c` = the BC1 family's PALT from the sister sequencing where it is known, else κ × panel AC/AN. Non-panel PASS sites are used too, but only where the family's PALT is known.
+
+**Family of a pool.** The first two fields of its pedigree in `SAMPLE_META`: `Zd.0010_P2_P3_P4.5.1.1` → `Zd.0010_P2`, the column name in `donor_alleles.vcf.gz`. The metadata has 132 families and the donor-allele file has 95. Pools from the other families run like version 1 (`FAMILY_MARKERS` = 0 in their summary).
+
+**Inputs:**
+- `union/<chr>.donor_alleles.vcf.gz`: FORMAT `GT:LLR:PRIOR:PALT:SRC`, one column per BC1 family.
+- Step 13c keeps biallelic SNPs and drops `PALT = .`.
+- The HMM uses a family's PALT only where REF/ALT match the pool's marker.
+- κ is learned from sites without family info. Family sites do not need κ.
+
+**Extra outputs:**
+- statepath: `C` (the `c` used) and `C_SOURCE` (`family` or `panel`).
+- summary: `FAMILY` and `FAMILY_MARKERS`.
+- `15b_introgression/family_check.tsv`: FRAC_DONOR in version 1 vs version 2 for each pool.
+
+**Wrong family label.** If a pool's family label is wrong, its DONOR tracts are called SEG and FRAC_DONOR drops. In the simulation it went from 0.14–0.26 to 0, and donor share was about halved. 15b flags these pools as `CHECK`. For each flagged pool:
+1. Confirm its pedigree.
+2. To run it without family info, add it to `sample_lists/no_family.txt`.
+3. Delete its `14b_hmm_family/<SAMPLE>.*` files.
+4. Resubmit 14b. Pools that are already done are skipped.
+
+**Simulation:**
+- Setup:
+  - 16 pools in 4 BC1 families: 2 Zd families (donor at 0.35× panel frequency) and 2 Zx families. Pools in a family share one donor haplotype.
+  - 100 Mb, 0.8 reads per pool per site, panel and non-panel sites 1:1.
+  - The family's PALT is known at 60% of sites: 70% "own" (PALT 0.97, 3% wrong) and 30% "gap" (PALT 0.8, 20% wrong).
+- Accuracy is per 10 kb against the truth:
+
+| Taxon | Version | Markers per pool | All | B73 | SEG | DONOR | Donor-share error |
+|---|---|---|---|---|---|---|---|
+| Zd | 1 (panel) | 18.4k | 98.8% | 99.3% | 91.3% | 99.6% | 0.0037 |
+| Zd | 2 (family) | 29.4k | 99.7% | 99.9% | 98.3% | 99.8% | 0.0010 |
+| Zx | 1 (panel) | 18.3k | 99.8% | 99.9% | 99.4% | 99.8% | 0.0005 |
+| Zx | 2 (family) | 29.4k | 99.8% | 99.9% | 99.1% | 99.9% | 0.0005 |
+
+The family information helps most where the panel represents the donor poorly (Zd), mostly for SEG calls. For Zx the two versions are the same. Version 2 takes about 1.5× as long per pool, because it has more markers.

@@ -52,6 +52,11 @@ D12=${WORK}/12_signal_check         # donor signal per taxon: panel vs non-panel
 D13=${WORK}/13_pool_gl              # per-pool GL files for the HMM
 D14=${WORK}/14_hmm                  # HMM state paths, tracts, summaries per pool
 D15=${WORK}/15_introgression        # all pools together: tracts + summary
+# family-informed version (BC1 sister donor haplotypes), run alongside 13-15:
+D13B=${WORK}/13b_pool_gl_all        # per-pool GLs at ALL PASS sites (panel + non-panel)
+D13C=${WORK}/13c_family_donor       # donor allele probability (PALT) per BC1 family
+D14B=${WORK}/14b_hmm_family         # HMM results, family-informed
+D15B=${WORK}/15b_introgression      # all pools together, family-informed
 
 # Site discovery (01-06) has ALREADY been run. Steps 07+ read the renamed
 # per-chromosome BCFs from here. If you ever rerun 01-06, set this to ${D06}.
@@ -98,6 +103,13 @@ HMM_RHO=0.2                 # scales genetic-map recombination into switch proba
 HMM_DECODE=posterior_hysteresis   # posterior_hysteresis | posterior | viterbi
 HMM_RIGIDITY=50             # markers in a row needed before switching (posterior_hysteresis)
 SAMPLES_PER_TASK=10         # pools per array task in step 14 (array size = ceil(pools / this))
+
+# ---------- 13c-14b: family-informed HMM ----------
+# Donor haplotype per BC1 family from the sister sequencing: one column per family
+# (e.g. Zd.0010_P2), FORMAT GT:LLR:PRIOR:PALT:SRC. A pool's family = first two fields
+# of its pedigree (Zd.0010_P2_P3_P4.5.1.1 -> Zd.0010_P2).
+DONOR_ALLELES_DIR=/rsstu/users/r/rrellan/BZea/ZEAL/variant_calling/variant_calling/union
+donor_alleles() { echo "${DONOR_ALLELES_DIR}/${1}.donor_alleles.vcf.gz"; }
 
 # =============================================================================
 # helpers (no edits needed below)

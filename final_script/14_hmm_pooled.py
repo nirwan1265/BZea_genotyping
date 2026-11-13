@@ -30,7 +30,9 @@ What changed from the original:
   2. Each chromosome is its own chain (the original ran chr1..chr10 as one chain).
   3. thetas[t] is the recombination fraction between markers t-1 and t (the original
      list started with an extra 0.0, shifting every transition by one marker).
-  4. Tracts cover each chromosome end to end (boundaries at the midpoint between the
+  4. Rigidity (hysteresis): the switch is placed at the first marker of the agreeing run,
+     not the R-th, so boundaries are no longer shifted by R-1 markers.
+  5. Tracts cover each chromosome end to end (boundaries at the midpoint between the
      last marker of one state and the first of the next), so lengths sum correctly.
 
 Input : <in_dir>/<chr>/<sample>.tsv.gz   CHROM POS B73 ALT GL_0 GL_1 GL_2 PANEL_AC PANEL_AN
@@ -237,7 +239,9 @@ def viterbi_standard(obs_ll, thetas, pi, rho):
 
 
 # -----------------------------
-# RTIGER-ish rigidity via hysteresis (unchanged; called per chromosome)
+# RTIGER-ish rigidity via hysteresis (called per chromosome). Change from the original:
+# when R markers in a row agree on a new state, the switch is placed at the first marker
+# of that run (the original placed it at the R-th, so every boundary sat R-1 markers late)
 # -----------------------------
 def decode_hysteresis(best_state, R):
     n = len(best_state)
@@ -263,6 +267,9 @@ def decode_hysteresis(best_state, R):
             run_len += 1
         if run_len >= R:
             cur = run_state
+            # boundary fix: the switch starts at the FIRST marker of the run, not the R-th
+            for k in range(t - run_len + 1, t):
+                out[k] = cur
             run_state = None
             run_len = 0
         out.append(cur)

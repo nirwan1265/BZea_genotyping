@@ -223,7 +223,8 @@ The HMM is `old_scripts/HMM_introgression/hmm_viterbi_bc2s3.py`, adapted in `14_
 
 4. **`thetas[t]` is the recombination fraction between markers t−1 and t.** The original was shifted by one marker.
 
-5. **Tracts cover each chromosome end to end.** Boundaries sit at the midpoint between markers, so tract lengths add up to the chromosome length.
+5. **Rigidity places switches at the first marker of the agreeing run, not the R-th.** Before, every boundary sat R−1 markers late. In the simulation, the median boundary error dropped from 52 to 14 markers and marker accuracy rose from 99.62% to 99.87%.
+6. **Tracts cover each chromosome end to end.** Boundaries sit at the midpoint between markers, so tract lengths add up to the chromosome length.
 
 **Outputs:**
 - In `14_hmm/`, per pool:

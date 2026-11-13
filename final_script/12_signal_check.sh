@@ -21,12 +21,11 @@
 # =============================================================================
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
-need python3
-python3 -c "import numpy, pandas" 2> /dev/null || die "python3 needs numpy and pandas"
+need Rscript
 
 for c in "${CHROMS[@]}"; do
-  [[ -s ${D11}/BZea_${c}.pool_class.tsv ]] || die "missing ${D11}/BZea_${c}.pool_class.tsv (run 11)"
+  [[ -s ${D11}/BZea_${c}.pool_reads.tsv ]] || die "missing ${D11}/BZea_${c}.pool_reads.tsv (run 11)"
 done
 GENOME_MB=$(awk -v list=" ${CHROMS[*]} " 'index(list, " " $1 " ") {s += $2} END {printf "%.1f", s / 1e6}' "${REF}.fai")
 echo "genome size (Mb, ${#CHROMS[@]} chromosomes): ${GENOME_MB}"
-python3 "${FINAL_DIR}/12_signal_check.py" --d11 "$D11" --genome-mb "$GENOME_MB" --out "$D12"
+Rscript "${FINAL_DIR}/12_signal_check.R" "$D11" "$GENOME_MB" "$D12"

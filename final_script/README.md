@@ -86,6 +86,8 @@ bcftools view -s PN9_SID857,PN9_SID854 BZea_chr1.AD.bcf | ...     # subset pools
 
 **`BZea_chrN.sitesum.tsv.gz`** has one row per site. Columns: `CHROM POS B73 ALT DP OTH REF_READS ALT_READS NCOV NALT CTRL_REF CTRL_ALT CTRL_NCOV`. The `CTRL_*` columns are reads from the 13 B73 control pools; an ALT read there flags a reference error, paralog or seed-lot difference. These are the inputs for step-2 site filtering.
 
+**QC decisions:** see [`QC_NOTES.md`](QC_NOTES.md) and the lists in `sample_lists/`.
+
 **`BZea_chrN.sampleqc.tsv`** has per-pool totals, and **`BZea_chrN.siteqc.tsv`** a one-line chromosome summary.
 
 QC in `10_qc/`:

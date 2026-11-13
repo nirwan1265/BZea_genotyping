@@ -14,7 +14,7 @@
 #      Each array task runs SAMPLES_PER_TASK pools (default 10 -> 1,424 pools = 143 tasks).
 #
 #   Pools: B73 controls + donor pools from ${D11}/pools.tsv (excluded pools left out).
-#   Background error = B73-control ALT rate on panel sites (step 11 split-half estimate).
+#   Input: per-pool GL files from step 13 (sequencing error is inside the GLs).
 #
 #   Output per pool in ${D14}: <SAMPLE>.statepath.tsv.gz, <SAMPLE>.tracts.bed.gz, <SAMPLE>.summary.tsv
 #   Submit after 13:  sbatch 14_run_hmm.sh
@@ -33,14 +33,13 @@ NT=$(( (${#ALL[@]} + SAMPLES_PER_TASK - 1) / SAMPLES_PER_TASK ))
 (( IDX <= NT )) || { echo "task ${IDX} > ${NT} tasks needed for ${#ALL[@]} pools; nothing to do"; exit 0; }
 FIRST=$(( (IDX - 1) * SAMPLES_PER_TASK ))
 
-ERR=$(cat "${D11}"/BZea_*.ctrl_background.tsv | awk -F'\t' '$1 != "CHROM" {r += $3; a += $4} END {printf "%.6f", (a > 0 ? a / (r + a) : 0.002)}')
 CHR_LIST=$(IFS=,; echo "${CHROMS[*]}")
-echo "task ${IDX}/${NT}: pools $((FIRST + 1))-$(( FIRST + SAMPLES_PER_TASK < ${#ALL[@]} ? FIRST + SAMPLES_PER_TASK : ${#ALL[@]} )) of ${#ALL[@]} | error ${ERR} | rho ${HMM_RHO} | ${HMM_DECODE} R=${HMM_RIGIDITY}"
+echo "task ${IDX}/${NT}: pools $((FIRST + 1))-$(( FIRST + SAMPLES_PER_TASK < ${#ALL[@]} ? FIRST + SAMPLES_PER_TASK : ${#ALL[@]} )) of ${#ALL[@]} | rho ${HMM_RHO} | ${HMM_DECODE} R=${HMM_RIGIDITY}"
 
 for S in "${ALL[@]:FIRST:SAMPLES_PER_TASK}"; do
   if [[ -s ${D14}/${S}.summary.tsv ]]; then echo "${S}: done already"; continue; fi
   python3 "${FINAL_DIR}/14_hmm_pooled.py" --sample "$S" --in_dir "$D13" --map_dir "$MAP_DIR" \
-    --fai "${REF}.fai" --out_prefix "${D14}/${S}" --chroms "$CHR_LIST" --err "$ERR" \
+    --fai "${REF}.fai" --out_prefix "${D14}/${S}" --chroms "$CHR_LIST" \
     --rho "$HMM_RHO" --decode "$HMM_DECODE" --rigidity "$HMM_RIGIDITY"
   echo "${S}: $(tail -n 1 "${D14}/${S}.summary.tsv" | cut -f2,6,7)"
 done

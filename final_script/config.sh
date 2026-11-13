@@ -49,7 +49,7 @@ D09=${WORK}/09_counts_by_chr        # read counts per chromosome (final)
 D10=${WORK}/10_qc                   # QC tables and plots
 D11=${WORK}/11_sites_filtered       # site filters, teosinte panel, donor-group read sums
 D12=${WORK}/12_signal_check         # donor signal per taxon: panel vs non-panel sites
-D13=${WORK}/13_pool_counts          # per-pool marker files for the HMM
+D13=${WORK}/13_pool_gl              # per-pool GL files for the HMM
 D14=${WORK}/14_hmm                  # HMM state paths, tracts, summaries per pool
 D15=${WORK}/15_introgression        # all pools together: tracts + summary
 

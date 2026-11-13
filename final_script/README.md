@@ -32,7 +32,10 @@ sbatch --dependency=afterok:<09 jobid> 10_counts_qc.sh
 sbatch 11_filter_sites.sh                       # array 1-10
 sbatch --dependency=afterok:<11 jobid> 12_signal_check.sh
 
-# ---- introgression calling: WORK IN PROGRESS, do not run yet ----
+# ---- introgression calling (after 11) ----
+sbatch 13_extract_pool_gl.sh                    # array 1-10
+sbatch --dependency=afterok:<13 jobid> 14_run_hmm.sh      # array 1-143 (10 pools each)
+sbatch --dependency=afterok:<14 jobid> 15_collect_hmm.sh
 
 # ---- site discovery (ALREADY RUN; only needed to redo it) ----
 sbatch 01_angsd_discovery_by_part.sh            # array 1-200
@@ -74,9 +77,9 @@ No partition is set. If your account needs one, uncomment `##SBATCH --partition=
 | 10 | `10_counts_qc.sh` + `10_counts_qc.R` | 1 | Per-pool QC: reads, coverage, ALT fraction against the B73 controls, error proxy | `10_qc/` |
 | 11 | `11_filter_sites.sh` (bcftools + awk) | 10 | Site filters (clean B73 controls, depth, third base, panel allele mismatch); splits sites into in / not in the 227-plant teosinte panel; reads per pool on each set | `11_sites_filtered/` |
 | 12 | `12_signal_check.sh` + `12_signal_check.R` | 1 | Donor signal per taxon on teosinte-panel sites vs other sites: are panel sites alone enough? | `12_signal_check/` |
-| 13 | `13_extract_pool_counts.sh` | 10 | Per-pool marker files for the HMM (work in progress) | `13_pool_counts/` |
-| 14 | `14_run_hmm.sh` + `14_hmm_pooled.py` | array | Nirwan's BC2S3 HMM adapted to pools (work in progress) | `14_hmm/` |
-| 15 | `15_collect_hmm.sh` + `.R` | 1 | Collects per-pool HMM results (work in progress) | `15_introgression/` |
+| 13 | `13_extract_pool_gl.sh` (bcftools + awk) | 10 | Per-pool GL files for the HMM: ANGSD GLs from the discovery BCF at PASS teosinte-panel sites, flipped to B73 orientation | `13_pool_gl/` |
+| 14 | `14_run_hmm.sh` + `14_hmm_pooled.py` | 143 | Nirwan's BC2S3 HMM adapted to pools: GL emissions for B73 / SEG / DONOR, NAM genetic-map transitions, per-pool κ by EM | `14_hmm/` |
+| 15 | `15_collect_hmm.sh` + `.R` | 1 | Collects all pools: summary table and all tracts | `15_introgression/` |
 
 ## Final outputs (`09_counts_by_chr/`)
 
@@ -185,16 +188,57 @@ These steps use only `bcftools`, `awk` and base R. They work on the pools we tru
 
 `z_fixed ≥ 10` on panel sites means the panel sites alone are enough for that taxon. Where it isn't, that taxon also gets its non-panel PASS sites in the introgression caller.
 
-## Steps 13–15: introgression calling (work in progress — do not run yet)
+## Steps 13–15: introgression calling (Nirwan's HMM, adapted to pools)
 
-These steps use Nirwan's BC2S3 HMM (`old_scripts/HMM_introgression/hmm_viterbi_bc2s3.py`), adapted in `14_hmm_pooled.py`. The structure is unchanged:
+The HMM is `old_scripts/HMM_introgression/hmm_viterbi_bc2s3.py`, adapted in `14_hmm_pooled.py`. These parts are unchanged from the original:
 - per-marker HMM
-- NAM genetic-map transitions, scaled by `rho`
-- forward–backward posteriors, then Viterbi or posterior + rigidity decoding
+- NAM genetic map (`genetic_maps/`): Haldane recombination fraction, scaled by `rho`
+- sticky/stationary transition matrix
+- forward–backward posteriors
+- posterior + rigidity (hysteresis) or Viterbi decoding, with optional min-run cleanup
 
-Three fixes so far:
-- each chromosome runs as its own chain
-- the `thetas` off-by-one is corrected
-- tracts cover each chromosome end to end
+**Input (step 13).** The ANGSD GLs come from the existing discovery BCFs, with no ANGSD rerun. Only the PASS teosinte-panel sites from step 11 are used. ANGSD stores alleles as major,minor, so at sites where the major allele is not the B73 base, the three GLs are flipped. `GL = 0,0,0` (no reads in that pool) is left out.
 
-**Still to decide: the emission input.** The current draft uses pooled read counts. The plan under discussion is to use ANGSD GLs instead: the GLs from the discovery BCFs, flipped to B73 orientation at the swapped sites, then converted to pool-state likelihoods. This is not tested yet.
+**What changed in the HMM:**
+
+1. **States are for a pool (one BC2S3 family), not one plant.** The GLs are read as the likelihood of the reads if the pool's ALT allele fraction is 0, ½ or 1. The likelihood at any other fraction comes from the curve through those three points:
+
+   L(p) = L0 (2p−1)(p−1) + L1·4p(1−p) + L2·p(2p−1)
+
+   This is exact for sites with 1–2 reads, which is almost all sites at ~0.8x.
+
+   | State | Meaning | Emission |
+   |---|---|---|
+   | **B73** | family fixed B73 | L(0) |
+   | **SEG** | family segregating | c · mean of L(¼), L(½), L(¾) + (1−c) · L(0) |
+   | **DONOR** | family fixed donor | c · L(1) + (1−c) · L(0) |
+
+   `c` is the chance the donor carries the ALT allele at the site: κ × the teosinte panel's AC/AN. Sequencing error is already inside the GLs. The old GL adjustments (`eta_hh_from_rh`, `eta_rr_from_rh`, `rh_penalty`) are dropped.
+
+2. **κ per pool, learned by EM.** κ is how often this pool's donor carries the panel's ALT alleles. It is near 1 for donors like the panel (parviglumis, mexicana) and lower for donors the panel represents poorly (e.g. diploperennis). Without κ, their fixed-donor regions look segregating.
+
+   At one read per site, "SEG at κ" and "DONOR at κ/2" look alike. So EM runs from several starts (κ = 1, 0.5, 0.25) and keeps the start with the best log-likelihood; sites with 2+ reads tell the two apart.
+
+3. **Each chromosome is its own chain.** The original ran chr1–chr10 as one chain.
+
+4. **`thetas[t]` is the recombination fraction between markers t−1 and t.** The original was shifted by one marker.
+
+5. **Tracts cover each chromosome end to end.** Boundaries sit at the midpoint between markers, so tract lengths add up to the chromosome length.
+
+**Outputs:**
+- In `14_hmm/`, per pool:
+  - `<SAMPLE>.statepath.tsv.gz`: per marker: GLs, panel AC/AN, state, P(B73), P(SEG), P(DONOR), theta.
+  - `<SAMPLE>.tracts.bed.gz`
+  - `<SAMPLE>.summary.tsv`: fractions B73/SEG/DONOR, donor share, number of tracts, κ.
+- In `15_introgression/`:
+  - `pool_summary.tsv`
+  - `tracts_all.tsv.gz`
+
+**Simulation check:** 54 pools (Zx, Zv, and Zd with a donor that carries panel ALT alleles at 0.35× the panel frequency), 100 Mb, ~0.6 reads per pool per site, ANGSD-style GLs, 5% of sites with a swapped major allele.
+- Marker accuracy: B73 controls 100%, Zx 99.5%, Zv 99.6%, Zd 99.3%.
+- κ came out at 1.0 for Zx and Zv, and 0.36 for Zd (true value 0.35).
+- Donor share per pool vs truth: correlation 1.00, mean error 0.0015.
+
+**Run time:** about 9 s per pool in the simulation (~54k markers). Real pools have ~1 M markers, so expect roughly 3–4 min per pool and about 35 min per array task of 10 pools.
+
+**BC1 sisters (later):** a 10x sister from the same F1 shows exactly which ALT alleles that F1's donor carries. It can replace `c = κ × panel AC/AN` for that family.

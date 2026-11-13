@@ -7,18 +7,25 @@ forward-backward posteriors, Viterbi or posterior + rigidity (hysteresis) decodi
 optional min-run cleanup.
 
 What changed from the original:
-  1. Emissions: each sample is a POOL of plants from one BC2S3 family, so the diploid
-     genotype likelihoods (RR/RH/HH) are replaced by read counts. States are now
-       B73   family fixed B73
-       SEG   family segregating (some plants carry the donor)
-       DONOR family fixed donor
-     At a marker with n reads, k of them ALT, sequencing/background error e, and
-     c = chance the donor carries the ALT allele there (teosinte panel AC/AN):
-       B73   : Bin(k; n, e)
-       DONOR : c * Bin(k; n, 1-e)              + (1-c) * Bin(k; n, e)
-       SEG   : c * mean_f Bin(k; n, f(1-e)+(1-f)e) + (1-c) * Bin(k; n, e)
-               f = share of donor copies in the pool, averaged over 1/4, 1/2, 3/4
-     (the binomial coefficient is the same for every state and is left out)
+  1. Emissions, still from the ANGSD GLs. Each sample is a POOL of plants from one BC2S3
+     family, so the GLs are read as likelihoods of the reads at ALT allele fraction
+     0 (GL_0), 1/2 (GL_1) and 1 (GL_2) rather than as genotypes of one diploid plant.
+     The likelihood at any other fraction p comes from the curve through those three
+     points (exact for sites with 1-2 reads, i.e. almost all sites at ~0.8x):
+       L(p) = L0 (2p-1)(p-1) + L1 4p(1-p) + L2 p(2p-1)
+     States are
+       B73   family fixed B73            : L(0)
+       SEG   family segregating          : c * mean_f L(f) + (1-c) * L(0),  f = 1/4, 1/2, 3/4
+       DONOR family fixed donor          : c * L(1)        + (1-c) * L(0)
+     c = chance the donor carries the ALT allele at the site = kappa x (teosinte panel AC/AN).
+     kappa is learned per pool by EM (until it changes < --em_tol, max --em_rounds): donors that are under-represented in
+     the panel (e.g. diploperennis) carry panel ALT alleles less often than the panel
+     frequency says; without kappa their fixed-donor regions look "segregating".
+     Each round: run forward-backward, then
+       kappa = sum_t w_t r_t / sum_t w_t a_t   (+ a weak prior at kappa = 1)
+     over SEG/DONOR markers, w_t = P(SEG or DONOR), r_t = posterior that the donor carries
+     ALT at that marker, a_t = panel AC/AN.
+     Sequencing error is already inside the GLs (base quality).
      The GL fixes (eta_hh_from_rh, eta_rr_from_rh, rh_penalty) are no longer needed.
   2. Each chromosome is its own chain (the original ran chr1..chr10 as one chain).
   3. thetas[t] is the recombination fraction between markers t-1 and t (the original
@@ -26,7 +33,8 @@ What changed from the original:
   4. Tracts cover each chromosome end to end (boundaries at the midpoint between the
      last marker of one state and the first of the next), so lengths sum correctly.
 
-Input : <in_dir>/<chr>/<sample>.tsv.gz   CHROM POS B73 ALT REF_READS ALT_READS PANEL_AC PANEL_AN
+Input : <in_dir>/<chr>/<sample>.tsv.gz   CHROM POS B73 ALT GL_0 GL_1 GL_2 PANEL_AC PANEL_AN
+        (step 13; GLs are log10, already in B73 orientation)
 Output: <out_prefix>.statepath.tsv.gz, <out_prefix>.tracts.bed.gz, <out_prefix>.summary.tsv
 """
 import argparse
@@ -104,25 +112,31 @@ def log_mix(c, la, lb):
 
 
 # -----------------------------
-# NEW: pooled read-count emissions
+# NEW: pool-state emissions from diploid GLs
 # -----------------------------
-class PoolEmission:
-    def __init__(self, err, seg_freqs=(0.25, 0.5, 0.75), c_min=0.01):
-        self.le, self.l1e = math.log(err), math.log(1.0 - err)
-        self.seg = [(math.log(f * (1 - err) + (1 - f) * err), math.log(1 - (f * (1 - err) + (1 - f) * err)))
-                    for f in seg_freqs]
-        self.lnseg = math.log(len(seg_freqs))
-        self.c_min = c_min
+LN10 = math.log(10.0)
 
-    def __call__(self, n, k, ac, an):
-        c = ac / an if an > 0 else 0.5
-        c = min(max(c, self.c_min), 1.0 - self.c_min)
-        l_b73 = k * self.le + (n - k) * self.l1e                     # read ALT only by error
-        l_alt = k * self.l1e + (n - k) * self.le                     # donor carries ALT, fixed
-        segs = [k * la + (n - k) * lr for la, lr in self.seg]        # donor carries ALT, pool freq f
-        m = max(segs)
-        l_seg_alt = m + math.log(sum(math.exp(x - m) for x in segs)) - self.lnseg
-        return [l_b73, log_mix(c, l_seg_alt, l_b73), log_mix(c, l_alt, l_b73)]
+
+class GLPoolEmission:
+    def __init__(self, seg_freqs=(0.25, 0.5, 0.75), c_min=0.005, floor=1e-6):
+        # Lagrange weights of L0, L1, L2 at each SEG fraction f
+        self.w = [((2 * f - 1) * (f - 1), 4 * f * (1 - f), f * (2 * f - 1)) for f in seg_freqs]
+        self.c_min = c_min
+        self.floor = floor        # keeps L(f) > 0 (interpolation can dip below 0 at sites with 3+ reads)
+
+    def prepare(self, gl0, gl1, gl2):
+        """GLs (log10) -> (L0, Lseg, L2): relative likelihood at ALT fraction 0, SEG mean, 1."""
+        m = max(gl0, gl1, gl2)
+        L0, L1, L2 = (math.exp((g - m) * LN10) for g in (gl0, gl1, gl2))
+        lf = [max(a * L0 + b * L1 + d * L2, self.floor) for a, b, d in self.w]
+        return (max(L0, 1e-300), sum(lf) / len(lf), L2)
+
+    def c_of(self, a, kappa):
+        return min(max(kappa * a, self.c_min), 1.0 - self.c_min)
+
+    def __call__(self, L, c):
+        L0, Ls, L2 = L
+        return [math.log(L0), math.log(c * Ls + (1 - c) * L0), math.log(c * L2 + (1 - c) * L0)]
 
 
 # -----------------------------
@@ -143,7 +157,8 @@ def build_A(theta, pi, rho):
 
 
 # -----------------------------
-# Forward-backward (unchanged; thetas[t] = transition t-1 -> t)
+# Forward-backward (unchanged except it also returns the log-likelihood;
+#                   thetas[t] = transition t-1 -> t)
 # -----------------------------
 def forward_backward(obs_ll, thetas, pi, rho):
     n = len(obs_ll)
@@ -185,7 +200,7 @@ def forward_backward(obs_ll, thetas, pi, rho):
         post[t][0] = math.exp(v0 - z)
         post[t][1] = math.exp(v1 - z)
         post[t][2] = math.exp(v2 - z)
-    return post
+    return post, sum(c)
 
 
 # -----------------------------
@@ -289,7 +304,6 @@ def main():
     ap.add_argument("--out_prefix", required=True)
     ap.add_argument("--chroms", default=",".join(f"chr{i}" for i in range(1, 11)))
 
-    ap.add_argument("--err", type=float, default=0.002, help="background ALT rate (B73 controls, step 12)")
     ap.add_argument("--prior_b73", type=float, default=0.844)
     ap.add_argument("--prior_seg", type=float, default=0.0625)
     ap.add_argument("--prior_donor", type=float, default=0.094)
@@ -297,6 +311,9 @@ def main():
     ap.add_argument("--min_morgan", type=float, default=1e-8)
     ap.add_argument("--rho", type=float, default=0.2)
 
+    ap.add_argument("--em_rounds", type=int, default=30, help="max EM rounds to learn kappa (donor match to the panel)")
+    ap.add_argument("--em_tol", type=float, default=0.005, help="stop EM when kappa changes less than this")
+    ap.add_argument("--em_starts", type=float, nargs="+", default=[1.0, 0.5, 0.25], help="EM starting values for kappa")
     ap.add_argument("--decode", choices=["posterior_hysteresis", "posterior", "viterbi"], default="posterior_hysteresis")
     ap.add_argument("--rigidity", "-R", type=int, default=50, help="R consecutive markers before switching (posterior_hysteresis)")
     ap.add_argument("--min_run_donor", type=int, default=1)
@@ -305,7 +322,7 @@ def main():
 
     s = args.prior_b73 + args.prior_seg + args.prior_donor
     pi = [args.prior_b73 / s, args.prior_seg / s, args.prior_donor / s]
-    emis = PoolEmission(args.err)
+    emis = GLPoolEmission()
     chroms = args.chroms.split(",")
     chr_len = {}
     with open(args.fai) as f:
@@ -314,13 +331,15 @@ def main():
             chr_len[p[0]] = int(p[1])
 
     sp = gzip.open(args.out_prefix + ".statepath.tsv.gz", "wt")
-    sp.write("CHROM\tPOS\tB73\tALT\tREF_READS\tALT_READS\tPANEL_AC\tPANEL_AN\tSTATE\tP_B73\tP_SEG\tP_DONOR\tTHETA\n")
+    sp.write("CHROM\tPOS\tB73\tALT\tGL_0\tGL_1\tGL_2\tPANEL_AC\tPANEL_AN\tSTATE\tP_B73\tP_SEG\tP_DONOR\tTHETA\n")
     tr = gzip.open(args.out_prefix + ".tracts.bed.gz", "wt")
     tr.write("chrom\tstart\tend\tstate\n")
     tot = {"B73": 0, "SEG": 0, "DONOR": 0}
     n_markers = 0
     n_tracts = 0
 
+    # ---- load every chromosome (markers, GL-derived likelihoods, panel freq, thetas) ----
+    data = {}
     for chrom in chroms:
         fn = os.path.join(args.in_dir, chrom, args.sample + ".tsv.gz")
         rows = []
@@ -328,19 +347,18 @@ def main():
             with gzip.open(fn, "rt") as f:
                 for line in f:
                     p = line.rstrip("\n").split("\t")
-                    if len(p) < 8:
+                    if len(p) < 9:
                         continue
-                    rows.append((int(p[1]), p[2], p[3], int(p[4]), int(p[5]), int(p[6]), int(p[7])))
+                    rows.append((int(p[1]), p[2], p[3], float(p[4]), float(p[5]), float(p[6]), int(p[7]), int(p[8])))
         rows.sort()
-        L = chr_len[chrom]
-        if not rows:                                      # no reads: leave chromosome uncalled
+        if not rows:                                      # no data: leave chromosome uncalled
             continue
-
         bp_map, cm_map = read_map(os.path.join(args.map_dir, chrom + ".map"))
-        obs_ll, thetas = [], []
+        Ls, af, thetas = [], [], []
         prev_cm = None
-        for pos, b73, alt, r, a, ac, an in rows:
-            obs_ll.append(emis(r + a, a, ac, an))
+        for pos, b73, alt, g0, g1, g2, ac, an in rows:
+            Ls.append(emis.prepare(g0, g1, g2))
+            af.append(ac / an if an > 0 else 0.5)
             cm_here = interp_cm(bp_map, cm_map, pos)
             if prev_cm is None:
                 thetas.append(0.0)                         # first marker: no transition into it
@@ -348,8 +366,53 @@ def main():
                 d_m = max(abs(cm_here - prev_cm) / 100.0, args.min_morgan)
                 thetas.append(max(haldane_theta(d_m), 1e-8))
             prev_cm = cm_here
+        data[chrom] = (rows, Ls, af, thetas)
 
-        post = forward_backward(obs_ll, thetas, pi, args.rho)
+    # ---- EM for kappa (how often this pool's donor carries the panel's ALT alleles) ----
+    # SEG at kappa k and DONOR at kappa k/2 look alike at 1 read per site, so EM can stop
+    # at the wrong one. Run it from several starts and keep the best log-likelihood
+    # (sites with 2+ reads tell the two apart).
+    PRIOR_W = 200.0                                       # weak prior: 200 markers' worth at kappa = 1
+
+    def run_all(kap):
+        out, ll = {}, 0.0
+        for chrom, (rows, Ls, af, thetas) in data.items():
+            cs = [emis.c_of(a, kap) for a in af]
+            post, l = forward_backward([emis(L, c) for L, c in zip(Ls, cs)], thetas, pi, args.rho)
+            out[chrom] = (cs, post); ll += l
+        return out, ll
+
+    def em(k0):
+        kap, used = k0, 0
+        for rnd in range(args.em_rounds):
+            res, ll = run_all(kap)
+            num, den = 0.0, 0.0
+            for chrom, (cs, post) in res.items():
+                Ls, af = data[chrom][1], data[chrom][2]
+                for (L0, Lseg, L2), c, a, (pB, pS, pD) in zip(Ls, cs, af, post):
+                    num += pS * c * Lseg / (c * Lseg + (1 - c) * L0) + pD * c * L2 / (c * L2 + (1 - c) * L0)
+                    den += (pS + pD) * a
+            new = min(max((num + PRIOR_W * 0.3) / (den + PRIOR_W * 0.3), 0.02), 1.5)
+            used = rnd + 1
+            if abs(new - kap) < args.em_tol:
+                kap = new
+                break
+            kap = new
+        return kap, run_all(kap)[1], used
+
+    best = None
+    for k0 in args.em_starts:
+        k, ll, used = em(k0)
+        if best is None or ll > best[1]:
+            best = (k, ll, used, k0)
+    kappa, _, em_used, kappa_start = best
+
+    # ---- final run, decode, write ----
+    for chrom, (rows, Ls, af, thetas) in data.items():
+        L = chr_len[chrom]
+        cs = [emis.c_of(a, kappa) for a in af]
+        obs_ll = [emis(Lx, c) for Lx, c in zip(Ls, cs)]
+        post, _ = forward_backward(obs_ll, thetas, pi, args.rho)
         if args.decode == "viterbi":
             path = viterbi_standard(obs_ll, thetas, pi, args.rho)
         else:
@@ -357,9 +420,9 @@ def main():
             path = decode_hysteresis(best, args.rigidity) if args.decode == "posterior_hysteresis" else best
         path = run_filter(path, args.min_run_donor, args.min_run_seg)
 
-        for i, (pos, b73, alt, r, a, ac, an) in enumerate(rows):
+        for i, (pos, b73, alt, g0, g1, g2, ac, an) in enumerate(rows):
             pB, pS, pD = post[i]
-            sp.write(f"{chrom}\t{pos}\t{b73}\t{alt}\t{r}\t{a}\t{ac}\t{an}\t{STATES[path[i]]}\t{pB:.4g}\t{pS:.4g}\t{pD:.4g}\t{thetas[i]:.4g}\n")
+            sp.write(f"{chrom}\t{pos}\t{b73}\t{alt}\t{g0:g}\t{g1:g}\t{g2:g}\t{ac}\t{an}\t{STATES[path[i]]}\t{pB:.4g}\t{pS:.4g}\t{pD:.4g}\t{thetas[i]:.4g}\n")
         n_markers += len(rows)
 
         # tracts cover the whole chromosome: boundary = midpoint between neighbouring markers
@@ -377,12 +440,12 @@ def main():
     tr.close()
     g = sum(tot.values())
     with open(args.out_prefix + ".summary.tsv", "w") as f:
-        f.write("SAMPLE\tMARKERS\tCALLED_BP\tFRAC_B73\tFRAC_SEG\tFRAC_DONOR\tDONOR_SHARE\tN_TRACTS\n")
+        f.write("SAMPLE\tMARKERS\tCALLED_BP\tFRAC_B73\tFRAC_SEG\tFRAC_DONOR\tDONOR_SHARE\tN_TRACTS\tKAPPA\tEM_ROUNDS\tKAPPA_START\n")
         if g:
             f.write(f"{args.sample}\t{n_markers}\t{g}\t{tot['B73']/g:.4f}\t{tot['SEG']/g:.4f}\t{tot['DONOR']/g:.4f}\t"
-                    f"{(tot['DONOR'] + 0.5 * tot['SEG'])/g:.4f}\t{n_tracts}\n")
+                    f"{(tot['DONOR'] + 0.5 * tot['SEG'])/g:.4f}\t{n_tracts}\t{kappa:.3f}\t{em_used}\t{kappa_start:g}\n")
         else:
-            f.write(f"{args.sample}\t0\t0\tNA\tNA\tNA\tNA\t0\n")
+            f.write(f"{args.sample}\t0\t0\tNA\tNA\tNA\tNA\t0\tNA\t0\tNA\n")
 
 
 if __name__ == "__main__":

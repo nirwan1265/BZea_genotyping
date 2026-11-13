@@ -46,7 +46,7 @@ rm -f "${OUT}.parts.list"
 
 # per-site summary: one header, then all bodies in order
 {
-  gzip -dc "${prefixes[0]}.sitesum.tsv.gz" | head -n 1
+  printf "CHROM\tPOS\tB73\tALT\tDP\tOTH\tREF_READS\tALT_READS\tNCOV\tNALT\tCTRL_REF\tCTRL_ALT\tCTRL_NCOV\n"
   for P in "${prefixes[@]}"; do gzip -dc "${P}.sitesum.tsv.gz" | tail -n +2; done
 } | gzip -c > "${OUT}.sitesum.tsv.gz"
 

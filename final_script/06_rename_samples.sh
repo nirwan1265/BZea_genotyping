@@ -40,5 +40,5 @@ sed -E 's#^.*/##; s/\.bam$//' "$OLD" | sed -E 's/^.*(PN[0-9]+_SID[0-9]+).*$/\1/'
 
 bcftools reheader -s "$NEW" -o "$OUT" "$IN"
 bcftools index -f "$OUT"
-echo "First samples: $(bcftools query -l "$OUT" | head -n 3 | tr '\n' ' ')"
+echo "First samples: $(bcftools query -l "$OUT" | sed -n '1,3p' | tr '\n' ' ')"
 echo "WROTE: ${OUT}"

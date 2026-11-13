@@ -49,6 +49,8 @@ D09=${WORK}/09_counts_by_chr        # read counts per chromosome (final)
 D10=${WORK}/10_qc                   # QC tables and plots
 D11=${WORK}/11_sites_filtered       # site filters, teosinte panel, donor-group read sums
 D12=${WORK}/12_signal_check         # donor signal per taxon: panel vs non-panel sites
+D13=${WORK}/13_window_counts        # B73/ALT reads per pool per window
+D14=${WORK}/14_introgression        # introgression calls, dosage matrix, segments
 
 # Site discovery (01-06) has ALREADY been run. Steps 07+ read the renamed
 # per-chromosome BCFs from here. If you ever rerun 01-06, set this to ${D06}.
@@ -88,6 +90,10 @@ MAX_CTRL_ALT=0      # remove a site if the clean B73 controls have more than thi
 MAX_DP_MULT=2.0     # remove a site if total depth > 2 x chromosome median (repeats)
 MIN_DP_MULT=0.25    # remove a site if total depth < 0.25 x median (hard to map)
 MAX_OTH_FRAC=0.05   # remove a site if > 5% of its reads show a third base
+
+# ---------- 13-14: introgression calling ----------
+WIN_SIZE=1000000    # window size (bp). 1 Mb: ~500-700 panel reads per pool per window
+SWITCH_PROB=0.01    # HMM: chance the state changes between neighbouring windows
 
 # =============================================================================
 # helpers (no edits needed below)

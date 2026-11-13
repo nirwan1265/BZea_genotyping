@@ -32,6 +32,10 @@ sbatch --dependency=afterok:<09 jobid> 10_counts_qc.sh
 sbatch 11_filter_sites.sh                       # array 1-10
 sbatch --dependency=afterok:<11 jobid> 12_signal_check.sh
 
+# ---- introgression calling (after 12) ----
+sbatch 13_window_counts.sh                      # array 1-10
+sbatch --dependency=afterok:<13 jobid> 14_call_introgression.sh
+
 # ---- site discovery (ALREADY RUN; only needed to redo it) ----
 sbatch 01_angsd_discovery_by_part.sh            # array 1-200
 bash 02_find_failed_parts.sh                    # prints the sbatch line for 03
@@ -72,6 +76,8 @@ No partition is set. If your account needs one, uncomment `##SBATCH --partition=
 | 10 | `10_counts_qc.sh` + `10_counts_qc.R` | 1 | Per-pool QC: reads, coverage, ALT fraction against the B73 controls, error proxy | `10_qc/` |
 | 11 | `11_filter_sites.sh` (bcftools + awk) | 10 | Site filters (clean B73 controls, depth, third base, panel allele mismatch); splits sites into in / not in the 227-plant teosinte panel; reads per pool on each set | `11_sites_filtered/` |
 | 12 | `12_signal_check.sh` + `12_signal_check.R` | 1 | Donor signal per taxon on teosinte-panel sites vs other sites: are panel sites alone enough? | `12_signal_check/` |
+| 13 | `13_window_counts.sh` (bcftools + awk) | 10 | B73/ALT reads per pool per 1 Mb window on PASS teosinte-panel sites | `13_window_counts/` |
+| 14 | `14_call_introgression.sh` + `.R` | 1 | Introgression calls per pool: B73 / SEG / DONOR per window (HMM), donor dosage matrix, segments | `14_introgression/` |
 
 ## Final outputs (`09_counts_by_chr/`)
 
@@ -179,3 +185,33 @@ These steps use only `bcftools`, `awk` and base R. They work on the pools we tru
 - `z_fixed`, how clearly those two separate
 
 `z_fixed ≥ 10` on panel sites means the panel sites alone are enough for that taxon. Where it isn't, that taxon also gets its non-panel PASS sites in the introgression caller.
+
+## Steps 13–14: introgression calling
+
+Each pool is one BC2S3 family. Each 1 Mb window (`WIN_SIZE`) of each pool gets one of three states:
+
+| State | Meaning | ALT reads expected |
+|---|---|---|
+| **B73** | the family is fixed B73 | background only (errors; measured on the B73 controls) |
+| **SEG** | the family is segregating (some plants carry donor) | background + ½ × q |
+| **DONOR** | the family is fixed for the donor | background + q |
+
+`q` is how often this line's donor carries the ALT allele at the window's sites. Teosinte is outbred and taxa differ, so `q` is estimated per window, for each pool, from the **other pools of the same accession** (the pool itself is left out). It is blended with the taxon's value for that window, so a few reads cannot swing it. Calling and re-estimating `q` alternate for 3 rounds.
+
+Reads follow a beta-binomial model. That allows extra spread, because SEG pools differ in how many plants carry the donor. Neighbouring windows are linked by a hidden Markov model (`SWITCH_PROB` per window), run forward–backward along each chromosome.
+
+**Outputs** (in `14_introgression/`):
+- `calls.tsv.gz`: for each window × pool: reads, ALT, `q`, P(B73), P(SEG), P(DONOR), `DOSAGE` (0–1) and `CALL`.
+- `dosage_matrix.tsv.gz`: windows × pools, expected donor dosage. Use this for GWAS or QTL.
+- `segments.tsv`: merged SEG / DONOR runs for each pool.
+- `pool_summary.tsv`: per pool, the donor share of the genome (expected ~0.125; ~0 for the B73 controls), the fraction called SEG and DONOR, and the number of segments.
+
+**Simulation check:** 64 pools, 100 Mb, about 600 panel reads per pool per Mb.
+- Window accuracy was 98.8%; donor vs B73 accuracy was 99.4%.
+- Dosage vs truth correlation was 0.97.
+- The B73 controls came out at 0% donor.
+- Most remaining errors were windows that straddle a true boundary, or segregating families where most plants carry the donor (called DONOR).
+
+**Run time:** the full data set (1,424 pools × 2,132 windows) takes about 1 minute.
+
+**BC1 sisters (later):** a 10x sister from the same F1 shows exactly which ALT alleles that F1's donor carries. It will replace the same-accession estimate of `q` for that family, and the current estimate stays as the fallback.

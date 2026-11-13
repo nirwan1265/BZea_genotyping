@@ -28,6 +28,10 @@ sbatch --dependency=afterok:<07 jobid> 08_angsd_counts_by_part.sh   # array 1-20
 sbatch --dependency=afterok:<08 jobid> 09_concat_counts_by_chr.sh   # array 1-10
 sbatch --dependency=afterok:<09 jobid> 10_counts_qc.sh
 
+# ---- site filters + teosinte panel (after 10) ----
+sbatch 11_filter_sites.sh                       # array 1-10
+sbatch --dependency=afterok:<11 jobid> 12_signal_check.sh
+
 # ---- site discovery (ALREADY RUN; only needed to redo it) ----
 sbatch 01_angsd_discovery_by_part.sh            # array 1-200
 bash 02_find_failed_parts.sh                    # prints the sbatch line for 03
@@ -66,6 +70,8 @@ No partition is set. If your account needs one, uncomment `##SBATCH --partition=
 | 08 | `08_check_unfinished.sh` | login node | Lists unfinished 08 parts and prints the resubmit command | — |
 | 09 | `09_concat_counts_by_chr.sh` | 10 | Joins parts per chromosome; builds site and pool summaries | `09_counts_by_chr/` |
 | 10 | `10_counts_qc.sh` + `10_counts_qc.R` | 1 | Per-pool QC: reads, coverage, ALT fraction against the B73 controls, error proxy | `10_qc/` |
+| 11 | `11_filter_sites.sh` + `11_filter_sites.py` | 10 | Site filters (clean B73 controls, depth, third base, panel allele mismatch); marks sites in the 227-plant teosinte panel; B73/ALT read sums per taxon and per accession | `11_sites_filtered/` |
+| 12 | `12_signal_check.sh` + `12_signal_check.py` | 1 | Donor signal per taxon on teosinte-panel sites vs other sites: are panel sites alone enough? | `12_signal_check/` |
 
 ## Final outputs (`09_counts_by_chr/`)
 
@@ -147,3 +153,30 @@ Memory is set to 32 GB per part in 08. If parts get killed, resubmit them with `
 - awk (mawk or gawk)
 
 Load them where `config.sh` says.
+
+## Steps 11–12: site filters, teosinte panel, signal check
+
+These steps use only the pools we trust: the 10 clean B73 controls and the donor pools not listed in `sample_lists/exclude_all.txt`. The reasons for each exclusion are in [`QC_NOTES.md`](QC_NOTES.md).
+
+**Site filters (step 11).** A site is removed if any of these is true:
+- **Control ALT reads:** any clean B73 control has an ALT read (`MAX_CTRL_ALT=0`). A real B73 plant cannot carry ALT, so ALT reads there point to a repeat, a paralog or a reference error.
+- **High depth:** depth is more than 2× the chromosome median (`MAX_DP_MULT`), typical of collapsed repeats.
+- **Low depth:** depth is below 0.25× the median (`MIN_DP_MULT`), typical of hard-to-map regions.
+- **Third base:** more than 5% of the site's reads show a base that is neither B73 nor ALT (`MAX_OTH_FRAC`).
+- **Panel mismatch:** the teosinte panel has the site, but with different alleles.
+
+**Teosinte panel.** Step 11 marks each site `IN_PANEL` if the 227-plant teosinte panel (`TEO_PANEL_DIR`, Schnable 2023) has the same SNP with the same alleles. It also stores the panel's `AC`/`AN`: how many of the 454 teosinte chromosomes carry ALT.
+
+**Group read sums.**
+- `sites.tsv.gz` has B73 and ALT read sums for each taxon (Zd, Zh, Zl, Zm, Zv, Zx).
+- `acc_counts.npz` has the same sums for each accession, for PASS sites only. These are the "other pools of the same accession" evidence used later.
+
+**Background estimate.** Each control's background ALT rate is measured on sites filtered by the *other* controls (leave-one-out). Otherwise its ALT count on PASS sites would be 0 by construction.
+
+**Signal check (step 12).** For a typical pool of each taxon, step 12 reports, per 1 Mb:
+- reads on panel sites
+- expected ALT reads in a B73 region
+- expected ALT reads in a fully donor region
+- `z_fixed`, how clearly those two separate
+
+`z_fixed ≥ 10` on panel sites means the panel sites are enough for that taxon. Where it isn't, that taxon gets its non-panel PASS sites back in the introgression caller.

@@ -47,6 +47,8 @@ D07=${WORK}/07_sites                # B73-polarized site tables + ANGSD -sites f
 D08=${WORK}/08_counts_parts         # read counts per part
 D09=${WORK}/09_counts_by_chr        # read counts per chromosome (final)
 D10=${WORK}/10_qc                   # QC tables and plots
+D11=${WORK}/11_sites_filtered       # site filters, teosinte panel, donor-group read sums
+D12=${WORK}/12_signal_check         # donor signal per taxon: panel vs non-panel sites
 
 # Site discovery (01-06) has ALREADY been run. Steps 07+ read the renamed
 # per-chromosome BCFs from here. If you ever rerun 01-06, set this to ${D06}.
@@ -78,10 +80,20 @@ BAMS_PER_RUN=
 # 08: keep ANGSD's raw A/C/G/T table (~4x larger than the AD BCF)? 1 = keep
 KEEP_RAW_COUNTS=0
 
+# ---------- 11: site filters + teosinte panel ----------
+# Teosinte reference panel: Schnable 2023 set, 227 teosinte samples (see QC_NOTES.md)
+TEO_PANEL_DIR=/rsstu/users/r/rrellan/sara/ref/Schnable_SNPset/teosinte_only
+teo_panel() { echo "${TEO_PANEL_DIR}/schnable2023_${1}.teosinte.vcf.gz"; }
+MAX_CTRL_ALT=0      # remove a site if the clean B73 controls have more than this many ALT reads
+MAX_DP_MULT=2.0     # remove a site if total depth > 2 x chromosome median (repeats)
+MIN_DP_MULT=0.25    # remove a site if total depth < 0.25 x median (hard to map)
+MAX_OTH_FRAC=0.05   # remove a site if > 5% of its reads show a third base
+
 # =============================================================================
 # helpers (no edits needed below)
 # =============================================================================
 FINAL_DIR="${SLURM_SUBMIT_DIR:-$PWD}"
+SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_NOTES.md)
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 

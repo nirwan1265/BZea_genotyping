@@ -481,9 +481,9 @@ def main():
         f.write("SAMPLE\tMARKERS\tCALLED_BP\tFRAC_B73\tFRAC_SEG\tFRAC_DONOR\tDONOR_SHARE\tN_TRACTS\tKAPPA\tEM_ROUNDS\tKAPPA_START\tFAMILY\tFAMILY_MARKERS\n")
         if g:
             f.write(f"{args.sample}\t{n_markers}\t{g}\t{tot['B73']/g:.4f}\t{tot['SEG']/g:.4f}\t{tot['DONOR']/g:.4f}\t"
-                    f"{(tot['DONOR'] + 0.5 * tot['SEG'])/g:.4f}\t{n_tracts}\t{kappa:.3f}\t{em_used}\t{kappa_start:g}\t{args.family or "NA"}\t{n_family}\n")
+                    f"{(tot['DONOR'] + 0.5 * tot['SEG'])/g:.4f}\t{n_tracts}\t{kappa:.3f}\t{em_used}\t{kappa_start:g}\t{args.family or 'NA'}\t{n_family}\n")
         else:
-            f.write(f"{args.sample}\t0\t0\tNA\tNA\tNA\tNA\t0\tNA\t0\tNA\t{args.family or "NA"}\t0\n")
+            f.write(f"{args.sample}\t0\t0\tNA\tNA\tNA\tNA\t0\tNA\t0\tNA\t{args.family or 'NA'}\t0\n")
 
 
 if __name__ == "__main__":

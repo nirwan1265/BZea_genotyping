@@ -304,15 +304,25 @@ Because a sample is a family, each genome region in a pool is in one of three st
 
 Both views give 12.5% donor alleles. Per single plant, the same expectation is 85.9% AA, 3.1% AB and 10.9% BB (see above). SEG is **not** the same as "het": a SEG region holds ¼ AA, ½ AB and ¼ BB plants.
 
-### Why not map reads and call SNPs?
+### The problem: mapping reads and calling SNPs at 0.8x in pools
 
-We first did it the usual way: ANGSD on mapped reads, per-pool read counts at SNPs, then an HMM (steps 01–15). It found too little donor and too much SEG.
+We first did it the usual way (steps 01–15): map reads to B73, count each pool's reads at SNPs (ANGSD), then run an HMM. It found too little donor and too much SEG. Three things go wrong, and they hit DONOR and SEG (het) regions hardest:
 
-The reads in a known donor tract show why. Only **~34%** of the expected donor reads map there at all, because teosinte sequence is often missing from or rearranged against B73. The usual filters then remove most of the rest (`-C 50`, BAQ, MAPQ ≥ 30): only **~11%** of expected donor bases survive, against ~96% in B73 regions.
+1. **Donor reads are lost (reference bias).** In a known Zd DONOR tract (PN13_SID1199, chr2:22.1–25.3 Mb), only **~34%** of the expected reads map there at all, because much teosinte sequence is missing from or rearranged against B73. The usual filters (`-C 50`, BAQ, MAPQ ≥ 30) then remove most of the rest: only **~11%** of expected donor bases survive, against ~96% in B73 regions. The filters remove reads with mismatches, and a read carrying a teosinte allele has extra mismatches by definition. So ALT alleles are lost first: **DONOR (BB) shows mixed reads and is called SEG, and SEG loses its ALT reads and is called B73.** This comes from mapping to one reference; tuning filters can't fix it.
+2. **Too few reads per site.** At 0.8x most SNPs have 0 or 1 read. One read shows one allele, so a het site looks homozygous, and a single error read looks like a het. Every call leans on the HMM and imputation.
+3. **Pools aren't diploid.** A pool's ALT fraction can be anything from 0 to 1 (e.g. 5/12 in a SEG region). Genotype callers built for diploids (0 / ½ / 1) mislabel these mixtures.
 
-The filters remove reads with mismatches, and a read carrying a teosinte allele has extra mismatches by definition. So **donor alleles are lost preferentially**: DONOR regions look like SEG, and SEG regions look like B73. That is a property of mapping to a single reference, and tuning filters can't fix it.
+### The solution: k-mers
 
-### The k-mer approach
+**Prior work.** Finding introgressions by counting reference k-mers in genome windows, without mapping reads, is not our idea. It was developed in wheat:
+- **IBSpy** (Uauy lab; Quiroz-Chávez 2023), used to find einkorn introgressions in bread wheat (Ahmed et al. 2023).
+- **KCFtools** (Selvanayagam et al. 2026), a fast tool for k-mer introgression screening and k-mer GWAS. We use it for the per-window counts.
+
+k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come from teosinte genome assemblies of the **PanAnd** project (Stitzer et al. 2025).
+
+**What we added:** low-coverage *pools* instead of single plants, a three-state pool model (B73 / SEG / DONOR) with per-window DONOR levels from assemblies, and the HMM on the NAM genetic map.
+
+### How it works
 
 ![How k-mers find introgressions](final_script/figures/kmer_method.svg)
 
@@ -360,23 +370,20 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 
 **Then the HMM** compares each window's r with these three expected levels (B73 ≈ 1, SEG ≈ 0.6–0.7, DONOR ≈ d). It allows for each pool's noise and takes neighbouring windows into account, using the genetic map, to call the most likely state.
 
-### Why this solves the "het problem" of conventional genotyping
+### How k-mers fix each problem
 
-With SNP genotyping at 0.8x, heterozygotes, and in pools the SEG regions, are where calls go wrong. There are three reasons, and the k-mer approach avoids each one:
+| Problem (above) | How the k-mer approach avoids it |
+|---|---|
+| **1. Donor reads are lost** | No mapping. A pool's raw reads are counted as k-mers, and only the presence of B73 k-mers is checked, so donor reads can't be filtered away. |
+| **2. Too few reads per site** | No per-site calls. Each 100-kb window adds up ~30,000 k-mers, so its score r is measured precisely from thousands of positions at once. |
+| **3. Pools aren't diploid** | The model is built for pools: DONOR = d, SEG = d + (1 − d)·g(f), averaged over the donor fractions a 6-plant family can have (Binomial(12, ½)). |
 
-| Problem with SNP calls | What happens | How the k-mer approach avoids it |
-|---|---|---|
-| **Too few reads per site** | At 0.8x most SNPs have 0 or 1 read. One read shows one allele, so a het site looks homozygous, and a single error read looks like a het. Every call leans on the HMM and imputation. | No per-site calls. Each 100-kb window adds up ~30,000 k-mers, so its score r is measured precisely from thousands of positions at once. |
-| **Reference bias** | Reads carrying teosinte alleles map worse and are filtered harder (`-C 50`, BAQ, MAPQ). In a known donor tract only ~11% of donor bases survived. ALT alleles are lost first, so **DONOR (BB) shows mixed reads and is called het/SEG, and SEG loses its ALT reads and is called B73**. | No mapping. A pool's reads are counted as k-mers directly, and only the presence of B73 k-mers is checked, so donor reads can't be lost. |
-| **Pools aren't diploid** | A pool's ALT fraction can be anything from 0 to 1 (e.g. 5/12 in a SEG region). Genotype callers built for diploids (0 / ½ / 1) mislabel these mixtures. | The model is built for pools: DONOR = d, SEG = d + (1 − d)·g(f), averaged over the donor fractions a 6-plant family can have (Binomial(12, ½)). |
-
-**Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in a Zd example, DONOR ≈ 0.27 and SEG ≈ 0.69, with B73 = 1. The DONOR level is measured from teosinte genomes, not guessed.
+**Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in the Zd example above, DONOR ≈ 0.27 and SEG ≈ 0.69, with B73 = 1. The DONOR level is measured from teosinte genomes, not guessed.
 
 **What we saw in our data:**
 - **SEG matches the expectation:** 6.4% observed vs 6.25% expected (family bootstrap p = 0.26).
 - **Plant-level het matches Mendel:** AB 3.2% vs 3.1%. So the k-mer calls don't inflate het, which is the classic failure.
 - **Fewer broken tracts:** the SNP route broke tracts into many short SEG pieces (44–69% of its SEG tracts were under 1 Mb) and turned DONOR into SEG when its donor-allele model drifted. In two Zd pools it reported 17% donor where the k-mers find 3–7%.
-- **A fair control test:** the B73 controls are clean (≤ 0.15% non-B73). This test is fair because the k-mer route never used the controls to filter sites; the SNP route's control test was circular.
 
 ### Validation
 
@@ -404,6 +411,17 @@ With SNP genotyping at 0.8x, heterozygotes, and in pools the SEG regions, are wh
 - **Noisy pools:** 93 pools are flagged NOISY because of low depth, mostly plates PN11, PN13 and PN15, which we recommend resequencing.
 
 The full statistics, per-plate table and family results are in [`final_script/README.md`](final_script/README.md).
+
+### References for this section
+
+- Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838. (IBSpy used to find einkorn introgressions in bread wheat.)
+- Quiroz-Chávez J (2023) Wheat haplotype diversity by a k-mer based approach. PhD thesis, University of East Anglia. (IBSpy.)
+- Selvanayagam S, Quiroz-Chavez J, Ramirez-Gonzalez RH, Uauy C, Smit S, Schranz ME (2026) KCFtools: rapid alignment-free method for introgression screening and GWAS using k-mer profiles. *Bioinformatics*. doi:10.1093/bioinformatics/btag354
+- Kokot M, Długosz M, Deorowicz S (2017) KMC 3: counting and manipulating k-mer statistics. *Bioinformatics* 33:2759–2761.
+- Stitzer MC, Seetharam AS, et al., Hufford MB (2025) Extensive genome evolution distinguishes maize within a stable tribe of grasses. *bioRxiv* doi:10.1101/2025.01.22.633974. (PanAnd assemblies.)
+- Lander ES, Waterman MS (1988) Genomic mapping by fingerprinting random clones: a mathematical analysis. *Genomics* 2:231–239. (Coverage formula behind g.)
+- Haldane JBS (1919) The combination of linkage values and the calculation of distances between the loci of linked factors. *J Genet* 8:299–309.
+- Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
 
 ## Section 7 — QTL / Association Mapping
 

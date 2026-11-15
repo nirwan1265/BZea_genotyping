@@ -51,23 +51,25 @@ The SNP HMM (step 14) gave too little donor, and more SEG than DONOR. Read count
 | Bases with `-C 50` + BAQ (the ANGSD settings used) | **11%** |
 | Same filters in a B73 region | ~96% |
 
-- **Mapping:** about 2/3 of donor reads don't map to the region. Much of that is donor sequence that has no counterpart in B73.
-- **Filters:** `-C 50` and BAQ remove another ~60% of the donor bases that do map. They lower the score of reads with mismatches, and a read carrying a teosinte allele has extra mismatches by definition.
-- **The effect:** ALT reads are lost preferentially. DONOR regions look like SEG, and SEG regions look like B73.
+Three problems follow, and they hit DONOR and SEG (het) regions hardest:
 
-k-mers avoid all of this, because no reads are mapped.
+1. **Donor reads are lost (reference bias).** About 2/3 of donor reads don't map to the region; much of that is donor sequence with no counterpart in B73. `-C 50` and BAQ then remove another ~60% of the donor bases that do map: they lower the score of reads with mismatches, and a read carrying a teosinte allele has extra mismatches by definition. ALT reads are lost first, so **DONOR (BB) looks mixed and is called SEG, and SEG loses its ALT reads and is called B73.**
+2. **Too few reads per site.** At 0.8x most SNPs have 0 or 1 read. One read shows one allele, so a het site looks homozygous, and a single error read looks like a het.
+3. **Pools aren't diploid.** A pool's ALT fraction can be anything from 0 to 1 (e.g. 5/12 in a SEG region). Diploid genotype callers (0 / ½ / 1) mislabel these mixtures.
 
 ---
 
-### 2.1 Why this solves the "het problem" of conventional genotyping
+### 2.1 Prior work
 
-With SNP genotyping at 0.8x, heterozygotes, and in pools the SEG regions, are where calls go wrong. There are three reasons, and the k-mer approach avoids each one:
+Finding introgressions by counting reference k-mers in windows, without mapping, was developed in wheat: **IBSpy** (Uauy lab; Quiroz-Chávez 2023; einkorn introgressions in bread wheat, Ahmed et al. 2023) and **KCFtools** (Selvanayagam et al. 2026, *Bioinformatics*, doi:10.1093/bioinformatics/btag354), which we use for the window counts. k-mers are counted with KMC 3 (Kokot et al. 2017); DONOR levels come from PanAnd assemblies (Stitzer et al. 2025). What we added: low-coverage pools, the three-state pool model with per-window DONOR levels, and the HMM on the NAM map. Full references are in the [top-level README](../README.md).
 
-| Problem with SNP calls | What happens | How the k-mer approach avoids it |
-|---|---|---|
-| **Too few reads per site** | At 0.8x most SNPs have 0 or 1 read. One read shows one allele, so a het site looks homozygous, and a single error read looks like a het. Every call leans on the HMM and imputation. | No per-site calls. Each 100-kb window adds up ~30,000 k-mers, so its score r is measured precisely from thousands of positions at once. |
-| **Reference bias** | Reads carrying teosinte alleles map worse and are filtered harder (`-C 50`, BAQ, MAPQ). In a known donor tract only ~11% of donor bases survived. ALT alleles are lost first, so **DONOR (BB) shows mixed reads and is called het/SEG, and SEG loses its ALT reads and is called B73**. | No mapping. A pool's reads are counted as k-mers directly, and only the presence of B73 k-mers is checked, so donor reads can't be lost. |
-| **Pools aren't diploid** | A pool's ALT fraction can be anything from 0 to 1 (e.g. 5/12 in a SEG region). Genotype callers built for diploids (0 / ½ / 1) mislabel these mixtures. | The model is built for pools: DONOR = d, SEG = d + (1 − d)·g(f), averaged over the donor fractions a 6-plant family can have (Binomial(12, ½)). |
+### 2.2 How k-mers fix each problem
+
+| Problem | How the k-mer approach avoids it |
+|---|---|
+| **1. Donor reads are lost** | No mapping. Raw reads are counted as k-mers and only the presence of B73 k-mers is checked, so donor reads can't be filtered away. |
+| **2. Too few reads per site** | No per-site calls. Each 100-kb window adds up ~30,000 k-mers, so r is measured from thousands of positions at once. |
+| **3. Pools aren't diploid** | The model is built for pools: DONOR = d, SEG = d + (1 − d)·g(f), averaged over Binomial(12, ½) donor fractions of a 6-plant family. |
 
 **Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in a Zd example, DONOR ≈ 0.27 and SEG ≈ 0.69, with B73 = 1. The DONOR level is measured from teosinte genomes, not guessed.
 
@@ -75,7 +77,6 @@ With SNP genotyping at 0.8x, heterozygotes, and in pools the SEG regions, are wh
 - **SEG matches the expectation:** 6.4% observed vs 6.25% expected (family bootstrap p = 0.26).
 - **Plant-level het matches Mendel:** AB 3.2% vs 3.1%. So the k-mer calls don't inflate het, which is the classic failure.
 - **Fewer broken tracts:** the SNP route broke tracts into many short SEG pieces (44–69% of its SEG tracts were under 1 Mb) and turned DONOR into SEG when its donor-allele model drifted. In two Zd pools it reported 17% donor where the k-mers find 3–7%.
-- **A fair control test:** the B73 controls are clean (≤ 0.15% non-B73). This test is fair because the k-mer route never used the controls to filter sites; the SNP route's control test was circular.
 
 ---
 

@@ -556,6 +556,15 @@ Our lines' donor plants are different plants again, so in about a quarter of Zv/
 - **B73 controls are clean:** all 10 have ≤ 0.56% non-B73 windows (donor share ≤ 0.28%) with the current method, and ≤ 0.26% with the first. This is a fair test, because the k-mer route never used the controls to filter sites.
 - **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
+- **Agreement with RTIGER** (SNP-based introgression calls made separately; B73 vs Introgression only, no SEG/DONOR split). 780 pools could be matched by name; 729 are non-noisy:
+  - **Introgressed share per pool:** RTIGER 11.0%, k-mer 11.6% (SEG + DONOR); correlation r = 0.97 across pools.
+  - **Same call in 98.2% of 100-kb windows** (median pool 98.7%). 95% of the k-mer introgression is also introgressed in RTIGER, and only 0.7% of k-mer B73 windows are introgressed in RTIGER.
+  - **The one systematic difference: RTIGER has no tract shorter than 10 Mb** (its shortest is 10.0 Mb, median 33 Mb). About 11% of the k-mer introgressed sequence lies in tracts under 10 Mb, and RTIGER calls it B73. RTIGER also bridges short B73 gaps inside long tracts. If the k-mer calls are limited to tracts of at least 10 Mb, the agreement rises to 98.6%.
+  - Two methods built on different data (mapped SNP reads vs k-mers, no mapping) agree on 98% of the genome. That supports both for the long tracts; for the short tracts, see [Limitations and future work](#limitations-and-future-work).
+
+![RTIGER vs k-mer HMM](final_script/figures/rtiger_comparison/rtiger_vs_kmer.png)
+
+Per-pool numbers: `final_script/figures/rtiger_comparison/rtiger_vs_kmer_per_pool.tsv`.
 
 ### Results (current method, 1,292 non-noisy donor pools)
 
@@ -634,6 +643,32 @@ The full statistics, per-plate table and family results are in [`final_script/RE
 - **Colors are colorblind-safe:** B73 blue, SEG yellow, DONOR red. The pairs were checked for protan, deutan and tritan vision. The same colors are used in `blocks_<GROUP>.pdf`.
 
 To view it, download the file and open it in a browser. GitHub shows HTML files as code, not as a page.
+
+### Limitations and future work
+
+**Short tracts aren't proven yet.** The k-mer HMM calls tracts down to a few hundred kb; RTIGER calls nothing under 10 Mb. RTIGER drops them because of its settings, not because the data show they are false. Some short k-mer tracts are probably real and some may be noise. This is the one place where the two methods truly differ, and neither has been checked there.
+
+**SEG vs DONOR isn't checked directly either.** A SEG call says the family still segregates (plants AA, AB or BB). RTIGER can't separate SEG from DONOR, so it can't confirm this split. The split is what gives the main result (het as expected, homozygous donor about half), so it should be checked independently.
+
+**The DONOR level depends on the assemblies.** The model needs to know how much of each window's B73 k-mers a teosinte genome keeps (d_w). The best source would have been **the actual donor parents** of our lines, sequenced. We don't have them, so we use teosinte assemblies from MaizeGDB (PanAnd). Those are other plants of the same taxa, so in diverse taxa they can differ from our donors:
+- Zv and Zx still switch between SEG and DONOR about twice as often as the other taxa, even after allowing for this uncertainty.
+- Zh and Zl have one assembly each, so the uncertainty can't be measured for them.
+- Zm (landraces) can't be done yet, because it needs a maize-based donor level (e.g. from NAM founder assemblies).
+
+**Future work:**
+1. **Read check, with data we already have.** The SNP route (steps 01–12) counted each pool's B73 and teosinte reads at SNP sites. Those reads come from mapping, which loses many donor reads, but they still show which alleles are present:
+   - **B73 regions:** almost only B73 reads.
+   - **DONOR regions:** mostly teosinte reads.
+   - **SEG regions:** a mix of both, because the pool holds both B73 and teosinte chromosomes.
+   - **Short tracts:** if real, they should show teosinte reads like longer tracts of the same state; if noise, they look like the B73 around them.
+2. **Relatives, with data we already have.** Pools from the same BC1 or BC2 plant inherited donor segments from that plant. A real short tract should show up at the same position in related pools more often than in unrelated pools of the same taxon; noise shouldn't line up. This needs the pedigree structure (which part of the name marks the BC1 and BC2 plant).
+3. **Gold standard: KASP markers on single plants.** A few markers inside short tracts and inside SEG tracts, genotyped on single plants from the same plots:
+   - **Short tract:** real if plants carry the teosinte allele there.
+   - **SEG tract:** plants should be AA, AB and BB in about 1:2:1.
+   - **DONOR tract:** all plants BB.
+   - **B73 region:** all plants AA.
+4. **Donor plants.** If seed or tissue of the donor parents (or of the same accessions) can be found, 10–20x short-read sequencing gives their own d_w directly. No assembly is needed.
+5. **Noisy plates.** Resequence PN11, PN13 and PN15.
 
 ### References for this section
 

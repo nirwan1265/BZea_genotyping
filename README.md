@@ -286,33 +286,76 @@ Script: [`scripts/03_bam_sort_dedup_index.sh`](scripts/03_bam_sort_dedup_index.s
 
 ## Sections 4–6 — Introgression calling (current pipeline)
 
-Introgressions are now called with the numbered pipeline in [`final_script/`](final_script/README.md). The old ANGSD-GL → Beagle → GL-HMM workflow that used to be described here is in [`old_scripts/HMM_introgression/`](old_scripts/HMM_introgression/README.md), kept for reference.
+All code is in [`final_script/`](final_script/README.md), numbered in run order. That README has every command, parameter and output. This section explains what we do and why. The old ANGSD-GL → Beagle → GL-HMM workflow that used to be described here is in [`old_scripts/HMM_introgression/`](old_scripts/HMM_introgression/README.md), kept for reference.
 
-**In short:**
-- **Main route, k-mers (steps 16–21):**
-  - Each pool's reads are compared with B73 without mapping. For every 100-kb window, it counts how many of B73's single-copy 31-mers the pool has (KMC + KCFtools).
-  - Donor DNA lacks many of those k-mers, so the count drops in introgressions. The expected drop for a fixed donor tract comes from teosinte genome assemblies (PanAnd).
-  - An HMM (states B73 / SEG / DONOR) runs along each chromosome, with transitions from the NAM genetic map. ρ is fitted by maximum likelihood (1.5), and SEG levels come from Binomial(12, ½) for 6 plants per pool.
-- **Cross-check, SNPs (steps 01–15):** ANGSD sites, per-pool read counts, site filters with a 227-plant teosinte panel, and a GL-based HMM.
-- **Why k-mers:** in a known donor tract only ~11% of the expected donor bases survive mapping plus the ANGSD filters, so the SNP route undercalls donor and turns DONOR into SEG.
+### What a sample is
 
-**Results** (1,292 non-noisy donor pools; Zm skipped for now):
+Each sequenced sample is a **pool of 6 BC2S3 plants from one plot (family)**, sequenced at about **0.8x**, with no parental sequencing. B73 is the recurrent parent. Donors are teosinte:
+- *mexicana* (Zx), *parviglumis* (Zv), *diploperennis* (Zd), *luxurians* (Zl), *huehuetenangensis* (Zh)
+- landraces (Zm) are set aside for now
 
-| Taxon | Pools | Mean donor share | Mean SEG | Mean DONOR |
-|---|---|---|---|---|
-| Zd | 227 | 5.5% | 5.2% | 3.0% |
-| Zh | 61 | 8.2% | 5.7% | 5.3% |
-| Zl | 98 | 7.2% | 6.8% | 3.8% |
-| Zv | 333 | 8.0% | 6.8% | 4.6% |
-| Zx | 573 | 8.7% | 6.7% | 5.3% |
-| **All** | **1,292** | **7.8%** | **6.4%** | **4.6%** |
-| *Expected BC2S3* | | *12.5%* | *6.25%* | *9.4%* |
+Because a sample is a family, each genome region in a pool is in one of three states. These are set by the genotype of the family's BC2S2 parent:
 
-- **B73 controls:** 10 controls, ≤ 0.15% non-B73.
-- **Noisy pools:** 93 pools are flagged NOISY (low depth, mostly plates PN11, PN13 and PN15).
-- **SEG matches the expectation; DONOR is about half.**
+| Pool state | Plants in the pool | Expected share of the genome |
+|---|---|---|
+| **B73** | all AA | 84.4% |
+| **SEG** | the family still segregates 1:2:1 (AA, AB, BB) | 6.25% |
+| **DONOR** | all BB | 9.4% |
 
-Full model description, every parameter, statistics (noisy and non-noisy), validation and next steps: [`final_script/README.md`](final_script/README.md).
+Both views give 12.5% donor alleles. Per single plant, the same expectation is 85.9% AA, 3.1% AB and 10.9% BB (see above). SEG is **not** the same as "het": a SEG region holds ¼ AA, ½ AB and ¼ BB plants.
+
+### Why not map reads and call SNPs?
+
+We first did it the usual way: ANGSD on mapped reads, per-pool read counts at SNPs, then an HMM (steps 01–15). It found too little donor and too much SEG.
+
+The reads in a known donor tract show why. Only **~34%** of the expected donor reads map there at all, because teosinte sequence is often missing from or rearranged against B73. The usual filters then remove most of the rest (`-C 50`, BAQ, MAPQ ≥ 30): only **~11%** of expected donor bases survive, against ~96% in B73 regions.
+
+The filters remove reads with mismatches, and a read carrying a teosinte allele has extra mismatches by definition. So **donor alleles are lost preferentially**: DONOR regions look like SEG, and SEG regions look like B73. That is a property of mapping to a single reference, and tuning filters can't fix it.
+
+### The k-mer approach
+
+![How k-mers find introgressions](final_script/figures/kmer_method.svg)
+
+1. **B73 k-mer list (step 16).** Every 31-letter word (k-mer) in the B73 genome is counted with KMC, and only the **single-copy** ones are kept: 680 M of 817 M. Repeats are dropped because they're in every genome, donor or not, and would hide the signal.
+2. **Look them up in each pool (step 17).** All k-mers in the pool's raw reads are counted, with no mapping. For each 100-kb B73 window, KCFtools counts how many of the window's single-copy B73 k-mers the pool has.
+   - **B73 region:** essentially all of them are present, limited only by sequencing depth.
+   - **Donor region:** every teosinte SNP or indel removes the B73 k-mers that overlap it, so the count drops.
+3. **Score each window (step 20).** r = k-mers seen in the pool ÷ what a B73 pool of the same depth would see. That reference is a fit of the 10 B73 control pools, never including the pool itself.
+   - B73 gives **r ≈ 1**, DONOR **r ≈ d**, and SEG falls between them.
+   - d is the share of B73 k-mers a donor genome keeps. It's measured per window from teosinte genome assemblies (PanAnd, step 19): Zd and Zl ≈ 0.26, Zh 0.34, Zx 0.37, Zv 0.43.
+   - SEG: k-mers the donor lacks come only from the B73 plants in the pool. For 6 plants, the pool's donor fraction follows Binomial(12, ½).
+4. **HMM along each chromosome (steps 20–21).** The same three-state HMM as before. Transitions follow the NAM genetic map (Haldane), forward–backward gives each window's most likely state, and adjacent windows in the same state become tracts.
+   - **ρ:** the switch rate is fitted by maximum likelihood over all pools, giving **1.5**. It plays the role of the number of generations in local-ancestry HMMs.
+   - **Rigidity:** none is used. With ρ fitted, a rigidity of 3 windows changed no pool.
+5. **Family DONOR levels (step 20b, rounds).** All pools of a BC1 family carry the same teosinte haplotype. So a family's real DONOR level is measured from its other pools that are DONOR in each window (leave-one-out), and the HMM is rerun. This fixes SEG/DONOR switching where a family's donor plant differs from the assembly plants (mainly Zv and Zx).
+6. **Tests (step 22).** Observed vs expected BC2S3 proportions, with a bootstrap over families. Pools of one family share segments, so the family is the unit.
+
+### Validation
+
+- **B73 controls are clean:** all 10 have ≤ 0.15% non-B73 windows. This is a fair test, because the k-mer route never used the controls to filter sites.
+- **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
+- **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
+
+### Results (round 0, 1,292 non-noisy donor pools)
+
+| Taxon | Pools | Donor alleles | SEG (pool) | DONOR (pool) | AB (plant) | BB (plant) | AB/(AB+BB) |
+|---|---|---|---|---|---|---|---|
+| Zd | 227 | 5.5% | 5.2% | 3.0% | 2.6% | 4.3% | 38% |
+| Zh | 61 | 8.2% | 5.7% | 5.3% | 2.9% | 6.7% | 30% |
+| Zl | 98 | 7.2% | 6.8% | 3.8% | 3.4% | 5.5% | 38% |
+| Zv | 333 | 8.0% | 6.8% | 4.6% | 3.4% | 6.3% | 35% |
+| Zx | 573 | 8.7% | 6.7% | 5.3% | 3.4% | 7.0% | 32% |
+| **All** | **1,292** | **7.8%** | **6.4%** | **4.6%** | **3.2%** | **6.2%** | **34%** |
+| *Expected BC2S3* | | *12.5%* | *6.25%* | *9.4%* | *3.1%* | *10.9%* | *22%* |
+
+**What this shows:**
+- **Het is as expected:** SEG and AB match the BC2S3 expectation, and the family bootstrap finds no difference (p = 0.26).
+- **Homozygous donor is about half the expectation** (BB 6.2% vs 10.9%; p < 0.0002 in every taxon). That loss is the whole shortfall in donor alleles (7.8% vs 12.5%).
+- **The remaining donor is mostly het:** 34% of donor-carrying plants are AB, against 22% expected. This holds on every chromosome (31–37%).
+- **Interpretation:** this fits selection against plants homozygous for teosinte segments during selfing, consistent with the excess heterozygosity reported in TeoNAM and in our lab's earlier lines.
+- **Noisy pools:** 93 pools are flagged NOISY because of low depth, mostly plates PN11, PN13 and PN15, which we recommend resequencing.
+
+The full statistics, per-plate table and family results are in [`final_script/README.md`](final_script/README.md).
 
 ## Section 7 — QTL / Association Mapping
 

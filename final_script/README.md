@@ -31,7 +31,8 @@ bash 18_kmer_check.sh                                          # missing pools, 
 sbatch 19_kmer_donor_reference.sh                              # expected DONOR level from teosinte assemblies
 N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' ${D11}/pools.tsv | wc -l)
 J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)   # HMM, 30 pools per task
-sbatch --dependency=afterok:$J 21_kmer_collect.sh              # pick rho, calls, tracts, figures
+J2=$(sbatch --parsable --dependency=afterok:$J 21_kmer_collect.sh)   # pick rho, calls, tracts, figures
+sbatch --dependency=afterok:$J2 22_kmer_stats.sh                # observed vs expected, family bootstrap
 ```
 
 Steps 01–15 are in [section 8](#8-snp-route-steps-0115-cross-check).
@@ -99,6 +100,7 @@ Zv shares the most single-copy k-mers with B73, and Zd and Zl the fewest, which 
 ## 4. The HMM, steps 20–21: model and every parameter
 
 **Code:**
+- `22_kmer_stats.py` (step 22): observed vs expected tests, run by `22_kmer_stats.sh`.
 - `20_kmer_hmm.py` (per pool), run by `20_run_kmer_hmm.sh` (30 pools per array task).
 - `21_kmer_collect.py`, run by `21_kmer_collect.sh`.
 
@@ -262,7 +264,68 @@ So the noisy pools have low depth. Resequencing them would make their calls usab
 - **By taxon:** Zd is lowest (5.5%), and Zh, Zv and Zx highest (8–9%). Some families reach the expected 12.5%: Zx.0130_P1, Zx.0390_P2 and Zx.0560_P2.
 - **Family means** range from 2.7% to 12.4% (98 families). See `family_summary.tsv`.
 
-### 5.5 Family table
+### 5.5 Plant genotypes and the statistical test (step 22)
+
+**From pool states to plant genotypes.** A SEG region is a family segregating 1:2:1, so its plants are ¼ AA, ½ AB and ¼ BB. Each pool's state fractions therefore give the expected genotype mix of its plants:
+
+- AA = B73 + ¼ SEG
+- AB = ½ SEG
+- BB = DONOR + ¼ SEG
+- donor alleles = BB + ½ AB
+
+These are expected plant fractions; single plants inside a pool can't be genotyped.
+
+**The test.** Pools of one family share their donor segments, so they are not independent. The unit is therefore the **family**:
+- 98 families, 1,292 non-noisy donor pools.
+- The families are resampled with replacement, each with all its pools, 5,000 times (`22_kmer_stats.py`).
+- 95% CI = the 2.5–97.5 percentiles.
+- Two-sided p = 2 × the share of resamples on the far side of the expected value.
+
+**Two kinds of measure:**
+- **Amounts:** SEG, DONOR, AB, BB and donor alleles, as shares of the genome.
+- **Ratios:** the share of the remaining donor that is still segregating, SEG/(SEG+DONOR), and its plant-level version, AB/(AB+BB) = the share of donor-carrying plants that are het. These ask how the donor that is present is split between het and homozygous, regardless of how much donor there is in total.
+
+**All taxa (98 families, 1,292 pools):**
+
+| Measure | Observed | 95% CI | Expected BC2S3 | p |
+|---|---|---|---|---|
+| SEG (pool) | 6.44% | 6.12–6.80 | 6.25% | 0.26 |
+| AB (plant) | 3.22% | 3.06–3.40 | 3.13% | 0.26 |
+| DONOR (pool) | 4.60% | 4.25–4.96 | 9.38% | < 0.0002 |
+| BB (plant) | 6.21% | 5.81–6.61 | 10.94% | < 0.0002 |
+| Donor alleles | 7.82% | 7.36–8.29 | 12.50% | < 0.0002 |
+| **AB/(AB+BB)** | **34.1%** | 33.0–35.3 | 22.2% | < 0.0002 |
+| SEG/(SEG+DONOR) | 58.3% | 56.7–60.0 | 40.0% | < 0.0002 |
+
+**By taxon:**
+
+| Taxon | Families | Pools | AB (plant) | BB (plant) | Donor alleles | AB/(AB+BB) |
+|---|---|---|---|---|---|---|
+| Zd | 6 | 227 | 2.58% | 4.26% | 5.55% | 37.8% (35.5–39.9) |
+| Zh | 2 | 61 | 2.87% | 6.73% | 8.16% | 29.9% |
+| Zl | 5 | 98 | 3.40% | 5.45% | 7.16% | 38.4% (36.4–41.3) |
+| Zv | 40 | 333 | 3.40% | 6.30% | 8.00% | 35.1% (32.8–37.3) |
+| Zx | 45 | 573 | 3.37% | 7.02% | 8.70% | 32.5% (31.2–33.9) |
+| *Expected* | | | *3.13%* | *10.94%* | *12.50%* | *22.2%* |
+
+BB, donor alleles and AB/(AB+BB) differ from the expectation at p < 0.0002 in every taxon. Zh (2 families), Zl (5) and Zd (6) have few families, so their intervals are less reliable. `stats_by_chrom.tsv` gives the same measures per chromosome.
+
+**What it shows.**
+- **Het is as expected.** AB (3.2%) and SEG (6.4%) don't differ from the BC2S3 expectation.
+- **Homozygous donor is missing.** BB is 6.2% instead of 10.9%, and DONOR is 4.6% instead of 9.4%. That loss is the whole shortfall in donor alleles (7.8% vs 12.5%).
+- **The remaining donor is mostly het.** 34% of donor-carrying plants are AB, against 22% expected. The same pattern holds in all five taxa.
+- **This fits other work.** Lab mates' lines and TeoNAM reported more heterozygosity than expected after selection during selfing. Here, het is normal in absolute terms but strongly elevated relative to fixation.
+- **Interpretation:** selection against plants homozygous for teosinte segments (BB) during the selfing generations. Recessive teosinte alleles that hurt plant type, flowering or seed set are exposed only in BB plants. Losing those plants removes fixed donor segments, while the same segments survive in heterozygotes.
+
+**Why it is not a model artifact.**
+1. **The prior works against it.** The HMM's prior π is the expected 84.4 / 6.25 / 9.4 split, which pulls calls toward the expectation. The departure happens in spite of it.
+2. **SEG is not inflated.** If real DONOR were being called SEG, SEG would come out above 6.25%. It doesn't.
+3. **The switching problem doesn't explain it.** SEG/DONOR switching occurs mainly in Zv and Zx, yet Zd and Zl, which have the least of it, show the strongest excess (38%).
+4. **No false donor.** The B73 controls are clean, so B73 regions are not turned into donor.
+
+**Next:** the per-chromosome breakdown (`stats_by_chrom.tsv`). If the BB deficit is concentrated in a few regions, those are candidate targets of selection.
+
+### 5.6 Family table
 
 ```bash
 source config.sh; PS=${D21}/pool_summary.tsv; OUT=${D21}/family_summary.tsv

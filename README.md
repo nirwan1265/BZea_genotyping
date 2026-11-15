@@ -504,7 +504,7 @@ With ρ = 1.5, the chance of a change is about **0.1% per window** on average. T
 
 ### Validation
 
-- **B73 controls are clean:** all 10 have ≤ 0.15% non-B73 windows. This is a fair test, because the k-mer route never used the controls to filter sites.
+- **B73 controls are clean:** all 10 have ≤ 0.26% non-B73 windows (donor share ≤ 0.14%). This is a fair test, because the k-mer route never used the controls to filter sites.
 - **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
 

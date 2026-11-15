@@ -532,7 +532,7 @@ sbatch --export=ALL,SPREAD=1 --dependency=afterok:$J2 23_introgression_viewer.sh
 
 ## 6. Validation
 
-- **B73 controls are clean.** All 10 have ≤ 0.15% non-B73 windows and 0–4 tiny tracts. This is a fair test: the k-mer route never uses the controls to filter sites, and each control is left out of its own reference.
+- **B73 controls are clean.** All 10 have ≤ 0.26% non-B73 windows (donor share ≤ 0.14%) and 0–4 tiny tracts. This is a fair test: the k-mer route never uses the controls to filter sites, and each control is left out of its own reference.
   - The SNP route can't test this. Its site filter removed every site where the controls had an ALT read, so its controls are B73 by construction.
 - **Known tracts are found.**
   - Zd PN13_SID1199 chr2:22–25 Mb: DONOR, r ≈ 0.20; the Zd assembly level there is 0.26.

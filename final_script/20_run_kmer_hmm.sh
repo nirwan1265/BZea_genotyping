@@ -15,7 +15,7 @@
 #   Output: ${D20}/<SAMPLE>.npz
 #   Needs python3 with numpy + scipy (check: python3 -c "import numpy, scipy").
 #   Submit after 17 and 19:
-#     N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' <D11>/pools.tsv | wc -l)
+#     N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' <D11>/pools.tsv | wc -l)
 #     sbatch --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh
 # =============================================================================
 set -euo pipefail
@@ -25,7 +25,8 @@ python3 -c "import numpy, scipy" 2> /dev/null || die "python3 here has no numpy/
 
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <task index>}}
 mkdir -p "$D20"
-mapfile -t POOLS < <(awk -F'\t' 'NR > 1 && ($2 == "control" || $2 == "donor") {print $1}' "${D11}/pools.tsv")
+# pools: controls + donors, minus taxa in KMER_SKIP_GROUPS
+mapfile -t POOLS < <(awk -F'\t' -v skip=" ${KMER_SKIP_GROUPS} " 'NR > 1 && ($2 == "control" || $2 == "donor") && index(skip, " " $3 " ") == 0 {print $1}' "${D11}/pools.tsv")
 FIRST=$(( (IDX - 1) * KMER_HMM_POOLS_PER_TASK ))
 (( FIRST < ${#POOLS[@]} )) || { echo "task ${IDX}: no pools"; exit 0; }
 TODO=()

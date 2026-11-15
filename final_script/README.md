@@ -374,7 +374,7 @@ Only the emission is new. r = the pool's B73 single-copy k-mer count / a fit of 
 |---|---|
 | B73 | Normal(1, σ_w) |
 | DONOR | Normal(a·d_w, σ_w) |
-| SEG | average over pool donor fractions f = k/2n, k ~ Binomial(2n, ½), n = 3–6 plants, of Normal(d_w + (1 − d_w)·g(f), σ_w) |
+| SEG | average over pool donor fractions f = k/2n, k ~ Binomial(2n, ½), n = 6 plants (`KMER_PLANTS`), of Normal(d_w + (1 − d_w)·g(f), σ_w) |
 
 - **d_w:** the taxon's assembly level for that window (step 19).
 - **a:** a per-pool scale, fitted (0.5–1.8). Zm has no assembly, so its d is a fitted constant.
@@ -401,6 +401,8 @@ Only the emission is new. r = the pool's B73 single-copy k-mer count / a fit of 
 - **Open:**
   - Zm still fragments, at about 100 tracts per pool.
   - Zx and Zv tracts sometimes alternate between SEG and DONOR.
+
+**Zm** is skipped in steps 20–21 for now (`KMER_SKIP_GROUPS`), because there's no landrace assembly.
 
 **Needs:** python3 with numpy, scipy and matplotlib.
 

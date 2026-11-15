@@ -242,17 +242,41 @@ So **SEG is not "het"**: a SEG region holds about 25% AA, 50% AB and 25% BB plan
 
 **All 1,385 donor pools together:** mean share 7.9%, median 7.4%, SEG 6.5%, DONOR 4.6%, median 15 tracts.
 
-**NOISY is a sequencing-plate effect.** 81 of the 93 noisy pools are on plates PN11, PN13 and PN15. Those plates have the fewest k-mers per pool:
+**NOISY is a sequencing-plate effect.**
+- **The count:** 81 of the 93 noisy pools are on three plates, **PN11, PN13 and PN15**.
+- **The cause:** those plates have the fewest single-copy k-mers per pool, i.e. the least sequencing depth. Each pool is a 100-kb-window count, so less depth means a noisier score r and a larger σ.
+- **The table:** all plates, from step 18 (`kmer_pool_qc.tsv`) and step 21 (`pool_summary.tsv`). Pools are those run in the HMM, including B73 controls, without Zm.
 
-| Plate | NOISY / pools | Median σ | Mean single-copy k-mers per pool |
-|---|---|---|---|
-| PN13 | 23 / 88 | 0.140 | 115 M |
-| PN15 | 24 / 93 | 0.138 | 109 M |
-| PN11 | 34 / 93 | 0.130 | 150 M |
-| PN6 | 2 / 93 | 0.111 | 145 M |
-| all others | 0–4 / ~90 each | 0.08–0.11 | 162–245 M |
+| Plate | Pools | NOISY | Median σ | Mean single-copy k-mers per pool | NOISY by taxon |
+|---|---|---|---|---|---|
+| PN2 | 3 | 0 | 0.118 | 189 M | — (rest of PN2 is Zm, skipped) |
+| PN3 | 87 | 3 | 0.089 | 192 M | Zx 3 |
+| PN4 | 93 | 0 | 0.081 | 211 M | — |
+| PN5 | 92 | 0 | 0.097 | 170 M | — |
+| PN6 | 94 | 2 | 0.112 | 145 M | Zx 1, Zd 1 |
+| PN7 | 91 | 0 | 0.081 | 213 M | — |
+| PN8 | 92 | 0 | 0.087 | 199 M | — |
+| PN9 | 95 | 2 | 0.112 | 162 M | Zl 2 |
+| PN10 | 94 | 0 | 0.086 | 245 M | — |
+| **PN11** | 93 | **34** | **0.130** | **150 M** | Zl 18, Zv 16 |
+| PN12 | 95 | 4 | 0.095 | 211 M | Zv 4 |
+| **PN13** | 88 | **23** | **0.140** | **115 M** | Zd 18, Zv 5 |
+| PN14 | 94 | 1 | 0.090 | 207 M | Zd 1 |
+| **PN15** | 93 | **24** | **0.138** | **109 M** | Zv 22, Zd 2 |
+| PN16 | 95 | 0 | 0.084 | 214 M | — |
+| PN17 | 96 | 0 | 0.082 | 217 M | — |
 
-So the noisy pools have low depth. Resequencing them would make their calls usable.
+**Recommendation: resequence PN11, PN13 and PN15.**
+- **Depth:** PN13 and PN15 have about half the k-mers of a typical plate (109–115 M vs ~200 M), and PN11 about 75%. On PN11, 37% of pools are NOISY.
+- **Taxa:** the noisy pools are concentrated in a few taxa:
+  - Zl, 18 of its 20 noisy pools (PN11)
+  - Zd, 18 of 22 (PN13)
+  - Zv, 43 of 47 (PN11, PN13, PN15)
+- **Families:** some are almost entirely noisy, for example Zv.0240_P2 (11 of 13 pools) and Zl.0030_P2 (7 of 10).
+
+**Until they're resequenced,** their calls stay flagged and are left out of the ρ fit, the means and the tests.
+
+**The list of the 93 noisy pools** (sample, plate, taxon, σ): `sample_lists/resequence_noisy_kmer.txt`. A whole-plate rerun of PN11, PN13 and PN15 would also cover their non-noisy pools, which are low depth too.
 
 ### 5.4 Are we getting what we expect?
 

@@ -32,8 +32,9 @@ sbatch 19_kmer_donor_reference.sh                              # expected DONOR 
 N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' ${D11}/pools.tsv | wc -l)
 J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)   # HMM, 30 pools per task (SPREAD=1 by default)
 J2=$(sbatch --parsable --dependency=afterok:$J 21_kmer_collect.sh)   # pick rho, calls, tracts, figures
-sbatch --dependency=afterok:$J2 22_kmer_stats.sh                # observed vs expected, family bootstrap
+J3=$(sbatch --parsable --dependency=afterok:$J2 22_kmer_stats.sh)
 sbatch --dependency=afterok:$J2 23_introgression_viewer.sh       # interactive HTML figures (drop-downs by family)
+sbatch --dependency=afterok:$J3 24_kmer_figures.sh              # result figures (PNG): observed vs expected
 ```
 
 Steps 01–15 are in [section 8](#8-snp-route-steps-0115-cross-check).
@@ -126,6 +127,7 @@ A plain-language walk-through (states, emissions, transitions, worked examples, 
 **Code:**
 - `22_kmer_stats.py` (step 22): observed vs expected tests, run by `22_kmer_stats.sh`.
 - `23_introgression_viewer.py` (step 23): interactive HTML figures, run by `23_introgression_viewer.sh`.
+- `24_kmer_figures.py` (step 24): result figures (observed vs expected overall, by taxon, family, chromosome; donor share per pool), run by `24_kmer_figures.sh`.
 - `20_kmer_hmm.py` (per pool), run by `20_run_kmer_hmm.sh` (30 pools per array task).
 - `21_kmer_collect.py`, run by `21_kmer_collect.sh`.
 

@@ -6,94 +6,83 @@ This repository documents the end-to-end processing for **low-pass sequencing** 
 >
 > **Previous pipeline:** [`old_scripts/HMM_introgression/`](old_scripts/HMM_introgression/README.md). This is the old GL-based HMM workflow. It's kept for reference, and its outputs are superseded.
 
-## BZea Breeding Scheme:
+## BZea Breeding Scheme
 
-B73 was crossed with teosinte lines for 2 backcrosses and 3 selfs. (Need more details here)
+B73 was crossed with teosinte, backcrossed twice to B73 and then selfed three times:
 
-## Expected genotype proportions after BC2 + 3 selfing generations (per locus)
+**B73 × teosinte → F1 → BC1 (× B73) → BC2 (× B73) → BC2S1 → BC2S2 → BC2S3**
 
-We calcualte the **expected fraction of genotypes** at any SNP where the recurrent parent (B73) and the donor (teosinte) carry different alleles, assuming:
-- B73 is homozygous **BB**
-- the teosinte donor is homozygous **TT**
-- random mating, no segregation distortion, no selection, and perfect marker informativeness.
+- **Plots:** each BC2S3 plot is grown from the seed of one BC2S2 mother (one selfed ear).
+- **Sequenced sample:** one leaf each from 6 BC2S3 plants of a plot, pooled into one sample. The 6 plants are siblings: each got its own two gametes from the BC2S2 mother, so where the mother is heterozygous, each plant is AA, AB or BB with chance ¼, ½, ¼.
 
-This expectation applies **separately within each donor family** we used:
-- **Zd** = *Zea diploperennis* (donor allele = T)
-- **Zl** = *Zea luxurians* (donor allele = T)
-- **Zx** = *Zea mexicana* (donor allele = T)
-- **Zv** = *Zea parviglumis* (donor allele = T)
+Both points were confirmed by the PI (15 Nov 2026).
 
-The Mendelian expectations shown below are the same for all families.
+## Expected genotype proportions (per locus)
 
----
+**Notation, used everywhere in this README and in `final_script/`:**
+- **A** = the B73 allele, **B** = the teosinte (donor) allele
+- **AA** = homozygous B73, **AB** = heterozygous, **BB** = homozygous teosinte
 
-## Allelic scheme
-B73 (BB) × Teo (TT) → **F1 = 100% BT**
+(An earlier version of this section wrote B73 as "B" and teosinte as "T", i.e. BB / BT / TT. That is the same as AA / AB / BB here.)
 
-Then:
-- **BC1 = F1 × BB**
-- **BC2 = BC1 × BB**
-- then **three selfing generations**: S1 → S2 → S3
+**Assumptions:** B73 is AA, the teosinte donor contributes one B allele to the F1, and there is no selection or segregation distortion. These are the same for every donor taxon: Zd (*diploperennis*), Zh (*huehuetenangensis*), Zl (*luxurians*), Zv (*parviglumis*) and Zx (*mexicana*).
 
----
+### Step 1 — Two backcrosses (BC2)
 
-### Step 1 — After two backcrosses (BC2)
+- F1 = B73 (AA) × teosinte (BB) → **100% AB**
+- BC1 = F1 × AA → ½ AA, ½ AB
+- BC2 = BC1 × AA → **¾ AA, ¼ AB**, 0 BB
 
-At a locus:
+Donor allele share at BC2: ¼ × ½ = **12.5%**. Selfing doesn't change allele shares, so 12.5% is the expectation at every later generation too.
 
-**BC1 (BT × BB):**
-- 1/2 BB
-- 1/2 BT
+### Step 2 — Selfing a heterozygote
 
-**BC2 (BC1 × BB):**
-- P(BB) = 3/4
-- P(BT) = 1/4
-- P(TT) = 0
+Each self halves the heterozygotes; the rest become AA or BB in equal parts. Starting from AB, after *s* selfs:
+- AB = (½)^s
+- AA = BB = (1 − (½)^s) / 2
 
-So at BC2:
-- **BB = 0.75**
-- **BT = 0.25**
-- **TT = 0.00**
+| Selfs | AA | AB | BB |
+|---|---|---|---|
+| 1 (BC2S1) | 1/4 | 1/2 | 1/4 |
+| 2 (BC2S2) | 3/8 | 1/4 | 3/8 |
+| 3 (BC2S3) | 7/16 | 1/8 | 7/16 |
 
-This also matches the ancestry expectation. Teosinte allele fraction is **12.5%** at BC2 (because BT loci carry one donor allele copy).
+### Step 3 — One BC2S3 plant (three selfs)
 
----
+¾ of the genome is already AA at BC2 and stays AA. The ¼ that is AB goes through three selfs:
 
-### Step 2 — Heterozygosity decay through selfing
+| Genotype | Calculation | Expected |
+|---|---|---|
+| AA | 0.75 + 0.25 × 7/16 | **85.94%** |
+| AB | 0.25 × 1/8 | **3.13%** |
+| BB | 0.25 × 7/16 | **10.94%** |
+| Donor alleles | 10.94 + ½ × 3.13 | **12.5%** |
 
-After selfing a heterozygote **BT** for *s* generations, heterozygosity halves each generation as:
+This is the expectation for **one plant**.
 
-- **P(BT after s selfs) = (1/2)^s**
-- The remaining probability becomes homozygous, split equally:
-  - **P(BB) = (1 − (1/2)^s)/2**
-  - **P(TT) = (1 − (1/2)^s)/2**
+### Step 4 — One sequenced pool (6 BC2S3 siblings)
 
-For **s = 3** (three selfs), starting from BT:
-- BT = (1/2)^3 = **1/8 = 0.125**
-- BB = TT = (1 − 1/8)/2 = **7/16 = 0.4375**
+We don't sequence single plants. We sequence a pool of 6 siblings, so what we can see in a region is the genotype of their **BC2S2 mother** (two selfs), which sets what the 6 plants can be:
 
+| BC2S2 mother | Calculation | Expected share | The 6 plants | Pool state (HMM) |
+|---|---|---|---|---|
+| AA | 0.75 + 0.25 × 3/8 | **84.38%** | all AA | **B73** |
+| AB | 0.25 × 1/4 | **6.25%** | each AA, AB or BB (¼, ½, ¼) | **SEG** |
+| BB | 0.25 × 3/8 | **9.38%** | all BB | **DONOR** |
 
----
+**The two views agree.** Taking the plants inside the pool states:
+- AA = B73 + ¼ SEG = 84.38 + 1.56 = **85.94%**
+- AB = ½ SEG = **3.13%**
+- BB = DONOR + ¼ SEG = 9.38 + 1.56 = **10.94%**
+- Donor alleles = DONOR + ½ SEG = 9.38 + 3.13 = **12.5%**
 
-### Step 3 — Final genotype proportions after BC2 + 3 selfs
+So the HMM's pool states are compared with Step 4, and converted to plant genotypes with the formulas above to compare with Step 3. Both are shown in the results.
 
-At BC2, only **25%** of loci are heterozygous (BT). The other **75%** are already BB and remain BB through selfing.
+### Implication for low-pass pooled genotyping
 
-So final expectations:
-
-- **P(BB) = 0.75 + 0.25×0.4375 = 0.859375 = 85.94%**
-- **P(BT) = 0.25×0.125 = 0.03125 = 3.13%**
-- **P(TT) = 0.25×0.4375 = 0.109375 = 10.94%**
-
-- **Genome-wide at informative loci (BC2 → S3):**
-- **~85.94% homozygous B73 (BB)**
-- **~3.13% heterozygous (BT)**
-- **~10.94% homozygous teosinte (TT)**
-
----
-
-### Implication for low-pass genotyping
-With low-pass depth, **heterozygotes are harder to call confidently**, and the expected heterozygote fraction after BC2+S3 is small (~3.1% of loci). Most donor ancestry is expected to appear as **homozygous TT** at loci where donor segments are fixed within a line, which is why imputation / probabilistic ancestry methods are helpful when coverage is low.
+- **Het is small:** only 3.1% of a plant's genome is expected to be AB. At 0.8x, single-site het calls are unreliable anyway, so we call pool states over 100-kb windows instead of genotypes at sites.
+- **Most donor should be fixed:** of the 12.5% donor alleles, most should sit in DONOR regions (9.4%), where all 6 plants are BB. SEG regions (6.25%) hold the rest, as a 1:2:1 mix of plants.
+- **What we found:** het matches the expectation (SEG 6.23%, AB 3.12%), but DONOR is only about half of it (5.0% vs 9.4%). See [Results](#results-current-method-1292-non-noisy-donor-pools).
 
 ---
 
@@ -580,11 +569,24 @@ Our lines' donor plants are different plants again, so in about a quarter of Zv/
 | **All** | **1,292** | **8.1%** | **6.2%** | **5.0%** | **3.1%** | **6.5%** | **32%** |
 | *Expected BC2S3* | | *12.5%* | *6.25%* | *9.4%* | *3.1%* | *10.9%* | *22%* |
 
+![Observed vs expected, all taxa](final_script/figures/results_spread/fig1_overall.png)
+
+![Observed vs expected by taxon](final_script/figures/results_spread/fig2_by_taxon.png)
+
+![Per family](final_script/figures/results_spread/fig3_by_family.png)
+
+![Per chromosome](final_script/figures/results_spread/fig4_by_chromosome.png)
+
+![Donor share per pool](final_script/figures/results_spread/fig5_pool_share.png)
+
+Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `final_script/figures/results_spread/family_values.tsv`.
+
 **What this shows:**
 - **Het is as expected:** SEG (6.23%) and AB (3.12%) match the BC2S3 expectation; the family bootstrap finds no difference (p = 0.93).
 - **Homozygous donor is about 60% of the expectation** (BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That loss is the whole shortfall in donor alleles (8.1% vs 12.5%).
 - **The remaining donor is mostly het:** 32% of donor-carrying plants are AB, against 22% expected. This holds on every chromosome (29–35%).
 - **Interpretation:** this fits selection against plants homozygous for teosinte segments during selfing, consistent with the excess heterozygosity reported in TeoNAM and in our lab's earlier lines.
+- **Families:** only 2 of 98 families reach the expected 12.5% donor alleles (Zx.0390_P2, Zx.0130_P1); most sit between 5% and 11%. AB/(AB+BB) is above 22% in most families of every taxon.
 - **Small taxa:** Zd (6 families), Zl (5) and Zh (2) have few families, so their intervals are less reliable. Zd's SEG (5.1%) is somewhat below the expectation (p = 0.0004).
 
 The full statistics, family results and the first method's numbers are in [`final_script/README.md`](final_script/README.md).

@@ -183,6 +183,20 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 
 **SEG is a pool state, not "het".** In a SEG region the family's BC2S2 parent was AB, so each of the 6 plants is AA, AB or BB. A SEG pool holds on average ¼ AA, ½ AB, ¼ BB plants, but the exact mix varies (e.g. 2 AA, 3 AB, 1 BB); the SEG emission averages over every possible mix. Plant genotypes from pool states: AA = B73 + SEG/4, AB = SEG/2, BB = DONOR + SEG/4.
 
+**How the pools were sampled, and why SEG looks the way it does.**
+- BC2 plants were selfed three times: BC2 → BC2S1 → BC2S2 → BC2S3. Each plot (family) is grown from the seed of one BC2S2 plant.
+- One leaf each was taken from 6 different BC2S3 plants of the plot and pooled into one sample. These 6 plants are siblings, not copies of one plant: each got its own two gametes from the BC2S2 parent.
+- Where the BC2S2 parent was AA, all 6 plants are AA (pool state **B73**). Where it was BB, all 6 are BB (**DONOR**). Where it was AB, each plant is independently AA, AB or BB with chance ¼, ½, ¼ (**SEG**).
+- So in a SEG region the pool carries k donor copies out of 12 (6 plants × 2), with k ~ Binomial(12, ½). That is the mixture the HMM uses.
+
+**Can we tell which plants are AA, AB or BB in a SEG region?** No, not from this data. The 6 leaves are ground into one sample, so a read doesn't say which plant it came from.
+- **What the pool can tell:** roughly how many donor copies it carries, k out of 12. In principle k can be estimated per SEG tract, because a 10-Mb tract has about 100 windows. Right now the HMM averages over all possible k and doesn't report one.
+- **Even an exact k doesn't give the genotypes.** For example, 6/12 could be 6 AB plants, or 3 AA + 3 BB, or 2 AA + 2 AB + 2 BB.
+- **The estimate is only as good as the family's DONOR level d**, because r(SEG) = d + (1 − d)·g(k/12).
+- **k can change inside a tract.** The 12 gametes recombine independently, so a plant can be AA at one end of a SEG tract and AB at the other.
+- **Leaves are not equal.** Leaf size and DNA yield differ, so a plant's share of the reads isn't exactly 1/6. This adds noise to k.
+- **To get plant genotypes:** genotype single plants, or seed of that family, e.g. with a few KASP markers inside the SEG tracts, or skim-sequence single plants from a subset of families.
+
 - **d_w:** the expected DONOR level of the pool's taxon in that window: the mean of that taxon's assemblies (step 19).
 - **a:** a per-pool scale that allows for the pool's donor plant differing from the assemblies. Fitted per pool.
 - **SEG:** a family segregating 1:2:1 at a locus gives each plant 0, 1 or 2 donor copies, so the pool's donor copies ~ **Binomial(2n, ½)**, with n = 6 plants. The pool's donor fraction is f = k/12, k = 1–11, with binomial weights. k-mers the donor lacks come only from the B73 part of the pool, so SEG for fraction f gives Normal(d_w + (1 − d_w)·g(f), σ_w), where:

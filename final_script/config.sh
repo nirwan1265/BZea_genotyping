@@ -144,8 +144,17 @@ DONOR_ASSEMBLIES=(
 D19=${KMER_DIR}/donor_ref                                 # <NAME>.tsv.gz per assembly + B73.tsv.gz
 
 # ---------- 20-21: HMM on k-mer windows ----------
-D20=${KMER_DIR}/hmm                 # per-pool results (<SAMPLE>.npz), all rho values
-D21=${KMER_DIR}/introgression       # final calls at the best rho
+# ROUND=0: DONOR level from the teosinte assemblies. ROUND=k>0: from the family's own pools,
+# measured on round k-1 (step 20b). Set it on the sbatch line: sbatch --export=ALL,ROUND=1 ...
+ROUND=${ROUND:-0}
+if (( ROUND == 0 )); then
+  D20=${KMER_DIR}/hmm                 # per-pool results (<SAMPLE>.npz), all rho values
+  D21=${KMER_DIR}/introgression       # final calls at the best rho
+else
+  D20=${KMER_DIR}/hmm_fam${ROUND}
+  D21=${KMER_DIR}/introgression_fam${ROUND}
+fi
+D20B=${KMER_DIR}/family_levels_fam${ROUND}   # family DONOR levels used in round ROUND (made by 20b)
 KMER_HMM_POOLS_PER_TASK=30          # array size = ceil(pools / this)
 KMER_PLANTS=6                       # plants per pool (SEG pools: donor copies ~ Binomial(2n, 1/2)); comma list if it varies
 KMER_SKIP_GROUPS="Zm"               # taxa not run in steps 20-21 (space-separated); Zm has no assembly yet

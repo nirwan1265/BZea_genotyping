@@ -340,6 +340,36 @@ tr -d '\r' < "$SAMPLE_META" | awk -F'\t' -v out="$OUT" 'NR==FNR { if (FNR > 1) {
 
 ---
 
+### 5.7 Family DONOR levels (step 20b, rounds)
+
+**Why.** In round 0 the DONOR level comes from the teosinte assemblies. Our lines' donor plants differ from those assembly plants, and in Zv and Zx that causes SEG/DONOR switching inside tracts. Every pool of a BC1 family carries the same donor haplotype (one F1 gamete). So where pools of the family are called DONOR, their score r there is the family's real DONOR level.
+
+**How (`20b_family_levels.py`).** For each pool and window, using the previous round's calls at its best ρ and only non-noisy pools:
+- n = the number of the **other** pools of its family (leave-one-out) called DONOR in that window, and m = their median r.
+- level = (n·m + K·prior) / (n + K), with K = 3.
+- prior = the family's median fitted scale × the taxon assembly level.
+
+So windows with few DONOR pools stay close to the assembly level. A pool's own calls never set its own level.
+
+Step 20 then uses this level, with a narrow per-pool scale (0.8–1.3). Rounds repeat until the calls stop changing; usually 2–3.
+
+**This tried a BC1-sister route first, and it did not work.** k-mer depth in BC1 plants at 10–17x didn't separate het from B73/B73 windows, even after normalizing by the pooled B73 controls (about 5x): one broad hump of depth ratios, 0.6–1.4. The expected het drop (15–35%) is about the size of the window-to-window depth noise.
+
+**Run** (each round after the previous round's 21):
+```bash
+sbatch --export=ALL,ROUND=1 20b_family_levels.sh
+J=$(sbatch --parsable --export=ALL,ROUND=1 --array=1-$(( (N + 29) / 30 )) --dependency=afterok:<20b jobid> 20_run_kmer_hmm.sh)
+J2=$(sbatch --parsable --export=ALL,ROUND=1 --dependency=afterok:$J 21_kmer_collect.sh)
+sbatch --export=ALL,ROUND=1 --dependency=afterok:$J2 22_kmer_stats.sh
+```
+Outputs: `KMER_DIR/family_levels_fam1/`, `hmm_fam1/`, `introgression_fam1/` (round 2: `…fam2`).
+
+**Per chromosome (round 0, step 22):** AB/(AB+BB) is 31–37% on every chromosome (expected 22%; all p < 0.0002). The BB deficit is genome-wide, not a few regions:
+
+| chr1 | chr2 | chr3 | chr4 | chr5 | chr6 | chr7 | chr8 | chr9 | chr10 |
+|---|---|---|---|---|---|---|---|---|---|
+| 34.9% | 33.4% | 31.8% | 35.7% | 35.6% | 30.9% | 34.5% | 36.7% | 34.3% | 34.1% |
+
 ## 6. Validation
 
 - **B73 controls are clean.** All 10 have ≤ 0.15% non-B73 windows and 0–4 tiny tracts. This is a fair test: the k-mer route never uses the controls to filter sites, and each control is left out of its own reference.

@@ -11,6 +11,7 @@
 # =============================================================================
 # 21 — Pick rho (highest total log-likelihood), write calls and figures (21_kmer_collect.py).
 #   Output in ${D21}: rho_loglik.tsv, pool_summary.tsv, tracts_all.tsv.gz, blocks_<GROUP>.pdf
+#   ROUND (default 0) picks the round: sbatch --export=ALL,ROUND=1 21_kmer_collect.sh
 #   Submit after 20:  sbatch 21_kmer_collect.sh
 # =============================================================================
 set -euo pipefail

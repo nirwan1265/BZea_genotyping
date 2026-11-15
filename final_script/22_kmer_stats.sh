@@ -11,6 +11,7 @@
 # =============================================================================
 # 22 — Observed vs expected BC2S3 proportions with a family bootstrap (22_kmer_stats.py).
 #   Output in ${D21}: stats_overall.tsv, stats_by_chrom.tsv
+#   ROUND (default 0) picks the round: sbatch --export=ALL,ROUND=1 22_kmer_stats.sh
 #   Submit after 21:  sbatch 22_kmer_stats.sh   (or run on the login node: bash 22_kmer_stats.sh)
 # =============================================================================
 set -euo pipefail

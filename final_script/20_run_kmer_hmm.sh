@@ -14,6 +14,8 @@
 #   Inputs: ${D16} (step 17), ${D19} (step 19), ${D11}/pools.tsv, genetic_maps/
 #   Output: ${D20}/<SAMPLE>.npz
 #   Needs python3 with numpy + scipy (check: python3 -c "import numpy, scipy").
+#   ROUND=0 (default): DONOR level from the assemblies. ROUND=k: family levels from 20b (${D20B}),
+#   output to ${KMER_DIR}/hmm_fam<k>.  e.g. sbatch --export=ALL,ROUND=1 --array=... 20_run_kmer_hmm.sh
 #   Submit after 17 and 19:
 #     N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' <D11>/pools.tsv | wc -l)
 #     sbatch --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh
@@ -35,6 +37,12 @@ for (( i = FIRST; i < FIRST + KMER_HMM_POOLS_PER_TASK && i < ${#POOLS[@]}; i++ )
 done
 (( ${#TODO[@]} )) || { echo "task ${IDX}: all done already"; exit 0; }
 ASMS=$(for a in "${DONOR_ASSEMBLIES[@]}"; do IFS=: read -r n t _ <<< "$a"; echo "${n}:${t}"; done | paste -sd,)
-python3 "${FINAL_DIR}/20_kmer_hmm.py" --samples "$(IFS=,; echo "${TODO[*]}")" \
+FAM=()
+if (( ROUND > 0 )); then
+  [[ -s ${D20B}/summary.tsv ]] || die "missing ${D20B} (run: sbatch --export=ALL,ROUND=${ROUND} 20b_family_levels.sh)"
+  FAM=(--family_dir "$D20B" --meta "$SAMPLE_META")
+fi
+echo "round ${ROUND}: output ${D20}"
+python3 "${FINAL_DIR}/20_kmer_hmm.py" "${FAM[@]}" --samples "$(IFS=,; echo "${TODO[*]}")" \
   --pools_tsv "${D11}/pools.tsv" --win_dir "$D16" --ref_dir "$D19" --assemblies "$ASMS" \
   --map_dir "$MAP_DIR" --out_dir "$D20" --plants "$KMER_PLANTS"

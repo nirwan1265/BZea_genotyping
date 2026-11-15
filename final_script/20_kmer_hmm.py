@@ -105,6 +105,9 @@ def main():
     ap.add_argument("--min_b73_kmers", type=float, default=2000)
     ap.add_argument("--eps", type=float, default=0.02)
     ap.add_argument("--rigidity", type=int, default=3)
+    ap.add_argument("--family_dir", default="", help="family DONOR levels (20b): <SAMPLE>.npy (leave-one-out); replaces the assembly level")
+    ap.add_argument("--meta", default="", help="SAMPLE_META, for pool -> family (with --family_dir)")
+    ap.add_argument("--family_scale_grid", default="0.8,0.9,1.0,1.1,1.2,1.3")
     a = ap.parse_args()
 
     rho_grid = [float(x) for x in a.rho_grid.split(",")]
@@ -141,6 +144,15 @@ def main():
     C = {s: load(s) for s in controls}
     Cn = {s: v / np.median(v) for s, v in C.items()}
 
+    family = {}
+    if a.family_dir:
+        with open(a.meta, encoding="utf-8", errors="ignore") as f:
+            next(f)
+            for line in f:
+                p = line.rstrip("\r\n").split("\t")
+                if len(p) > 1: family[p[0]] = "_".join(p[1].split("_")[:2])
+    fam_grid = [float(x) for x in a.family_scale_grid.split(",")]
+
     maps = {c: H.read_map(f"{a.map_dir}/{c}.map") for c in np.unique(chrom)}
     cm = np.array([H.interp_cm(*maps[c], int(p) + 50000) for c, p in zip(chrom, start)])
     os.makedirs(a.out_dir, exist_ok=True)
@@ -168,7 +180,10 @@ def main():
         wscale = np.clip(spread / np.nanmedian(spread[ok]), 0.5, 3)
         frac = np.median(O[ok] / B[ok]); lam = -math.log(max(1e-6, 1 - min(frac, 0.99)))
         tax = group.get(S, "NA")
-        if tax in d_tax:   dw0, grid, kind = d_tax[tax], scale_grid, "assembly_scale"
+        famfile = f"{a.family_dir}/{S}.npy" if a.family_dir else ""
+        if famfile and os.path.exists(famfile):
+            dw0, grid, kind = np.load(famfile).astype(float), fam_grid, "family_scale"
+        elif tax in d_tax: dw0, grid, kind = d_tax[tax], scale_grid, "assembly_scale"
         elif role.get(S) == "control": dw0, grid, kind = d_all, scale_grid, "assembly_scale"
         else:              dw0, grid, kind = None, const_grid, "constant_d"
 

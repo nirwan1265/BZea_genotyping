@@ -330,6 +330,36 @@ The filters remove reads with mismatches, and a read carrying a teosinte allele 
 5. **Family DONOR levels (step 20b, rounds).** All pools of a BC1 family carry the same teosinte haplotype. So a family's real DONOR level is measured from its other pools that are DONOR in each window (leave-one-out), and the HMM is rerun. This fixes SEG/DONOR switching where a family's donor plant differs from the assembly plants (mainly Zv and Zx).
 6. **Tests (step 22).** Observed vs expected BC2S3 proportions, with a bootstrap over families. Pools of one family share segments, so the family is the unit.
 
+### How r is calculated: a worked example
+
+Take one 100-kb window. The numbers are rounded but realistic.
+
+**Step 1: what B73 has.** B73's window contains **30,000** single-copy k-mers (step 16).
+
+**Step 2: what a pure-B73 pool would find.** At 0.8x a pool doesn't see every k-mer, because many parts of the window aren't covered by any read. The 10 B73 control pools tell us how many a B73 pool of this depth finds in this window; say **13,000**. That's the expected count.
+
+**Step 3: r = what our pool found ÷ the expected count.**
+
+| Our pool in this window is… | k-mers found | r |
+|---|---|---|
+| B73 (all plants AA) | ~13,000 | 13,000 / 13,000 ≈ **1.0** |
+| DONOR (all plants BB, Zd) | ~3,500 | 3,500 / 13,000 ≈ **0.27** |
+| SEG (about half B73, half donor) | ~9,000 | ≈ **0.69** (below) |
+
+**Where the DONOR level comes from (step 19).** We take a complete Zd genome assembly (Gigi, Momo) and count how many of the window's 30,000 B73 k-mers appear anywhere in it. Say 8,100: 8,100 / 30,000 = **d = 0.27**, so Zd keeps 27% of B73's k-mers here. A pool that is all Zd in this window can only find that 27%, so its expected r is 0.27.
+
+d is measured like this for every window and every taxon. Genome-wide it's Zd 0.27, Zl 0.26, Zh 0.34, Zx 0.37 and Zv 0.43; Zv is closest to maize, so it keeps the most. In later rounds (step 20b), d comes from the family's own DONOR pools instead.
+
+**Why SEG falls in between.** In a SEG region the pool is a mix of B73 and donor chromosomes. Split the 30,000 k-mers in two:
+- **Shared with the donor (27%):** every chromosome carries them, so they're found as often as in a B73 pool (ratio 1.0).
+- **Missing from the donor (73%):** only the B73 chromosomes carry them. With half the chromosomes B73, they get half the reads, so at this depth they're found about **57%** as often.
+
+So r(SEG) = 0.27 × 1.0 + 0.73 × 0.57 ≈ **0.69**.
+
+In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at the pool's B73 share of the reads ÷ how often at full depth. g comes from the standard coverage formula: the chance that a k-mer is seen at coverage c is 1 − e^(−c). The HMM doesn't assume exactly half donor. It averages over the possible donor fractions of a 6-plant pool (1/12 to 11/12), weighted by Binomial(12, ½), the 1:2:1 segregation summed over 6 plants.
+
+**Then the HMM** compares each window's r with these three expected levels (B73 ≈ 1, SEG ≈ 0.6–0.7, DONOR ≈ d). It allows for each pool's noise and takes neighbouring windows into account, using the genetic map, to call the most likely state.
+
 ### Validation
 
 - **B73 controls are clean:** all 10 have ≤ 0.15% non-B73 windows. This is a fair test, because the k-mer route never used the controls to filter sites.

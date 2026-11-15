@@ -73,17 +73,20 @@ y=568; panel(y,3,"Score the window (step 20)","r = B73 single-copy k-mers seen i
 base=y+200; x0=170; h=130
 line(x0-20,base,x0+560,base,SOFT,1.5)
 line(x0-20,base-h,x0+560,base-h,SOFT,1,'stroke-dasharray="5,5"'); t(x0-28,base-h+5,"1.0",13,fill=SOFT,anchor="end"); t(x0-28,base+5,"0",13,fill=SOFT,anchor="end")
-for i,(lab,val,c,desc) in enumerate([("B73",1.0,B73,"all plants AA"),("SEG",0.62,SEG,"family segregates (AA, AB, BB)"),("DONOR",0.22,DON,"all plants BB")]):
+for i,(lab,val,c,desc) in enumerate([("B73",1.0,B73,"all plants AA"),("SEG",0.69,SEG,"about half B73, half donor"),("DONOR",0.27,DON,"all plants BB (Zd)")]):
     x=x0+30+i*180; rect(x,base-h*val,90,h*val,c,4)
-    t(x+45,base-h*val-10,f"r ≈ {val:.1f}" if val!=1.0 else "r ≈ 1",14,"bold",anchor="middle")
+    t(x+45,base-h*val-10,f"r ≈ {val:.2f}" if val!=1.0 else "r ≈ 1",14,"bold",anchor="middle")
     t(x+45,base+22,lab,15,"bold",fill=c,anchor="middle"); t(x+45,base+40,desc,12,fill=SOFT,anchor="middle")
-t(x0+620,base-100,"Expected DONOR level per window comes",13.5,fill=INK)
-t(x0+620,base-81,"from teosinte genome assemblies",13.5,fill=INK)
-t(x0+620,base-62,"(share of B73 k-mers each taxon keeps,",13.5,fill=SOFT)
-t(x0+620,base-43,"e.g. Zd ≈ 0.27, Zv ≈ 0.43; step 19).",13.5,fill=SOFT)
-t(x0+620,base-18,"SEG lies in between: k-mers the donor lacks",13.5,fill=SOFT)
-t(x0+620,base+1,"come only from the B73 plants in the pool.",13.5,fill=SOFT)
-
+ex=[("Example window (Zd):",INK,"bold"),
+    ("B73 has 30,000 single-copy k-mers.",INK,"normal"),
+    ("A B73 pool at this depth finds 13,000.",INK,"normal"),
+    ("DONOR: the Zd genome has only 27% of",DON,"normal"),
+    ("these k-mers, so the pool finds ~3,500:",DON,"normal"),
+    ("r = 3,500 / 13,000 = 0.27.",DON,"bold"),
+    ("SEG: shared k-mers (27%) are found as usual;",SEG,"normal"),
+    ("the rest come only from the B73 half,",SEG,"normal"),
+    ("found ~57% as often: 0.27 + 0.73 × 0.57 = 0.69.",SEG,"bold")]
+for k,(txt,c,wt) in enumerate(ex): t(x0+605,base-128+k*19,txt,13,wt,fill=c)
 # ---------- panel 4 ----------
 y=845; panel(y,4,"HMM along each chromosome (steps 20-21)","Windows → B73 / SEG / DONOR. Switches follow the NAM genetic map; switch rate ρ fitted by maximum likelihood.")
 px0,px1,pyb,ph=110,1040,y+175,95

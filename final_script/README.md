@@ -30,7 +30,7 @@ sbatch --array=1-$(( (N + 3) / 4 ))%50 17_kmer_windows.sh       # k-mer windows 
 bash 18_kmer_check.sh                                          # missing pools, k-mers per pool
 sbatch 19_kmer_donor_reference.sh                              # expected DONOR level from teosinte assemblies
 N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' ${D11}/pools.tsv | wc -l)
-J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)   # HMM, 30 pools per task
+J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)   # HMM, 30 pools per task (SPREAD=1 by default)
 J2=$(sbatch --parsable --dependency=afterok:$J 21_kmer_collect.sh)   # pick rho, calls, tracts, figures
 sbatch --dependency=afterok:$J2 22_kmer_stats.sh                # observed vs expected, family bootstrap
 sbatch --dependency=afterok:$J2 23_introgression_viewer.sh       # interactive HTML figures (drop-downs by family)
@@ -205,7 +205,7 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
   - λ = the pool's k-mer coverage, from the median share of single-copy k-mers it sees.
 - **σ_w:** the pool's robust SD of r in B73 windows × how much the controls disagree in that window relative to a typical window (clipped to 0.5–3×). Robust SD = 1.4826 × MAD, where MAD = median of |r − 1| over the B73-like windows. It equals the SD for normal noise but ignores the few introgressed or junk windows.
 - **Outliers:** every state has a 2% chance that the window is junk (uniform on 0–2), a contamination term so one odd window can't give near-certain evidence. 2% is chosen, not estimated. In the 10 B73 controls (44-pool test), 0.77% of windows are > 3σ from 1 (normal: 0.27%) and 0.10% are > 4σ (normal: 0.006%), so real outliers are well under 2%.
-- **Option `--d_spread` (`SPREAD=1`, being tested):** our donor plant isn't an assembly plant, so in each window the DONOR level is uncertain by τ_w = how much the taxon's two assemblies disagree there (SD × √1.5, averaged over ±5 windows). DONOR sd = √(σ_w² + (a·τ_w)²); SEG sd = √(σ_w² + ((1 − g)·a·τ_w)²). Mean τ: Zv 0.18, Zx 0.16, Zd 0.06; Zh and Zl have one assembly, so τ = 0. B73 controls get the Zv τ, the widest, as a worst case. See section 5.7.
+- **DONOR-level uncertainty, `--d_spread` (`SPREAD=1`, the default since 15 Nov 2026):** our donor plant isn't an assembly plant, so in each window the DONOR level is uncertain by τ_w = how much the taxon's two assemblies disagree there (SD × √1.5, averaged over ±5 windows). DONOR sd = √(σ_w² + (a·τ_w)²); SEG sd = √(σ_w² + ((1 − g)·a·τ_w)²). Mean τ: Zv 0.18, Zx 0.16, Zd 0.06; Zh and Zl have one assembly, so τ = 0. B73 controls get the Zv τ, the widest, as a worst case. See section 5.7.
 
 ### 4.3 Transitions and decoding (unchanged from step 14)
 
@@ -232,6 +232,7 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 | σ | 1.4826 × MAD, per pool; × controls' spread per window (0.5–3) | 20 | robust SD |
 | Outliers | 2% | `--eps` | robust mixture; chosen, controls show well under 2% real outliers |
 | DONOR level | assembly d_w × a | step 19 + 20 | measured from teosinte genomes |
+| DONOR-level uncertainty τ_w | SD of the taxon's two assemblies × √1.5, ±5 windows | `SPREAD=1` (`--d_spread`) | our donor plants differ from the assembly plants (section 5.7) |
 | a (per pool) | grid 0.5–1.8; fitted median 0.9–1.0 in every taxon | `--scale_grid` | donor plant ≠ assembly plant |
 | Plants per pool | 6 | `KMER_PLANTS` | sampling design |
 | SEG fractions | k/12, k ~ Binomial(12, ½) | 20 | Mendelian 1:2:1 summed over 6 plants |
@@ -241,7 +242,7 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 | Skipped taxa | Zm | `KMER_SKIP_GROUPS` | no landrace assembly yet |
 | Min. single-copy k-mers per window | 2,000 | `--min_b73_kmers` | drops near-empty windows |
 
-### 4.6 Outputs (`${KMER_DIR}/introgression/`, from step 21)
+### 4.6 Outputs (`${KMER_DIR}/introgression_spread/`, from step 21; first method: `introgression/`)
 
 - `pool_summary.tsv`: `SAMPLE ROLE GROUP SIGMA FLAG PARAM_KIND PARAM FRAC_B73 FRAC_SEG FRAC_DONOR DONOR_SHARE N_TRACTS`. DONOR_SHARE = FRAC_DONOR + ½ FRAC_SEG.
 - `tracts_all.tsv.gz`: `SAMPLE GROUP CHROM START END STATE`
@@ -255,7 +256,7 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 
 ## 5. Results: all 1,395 pools
 
-1,385 donor pools (Zm skipped) and 10 B73 controls. Run of 15 Nov 2026.
+1,385 donor pools (Zm skipped) and 10 B73 controls. Current method (`SPREAD=1`), run of 15 Nov 2026. The first method's numbers (round 0) are in section 5.7.
 
 ### 5.1 Expected for BC2S3: one plant vs one pool
 
@@ -282,35 +283,35 @@ So **SEG is not "het"**: a SEG region holds about 25% AA, 50% AB and 25% BB plan
 
 | Taxon | Pools | Mean share % | Median share % | Mean SEG % | Mean DONOR % | Median tracts |
 |---|---|---|---|---|---|---|
-| B73 controls | 10 | 0.0 | 0.0 | 0.1 | 0.0 | 1 |
-| Zd | 227 | 5.5 | 4.7 | 5.2 | 3.0 | 7 |
+| B73 controls | 10 | 0.1 | 0.1 | 0.1 | 0.0 | 2 |
+| Zd | 227 | 5.6 | 4.7 | 5.1 | 3.0 | 7 |
 | Zh | 61 | 8.2 | 7.8 | 5.7 | 5.3 | 9 |
 | Zl | 98 | 7.2 | 6.5 | 6.8 | 3.8 | 9 |
-| Zv | 333 | 8.0 | 7.7 | 6.8 | 4.6 | 21 |
-| Zx | 573 | 8.7 | 8.2 | 6.7 | 5.3 | 21 |
-| **All donors** | **1,292** | **7.8** | **7.3** | **6.4** | **4.6** | **16** |
+| Zv | 333 | 8.4 | 8.0 | 6.5 | 5.1 | 15 |
+| Zx | 573 | 9.0 | 8.5 | 6.5 | 5.8 | 15 |
+| **All donors** | **1,292** | **8.1** | **7.5** | **6.2** | **5.0** | **13** |
 
 **Donor share across non-noisy donor pools:**
 
 | 10% | 25% | Median | 75% | 90% |
 |---|---|---|---|---|
-| 2.0% | 4.2% | 7.3% | 10.5% | 14.2% |
+| 2.1% | 4.3% | 7.5% | 10.9% | 14.8% |
 
-- 199 pools reach at least 12.5%.
-- 127 pools are below 2%.
-- 23 pools are above 20%.
+- 220 pools reach at least 12.5%.
+- 115 pools are below 2%.
+- 24 pools are above 20%.
 
 ### 5.3 Noisy pools (σ > 0.15): flagged, not trusted
 
 | Taxon | Pools | Mean share % | Median share % | Mean SEG % | Mean DONOR % | Median tracts |
 |---|---|---|---|---|---|---|
-| Zd | 22 | 6.5 | 5.3 | 7.6 | 2.7 | 7 |
+| Zd | 22 | 6.4 | 5.3 | 7.5 | 2.7 | 6 |
 | Zl | 20 | 7.0 | 6.3 | 7.2 | 3.3 | 10 |
-| Zv | 47 | 9.5 | 9.4 | 6.7 | 6.2 | 20 |
-| Zx | 4 | 17.0 | 16.3 | 19.8 | 7.1 | 64 |
-| **All** | **93** | **8.6** | **8.7** | **7.6** | **4.8** | **13** |
+| Zv | 47 | 9.8 | 9.7 | 6.3 | 6.6 | 16 |
+| Zx | 4 | 14.8 | 14.1 | 21.8 | 3.9 | 45 |
+| **All** | **93** | **8.6** | **8.7** | **7.5** | **4.8** | **11** |
 
-**All 1,385 donor pools together:** mean share 7.9%, median 7.4%, SEG 6.5%, DONOR 4.6%, median 15 tracts.
+**All 1,385 donor pools together:** mean share 8.1%, median 7.6%, SEG 6.3%, DONOR 4.9%, median 13 tracts.
 
 **NOISY is a sequencing-plate effect.**
 - **The count:** 81 of the 93 noisy pools are on three plates, **PN11, PN13 and PN15**.
@@ -350,13 +351,13 @@ So **SEG is not "het"**: a SEG region holds about 25% AA, 50% AB and 25% BB plan
 
 ### 5.4 Are we getting what we expect?
 
-- **SEG matches.** Observed SEG is 6.4%, against an expected 6.25%.
-- **DONOR is about half the expected value.** Observed DONOR is 4.6% against 9.4%, so the donor share is 7.8% instead of 12.5%. The shortfall is almost entirely in **fixed** donor segments. Two explanations remain:
-  1. **Biology:** selection against plants homozygous for teosinte segments during selfing (plant type, flowering, seed set). Some lines also lost almost all donor (127 pools below 2%).
-  2. **Model:** a real DONOR block called SEG where the line's donor plant differs from the assemblies. This happens most in Zv and Zx; see section 7.
+- **SEG matches.** Observed SEG is 6.23%, against an expected 6.25%.
+- **DONOR is about half the expected value.** Observed DONOR is 5.0% against 9.4%, so the donor share is 8.1% instead of 12.5%. The shortfall is almost entirely in **fixed** donor segments. Two explanations remain:
+  1. **Biology:** selection against plants homozygous for teosinte segments during selfing (plant type, flowering, seed set). Some lines also lost almost all donor (115 pools below 2%).
+  2. **Model:** a real DONOR block called SEG where the line's donor plant differs from the assemblies. This happens most in Zv and Zx. The current method reduces it (section 5.7), and it can't explain the deficit in Zd, where the assemblies agree.
 - **The low share isn't a mapping artifact.** The k-mer route never maps reads, and it gives the same shares as the SNP route for pools where the SNP route is reliable (section 6).
-- **By taxon:** Zd is lowest (5.5%), and Zh, Zv and Zx highest (8–9%). Some families reach the expected 12.5%: Zx.0130_P1, Zx.0390_P2 and Zx.0560_P2.
-- **Family means** range from 2.7% to 12.4% (98 families). See `family_summary.tsv`.
+- **By taxon:** Zd is lowest (5.6%), and Zh, Zv and Zx highest (8–9%). Two families reach the expected 12.5% (Zx.0390_P2, Zx.0130_P1), and Zx.0560_P2 is close (12.0%).
+- **Family means** range from 2.7% to 12.7% (98 families). See `family_summary.tsv`.
 
 ### 5.5 Plant genotypes and the statistical test (step 22)
 
@@ -383,41 +384,45 @@ These are expected plant fractions; single plants inside a pool can't be genotyp
 
 | Measure | Observed | 95% CI | Expected BC2S3 | p |
 |---|---|---|---|---|
-| SEG (pool) | 6.44% | 6.12–6.80 | 6.25% | 0.26 |
-| AB (plant) | 3.22% | 3.06–3.40 | 3.13% | 0.26 |
-| DONOR (pool) | 4.60% | 4.25–4.96 | 9.38% | < 0.0002 |
-| BB (plant) | 6.21% | 5.81–6.61 | 10.94% | < 0.0002 |
-| Donor alleles | 7.82% | 7.36–8.29 | 12.50% | < 0.0002 |
-| **AB/(AB+BB)** | **34.1%** | 33.0–35.3 | 22.2% | < 0.0002 |
-| SEG/(SEG+DONOR) | 58.3% | 56.7–60.0 | 40.0% | < 0.0002 |
+| SEG (pool) | 6.23% | 5.92–6.57 | 6.25% | 0.93 |
+| AB (plant) | 3.12% | 2.96–3.29 | 3.13% | 0.93 |
+| DONOR (pool) | 4.95% | 4.55–5.36 | 9.38% | < 0.0002 |
+| BB (plant) | 6.51% | 6.07–6.96 | 10.94% | < 0.0002 |
+| Donor alleles | 8.07% | 7.58–8.57 | 12.50% | < 0.0002 |
+| **AB/(AB+BB)** | **32.4%** | 31.1–33.6 | 22.2% | < 0.0002 |
+| SEG/(SEG+DONOR) | 55.7% | 53.9–57.6 | 40.0% | < 0.0002 |
 
 **By taxon:**
 
 | Taxon | Families | Pools | AB (plant) | BB (plant) | Donor alleles | AB/(AB+BB) |
 |---|---|---|---|---|---|---|
-| Zd | 6 | 227 | 2.58% | 4.26% | 5.55% | 37.8% (35.5–39.9) |
+| Zd | 6 | 227 | 2.56% | 4.32% | 5.60% | 37.2% (35.4–39.0) |
 | Zh | 2 | 61 | 2.87% | 6.73% | 8.16% | 29.9% |
-| Zl | 5 | 98 | 3.40% | 5.45% | 7.16% | 38.4% (36.4–41.3) |
-| Zv | 40 | 333 | 3.40% | 6.30% | 8.00% | 35.1% (32.8–37.3) |
-| Zx | 45 | 573 | 3.37% | 7.02% | 8.70% | 32.5% (31.2–33.9) |
+| Zl | 5 | 98 | 3.40% | 5.46% | 7.16% | 38.4% (36.4–41.3) |
+| Zv | 40 | 333 | 3.25% | 6.75% | 8.38% | 32.5% (30.1–34.8) |
+| Zx | 45 | 573 | 3.24% | 7.39% | 9.01% | 30.5% (29.1–31.9) |
 | *Expected* | | | *3.13%* | *10.94%* | *12.50%* | *22.2%* |
 
 BB, donor alleles and AB/(AB+BB) differ from the expectation at p < 0.0002 in every taxon. Zh (2 families), Zl (5) and Zd (6) have few families, so their intervals are less reliable. `stats_by_chrom.tsv` gives the same measures per chromosome.
 
 **What it shows.**
-- **Het is as expected.** AB (3.2%) and SEG (6.4%) don't differ from the BC2S3 expectation.
-- **Homozygous donor is missing.** BB is 6.2% instead of 10.9%, and DONOR is 4.6% instead of 9.4%. That loss is the whole shortfall in donor alleles (7.8% vs 12.5%).
-- **The remaining donor is mostly het.** 34% of donor-carrying plants are AB, against 22% expected. The same pattern holds in all five taxa.
+- **Het is as expected.** AB (3.12%) and SEG (6.23%) don't differ from the BC2S3 expectation (p = 0.93).
+- **Homozygous donor is missing.** BB is 6.5% instead of 10.9%, and DONOR is 5.0% instead of 9.4%. That loss is the whole shortfall in donor alleles (8.1% vs 12.5%).
+- **The remaining donor is mostly het.** 32% of donor-carrying plants are AB, against 22% expected. The same pattern holds in all five taxa.
 - **This fits other work.** Lab mates' lines and TeoNAM reported more heterozygosity than expected after selection during selfing. Here, het is normal in absolute terms but strongly elevated relative to fixation.
 - **Interpretation:** selection against plants homozygous for teosinte segments (BB) during the selfing generations. Recessive teosinte alleles that hurt plant type, flowering or seed set are exposed only in BB plants. Losing those plants removes fixed donor segments, while the same segments survive in heterozygotes.
 
 **Why it is not a model artifact.**
 1. **The prior works against it.** The HMM's prior π is the expected 84.4 / 6.25 / 9.4 split, which pulls calls toward the expectation. The departure happens in spite of it.
 2. **SEG is not inflated.** If real DONOR were being called SEG, SEG would come out above 6.25%. It doesn't.
-3. **The switching problem doesn't explain it.** SEG/DONOR switching occurs mainly in Zv and Zx, yet Zd and Zl, which have the least of it, show the strongest excess (38%).
+3. **The switching problem doesn't explain it.** SEG/DONOR switching occurs mainly in Zv and Zx, yet Zd and Zl, which have the least of it, show the strongest excess (37–38%). Reducing the switching (current method) moved AB/(AB+BB) only from 34.1% to 32.4%.
 4. **No false donor.** The B73 controls are clean, so B73 regions are not turned into donor.
 
-**Next:** the per-chromosome breakdown (`stats_by_chrom.tsv`). If the BB deficit is concentrated in a few regions, those are candidate targets of selection.
+**Per chromosome (current method):** AB/(AB+BB) is 29–35% on every chromosome (expected 22%; all p < 0.0002). The BB deficit is genome-wide, not a few regions:
+
+| chr1 | chr2 | chr3 | chr4 | chr5 | chr6 | chr7 | chr8 | chr9 | chr10 |
+|---|---|---|---|---|---|---|---|---|---|
+| 33.5% | 31.5% | 30.3% | 33.9% | 33.0% | 29.0% | 32.9% | 35.3% | 32.4% | 32.0% |
 
 ### 5.6 Family table
 
@@ -434,7 +439,11 @@ tr -d '\r' < "$SAMPLE_META" | awk -F'\t' -v out="$OUT" 'NR==FNR { if (FNR > 1) {
 
 ---
 
-### 5.7 Family DONOR levels (step 20b, rounds)
+### 5.7 Method history: family DONOR levels, then DONOR-level uncertainty (current)
+
+The top-level README has a shorter version of this: [What we changed and why](../README.md#what-we-changed-and-why).
+
+#### Family DONOR levels (step 20b, rounds)
 
 **Why.** In round 0 the DONOR level comes from the teosinte assemblies. Our lines' donor plants differ from those assembly plants, and in Zv and Zx that causes SEG/DONOR switching inside tracts. Every pool of a BC1 family carries the same donor haplotype (one F1 gamete). So where pools of the family are called DONOR, their score r there is the family's real DONOR level.
 
@@ -477,7 +486,9 @@ Outputs: `KMER_DIR/family_levels_fam1/`, `hmm_fam1/`, `introgression_fam1/` (rou
 - **A round 2 is not worth running:** the levels can't move much further with this little data per window.
 - **The main conclusions don't depend on the round:** SEG and AB match the expectation; DONOR and BB are about half of it.
 
-**What does cause the Zv/Zx fragmentation (round 1 tracts, non-noisy pools):**
+#### What causes the Zv/Zx fragmentation: our donor plants differ from the assembly plants
+
+Round 1 tracts, non-noisy pools:
 
 | Taxon | SEG tracts / pool | Median SEG tract | DONOR tracts / pool | SEG↔DONOR switches / pool | Short B73 gaps (< 1 Mb) inside introgressions |
 |---|---|---|---|---|---|
@@ -499,7 +510,9 @@ The two assemblies of each taxon disagree on d much more in Zv and Zx (`donor_re
 
 So in a quarter of Zv/Zx windows, two plants of the same taxon differ by more than 0.2 in d. Our lines' donor plant can be just as different from the assembly mean. In those windows the true DONOR level sits where the model expects SEG, or SEG sits where it expects B73, and the call flips. This fits *parviglumis* and *mexicana* being far more diverse than *diploperennis*.
 
-**Fix being tested: widen the DONOR level by the assembly disagreement (`--d_spread`).** The model is told that in windows where the two assemblies disagree, the DONOR level (and so the SEG level) is uncertain. A window a bit above d then no longer looks strongly like SEG, and the HMM stays in DONOR instead of switching. Tested on the 44 batch pools (same code and settings, with and without the option):
+#### The fix, now the current method: DONOR-level uncertainty (`--d_spread`, `SPREAD=1`)
+
+ The model is told that in windows where the two assemblies disagree, the DONOR level (and so the SEG level) is uncertain. A window a bit above d then no longer looks strongly like SEG, and the HMM stays in DONOR instead of switching. First tested on the 44 batch pools (same code and settings, with and without the option):
 
 | Group (pools) | SEG % | DONOR % | Tracts / pool | SEG↔DONOR switches / pool |
 |---|---|---|---|---|
@@ -515,24 +528,44 @@ So in a quarter of Zv/Zx windows, two plants of the same taxon differ by more th
 - Best ρ stays 1.5.
 - Example: PN16_SID1473 chr4, a DONOR tract broken into 15 pieces, becomes one long DONOR tract with SEG at its start.
 
-**Run on all pools** (own folders `hmm_spread/`, `introgression_spread/`; round 0 is not touched):
+**All pools (15 Nov 2026), first method → current method, non-noisy pools:**
+
+| Taxon | Tracts / pool | SEG↔DONOR switches / pool | Median SEG tract | Donor share |
+|---|---|---|---|---|
+| Zd | 8.8 → 8.4 | 2.5 → 2.2 | 7.0 → 7.2 Mb | 5.55 → 5.60% |
+| Zh | 10.0 → 10.0 | 3.2 → 3.2 | 7.9 → 7.9 Mb | 8.16 → 8.16% |
+| Zl | 9.8 → 9.8 | 2.6 → 2.6 | 8.5 → 8.5 Mb | 7.16 → 7.16% |
+| Zv | 24.3 → 16.7 | 11.6 → 5.3 | 3.5 → 5.6 Mb | 8.00 → 8.38% |
+| Zx | 23.8 → 17.2 | 11.8 → 6.1 | 3.1 → 4.6 Mb | 8.70 → 9.01% |
+| B73 controls | 1.3 → 2.0 | 0 → 0 | | 0.04 → 0.07% |
+
+| All 1,292 non-noisy pools | First method (round 0) | Round 1 (family levels) | Current method | Expected |
+|---|---|---|---|---|
+| SEG (pool) | 6.44% | 6.34% | **6.23%** (p = 0.93) | 6.25% |
+| DONOR (pool) | 4.60% | 4.70% | 4.95% | 9.38% |
+| Donor alleles | 7.82% | 7.87% | 8.07% | 12.5% |
+| AB (plant) | 3.22% | 3.17% | **3.12%** (p = 0.93) | 3.13% |
+| BB (plant) | 6.21% | 6.29% | 6.51% | 10.94% |
+| AB/(AB+BB) | 34.1% | 33.5% | 32.4% | 22.2% |
+| Best ρ | 1.5 | 1.5 | 1.5 | |
+
+- **Windows changed:** 0.5%, mostly SEG → DONOR (0.35% of windows) and B73 → SEG (0.13%; mainly short B73 gaps inside tracts that are now filled). 185 of 1,292 pools changed in more than 1% of windows, 14 in more than 5%.
+- **ρ:** the best ρ is still 1.5. Zv and Zx alone now prefer 1.5 instead of 2, which also fits less flipping.
+- **Controls:** largest PN6_SID576, 0.56% non-B73 windows (donor share 0.28%). The other nine are ≤ 0.21%.
+- **What remains:** Zv and Zx still switch about twice as often as the other taxa (5–6 vs 2–3 per pool). Two assemblies per taxon only partly capture how different our donor plants are (section 7).
+
+**Run** (the default since 15 Nov 2026; `SPREAD=0` gives the first method):
 ```bash
 N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' ${D11}/pools.tsv | wc -l)
-J=$(sbatch --parsable --export=ALL,SPREAD=1 --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)
-J2=$(sbatch --parsable --export=ALL,SPREAD=1 --dependency=afterok:$J 21_kmer_collect.sh)
-sbatch --export=ALL,SPREAD=1 --dependency=afterok:$J2 22_kmer_stats.sh
-sbatch --export=ALL,SPREAD=1 --dependency=afterok:$J2 23_introgression_viewer.sh
+J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)
+J2=$(sbatch --parsable --dependency=afterok:$J 21_kmer_collect.sh)
+sbatch --dependency=afterok:$J2 22_kmer_stats.sh
+sbatch --dependency=afterok:$J2 23_introgression_viewer.sh
 ```
-
-**Per chromosome (round 0, step 22):** AB/(AB+BB) is 31–37% on every chromosome (expected 22%; all p < 0.0002). The BB deficit is genome-wide, not a few regions:
-
-| chr1 | chr2 | chr3 | chr4 | chr5 | chr6 | chr7 | chr8 | chr9 | chr10 |
-|---|---|---|---|---|---|---|---|---|---|
-| 34.9% | 33.4% | 31.8% | 35.7% | 35.6% | 30.9% | 34.5% | 36.7% | 34.3% | 34.1% |
 
 ## 6. Validation
 
-- **B73 controls are clean.** All 10 have ≤ 0.26% non-B73 windows (donor share ≤ 0.14%) and 0–4 tiny tracts. This is a fair test: the k-mer route never uses the controls to filter sites, and each control is left out of its own reference.
+- **B73 controls are clean.** All 10 have ≤ 0.56% non-B73 windows (donor share ≤ 0.28%) and 0–4 tiny tracts with the current method (≤ 0.26% with the first). This is a fair test: the k-mer route never uses the controls to filter sites, and each control is left out of its own reference.
   - The SNP route can't test this. Its site filter removed every site where the controls had an ALT read, so its controls are B73 by construction.
 - **Known tracts are found.**
   - Zd PN13_SID1199 chr2:22–25 Mb: DONOR, r ≈ 0.20; the Zd assembly level there is 0.26.
@@ -544,19 +577,18 @@ sbatch --export=ALL,SPREAD=1 --dependency=afterok:$J2 23_introgression_viewer.sh
     - κ collapsing to 0.1–0.2 in two Zd pools (SNP 17% vs k-mer 3–7%)
     - Zm, which is too close to B73 for a teosinte panel
     - noisy pools
-- **R:** no effect in any pool (section 4.4).
 
 ---
 
 ## 7. Open issues and next steps
 
-1. **DONOR ↔ SEG switching inside tracts (Zv, Zx).** Zv and Zx have ~20 tracts per pool against 7–9 for the other taxa, and four times as many SEG↔DONOR switches.
-   - Cause: two assemblies of the same taxon differ by > 0.2 in d in 23–28% of Zv/Zx windows (6.5% in Zd), so the assembly level is often wrong for our lines' donor plant (section 5.7).
-   - Tried and failed: BC1 sisters (k-mer depth too noisy), and family levels from the family's own DONOR pools (round 1, too few DONOR pools per window; 0.27% of windows changed).
-   - **Being tested:** widen the DONOR level by the between-assembly spread of d (`--d_spread`, `SPREAD=1`). On the 44 batch pools it more than halves the Zv/Zx switches with the controls still clean (section 5.7); next is the run on all pools. Not chosen: family levels from SEG windows too (too complex), and tract-level-only calls for Zv/Zx.
+1. **DONOR ↔ SEG switching inside tracts (Zv, Zx): reduced, not gone.** Cause: our donor plants differ from the assembly plants; two assemblies of the same taxon differ by > 0.2 in d in 23–28% of Zv/Zx windows (6.5% in Zd).
+   - Tried: BC1 sisters (k-mer depth too noisy) and family levels (round 1; 0.27% of windows changed).
+   - **Adopted:** DONOR-level uncertainty (`SPREAD=1`). It halves the switching; Zv/Zx still switch about twice as often as the other taxa (section 5.7).
+   - **The real fix:** measure our own donor plants. If tissue or seed of the teosinte donor parents (or the F1s) exists, 10–20x short-read sequencing of each is enough. No assembly is needed: d_w is just the share of the window's B73 k-mers present in that plant's reads.
 2. **Noisy plates (PN11, PN13, PN15):** resequence, or keep them flagged.
 3. **Zm (landraces):** skipped. They need a maize-based DONOR level, e.g. from NAM founder assemblies.
-4. **Shortfall in DONOR (4.7% vs 9.4%):** unchanged by round 1 and seen in every taxon, including Zd, where the levels are reliable. Waiting on how the plots were advanced (single BC2S2 plant per plot or a bulk, and any selection during selfing).
+4. **Shortfall in DONOR (5.0% vs 9.4%):** seen with every method and in every taxon, including Zd, where the levels are reliable. Waiting on how the plots were advanced (single BC2S2 plant per plot or a bulk, and any selection during selfing).
 
 ---
 

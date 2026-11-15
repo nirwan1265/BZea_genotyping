@@ -154,10 +154,11 @@ else
   D20=${KMER_DIR}/hmm_fam${ROUND}
   D21=${KMER_DIR}/introgression_fam${ROUND}
 fi
-# SPREAD=1: widen the DONOR/SEG levels by how much the taxon's assemblies disagree per window
-# (20_kmer_hmm.py --d_spread; fixes Zv/Zx SEG<->DONOR switching). Own output folders, nothing overwritten:
-#   sbatch --export=ALL,SPREAD=1 ...   ->  hmm_spread / introgression_spread
-SPREAD=${SPREAD:-0}
+# SPREAD=1 (the default, current method since 15 Nov 2026): widen the DONOR/SEG levels by how much the
+# taxon's assemblies disagree per window (20_kmer_hmm.py --d_spread), because our donor plants differ
+# from the assembly plants. Output: hmm_spread / introgression_spread.
+# SPREAD=0 reproduces the first method (round 0, hmm / introgression): sbatch --export=ALL,SPREAD=0 ...
+if (( ROUND == 0 )); then SPREAD=${SPREAD:-1}; else SPREAD=${SPREAD:-0}; fi
 RUN_TAG=round${ROUND}
 if (( SPREAD == 1 )); then
   (( ROUND == 0 )) || { echo "SPREAD=1 is for ROUND=0 (assembly levels) only" >&2; exit 1; }

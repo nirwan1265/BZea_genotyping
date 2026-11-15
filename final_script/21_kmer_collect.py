@@ -5,13 +5,12 @@
 rho: summed log-likelihood over donor pools that are not Zm (no assembly) and not NOISY; the rho
      with the highest total is used for every pool. rho_loglik.tsv shows the whole curve, also
      per taxon.
-Calls: hysteresis R = 1 (none). pool_summary.tsv also gives the share with R = step-20 rigidity,
-       to show whether R changes anything.
+Calls: the most likely state per window (forward-backward).
 
 Outputs in <out_dir>:
   rho_loglik.tsv     rho, total log-likelihood (relative to best), and per taxon
   pool_summary.tsv   SAMPLE ROLE GROUP SIGMA FLAG PARAM_KIND PARAM FRAC_B73 FRAC_SEG FRAC_DONOR
-                     DONOR_SHARE DONOR_SHARE_R N_TRACTS
+                     DONOR_SHARE N_TRACTS
   tracts_all.tsv.gz  SAMPLE GROUP CHROM START END STATE (non-B73 and B73 runs)
   blocks_<GROUP>.pdf one page per pool (blue B73, yellow SEG, red DONOR; colorblind-safe), if matplotlib is present
 """
@@ -82,19 +81,19 @@ def main():
     for g in groups: print(f"  {g}: best rho alone = {rho[int(np.argmax(per[g]))]:g}")
 
     summ = open(f"{a.out_dir}/pool_summary.tsv", "w")
-    summ.write("SAMPLE\tROLE\tGROUP\tSIGMA\tFLAG\tPARAM_KIND\tPARAM\tFRAC_B73\tFRAC_SEG\tFRAC_DONOR\tDONOR_SHARE\tDONOR_SHARE_R\tN_TRACTS\n")
+    summ.write("SAMPLE\tROLE\tGROUP\tSIGMA\tFLAG\tPARAM_KIND\tPARAM\tFRAC_B73\tFRAC_SEG\tFRAC_DONOR\tDONOR_SHARE\tN_TRACTS\n")
     tr = gzip.open(f"{a.out_dir}/tracts_all.tsv.gz", "wt"); tr.write("SAMPLE\tGROUP\tCHROM\tSTART\tEND\tSTATE\n")
     blocks = {}
     for s, z in P.items():
-        st, stR = z["states_R1"][j], z["states_R"][j]
-        v, vR = st[st >= 0], stR[stR >= 0]
+        st = z["states_R1"][j]
+        v = st[st >= 0]
         fB, fS, fD = (np.mean(v == k) for k in range(3))
-        sh, shR = fD + fS / 2, np.mean(vR == 2) + np.mean(vR == 1) / 2
+        sh = fD + fS / 2
         bl = runs(st, chrom, start, a.window); blocks[s] = bl
         nt = sum(1 for b in bl if b[3] > 0)
         i = info[s]
         summ.write(f"{s}\t{i['role']}\t{i['group']}\t{i['sigma']:.3f}\t{i['flag']}\t{z['param_kind']}\t{z['par_best'][j]:g}\t"
-                   f"{fB:.4f}\t{fS:.4f}\t{fD:.4f}\t{sh:.4f}\t{shR:.4f}\t{nt}\n")
+                   f"{fB:.4f}\t{fS:.4f}\t{fD:.4f}\t{sh:.4f}\t{nt}\n")
         for c, b0, b1, k in bl: tr.write(f"{s}\t{i['group']}\t{c}\t{b0}\t{b1}\t{STATES[k]}\n")
     summ.close(); tr.close()
 

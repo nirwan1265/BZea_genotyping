@@ -134,7 +134,6 @@ The HMM itself is Nirwan's BC2S3 HMM. `20_kmer_hmm.py` imports these functions u
 - `haldane_theta`
 - `build_A`: transitions
 - `forward_backward`
-- `decode_hysteresis`
 
 **Only the emission is new.**
 
@@ -200,12 +199,12 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 - **To get plant genotypes:** genotype single plants, or seed of that family, e.g. with a few KASP markers inside the SEG tracts, or skim-sequence single plants from a subset of families.
 
 - **d_w:** the expected DONOR level of the pool's taxon in that window: the mean of that taxon's assemblies (step 19).
-- **a:** a per-pool scale that allows for the pool's donor plant differing from the assemblies. Fitted per pool.
+- **a:** a per-pool scale that allows for the pool's donor plant differing from the assemblies. Fitted per pool by maximum likelihood on a grid: the HMM is run with each a in `--scale_grid` (0.5–1.8), the forward algorithm gives the total log-likelihood over all chromosomes, and the best a is kept (separately for each ρ).
 - **SEG:** a family segregating 1:2:1 at a locus gives each plant 0, 1 or 2 donor copies, so the pool's donor copies ~ **Binomial(2n, ½)**, with n = 6 plants. The pool's donor fraction is f = k/12, k = 1–11, with binomial weights. k-mers the donor lacks come only from the B73 part of the pool, so SEG for fraction f gives Normal(d_w + (1 − d_w)·g(f), σ_w), where:
   - g(f) = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)) (Lander–Waterman: the share of k-mers seen at coverage λ is 1 − e^(−λ))
   - λ = the pool's k-mer coverage, from the median share of single-copy k-mers it sees.
-- **σ_w:** the pool's robust SD of r in B73 windows (1.4826 × MAD) × how much the controls disagree in that window relative to a typical window (clipped to 0.5–3×).
-- **Outliers:** every state has a 2% chance that the window is junk (uniform on 0–2).
+- **σ_w:** the pool's robust SD of r in B73 windows × how much the controls disagree in that window relative to a typical window (clipped to 0.5–3×). Robust SD = 1.4826 × MAD, where MAD = median of |r − 1| over the B73-like windows. It equals the SD for normal noise but ignores the few introgressed or junk windows.
+- **Outliers:** every state has a 2% chance that the window is junk (uniform on 0–2), a contamination term so one odd window can't give near-certain evidence. 2% is chosen, not estimated. In the 10 B73 controls (44-pool test), 0.77% of windows are > 3σ from 1 (normal: 0.27%) and 0.10% are > 4σ (normal: 0.006%), so real outliers are well under 2%.
 - **Option `--d_spread` (`SPREAD=1`, being tested):** our donor plant isn't an assembly plant, so in each window the DONOR level is uncertain by τ_w = how much the taxon's two assemblies disagree there (SD × √1.5, averaged over ±5 windows). DONOR sd = √(σ_w² + (a·τ_w)²); SEG sd = √(σ_w² + ((1 − g)·a·τ_w)²). Mean τ: Zv 0.18, Zx 0.16, Zd 0.06; Zh and Zl have one assembly, so τ = 0. B73 controls get the Zv τ, the widest, as a worst case. See section 5.7.
 
 ### 4.3 Transitions and decoding (unchanged from step 14)
@@ -215,12 +214,11 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 - **Chains:** each chromosome is its own chain.
 - **Decoding:** forward–backward, then the most likely state per window.
 
-### 4.4 ρ is fitted, R is not used
+### 4.4 ρ is fitted
 
 - **ρ:** step 20 runs every pool over a ρ grid and saves the log-likelihood. Step 21 sums it over donor pools that are not NOISY and uses the best ρ for every pool. This is the same as estimating the number of generations in local-ancestry HMMs (e.g. Ancestry_HMM).
   - Best: **ρ = 1.5**, from 1,292 pools; the 44-pool test also gave 1.5.
   - Alone, each taxon would pick ρ = 1 (Zd, Zh, Zl) or 2 (Zv, Zx).
-- **R:** calls are made without rigidity. With R = 3 windows, the donor share differed by more than 0.5 percentage points in **0 of 1,385** pools, so R isn't needed once ρ is fitted. `DONOR_SHARE_R` in the summary keeps the R = 3 value for reference.
 
 ### 4.5 All parameters
 
@@ -232,21 +230,20 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 | KMC minimum count | 1 | steps 17, 19 | at 0.8x most k-mers are seen once |
 | Reference fit | NNLS of B73 controls, refit without windows below 1 − 2σ | `--cut_sigma 2` | robust; no fixed cutoff |
 | σ | 1.4826 × MAD, per pool; × controls' spread per window (0.5–3) | 20 | robust SD |
-| Outliers | 2% | `--eps` | robust mixture |
+| Outliers | 2% | `--eps` | robust mixture; chosen, controls show well under 2% real outliers |
 | DONOR level | assembly d_w × a | step 19 + 20 | measured from teosinte genomes |
 | a (per pool) | grid 0.5–1.8; fitted median 0.9–1.0 in every taxon | `--scale_grid` | donor plant ≠ assembly plant |
 | Plants per pool | 6 | `KMER_PLANTS` | sampling design |
 | SEG fractions | k/12, k ~ Binomial(12, ½) | 20 | Mendelian 1:2:1 summed over 6 plants |
 | Prior π (and start) | B73 0.844, SEG 0.0625, DONOR 0.094 | `--prior` | expected state of a BC2S3 **family** = genotype of its BC2S2 parent (section 5.1) |
 | ρ | grid 0.25–8; fitted **1.5** | `--rho_grid`, step 21 | maximum likelihood over all pools |
-| R | none (R = 1) | — | R = 3 changed nothing |
 | NOISY flag | σ > 0.15 | `KMER_NOISY_SIGMA` | left out of the ρ fit and the means |
 | Skipped taxa | Zm | `KMER_SKIP_GROUPS` | no landrace assembly yet |
 | Min. single-copy k-mers per window | 2,000 | `--min_b73_kmers` | drops near-empty windows |
 
 ### 4.6 Outputs (`${KMER_DIR}/introgression/`, from step 21)
 
-- `pool_summary.tsv`: `SAMPLE ROLE GROUP SIGMA FLAG PARAM_KIND PARAM FRAC_B73 FRAC_SEG FRAC_DONOR DONOR_SHARE DONOR_SHARE_R N_TRACTS`. DONOR_SHARE = FRAC_DONOR + ½ FRAC_SEG.
+- `pool_summary.tsv`: `SAMPLE ROLE GROUP SIGMA FLAG PARAM_KIND PARAM FRAC_B73 FRAC_SEG FRAC_DONOR DONOR_SHARE N_TRACTS`. DONOR_SHARE = FRAC_DONOR + ½ FRAC_SEG.
 - `tracts_all.tsv.gz`: `SAMPLE GROUP CHROM START END STATE`
 - `rho_loglik.tsv`: log-likelihood by ρ (all pools and per taxon)
 - `blocks_<GROUP>.pdf`: one page per pool. Blue = B73 (all plants AA), yellow = SEG (plants AA, AB or BB), red = DONOR (all plants BB). Colorblind-safe.
@@ -592,7 +589,7 @@ sbatch 13_extract_pool_gl.sh; sbatch --dependency=afterok:<13> 14_run_hmm.sh; sb
 **How the SNP HMM (step 14) works:**
 - **States:** B73 / SEG / DONOR. The pool likelihood comes from interpolating the GLs: L(p) = L0(2p−1)(p−1) + L1·4p(1−p) + L2·p(2p−1).
 - **Donor ALT chance:** c = κ × panel AF, with κ learned per pool by multi-start EM.
-- **Transitions:** NAM map transitions, ρ = 0.2, rigidity 50 markers.
+- **Transitions:** NAM map transitions, ρ = 0.2.
 
 **Results and limits:**
 - **Results:** median donor share Zd 5.4%, Zh 8.0%, Zl 6.7%, Zv 8.9%, Zx 8.6%.

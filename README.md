@@ -412,7 +412,12 @@ The HMM combines both to find the most likely series of states along each chromo
 #### Emissions: how well does r fit each state?
 
 Each state expects r near a certain value, with some spread (noise). The spread σ_w is measured, not assumed:
-- **Pool noise σ:** how much r scatters around 1 in the pool's B73 windows (robust SD, 1.4826 × MAD). Good pools have σ ≈ 0.08–0.10. Pools with σ > 0.15 are flagged **NOISY**, which mostly means low depth.
+- **Pool noise σ:** how much r scatters around 1 in the pool's B73 windows. It is a *robust* standard deviation:
+  1. For every B73-like window, take how far r is from 1: |r − 1|.
+  2. Take the median of those distances. This is the **MAD** (median absolute deviation).
+  3. Multiply by 1.4826. For normally distributed noise, 1.4826 × MAD equals the ordinary SD.
+
+  Unlike the ordinary SD, the MAD isn't inflated by the few introgressed or junk windows, because a median ignores extreme values. Good pools have σ ≈ 0.08–0.10. Pools with σ > 0.15 are flagged **NOISY**, which mostly means low depth.
 - **Window factor:** windows where the 10 B73 controls disagree with each other are noisier in every pool, so σ_w = σ × (control spread in this window ÷ typical control spread), limited to 0.5–3.
 
 | State | Expected r | Emission (probability of r) |
@@ -423,10 +428,19 @@ Each state expects r near a certain value, with some spread (noise). The spread 
 
 What the terms mean:
 - **d_w:** the share of the window's B73 k-mers that the donor genome keeps, measured from the teosinte assemblies (step 19). Each window has its own value.
-- **a:** one scale factor per pool (0.5–1.8, chosen by best fit). It absorbs small differences between our donor plant and the assembly plants that apply genome-wide.
+- **a:** one scale factor per pool. It absorbs genome-wide differences between our donor plant and the assembly plants; for example, our plant may keep a few percent more B73 k-mers everywhere. **How it's fitted (maximum likelihood by grid search):**
+  1. The whole HMM is run for the pool with each value of a: 0.5, 0.6, …, 1.4, 1.6, 1.8.
+  2. Each run gives the **likelihood**: the probability of the pool's observed r values in all windows of all chromosomes under that model. The forward algorithm computes it.
+  3. The a with the highest likelihood is kept. This is done for each ρ.
+
+  The fitted a is mostly 0.9–1.0 in every taxon, so on average the assembly levels fit our lines well.
 - **k/12:** the donor fraction of a SEG pool. 6 plants carry 12 chromosome copies. A SEG family segregates 1:2:1, so the number of donor copies k follows Binomial(12, ½). The model averages over all k instead of assuming exactly half (see [What SEG means](#what-a-sample-is)).
 - **g(f):** how much of the B73-only k-mers a pool still sees when only a share (1 − f) of its chromosomes are B73. From the coverage formula: g(f) = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)), where λ is the pool's k-mer coverage, measured from the share of B73 k-mers it sees in B73 windows.
-- **Outliers:** each state also has a 2% chance that the window is junk (r anywhere from 0 to 2). One odd window then can't give overwhelming evidence for any state.
+- **Outliers:** each state also has a 2% chance that the window is junk. A junk window's r is treated as equally likely anywhere from 0 to 2 (a uniform distribution). This is a standard robustness device, a "contamination" term in the emission. Without it, one odd window (e.g. a mis-assembled or duplicated region) could give near-certain evidence for a state just because it lies far out in a normal curve's tail.
+  - **The 2% is a chosen value, not estimated from the data.** The B73 controls show it's on the safe side (44-pool test, 10 controls, about 21,000 windows each):
+    - 0.77% of control windows are more than 3σ from 1, where a perfect normal would give 0.27%.
+    - 0.10% are more than 4σ from 1, where a normal would give 0.006%.
+  - So real outliers exist, but at well under 2%. A higher value makes the HMM more reluctant to switch on a few windows; a lower one makes it switch more readily.
 
 **Example: one Zd window** (d = 0.27, σ = 0.09, a typical pool). For a given r, this is how well each state fits on its own, before neighbouring windows are considered:
 
@@ -453,7 +467,6 @@ With ρ = 1.5, the chance of a change is about **0.1% per window** on average. T
 
 - **Forward–backward** computes, for every window, the probability of each state given the whole chromosome. The window gets the state with the highest probability.
 - **Tracts:** adjacent windows with the same state are joined. Skipped windows take the state before them.
-- **No extra smoothing:** an earlier "rigidity" rule (require R windows in a row before switching) was tested and changed no pool once ρ was fitted, so it's not used.
 - **Plant genotypes** follow from the pool states: AA = B73 + SEG/4, AB = SEG/2, BB = DONOR + SEG/4.
 
 #### What is fitted, and where
@@ -468,6 +481,9 @@ With ρ = 1.5, the chance of a change is about **0.1% per window** on average. T
 | ρ (switch rate) | whole data set | best total likelihood | `21_kmer_collect.py` |
 | Prior | fixed | BC2S3 expectation | `config.sh` |
 | Plants per pool | fixed | 6 | `config.sh` (`KMER_PLANTS`) |
+| Outlier share | fixed | 2% | `20_kmer_hmm.py` (`--eps`) |
+
+**Why the prior is fixed.** It only sets the state each chromosome starts in, and which state a switch goes to. It doesn't set how much of the genome ends up in each state: with about 2,000 windows per chromosome, the data decide. DONOR came out at 4.6% although the prior expects 9.4%, so the prior isn't forcing the result.
 
 **Being tested (`--d_spread`):** in Zv and Zx the two assemblies of the same taxon often disagree on d_w, so our donor plant's level is uncertain there. This option widens the DONOR and SEG spread by that disagreement. On 44 test pools it more than halved the SEG↔DONOR switching in Zv/Zx, with the controls still clean. The run on all pools is in progress (details in [`final_script/README.md`](final_script/README.md), section 5.7).
 

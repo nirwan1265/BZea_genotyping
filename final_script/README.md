@@ -93,6 +93,8 @@ No partition is set. If your account needs one, uncomment `##SBATCH --partition=
 | 16 | `16_kmer_b73_unique.sh` | 1 | B73 chr1-10 FASTA; all B73 31-mers; the single-copy ones (`B73_uniq`) | `KMER_DIR` |
 | 17 | `17_kmer_windows.sh` | array | Per pool: KMC count of trimmed reads → keep B73 single-copy k-mers → KCFtools 100-kb windows | `KMER_DIR/windows/` |
 | 18 | `18_kmer_check.sh` | login node | Pools missing output, missing FASTQs, k-mers per pool | `KMER_DIR/kmer_pool_qc.tsv` |
+| 20 | `20_run_kmer_hmm.sh` + `20_kmer_hmm.py` | array | HMM on k-mer windows for each pool, over a grid of rho | `KMER_DIR/hmm/` |
+| 21 | `21_kmer_collect.sh` + `.py` | 1 | Picks rho (max total log-likelihood); calls, tracts, block figures | `KMER_DIR/introgression/` |
 | 19 | `19_kmer_donor_reference.sh` | 9 | Same windows for B73 itself and 8 teosinte assemblies (PanAnd): expected DONOR level per window and taxon | `KMER_DIR/donor_ref/` |
 
 ## Final outputs (`09_counts_by_chr/`)
@@ -356,4 +358,49 @@ bash 18_kmer_check.sh                             # after 17
 
 - **Why:** the HMM then uses a measured DONOR level instead of fitting or capping d.
 - **Not covered:** Zm has no assembly here yet.
+
+## Steps 20–21: HMM on k-mer windows
+
+Same HMM as step 14 (imported from `14_hmm_pooled.py`):
+- NAM map → Haldane θ
+- switch s = ρθ, target state by prior π (0.844 / 0.0625 / 0.094)
+- forward–backward and posterior decoding
+
+Only the emission is new. r = the pool's B73 single-copy k-mer count / a fit of the B73 controls (never including itself).
+
+**Emissions per window:**
+
+| State | Model |
+|---|---|
+| B73 | Normal(1, σ_w) |
+| DONOR | Normal(a·d_w, σ_w) |
+| SEG | average over pool donor fractions f = k/2n, k ~ Binomial(2n, ½), n = 3–6 plants, of Normal(d_w + (1 − d_w)·g(f), σ_w) |
+
+- **d_w:** the taxon's assembly level for that window (step 19).
+- **a:** a per-pool scale, fitted (0.5–1.8). Zm has no assembly, so its d is a fitted constant.
+- **g(f):** = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)). k-mers the donor lacks come only from the B73 part of the pool; λ is the pool's k-mer coverage.
+- **σ_w:** the pool's robust SD × the controls' spread in that window.
+- **Outliers:** 2% per window.
+
+**Reference fit:** refit without windows below 1 − 2σ until it stops changing.
+
+**ρ:** fitted, not fixed. Each pool is run over the ρ grid. Step 21 sums the log-likelihoods over donor pools that are neither Zm nor noisy, and uses the best ρ for all pools.
+
+**R:** in the 44-pool test, calls with R = 1 and R = 3 were identical, so the calls use R = 1. `DONOR_SHARE_R` keeps the R = 3 value for comparison.
+
+**44-pool test:**
+- **Best ρ:** 1.5 overall. Alone, Zd and Zl would pick 0.5, Zh 1, Zv 2 and Zx 3.
+- **B73 controls:** 0–0.07%.
+- **Median donor share:**
+
+  | Zd | Zh | Zl | Zv | Zx |
+  |---|---|---|---|---|
+  | 3.5% | 12.2% | 8.7% | 10.0% | 9.0% |
+
+- **Noisy pools:** σ > 0.15 is flagged NOISY: 5 of 34 donor pools.
+- **Open:**
+  - Zm still fragments, at about 100 tracts per pool.
+  - Zx and Zv tracts sometimes alternate between SEG and DONOR.
+
+**Needs:** python3 with numpy, scipy and matplotlib.
 

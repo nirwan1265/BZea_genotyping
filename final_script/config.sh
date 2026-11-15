@@ -143,6 +143,13 @@ DONOR_ASSEMBLIES=(
 )
 D19=${KMER_DIR}/donor_ref                                 # <NAME>.tsv.gz per assembly + B73.tsv.gz
 
+# ---------- 20-21: HMM on k-mer windows ----------
+D20=${KMER_DIR}/hmm                 # per-pool results (<SAMPLE>.npz), all rho values
+D21=${KMER_DIR}/introgression       # final calls at the best rho
+KMER_HMM_POOLS_PER_TASK=30          # array size = ceil(pools / this)
+KMER_PLANTS=3,4,5,6                 # plants per pool (SEG pools: donor copies ~ Binomial(2n, 1/2))
+KMER_NOISY_SIGMA=0.15               # pools with sigma above this are flagged NOISY, not used to fit rho
+
 SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_NOTES.md)
 
 die() { echo "ERROR: $*" >&2; exit 1; }

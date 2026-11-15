@@ -13,7 +13,7 @@ Outputs in <out_dir>:
   pool_summary.tsv   SAMPLE ROLE GROUP SIGMA FLAG PARAM_KIND PARAM FRAC_B73 FRAC_SEG FRAC_DONOR
                      DONOR_SHARE DONOR_SHARE_R N_TRACTS
   tracts_all.tsv.gz  SAMPLE GROUP CHROM START END STATE (non-B73 and B73 runs)
-  blocks_<GROUP>.pdf one page per pool (blue B73, purple SEG, red DONOR), if matplotlib is present
+  blocks_<GROUP>.pdf one page per pool (blue B73, yellow SEG, red DONOR; colorblind-safe), if matplotlib is present
 """
 import argparse
 import glob
@@ -115,9 +115,10 @@ def main():
         from matplotlib.patches import Patch
     except ImportError:
         print("matplotlib not available: no figures"); return
-    col = {0: "#2850C0", 1: "#4F1F87", 2: "#C0202A"}
+    col = {0: "#3A6FB5", 1: "#DDAA33", 2: "#BB5566"}   # colorblind-safe (same as step 23)
     chs = list(dict.fromkeys(chrom)); clen = {c: start[chrom == c].max() + a.window for c in chs}
-    leg = [Patch(color=col[0], label="AA (B73/B73)"), Patch(color=col[1], label="AB (Het / SEG)"), Patch(color=col[2], label="BB (Teo/Teo)")]
+    leg = [Patch(color=col[0], label="B73: all plants AA"), Patch(color=col[1], label="SEG: plants AA, AB or BB (1:2:1)"),
+           Patch(color=col[2], label="DONOR: all plants BB")]
     for g in sorted({i["group"] for i in info.values()}):
         with PdfPages(f"{a.out_dir}/blocks_{g}.pdf") as pdf:
             for s in sorted(x for x in P if info[x]["group"] == g):

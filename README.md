@@ -299,10 +299,16 @@ Because a sample is a family, each genome region in a pool is in one of three st
 | Pool state | Plants in the pool | Expected share of the genome |
 |---|---|---|
 | **B73** | all AA | 84.4% |
-| **SEG** | the family still segregates 1:2:1 (AA, AB, BB) | 6.25% |
+| **SEG** | the family still segregates: each plant is AA, AB or BB (1:2:1) | 6.25% |
 | **DONOR** | all BB | 9.4% |
 
-Both views give 12.5% donor alleles. Per single plant, the same expectation is 85.9% AA, 3.1% AB and 10.9% BB (see above). SEG is **not** the same as "het": a SEG region holds ¼ AA, ½ AB and ¼ BB plants.
+Both views give 12.5% donor alleles. Per single plant, the same expectation is 85.9% AA, 3.1% AB and 10.9% BB (see above).
+
+**What SEG means.** SEG is a state of the *pool*, not of a plant, and it is **not the same as "het"**.
+- In a SEG region, the family's BC2S2 parent was AB, so its BC2S3 offspring segregate 1:2:1. **Each of the 6 plants in the pool can be AA, AB or BB.**
+- On average a SEG pool holds ¼ AA, ½ AB and ¼ BB plants. The exact mix differs from pool to pool (e.g. 2 AA, 3 AB, 1 BB), and the model allows for that.
+- A SEG call says "this family is still segregating here". It does not say that any one plant is AB.
+- To get plant genotypes from pool states: **AA = B73 + SEG/4, AB = SEG/2, BB = DONOR + SEG/4**.
 
 ### The problem: mapping reads and calling SNPs at 0.8x in pools
 
@@ -318,7 +324,9 @@ We first did it the usual way (steps 01–15): map reads to B73, count each pool
 - **IBSpy** (Uauy lab; Quiroz-Chávez 2023), used to find einkorn introgressions in bread wheat (Ahmed et al. 2023).
 - **KCFtools** (Selvanayagam et al. 2026), a fast tool for k-mer introgression screening and k-mer GWAS. We use it for the per-window counts.
 
-k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come from teosinte genome assemblies of the **PanAnd** project (Stitzer et al. 2025).
+We did **not** use IBSpy itself. It is cited because it introduced the approach; KCFtools came later from some of the same authors.
+
+k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come from teosinte genome assemblies (PanAnd-1.0, Stitzer et al. 2025), downloaded from **MaizeGDB** (Portwood et al. 2019).
 
 **What we added:** low-coverage *pools* instead of single plants, a three-state pool model (B73 / SEG / DONOR) with per-window DONOR levels from assemblies, and the HMM on the NAM genetic map.
 
@@ -332,7 +340,7 @@ k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come fro
    - **Donor region:** every teosinte SNP or indel removes the B73 k-mers that overlap it, so the count drops.
 3. **Score each window (step 20).** r = k-mers seen in the pool ÷ what a B73 pool of the same depth would see. That reference is a fit of the 10 B73 control pools, never including the pool itself.
    - B73 gives **r ≈ 1**, DONOR **r ≈ d**, and SEG falls between them.
-   - d is the share of B73 k-mers a donor genome keeps. It's measured per window from teosinte genome assemblies (PanAnd, step 19): Zd and Zl ≈ 0.26, Zh 0.34, Zx 0.37, Zv 0.43.
+   - d is the share of B73 k-mers a donor genome keeps. It's measured per window from teosinte genome assemblies (PanAnd-1.0 from MaizeGDB, step 19): Zd and Zl ≈ 0.26, Zh 0.34, Zx 0.37, Zv 0.43.
    - SEG: k-mers the donor lacks come only from the B73 plants in the pool. For 6 plants, the pool's donor fraction follows Binomial(12, ½).
 4. **HMM along each chromosome (steps 20–21).** The same three-state HMM as before. Transitions follow the NAM genetic map (Haldane), forward–backward gives each window's most likely state, and adjacent windows in the same state become tracts.
    - **ρ:** the switch rate is fitted by maximum likelihood over all pools, giving **1.5**. It plays the role of the number of generations in local-ancestry HMMs.
@@ -412,12 +420,25 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 
 The full statistics, per-plate table and family results are in [`final_script/README.md`](final_script/README.md).
 
+### Interactive figures (step 23)
+
+`final_script/figures/introgression_viewer_round<N>.html` is one self-contained page with every pool's chromosome plot:
+- **Drop-down menus:** taxon → family → "All pools" or one pool. There is also a search box for a pool ID.
+- **Family view:** each chromosome shows one track per pool of the family, so the segments the pools share line up.
+- **Pool view:** the 10 chromosomes of one pool.
+- **Hover** a segment for its position, length and state. A table under the figure lists the family's pools (σ, flag, donor share, SEG, DONOR, tracts).
+- **Download SVG / PNG** saves the figure on screen, legend included, for papers and slides.
+- **Colors are colorblind-safe:** B73 blue, SEG yellow, DONOR red. The pairs were checked for protan, deutan and tritan vision. The same colors are used in `blocks_<GROUP>.pdf`.
+
+To view it, download the file and open it in a browser. GitHub shows HTML files as code, not as a page.
+
 ### References for this section
 
 - Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838. (IBSpy used to find einkorn introgressions in bread wheat.)
 - Quiroz-Chávez J (2023) Wheat haplotype diversity by a k-mer based approach. PhD thesis, University of East Anglia. (IBSpy.)
 - Selvanayagam S, Quiroz-Chavez J, Ramirez-Gonzalez RH, Uauy C, Smit S, Schranz ME (2026) KCFtools: rapid alignment-free method for introgression screening and GWAS using k-mer profiles. *Bioinformatics*. doi:10.1093/bioinformatics/btag354
 - Kokot M, Długosz M, Deorowicz S (2017) KMC 3: counting and manipulating k-mer statistics. *Bioinformatics* 33:2759–2761.
+- Portwood JL 2nd, Woodhouse MR, Cannon EK, et al. (2019) MaizeGDB 2018: the maize multi-genome genetics and genomics database. *Nucleic Acids Res* 47:D1146–D1154. (Source of the teosinte assemblies.)
 - Stitzer MC, Seetharam AS, et al., Hufford MB (2025) Extensive genome evolution distinguishes maize within a stable tribe of grasses. *bioRxiv* doi:10.1101/2025.01.22.633974. (PanAnd assemblies.)
 - Lander ES, Waterman MS (1988) Genomic mapping by fingerprinting random clones: a mathematical analysis. *Genomics* 2:231–239. (Coverage formula behind g.)
 - Haldane JBS (1919) The combination of linkage values and the calculation of distances between the loci of linked factors. *J Genet* 8:299–309.

@@ -33,6 +33,7 @@ N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' ${D11}/pools.t
 J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)   # HMM, 30 pools per task
 J2=$(sbatch --parsable --dependency=afterok:$J 21_kmer_collect.sh)   # pick rho, calls, tracts, figures
 sbatch --dependency=afterok:$J2 22_kmer_stats.sh                # observed vs expected, family bootstrap
+sbatch --dependency=afterok:$J2 23_introgression_viewer.sh       # interactive HTML figures (drop-downs by family)
 ```
 
 Steps 01–15 are in [section 8](#8-snp-route-steps-0115-cross-check).
@@ -61,7 +62,7 @@ Three problems follow, and they hit DONOR and SEG (het) regions hardest:
 
 ### 2.1 Prior work
 
-Finding introgressions by counting reference k-mers in windows, without mapping, was developed in wheat: **IBSpy** (Uauy lab; Quiroz-Chávez 2023; einkorn introgressions in bread wheat, Ahmed et al. 2023) and **KCFtools** (Selvanayagam et al. 2026, *Bioinformatics*, doi:10.1093/bioinformatics/btag354), which we use for the window counts. k-mers are counted with KMC 3 (Kokot et al. 2017); DONOR levels come from PanAnd assemblies (Stitzer et al. 2025). What we added: low-coverage pools, the three-state pool model with per-window DONOR levels, and the HMM on the NAM map. Full references are in the [top-level README](../README.md).
+Finding introgressions by counting reference k-mers in windows, without mapping, was developed in wheat: **IBSpy** (Uauy lab; Quiroz-Chávez 2023; einkorn introgressions in bread wheat, Ahmed et al. 2023) and **KCFtools** (Selvanayagam et al. 2026, *Bioinformatics*, doi:10.1093/bioinformatics/btag354), which we use for the window counts. We did not use IBSpy itself; it is cited because it introduced the approach. k-mers are counted with KMC 3 (Kokot et al. 2017); DONOR levels come from PanAnd-1.0 teosinte assemblies (Stitzer et al. 2025) downloaded from MaizeGDB. What we added: low-coverage pools, the three-state pool model with per-window DONOR levels, and the HMM on the NAM map. Full references are in the [top-level README](../README.md).
 
 ### 2.2 How k-mers fix each problem
 
@@ -93,7 +94,7 @@ Repeats are left out because they're present in every genome, donor or not. With
 | 16 | `16_kmer_b73_unique.sh` | Counts all 31-mers in B73 v5 (KMC) and keeps those that occur once (`kmc_tools transform -ci1 -cx1`). That's 680 M of 817 M (83%). Also writes the chr1–10 FASTA. | `${KMER_DIR}/B73_uniq.kmc_*`, `B73_chr1-10.fa` |
 | 17 | `17_kmer_windows.sh` | Per pool: (1) KMC count of the trimmed paired reads, `-ci1` (at 0.8x most k-mers are seen once); (2) keep k-mers single-copy in B73 (`kmc_tools simple … intersect`); (3) dump and recount with `kmc`, because KCFtools reads only the KMC2 format; (4) `kcftools getVariations` on 100-kb windows of chr1–10. | `${KMER_DIR}/windows/<SAMPLE>.tsv.gz` (`observed_kmers` per window) |
 | 18 | `18_kmer_check.sh` | Pools without output, missing FASTQs, k-mers per pool | `${KMER_DIR}/kmer_pool_qc.tsv` |
-| 19 | `19_kmer_donor_reference.sh` | Scores B73 and 8 teosinte genome assemblies (PanAnd) like pools. Per window, d = the share of B73 single-copy k-mers present in that taxon's genome: the level a fixed donor tract should show. | `${KMER_DIR}/donor_ref/<NAME>.tsv.gz` |
+| 19 | `19_kmer_donor_reference.sh` | Scores B73 and 8 teosinte genome assemblies (PanAnd-1.0, from MaizeGDB) like pools. Per window, d = the share of B73 single-copy k-mers present in that taxon's genome: the level a fixed donor tract should show. | `${KMER_DIR}/donor_ref/<NAME>.tsv.gz` |
 
 **Inputs:**
 - Reads: `FASTQ_DIR/filtered_S<plate>/<SAMPLE>/<SAMPLE>_paired_R1/R2.fq.gz`
@@ -122,6 +123,7 @@ Zv shares the most single-copy k-mers with B73, and Zd and Zl the fewest, which 
 
 **Code:**
 - `22_kmer_stats.py` (step 22): observed vs expected tests, run by `22_kmer_stats.sh`.
+- `23_introgression_viewer.py` (step 23): interactive HTML figures, run by `23_introgression_viewer.sh`.
 - `20_kmer_hmm.py` (per pool), run by `20_run_kmer_hmm.sh` (30 pools per array task).
 - `21_kmer_collect.py`, run by `21_kmer_collect.sh`.
 
@@ -176,8 +178,10 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 | State | Meaning in a pool of 6 plants | Emission for r |
 |---|---|---|
 | B73 | all plants B73/B73 | Normal(1, σ_w) |
-| SEG | the family still segregates here: a mix of AA, AB and BB plants | mixture below |
+| SEG | the family still segregates here: each plant can be AA, AB or BB (1:2:1) | mixture below |
 | DONOR | all plants donor/donor (BB) | Normal(a·d_w, σ_w) |
+
+**SEG is a pool state, not "het".** In a SEG region the family's BC2S2 parent was AB, so each of the 6 plants is AA, AB or BB. A SEG pool holds on average ¼ AA, ½ AB, ¼ BB plants, but the exact mix varies (e.g. 2 AA, 3 AB, 1 BB); the SEG emission averages over every possible mix. Plant genotypes from pool states: AA = B73 + SEG/4, AB = SEG/2, BB = DONOR + SEG/4.
 
 - **d_w:** the expected DONOR level of the pool's taxon in that window: the mean of that taxon's assemblies (step 19).
 - **a:** a per-pool scale that allows for the pool's donor plant differing from the assemblies. Fitted per pool.
@@ -228,7 +232,8 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 - `pool_summary.tsv`: `SAMPLE ROLE GROUP SIGMA FLAG PARAM_KIND PARAM FRAC_B73 FRAC_SEG FRAC_DONOR DONOR_SHARE DONOR_SHARE_R N_TRACTS`. DONOR_SHARE = FRAC_DONOR + ½ FRAC_SEG.
 - `tracts_all.tsv.gz`: `SAMPLE GROUP CHROM START END STATE`
 - `rho_loglik.tsv`: log-likelihood by ρ (all pools and per taxon)
-- `blocks_<GROUP>.pdf`: one page per pool. Blue B73 (AA), purple SEG (AB), red DONOR (BB).
+- `blocks_<GROUP>.pdf`: one page per pool. Blue = B73 (all plants AA), yellow = SEG (plants AA, AB or BB), red = DONOR (all plants BB). Colorblind-safe.
+- `introgression_viewer.html` (step 23): interactive page with drop-downs by taxon → family → pool, a family view that lines up all pools of a family, hover details, and SVG/PNG download. Also copied to `figures/introgression_viewer_round<N>.html` to commit.
 - `family_summary.tsv`: family = first two pedigree fields, e.g. `Zd.0010_P2`. Built from `pool_summary.tsv` and `SAMPLE_META` (command in section 5.5).
 - Per-pool HMM results for every ρ: `${KMER_DIR}/hmm/<SAMPLE>.npz`.
 
@@ -436,6 +441,7 @@ sbatch --export=ALL,ROUND=1 20b_family_levels.sh
 J=$(sbatch --parsable --export=ALL,ROUND=1 --array=1-$(( (N + 29) / 30 )) --dependency=afterok:<20b jobid> 20_run_kmer_hmm.sh)
 J2=$(sbatch --parsable --export=ALL,ROUND=1 --dependency=afterok:$J 21_kmer_collect.sh)
 sbatch --export=ALL,ROUND=1 --dependency=afterok:$J2 22_kmer_stats.sh
+sbatch --export=ALL,ROUND=1 --dependency=afterok:$J2 23_introgression_viewer.sh
 ```
 Outputs: `KMER_DIR/family_levels_fam1/`, `hmm_fam1/`, `introgression_fam1/` (round 2: `…fam2`).
 

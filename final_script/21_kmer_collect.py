@@ -61,7 +61,10 @@ def main():
     os.makedirs(a.out_dir, exist_ok=True)
 
     chrom, start = read_windows(f"{a.ref_dir}/B73.tsv.gz")
-    P = {os.path.basename(f)[:-4]: np.load(f, allow_pickle=True) for f in sorted(glob.glob(f"{a.hmm_dir}/*.npz"))}
+    def load(f):                                   # read fully and close (np.load keeps .npz files open)
+        with np.load(f, allow_pickle=True) as z:
+            return {k: z[k] for k in z.files}
+    P = {os.path.basename(f)[:-4]: load(f) for f in sorted(glob.glob(f"{a.hmm_dir}/*.npz"))}
     if not P: raise SystemExit(f"no .npz in {a.hmm_dir}")
     rho = P[next(iter(P))]["rho_grid"]
     info = {s: dict(role=str(z["role"]), group=str(z["taxon"]), sigma=float(z["sigma"])) for s, z in P.items()}

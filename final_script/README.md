@@ -1,408 +1,349 @@
-# final_script — ANGSD site discovery and per-pool read counts
+# final_script — BZea introgression calling
 
-This is a clean, numbered rewrite of the BZea genotyping steps. Each sequenced sample is a **pool of several BC2S3 plants from one plot (family)**, so the pipeline keeps **read counts per pool** instead of diploid genotype likelihoods. Every SNP is polarized to the **B73 reference base**.
+Each sequenced sample is a **pool of 6 BC2S3 plants from one plot (family)**, sequenced at about 0.8x, with no parental sequencing. B73 is the recurrent parent. The donors are teosinte: mexicana (Zx), parviglumis (Zv), diploperennis (Zd), luxurians (Zl) and huehuetenangensis (Zh). Landraces (Zm) are set aside for now.
 
-- **Steps 01–06** document how SNP discovery was run. They have already been run, and their output lives in `.../angsd_full_snps/4_per_chr_renamed`.
-- **Steps 07–10** are new. They produce the read-count data used for introgression calling.
+**Introgressions are called from k-mers (steps 16–21).** The pool's reads are compared with B73 directly, without mapping. An HMM then runs along the genome on 100-kb windows. The SNP route (steps 01–15) is kept as a cross-check, and its outputs (sites, read counts, QC) are still used. All paths and settings are in `config.sh`, and every script reads them from there.
 
-All paths are set in `config.sh`, and every script reads them from there.
+Contents:
+1. [Run order](#1-run-order)
+2. [Why k-mers, not mapped SNPs](#2-why-k-mers-not-mapped-snps)
+3. [k-mer pipeline, steps 16–19](#3-k-mer-pipeline-steps-1619)
+4. [The HMM, steps 20–21: model and every parameter](#4-the-hmm-steps-2021-model-and-every-parameter)
+5. [Results: all 1,395 pools](#5-results-all-1395-pools)
+6. [Validation](#6-validation)
+7. [Open issues and next steps](#7-open-issues-and-next-steps)
+8. [SNP route, steps 01–15 (cross-check)](#8-snp-route-steps-0115-cross-check)
+9. [Requirements](#9-requirements)
 
-## Run
+---
 
-All jobs are Slurm (`sbatch`). Submit them from inside `final_script/`. Slurm needs the `logs/` folder to exist before a job starts, or the job fails without writing a log.
+## 1. Run order
 
-```bash
-cd final_script
-mkdir -p logs
-
-# ---- read counts (run these now) ----
-bash submit_counts.sh test     # 07 (10 tasks) + part 1 of 08; check its log and sacct
-bash submit_counts.sh rest     # 08 parts 2-200, then 09 and 10, chained with --dependency=afterok
-
-# if any 08 part was killed: list them and get the resubmit command
-bash 08_check_unfinished.sh    # prints e.g.: sbatch --array=37,112 08_angsd_counts_by_part.sh
-
-# the same steps by hand:
-sbatch 07_make_site_tables.sh                                    # array 1-10, one per chromosome
-sbatch --dependency=afterok:<07 jobid> 08_angsd_counts_by_part.sh   # array 1-200 (10 chr x 20 parts)
-sbatch --dependency=afterok:<08 jobid> 09_concat_counts_by_chr.sh   # array 1-10
-sbatch --dependency=afterok:<09 jobid> 10_counts_qc.sh
-
-# ---- site filters + teosinte panel (after 10) ----
-sbatch 11_filter_sites.sh                       # array 1-10
-sbatch --dependency=afterok:<11 jobid> 12_signal_check.sh
-
-# ---- introgression calling (after 11) ----
-sbatch 13_extract_pool_gl.sh                    # array 1-10
-sbatch --dependency=afterok:<13 jobid> 14_run_hmm.sh      # array 1-143 (10 pools each)
-sbatch --dependency=afterok:<14 jobid> 15_collect_hmm.sh
-
-# ---- version 2: family-informed HMM (run alongside 13-15) ----
-sbatch 13b_extract_pool_gl_all.sh               # array 1-10
-sbatch 13c_family_donor_alleles.sh              # array 1-10 (independent of 13b)
-sbatch --dependency=afterok:<13b jobid>:<13c jobid> 14b_run_hmm_family.sh   # array 1-143
-sbatch --dependency=afterok:<14b jobid> 15b_collect_hmm_family.sh           # after 15 too, for the family check
-
-# ---- site discovery (ALREADY RUN; only needed to redo it) ----
-sbatch 01_angsd_discovery_by_part.sh            # array 1-200
-bash 02_find_failed_parts.sh                    # prints the sbatch line for 03
-sbatch --array=1-N%60 03_angsd_rerun_failed_split.sh
-sbatch 04_merge_subparts.sh
-sbatch 05_concat_parts_by_chr.sh                # array 1-10
-sbatch 06_rename_samples.sh                     # array 1-10
-# then set DISCOVERY_BCF_DIR=${D06} in config.sh
-```
-
-Options given on the `sbatch` command line override the `#SBATCH` lines. For example, `sbatch --array=5 --mem=64G 08_angsd_counts_by_part.sh` reruns part 5 with more memory.
-
-Every job skips work that already finished (a `.done` marker), so resubmitting the same command is safe. To test one part interactively, pass the index: `bash 08_angsd_counts_by_part.sh 1`.
-
-**Resources** (in each script's `#SBATCH` lines):
-
-| Steps | CPUs | Memory | Time |
-|---|---|---|---|
-| ANGSD (01, 03, 08) | 4 | 16 / 48 / 32 G | 3 days 11 h |
-| Others | 1 | 8–20 G | 2 h – 10 days |
-
-No partition is set. If your account needs one, uncomment `##SBATCH --partition=...` in each script.
-
-## Steps
-
-| # | Script | Jobs | What it does | Main output |
-|---|--------|------|--------------|-------------|
-| 01 | `01_angsd_discovery_by_part.sh` | 200 | ANGSD SNP discovery + GL per part (`-GL 1 -doMajorMinor 1 -doMaf 1 -doBcf 1`) | `01_angsd_parts/*.bcf` |
-| 02 | `02_find_failed_parts.sh` | login node | Finds parts without `[ALL done]` and splits each into 2 sub-intervals | `03_angsd_rerun/failed_subintervals.tsv` |
-| 03 | `03_angsd_rerun_failed_split.sh` | N | Reruns those sub-intervals with 48 GB | `03_angsd_rerun/*.bcf` |
-| 04 | `04_merge_subparts.sh` | 1 | Joins sub-intervals back into whole parts | `01_angsd_parts/*.bcf` |
-| 05 | `05_concat_parts_by_chr.sh` | 10 | Joins 20 parts per chromosome; stops if any part is missing | `05_per_chr/BZea_chrN.full.bcf` |
-| 06 | `06_rename_samples.sh` | 10 | BAM paths → `PN*_SID*`, after checking sample order | `06_per_chr_renamed/BZea_chrN.full.renamed.bcf` |
-| 07 | `07_make_site_tables.sh` + `07_polarize_to_b73.py` | 10 | All biallelic ANGSD SNPs, re-polarized to B73; ANGSD `-sites` files; B73 control list; VCF header | `07_sites/` |
-| 08 | `08_angsd_counts_by_part.sh` + `08_counts_to_ad.awk` | 200 | `angsd -doCounts 1 -dumpCounts 4 -sites`, with the same read filters as discovery → B73/ALT counts per pool | `08_counts_parts/*.AD.bcf` |
-| 08 | `08_check_unfinished.sh` | login node | Lists unfinished 08 parts and prints the resubmit command | — |
-| 09 | `09_concat_counts_by_chr.sh` | 10 | Joins parts per chromosome; builds site and pool summaries | `09_counts_by_chr/` |
-| 10 | `10_counts_qc.sh` + `10_counts_qc.R` | 1 | Per-pool QC: reads, coverage, ALT fraction against the B73 controls, error proxy | `10_qc/` |
-| 11 | `11_filter_sites.sh` (bcftools + awk) | 10 | Site filters (clean B73 controls, depth, third base, panel allele mismatch); splits sites into in / not in the 227-plant teosinte panel; reads per pool on each set | `11_sites_filtered/` |
-| 12 | `12_signal_check.sh` + `12_signal_check.R` | 1 | Donor signal per taxon on teosinte-panel sites vs other sites: are panel sites alone enough? | `12_signal_check/` |
-| 13 | `13_extract_pool_gl.sh` (bcftools + awk) | 10 | Per-pool GL files for the HMM: ANGSD GLs from the discovery BCF at PASS teosinte-panel sites, flipped to B73 orientation | `13_pool_gl/` |
-| 14 | `14_run_hmm.sh` + `14_hmm_pooled.py` | 143 | Nirwan's BC2S3 HMM adapted to pools: GL emissions for B73 / SEG / DONOR, NAM genetic-map transitions, per-pool κ by EM | `14_hmm/` |
-| 15 | `15_collect_hmm.sh` + `.R` | 1 | Collects all pools: summary table and all tracts | `15_introgression/` |
-| 13b | `13b_extract_pool_gl_all.sh` | 10 | Same as 13, but at all PASS sites (panel + non-panel); panel AC/AN = −1 where not in the panel | `13b_pool_gl_all/` |
-| 13c | `13c_family_donor_alleles.sh` | 10 | Donor allele probability (PALT) per BC1 family from the sister-based `union/<chr>.donor_alleles.vcf.gz` | `13c_family_donor/<FAMILY>/` |
-| 14b | `14b_run_hmm_family.sh` + `14_hmm_pooled.py` | 143 | Same HMM, with `c` = the family's PALT where known | `14b_hmm_family/` |
-| 15b | `15b_collect_hmm_family.sh` + `15_collect_hmm.R` | 1 | Collects 14b; flags pools whose family run disagrees with step 15 | `15b_introgression/` |
-| 16 | `16_kmer_b73_unique.sh` | 1 | B73 chr1-10 FASTA; all B73 31-mers; the single-copy ones (`B73_uniq`) | `KMER_DIR` |
-| 17 | `17_kmer_windows.sh` | array | Per pool: KMC count of trimmed reads → keep B73 single-copy k-mers → KCFtools 100-kb windows | `KMER_DIR/windows/` |
-| 18 | `18_kmer_check.sh` | login node | Pools missing output, missing FASTQs, k-mers per pool | `KMER_DIR/kmer_pool_qc.tsv` |
-| 20 | `20_run_kmer_hmm.sh` + `20_kmer_hmm.py` | array | HMM on k-mer windows for each pool, over a grid of rho | `KMER_DIR/hmm/` |
-| 21 | `21_kmer_collect.sh` + `.py` | 1 | Picks rho (max total log-likelihood); calls, tracts, block figures | `KMER_DIR/introgression/` |
-| 19 | `19_kmer_donor_reference.sh` | 9 | Same windows for B73 itself and 8 teosinte assemblies (PanAnd): expected DONOR level per window and taxon | `KMER_DIR/donor_ref/` |
-
-## Final outputs (`09_counts_by_chr/`)
-
-**`BZea_chrN.AD.bcf`** holds the read counts.
-- `REF` is the B73 base and `ALT` is the other allele.
-- `FORMAT/AD` = (B73 reads, ALT reads) per pool. A pool with no reads at a site is `0,0`.
-- INFO fields:
-  - `DP`: all reads at the site.
-  - `OTH`: reads carrying a third base.
-  - `NCOV`: pools with any B73 or ALT read.
-  - `NALT`: pools with any ALT read.
-  - `SWAP`: ANGSD's major allele was not B73.
+All jobs are Slurm. Submit them from `final_script/` (`mkdir -p logs` first). Activate the k-mer conda env (kmc, kmc_tools, kcftools, samtools) before submitting steps 16–21; jobs inherit it. Every step skips work that is already done, so resubmitting is safe.
 
 ```bash
-bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%AD]\n' BZea_chr1.AD.bcf | head
-bcftools view -s PN9_SID857,PN9_SID854 BZea_chr1.AD.bcf | ...     # subset pools, e.g. by donor accession
+cd final_script; mkdir -p logs; source config.sh
+# ---- k-mer introgression calling (main) ----
+sbatch 16_kmer_b73_unique.sh                                   # once: B73 single-copy 31-mers
+N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' ${D11}/pools.tsv | wc -l)
+sbatch --array=1-$(( (N + 3) / 4 ))%50 17_kmer_windows.sh       # k-mer windows per pool (4 pools per task)
+bash 18_kmer_check.sh                                          # missing pools, k-mers per pool
+sbatch 19_kmer_donor_reference.sh                              # expected DONOR level from teosinte assemblies
+N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' ${D11}/pools.tsv | wc -l)
+J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)   # HMM, 30 pools per task
+sbatch --dependency=afterok:$J 21_kmer_collect.sh              # pick rho, calls, tracts, figures
 ```
 
-**`BZea_chrN.sitesum.tsv.gz`** has one row per site. Columns: `CHROM POS B73 ALT DP OTH REF_READS ALT_READS NCOV NALT CTRL_REF CTRL_ALT CTRL_NCOV`. The `CTRL_*` columns are reads from the 13 B73 control pools; an ALT read there flags a reference error, paralog or seed-lot difference. These are the inputs for step-2 site filtering.
+Steps 01–15 are in [section 8](#8-snp-route-steps-0115-cross-check).
 
-**QC decisions:** see [`QC_NOTES.md`](QC_NOTES.md) and the lists in `sample_lists/`.
+---
 
-**`BZea_chrN.sampleqc.tsv`** has per-pool totals, and **`BZea_chrN.siteqc.tsv`** a one-line chromosome summary.
+## 2. Why k-mers, not mapped SNPs
 
-QC in `10_qc/`:
-- `sample_qc.tsv` (one row per pool)
-- `taxon_summary.tsv`
-- `site_qc.tsv`
-- `qc_plots.png`
+The SNP HMM (step 14) gave too little donor, and more SEG than DONOR. Read counts in one known Zd DONOR tract show why: PN13_SID1199, chr2:22.1–25.3 Mb, compared with a B73 region of the same size and normalized with a B73 control.
 
-The B73 controls give the background ALT fraction; donor pools should sit above it.
-
-## Notes on decisions and problems found in the earlier pipeline
-
-1. **ANGSD's BCF alleles are major/minor, not REF/ALT.** ANGSD writes `major,minor` (`abcWriteBcf.cpp`), and its GLs are ordered major/major, major/minor, minor/minor. Wherever the major allele is not the B73 base, the old GL "RR" meant *donor* homozygous. Step 07 re-polarizes every SNP to the B73 FASTA base and logs how many were flipped (`07_sites/BZea_chrN.polarize.log`).
-
-2. **The old `0.6_filter_bcf.sh` is not used.** Its population-wide `AF 0.05–0.95` cut removes donor-specific SNPs. Example: a SNP carried only by parviglumis donors has expected AF ≈ 394/1510 × 0.125 ≈ 0.03 across all pools. Its `F_MISSING` and `AF` were also computed from fields ANGSD fills differently from bcftools. Counts are therefore taken at **all** biallelic ANGSD SNPs. Site filtering moves to step 2 and uses the B73 controls, depth and donor groups.
-
-3. **Counting uses the same read filters as discovery**, set in `READ_FILTERS` in `config.sh`. It drops `-minInd` and `-setMinDepthInd`, so every read that passed the filters is counted.
-
-4. **The killed parts were rerun with stricter settings** (`SNP_pval 1e-10`, `minInd 20`, `setMinDepthInd 4`; the main run used `1e-8`, `5`, `2`). Those parts have a sparser, stricter SNP set than the rest of the genome. `config.sh` records the values that were actually used. Set the `RERUN_*` values equal to the main ones if discovery is ever redone.
-
-5. **Metadata issues** (`data/name_change/name_change_final.txt`):
-   - The file has Windows (CRLF) line endings. Step 07 and the QC strip them.
-   - `PN13_SID1225` is listed twice, as `Zd.0020_P3_P1_P2.5.1.1` and as `PurpleCheck`. QC labels it `conflicting_metadata`.
-   - The metadata has 13 B73 controls, but `scripts/HMM_introgression/b73.list` has 12 (it is missing `PN1_SID85`). Step 07 takes the controls from the metadata.
-
-6. **PoolParty2 is not used.** It starts from FASTQ and realigns, and it sums barcoded individuals into population pools. It also requires ≥10 reads per pool, which at ~0.8x per pool removes nearly every site. Its outputs (allele frequencies, F<sub>ST</sub>, CMH, FLK) compare populations rather than giving per-line ancestry. Its useful part, per-sample coverage QC, is covered by step 10.
-
-## Old → new scripts
-
-| Old (`scripts/HMM_introgression/`) | New |
+| What is kept in the donor tract | Share of expected |
 |---|---|
-| `0.0_angsd_genotyping.sh` (manual `CHR=` edit per chromosome) | `01` (one 200-job array) |
-| `0.1_find_failed_runs.sh` (grep LSF logs) | `02` (checks ANGSD's `[ALL done]`) |
-| `0.2_run_failed_parts.sh` | `03` |
-| `0.3_combine_sub_parts.sh` | `04` |
-| `0.4_combine_parts_chrom.sh` (manual chr loop, globbed parts) | `05` (computed part names, gap check) |
-| `0.5_rename_headers_files.sh` (hand-made rename list) | `06` (builds the list and checks the order) |
-| `0.6_filter_bcf.sh`, `1_extract_GL_emissions.sh`, `1.2_filter_GL_emissions.sh` | replaced by `07`–`10` |
+| Reads that map there at all | 34% |
+| + MAPQ ≥ 30 | 30% |
+| Bases, MAPQ 30, no `-C 50`, no BAQ | 25% |
+| Bases with `-C 50` + BAQ (the ANGSD settings used) | **11%** |
+| Same filters in a B73 region | ~96% |
 
-## Size and time
+- **Mapping:** about 2/3 of donor reads don't map to the region. Much of that is donor sequence that has no counterpart in B73.
+- **Filters:** `-C 50` and BAQ remove another ~60% of the donor bases that do map. They lower the score of reads with mismatches, and a read carrying a teosinte allele has extra mismatches by definition.
+- **The effect:** ALT reads are lost preferentially. DONOR regions look like SEG, and SEG regions look like B73.
 
-These figures come from a test of the awk converter at 1,500 pools with ~0.8 reads per pool per site:
-- **Conversion speed:** about 1.5 ms per site with mawk and 2.2 ms with gawk, on top of the ANGSD run.
-- **Storage:** the AD BCF takes about 0.5 kB per site, roughly 4.6 GB per 10 M sites.
-- **Raw counts:** ANGSD's A/C/G/T table is deleted after conversion unless `KEEP_RAW_COUNTS=1`.
+k-mers avoid all of this, because no reads are mapped.
 
-**Open files.** ANGSD keeps every BAM open at once, about 1,535 files. Steps 01, 03 and 08 raise the open-file limit to the node's hard limit. If that is still too low, 08 splits the BAM list into batches that fit, runs ANGSD on each batch, and merges the counts back in the original column order (`08_merge_batches.py`). The result is identical to a single run. To force smaller batches, set `BAMS_PER_RUN=500` in `config.sh`.
+---
 
-Memory is set to 32 GB per part in 08. If parts get killed, resubmit them with `sbatch --array=<ids> --mem=64G 08_angsd_counts_by_part.sh`, or set `NPARTS=40` in `config.sh` and change `--array` in 01 and 08 to `1-400%40`.
+## 3. k-mer pipeline, steps 16–19
 
-## Requirements
+**Idea.** Take a 100-kb window of B73. Count how many of its **single-copy** 31-mers (k-mers that occur exactly once in the whole B73 genome) appear in a pool's reads.
+- **B73 regions:** the count is what a B73 pool of the same depth gives.
+- **Donor regions:** every SNP, indel or missing sequence in the donor removes the B73 k-mers that overlap it, so the count drops.
 
-- angsd
-- bcftools and bgzip (htslib)
-- python3 (standard library only)
-- Rscript (base R only)
-- awk (mawk or gawk)
+Repeats are left out because they're present in every genome, donor or not. With repeats included, a fixed donor tract scored 0.91. With single-copy k-mers only, it scores 0.20.
 
-Load them where `config.sh` says.
-
-## Steps 11–12: site filters, teosinte panel, signal check
-
-These steps use only `bcftools`, `awk` and base R. They work on the pools we trust: the 10 clean B73 controls and the donor pools not listed in `sample_lists/exclude_all.txt`. The reasons for each exclusion are in [`QC_NOTES.md`](QC_NOTES.md).
-
-**Site filters (step 11).** A site is removed if any of these is true:
-- **Control ALT reads:** the clean B73 controls have an ALT read there (`bcftools view -S controls | bcftools query -i 'SUM(FMT/AD[*:1])>0'`). A real B73 plant cannot carry ALT, so ALT reads point to a repeat, a paralog or a reference error.
-- **Depth:** depth is more than 2× or less than 0.25× the chromosome median (`MAX_DP_MULT`, `MIN_DP_MULT`).
-- **Third base:** more than 5% of the site's reads show a base that is neither B73 nor ALT (`MAX_OTH_FRAC`).
-- **Panel mismatch:** the teosinte panel has the position, but with different alleles (`bcftools isec -c all` minus `-c none`).
-
-**Outputs per chromosome:**
-- `BZea_<chr>.PASS.bcf`: all sites that passed, trusted pools only.
-- `BZea_<chr>.PASS.panel.bcf`: passed sites that the teosinte panel also has, with the same alleles (`bcftools isec -c none`). Each site gets `INFO/PANEL_AC` and `PANEL_AN`: how many of the 454 teosinte chromosomes carry ALT.
-- `BZea_<chr>.PASS.nonpanel.bcf`: passed sites that are not in the panel.
-- `BZea_<chr>.pool_reads.tsv`: B73 and ALT reads per pool on panel and non-panel sites.
-- `BZea_<chr>.ctrl_background.tsv`: the B73-control ALT rate, measured fairly. A control's ALT count on sites it helped filter is 0 by construction, so the controls are split in two halves, and each half is counted on sites filtered using only the other half.
-- `BZea_<chr>.summary.tsv`: how many sites each filter removed.
-
-**Signal check (step 12).** For a typical pool of each taxon, step 12 reports, per 1 Mb:
-- reads on panel sites
-- expected ALT reads in a B73 region
-- expected ALT reads in a fully donor region
-- `z_fixed`, how clearly those two separate
-
-`z_fixed ≥ 10` on panel sites means the panel sites alone are enough for that taxon. Where it isn't, that taxon also gets its non-panel PASS sites in the introgression caller.
-
-## Steps 13–15: introgression calling (Nirwan's HMM, adapted to pools)
-
-The HMM is `old_scripts/HMM_introgression/hmm_viterbi_bc2s3.py`, adapted in `14_hmm_pooled.py`. These parts are unchanged from the original:
-- per-marker HMM
-- NAM genetic map (`genetic_maps/`): Haldane recombination fraction, scaled by `rho`
-- sticky/stationary transition matrix
-- forward–backward posteriors
-- posterior + rigidity (hysteresis) or Viterbi decoding, with optional min-run cleanup
-
-**Input (step 13).** The ANGSD GLs come from the existing discovery BCFs, with no ANGSD rerun. Only the PASS teosinte-panel sites from step 11 are used. ANGSD stores alleles as major,minor, so at sites where the major allele is not the B73 base, the three GLs are flipped. `GL = 0,0,0` (no reads in that pool) is left out.
-
-**What changed in the HMM:**
-
-1. **States are for a pool (one BC2S3 family), not one plant.** The GLs are read as the likelihood of the reads if the pool's ALT allele fraction is 0, ½ or 1. The likelihood at any other fraction comes from the curve through those three points:
-
-   L(p) = L0 (2p−1)(p−1) + L1·4p(1−p) + L2·p(2p−1)
-
-   This is exact for sites with 1–2 reads, which is almost all sites at ~0.8x.
-
-   | State | Meaning | Emission |
-   |---|---|---|
-   | **B73** | family fixed B73 | L(0) |
-   | **SEG** | family segregating | c · mean of L(¼), L(½), L(¾) + (1−c) · L(0) |
-   | **DONOR** | family fixed donor | c · L(1) + (1−c) · L(0) |
-
-   `c` is the chance the donor carries the ALT allele at the site: κ × the teosinte panel's AC/AN. Sequencing error is already inside the GLs. The old GL adjustments (`eta_hh_from_rh`, `eta_rr_from_rh`, `rh_penalty`) are dropped.
-
-2. **κ per pool, learned by EM.** κ is how often this pool's donor carries the panel's ALT alleles. It is near 1 for donors like the panel (parviglumis, mexicana) and lower for donors the panel represents poorly (e.g. diploperennis). Without κ, their fixed-donor regions look segregating.
-
-   At one read per site, "SEG at κ" and "DONOR at κ/2" look alike. So EM runs from several starts (κ = 1, 0.5, 0.25) and keeps the start with the best log-likelihood; sites with 2+ reads tell the two apart.
-
-3. **Each chromosome is its own chain.** The original ran chr1–chr10 as one chain.
-
-4. **`thetas[t]` is the recombination fraction between markers t−1 and t.** The original was shifted by one marker.
-
-5. **Rigidity places switches at the first marker of the agreeing run, not the R-th.** Before, every boundary sat R−1 markers late. In the simulation, the median boundary error dropped from 52 to 14 markers and marker accuracy rose from 99.62% to 99.87%.
-6. **Tracts cover each chromosome end to end.** Boundaries sit at the midpoint between markers, so tract lengths add up to the chromosome length.
-
-**Outputs:**
-- In `14_hmm/`, per pool:
-  - `<SAMPLE>.statepath.tsv.gz`: per marker: GLs, panel AC/AN, state, P(B73), P(SEG), P(DONOR), theta.
-  - `<SAMPLE>.tracts.bed.gz`
-  - `<SAMPLE>.summary.tsv`: fractions B73/SEG/DONOR, donor share, number of tracts, κ.
-- In `15_introgression/`:
-  - `pool_summary.tsv`
-  - `tracts_all.tsv.gz`
-
-**Simulation check:** 54 pools (Zx, Zv, and Zd with a donor that carries panel ALT alleles at 0.35× the panel frequency), 100 Mb, ~0.6 reads per pool per site, ANGSD-style GLs, 5% of sites with a swapped major allele.
-- Marker accuracy: B73 controls 100%, Zx 99.5%, Zv 99.6%, Zd 99.3%.
-- κ came out at 1.0 for Zx and Zv, and 0.36 for Zd (true value 0.35).
-- Donor share per pool vs truth: correlation 1.00, mean error 0.0015.
-
-**Run time:** about 9 s per pool in the simulation (~54k markers). Real pools have ~1 M markers, so expect roughly 3–4 min per pool and about 35 min per array task of 10 pools.
-
-## Steps 13b–15b: family-informed HMM (version 2)
-
-Same HMM and same settings as 14. The one change is `c`, the chance the donor carries the ALT allele:
-
-- **Version 1 (13–15):** `c` = κ × teosinte panel AC/AN, at panel sites only.
-- **Version 2 (13b–15b):** `c` = the BC1 family's PALT from the sister sequencing where it is known, else κ × panel AC/AN. Non-panel PASS sites are used too, but only where the family's PALT is known.
-
-**Family of a pool.** The first two fields of its pedigree in `SAMPLE_META`: `Zd.0010_P2_P3_P4.5.1.1` → `Zd.0010_P2`, the column name in `donor_alleles.vcf.gz`. The metadata has 132 families and the donor-allele file has 95. Pools from the other families run like version 1 (`FAMILY_MARKERS` = 0 in their summary).
+| Step | Script | What it does | Output |
+|---|---|---|---|
+| 16 | `16_kmer_b73_unique.sh` | Counts all 31-mers in B73 v5 (KMC) and keeps those that occur once (`kmc_tools transform -ci1 -cx1`). That's 680 M of 817 M (83%). Also writes the chr1–10 FASTA. | `${KMER_DIR}/B73_uniq.kmc_*`, `B73_chr1-10.fa` |
+| 17 | `17_kmer_windows.sh` | Per pool: (1) KMC count of the trimmed paired reads, `-ci1` (at 0.8x most k-mers are seen once); (2) keep k-mers single-copy in B73 (`kmc_tools simple … intersect`); (3) dump and recount with `kmc`, because KCFtools reads only the KMC2 format; (4) `kcftools getVariations` on 100-kb windows of chr1–10. | `${KMER_DIR}/windows/<SAMPLE>.tsv.gz` (`observed_kmers` per window) |
+| 18 | `18_kmer_check.sh` | Pools without output, missing FASTQs, k-mers per pool | `${KMER_DIR}/kmer_pool_qc.tsv` |
+| 19 | `19_kmer_donor_reference.sh` | Scores B73 and 8 teosinte genome assemblies (PanAnd) like pools. Per window, d = the share of B73 single-copy k-mers present in that taxon's genome: the level a fixed donor tract should show. | `${KMER_DIR}/donor_ref/<NAME>.tsv.gz` |
 
 **Inputs:**
-- `union/<chr>.donor_alleles.vcf.gz`: FORMAT `GT:LLR:PRIOR:PALT:SRC`, one column per BC1 family.
-- Step 13c keeps biallelic SNPs and drops `PALT = .`.
-- The HMM uses a family's PALT only where REF/ALT match the pool's marker.
-- κ is learned from sites without family info. Family sites do not need κ.
+- Reads: `FASTQ_DIR/filtered_S<plate>/<SAMPLE>/<SAMPLE>_paired_R1/R2.fq.gz`
+- Assemblies: `DONOR_ASSEMBLIES` in `config.sh`
+- Outputs go to `KMER_DIR=/share/maize/ntanduk/kmer`.
 
-**Extra outputs:**
-- statepath: `C` (the `c` used) and `C_SOURCE` (`family` or `panel`).
-- summary: `FAMILY` and `FAMILY_MARKERS`.
-- `15b_introgression/family_check.tsv`: FRAC_DONOR in version 1 vs version 2 for each pool.
+**Disk:**
+- Temporary: ~25 GB per running pool (17), deleted after each pool.
+- Pool read databases: ~2–3 GB each, deleted unless `KMER_KEEP_KMC=1`.
 
-**Wrong family label.** If a pool's family label is wrong, its DONOR tracts are called SEG and FRAC_DONOR drops. In the simulation it went from 0.14–0.26 to 0, and donor share was about halved. 15b flags these pools as `CHECK`. For each flagged pool:
-1. Confirm its pedigree.
-2. To run it without family info, add it to `sample_lists/no_family.txt`.
-3. Delete its `14b_hmm_family/<SAMPLE>.*` files.
-4. Resubmit 14b. Pools that are already done are skipped.
+**Expected DONOR level from the assemblies (step 19), whole genome:**
 
-**Simulation:**
-- Setup:
-  - 16 pools in 4 BC1 families: 2 Zd families (donor at 0.35× panel frequency) and 2 Zx families. Pools in a family share one donor haplotype.
-  - 100 Mb, 0.8 reads per pool per site, panel and non-panel sites 1:1.
-  - The family's PALT is known at 60% of sites: 70% "own" (PALT 0.97, 3% wrong) and 30% "gap" (PALT 0.8, 20% wrong).
-- Accuracy is per 10 kb against the truth:
+| Taxon | Assemblies | d (genome) | d per window, median (10–90%) |
+|---|---|---|---|
+| Zv | TIL01, TIL11 | 0.43, 0.44 | 0.38 (0.15–0.79) |
+| Zx | TIL18, TIL25 | 0.38, 0.37 | 0.32 (0.13–0.67) |
+| Zh | RIMHU001 | 0.34 | 0.30 (0.14–0.55) |
+| Zd | Gigi, Momo | 0.26, 0.28 | 0.23 (0.13–0.42) |
+| Zl | RIL003 | 0.26 | 0.22 (0.13–0.40) |
 
-| Taxon | Version | Markers per pool | All | B73 | SEG | DONOR | Donor-share error |
-|---|---|---|---|---|---|---|---|
-| Zd | 1 (panel) | 18.4k | 98.8% | 99.3% | 91.3% | 99.6% | 0.0037 |
-| Zd | 2 (family) | 29.4k | 99.7% | 99.9% | 98.3% | 99.8% | 0.0010 |
-| Zx | 1 (panel) | 18.3k | 99.8% | 99.9% | 99.4% | 99.8% | 0.0005 |
-| Zx | 2 (family) | 29.4k | 99.8% | 99.9% | 99.1% | 99.9% | 0.0005 |
+Zv shares the most single-copy k-mers with B73, and Zd and Zl the fewest, which fits the Zea phylogeny. In the 44-pool test, the level observed in pools' DONOR windows matched their taxon's assembly value. For example, Zh pools were at 0.22–0.32 against an assembly value of 0.26–0.31, with a window-by-window correlation of up to 0.8.
 
-The family information helps most where the panel represents the donor poorly (Zd), mostly for SEG calls. For Zx the two versions are the same. Version 2 takes about 1.5× as long per pool, because it has more markers.
+---
 
-## Steps 16–18: k-mer windows (alignment-free)
+## 4. The HMM, steps 20–21: model and every parameter
 
-**Why.** Donor reads map poorly to B73. In a Zd DONOR tract only ~34% of the expected reads mapped at all, and `-C 50` + BAQ removed another ~60% of the donor bases that did (vs ~12% in B73 regions). ALT reads are removed preferentially, so DONOR looks like SEG and SEG looks like B73. k-mers skip mapping.
+**Code:**
+- `20_kmer_hmm.py` (per pool), run by `20_run_kmer_hmm.sh` (30 pools per array task).
+- `21_kmer_collect.py`, run by `21_kmer_collect.sh`.
 
-**How.**
-1. For each pool, KMC counts its 31-mers from the trimmed reads (`-ci1`, because at 0.8x most k-mers are seen once).
-2. It keeps only k-mers that occur exactly once in the B73 genome. Repeats are in every pool and hide the signal.
-3. KCFtools counts, per 100-kb window, how many of the window's B73 k-mers the pool has.
-4. Where the pool carries donor DNA, B73 k-mers are missing, so the count drops.
+The HMM itself is Nirwan's BC2S3 HMM. `20_kmer_hmm.py` imports these functions unchanged from `14_hmm_pooled.py`:
+- `read_map` / `interp_cm`: NAM genetic map
+- `haldane_theta`
+- `build_A`: transitions
+- `forward_backward`
+- `decode_hysteresis`
 
-**Test results** (44 pools: 10 B73 controls and 34 donor pools from all 6 taxa). Score = observed count / B73 controls:
+**Only the emission is new.**
 
-| State | Score |
-|---|---|
-| B73 | ≈ 1.0 |
-| SEG | ≈ 0.6 |
-| DONOR | ≈ 0.2 (Zd) |
+### 4.1 Observation per window
 
-- **Controls:** a prototype HMM on these windows called all 10 B73 controls clean, 0–0.07% non-B73 (each control left out of its own reference).
-- **Agreement with the SNP HMM:** donor share within ~1.5 points for 24 of 34 donor pools.
-- **Where they differ:** the SNP HMM fails in specific pools:
-  - DONOR called as SEG in divergent Zl
-  - κ collapsing to 0.1–0.2 in two Zd pools
-  - Zm
-- **Noisy pools:** two Zl pools with few k-mers were too noisy to trust.
+1. **Scale the pool:** N = the pool's single-copy k-mer count in the window ÷ the pool's genome-wide median.
+2. **Build the reference:** a non-negative least-squares fit (`scipy.optimize.nnls`) of the B73 controls' scaled counts to this pool. A control is never part of its own reference. The fit is redone without windows below 1 − 2σ until it stops changing, so donor windows don't pull the reference down.
+3. **Score:** r = N / reference, rescaled so the B73-like windows have median 1. **r = 1 means "looks like B73".**
+4. **Skip:** windows with fewer than 2,000 B73 single-copy k-mers, or where the controls' median scaled count is below 0.2.
 
-The HMM on k-mer windows is not in the repo yet.
+### 4.2 States and emissions
 
-**Run** (k-mer conda env active; jobs inherit it):
+| State | Meaning in a pool of 6 plants | Emission for r |
+|---|---|---|
+| B73 | all plants B73/B73 | Normal(1, σ_w) |
+| SEG | the family still segregates here: a mix of AA, AB and BB plants | mixture below |
+| DONOR | all plants donor/donor (BB) | Normal(a·d_w, σ_w) |
+
+- **d_w:** the expected DONOR level of the pool's taxon in that window: the mean of that taxon's assemblies (step 19).
+- **a:** a per-pool scale that allows for the pool's donor plant differing from the assemblies. Fitted per pool.
+- **SEG:** a family segregating 1:2:1 at a locus gives each plant 0, 1 or 2 donor copies, so the pool's donor copies ~ **Binomial(2n, ½)**, with n = 6 plants. The pool's donor fraction is f = k/12, k = 1–11, with binomial weights. k-mers the donor lacks come only from the B73 part of the pool, so SEG for fraction f gives Normal(d_w + (1 − d_w)·g(f), σ_w), where:
+  - g(f) = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)) (Lander–Waterman: the share of k-mers seen at coverage λ is 1 − e^(−λ))
+  - λ = the pool's k-mer coverage, from the median share of single-copy k-mers it sees.
+- **σ_w:** the pool's robust SD of r in B73 windows (1.4826 × MAD) × how much the controls disagree in that window relative to a typical window (clipped to 0.5–3×).
+- **Outliers:** every state has a 2% chance that the window is junk (uniform on 0–2).
+
+### 4.3 Transitions and decoding (unchanged from step 14)
+
+- **Genetic distance:** cM interpolated at window midpoints from the NAM map (`genetic_maps/`), converted to θ with Haldane.
+- **Switching:** probability s = ρ·θ (clamped to 1e-12–0.25). The new state is chosen in proportion to the prior π.
+- **Chains:** each chromosome is its own chain.
+- **Decoding:** forward–backward, then the most likely state per window.
+
+### 4.4 ρ is fitted, R is not used
+
+- **ρ:** step 20 runs every pool over a ρ grid and saves the log-likelihood. Step 21 sums it over donor pools that are not NOISY and uses the best ρ for every pool. This is the same as estimating the number of generations in local-ancestry HMMs (e.g. Ancestry_HMM).
+  - Best: **ρ = 1.5**, from 1,292 pools; the 44-pool test also gave 1.5.
+  - Alone, each taxon would pick ρ = 1 (Zd, Zh, Zl) or 2 (Zv, Zx).
+- **R:** calls are made without rigidity. With R = 3 windows, the donor share differed by more than 0.5 percentage points in **0 of 1,385** pools, so R isn't needed once ρ is fitted. `DONOR_SHARE_R` in the summary keeps the R = 3 value for reference.
+
+### 4.5 All parameters
+
+| Parameter | Value | Where | Source / justification |
+|---|---|---|---|
+| k-mer size | 31 | `KMER_K` | standard (KMC, KCFtools) |
+| Window | 100 kb | `KMER_WINDOW` | ~30,000 single-copy k-mers per window |
+| Single-copy | count = 1 in B73 v5 | step 16 | removes repeats |
+| KMC minimum count | 1 | steps 17, 19 | at 0.8x most k-mers are seen once |
+| Reference fit | NNLS of B73 controls, refit without windows below 1 − 2σ | `--cut_sigma 2` | robust; no fixed cutoff |
+| σ | 1.4826 × MAD, per pool; × controls' spread per window (0.5–3) | 20 | robust SD |
+| Outliers | 2% | `--eps` | robust mixture |
+| DONOR level | assembly d_w × a | step 19 + 20 | measured from teosinte genomes |
+| a (per pool) | grid 0.5–1.8; fitted median 0.9–1.0 in every taxon | `--scale_grid` | donor plant ≠ assembly plant |
+| Plants per pool | 6 | `KMER_PLANTS` | sampling design |
+| SEG fractions | k/12, k ~ Binomial(12, ½) | 20 | Mendelian 1:2:1 summed over 6 plants |
+| Prior π (and start) | B73 0.844, SEG 0.0625, DONOR 0.094 | `--prior` | BC2S3 expectation (top-level README) |
+| ρ | grid 0.25–8; fitted **1.5** | `--rho_grid`, step 21 | maximum likelihood over all pools |
+| R | none (R = 1) | — | R = 3 changed nothing |
+| NOISY flag | σ > 0.15 | `KMER_NOISY_SIGMA` | left out of the ρ fit and the means |
+| Skipped taxa | Zm | `KMER_SKIP_GROUPS` | no landrace assembly yet |
+| Min. single-copy k-mers per window | 2,000 | `--min_b73_kmers` | drops near-empty windows |
+
+### 4.6 Outputs (`${KMER_DIR}/introgression/`, from step 21)
+
+- `pool_summary.tsv`: `SAMPLE ROLE GROUP SIGMA FLAG PARAM_KIND PARAM FRAC_B73 FRAC_SEG FRAC_DONOR DONOR_SHARE DONOR_SHARE_R N_TRACTS`. DONOR_SHARE = FRAC_DONOR + ½ FRAC_SEG.
+- `tracts_all.tsv.gz`: `SAMPLE GROUP CHROM START END STATE`
+- `rho_loglik.tsv`: log-likelihood by ρ (all pools and per taxon)
+- `blocks_<GROUP>.pdf`: one page per pool. Blue B73 (AA), purple SEG (AB), red DONOR (BB).
+- `family_summary.tsv`: family = first two pedigree fields, e.g. `Zd.0010_P2`. Built from `pool_summary.tsv` and `SAMPLE_META` (command in section 5.5).
+- Per-pool HMM results for every ρ: `${KMER_DIR}/hmm/<SAMPLE>.npz`.
+
+---
+
+## 5. Results: all 1,395 pools
+
+1,385 donor pools (Zm skipped) and 10 B73 controls. Run of 15 Nov 2026.
+
+### 5.1 Expected for BC2S3
+
+A BC2 carries 12.5% donor, all heterozygous. After 3 rounds of selfing, a pool from one BC2S3 family is expected to be:
+
+| | B73 | SEG | DONOR | Donor share (DONOR + ½ SEG) |
+|---|---|---|---|---|
+| Expected | 84.4% | 6.25% | 9.4% | **12.5%** |
+
+### 5.2 Non-noisy pools (σ ≤ 0.15): the main results
+
+| Taxon | Pools | Mean share % | Median share % | Mean SEG % | Mean DONOR % | Median tracts |
+|---|---|---|---|---|---|---|
+| B73 controls | 10 | 0.0 | 0.0 | 0.1 | 0.0 | 1 |
+| Zd | 227 | 5.5 | 4.7 | 5.2 | 3.0 | 7 |
+| Zh | 61 | 8.2 | 7.8 | 5.7 | 5.3 | 9 |
+| Zl | 98 | 7.2 | 6.5 | 6.8 | 3.8 | 9 |
+| Zv | 333 | 8.0 | 7.7 | 6.8 | 4.6 | 21 |
+| Zx | 573 | 8.7 | 8.2 | 6.7 | 5.3 | 21 |
+| **All donors** | **1,292** | **7.8** | **7.3** | **6.4** | **4.6** | **16** |
+
+**Donor share across non-noisy donor pools:**
+
+| 10% | 25% | Median | 75% | 90% |
+|---|---|---|---|---|
+| 2.0% | 4.2% | 7.3% | 10.5% | 14.2% |
+
+- 199 pools reach at least 12.5%.
+- 127 pools are below 2%.
+- 23 pools are above 20%.
+
+### 5.3 Noisy pools (σ > 0.15): flagged, not trusted
+
+| Taxon | Pools | Mean share % | Median share % | Mean SEG % | Mean DONOR % | Median tracts |
+|---|---|---|---|---|---|---|
+| Zd | 22 | 6.5 | 5.3 | 7.6 | 2.7 | 7 |
+| Zl | 20 | 7.0 | 6.3 | 7.2 | 3.3 | 10 |
+| Zv | 47 | 9.5 | 9.4 | 6.7 | 6.2 | 20 |
+| Zx | 4 | 17.0 | 16.3 | 19.8 | 7.1 | 64 |
+| **All** | **93** | **8.6** | **8.7** | **7.6** | **4.8** | **13** |
+
+**All 1,385 donor pools together:** mean share 7.9%, median 7.4%, SEG 6.5%, DONOR 4.6%, median 15 tracts.
+
+**NOISY is a sequencing-plate effect.** 81 of the 93 noisy pools are on plates PN11, PN13 and PN15. Those plates have the fewest k-mers per pool:
+
+| Plate | NOISY / pools | Median σ | Mean single-copy k-mers per pool |
+|---|---|---|---|
+| PN13 | 23 / 88 | 0.140 | 115 M |
+| PN15 | 24 / 93 | 0.138 | 109 M |
+| PN11 | 34 / 93 | 0.130 | 150 M |
+| PN6 | 2 / 93 | 0.111 | 145 M |
+| all others | 0–4 / ~90 each | 0.08–0.11 | 162–245 M |
+
+So the noisy pools have low depth. Resequencing them would make their calls usable.
+
+### 5.4 Are we getting what we expect?
+
+- **SEG matches.** Observed SEG is 6.4%, against an expected 6.25%.
+- **DONOR is about half the expected value.** Observed DONOR is 4.6% against 9.4%, so the donor share is 7.8% instead of 12.5%. The shortfall is almost entirely in **fixed** donor segments. Two explanations remain:
+  1. **Biology:** selection against plants homozygous for teosinte segments during selfing (plant type, flowering, seed set). Some lines also lost almost all donor (127 pools below 2%).
+  2. **Model:** a real DONOR block called SEG where the line's donor plant differs from the assemblies. This happens most in Zv and Zx; see section 7.
+- **The low share isn't a mapping artifact.** The k-mer route never maps reads, and it gives the same shares as the SNP route for pools where the SNP route is reliable (section 6).
+- **By taxon:** Zd is lowest (5.5%), and Zh, Zv and Zx highest (8–9%). Some families reach the expected 12.5%: Zx.0130_P1, Zx.0390_P2 and Zx.0560_P2.
+- **Family means** range from 2.7% to 12.4% (98 families). See `family_summary.tsv`.
+
+### 5.5 Family table
+
+```bash
+source config.sh; PS=${D21}/pool_summary.tsv; OUT=${D21}/family_summary.tsv
+tr -d '\r' < "$SAMPLE_META" | awk -F'\t' -v out="$OUT" 'NR==FNR { if (FNR > 1) { split($2, a, "_"); fam[$1] = a[1] "_" a[2] }; next }
+  FNR == 1 { for (i = 1; i <= NF; i++) h[$i] = i; next }
+  $h["ROLE"] == "donor" { f = ($h["SAMPLE"] in fam) ? fam[$h["SAMPLE"]] : "unknown"; n[f]++; grp[f] = $h["GROUP"]
+    if ($h["FLAG"] == "NOISY") { noisy[f]++; next }
+    k[f]++; sh[f] += $h["DONOR_SHARE"]; sg[f] += $h["FRAC_SEG"]; dn[f] += $h["FRAC_DONOR"]; tr[f] += $h["N_TRACTS"] }
+  END { print "FAMILY\tTAXON\tPOOLS\tNOISY\tMEAN_SHARE\tMEAN_SEG\tMEAN_DONOR\tMEAN_TRACTS" > out
+    for (f in n) if (k[f]) printf "%s\t%s\t%d\t%d\t%.4f\t%.4f\t%.4f\t%.1f\n", f, grp[f], n[f], noisy[f], sh[f]/k[f], sg[f]/k[f], dn[f]/k[f], tr[f]/k[f] >> out }' - "$PS"
 ```
-sbatch 16_kmer_b73_unique.sh                      # once (skips what exists)
-N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' <D11>/pools.tsv | wc -l)
-sbatch --array=1-$(( (N + 3) / 4 ))%10 17_kmer_windows.sh
-bash 18_kmer_check.sh                             # after 17
+
+---
+
+## 6. Validation
+
+- **B73 controls are clean.** All 10 have ≤ 0.15% non-B73 windows and 0–4 tiny tracts. This is a fair test: the k-mer route never uses the controls to filter sites, and each control is left out of its own reference.
+  - The SNP route can't test this. Its site filter removed every site where the controls had an ALT read, so its controls are B73 by construction.
+- **Known tracts are found.**
+  - Zd PN13_SID1199 chr2:22–25 Mb: DONOR, r ≈ 0.20; the Zd assembly level there is 0.26.
+  - Zv PN10_SID867 chr2:224–239 Mb: SEG, r ≈ 0.63. The reads confirm SEG: 55% of informative sites with 2+ reads have both B73 and ALT reads.
+  - Boundaries agree with the SNP calls to within one 2-Mb bin.
+- **Agreement with the SNP HMM,** in a 44-pool test (10 controls, 34 donors from all taxa):
+  - The donor share is within ~1.5 points in 24 of 34 pools.
+  - The disagreements have known SNP-side causes:
+    - κ collapsing to 0.1–0.2 in two Zd pools (SNP 17% vs k-mer 3–7%)
+    - Zm, which is too close to B73 for a teosinte panel
+    - noisy pools
+- **R:** no effect in any pool (section 4.4).
+
+---
+
+## 7. Open issues and next steps
+
+1. **DONOR ↔ SEG switching inside tracts (Zv, Zx).** Zv and Zx have ~21 tracts per pool against 7–9 for the other taxa. Inside one long tract, some 5–10 Mb blocks are called SEG.
+   - Example: PN16_SID1523, chr5 100–110 Mb (around the centromere). The pool's level is 0.53–0.76, while the mexicana assemblies predict 0.37–0.55.
+   - Cause: the lines' donor plant differs locally from TIL18 and TIL25.
+   - **Fix in progress:** take the expected DONOR level from the family's own **BC1 sisters** (10x, `/rsstu/users/r/rrellan/BZea/ZEAL/demultiplex/bc1`). An F1 carries one teosinte gamete, so all BC1 sisters and all BC2S3 lines of that family carry the same donor haplotype.
+   - In a BC1's B73/donor windows, B73 k-mers the donor lacks appear at half depth, so d_w(family) = 2 × (depth ratio) − 1.
+   - Pilot (`/share/maize/ntanduk/kmer/bc1_pilot.sh`, chr2, two BC1 plants) is running. It still needs the S_* → BC1 → family table.
+   - Option if needed: estimate each family's d_w from its own DONOR pools (iteratively), with no BC1 data.
+2. **Noisy plates (PN11, PN13, PN15):** resequence, or keep them flagged.
+3. **Zm (landraces):** skipped. They need a maize-based DONOR level, e.g. from NAM founder assemblies.
+4. **Shortfall in DONOR (4.6% vs 9.4%):** recheck after the BC1-based levels, then interpret biologically.
+
+---
+
+## 8. SNP route, steps 01–15 (cross-check)
+
+These steps produced the SNP sites, per-pool read counts, QC, site filters and a GL-based HMM. Use them as a cross-check and for SNP-level work. For introgression calls, use section 5.
+
+```bash
+# site discovery (already run; only to redo it)
+sbatch 01_angsd_discovery_by_part.sh; bash 02_find_failed_parts.sh; sbatch --array=1-N%60 03_angsd_rerun_failed_split.sh
+sbatch 04_merge_subparts.sh; sbatch 05_concat_parts_by_chr.sh; sbatch 06_rename_samples.sh
+# read counts
+bash submit_counts.sh test; bash submit_counts.sh rest; bash 08_check_unfinished.sh
+# site filters + teosinte panel
+sbatch 11_filter_sites.sh; sbatch --dependency=afterok:<11> 12_signal_check.sh
+# SNP HMM
+sbatch 13_extract_pool_gl.sh; sbatch --dependency=afterok:<13> 14_run_hmm.sh; sbatch --dependency=afterok:<14> 15_collect_hmm.sh
 ```
 
-**Notes.**
-- **Pools done twice:** finished pools are skipped, and test-batch outputs (`KMER_DIR/batch`) are reused.
-- **Format conversion:** KCFtools reads only KMC2-format databases, and `kmc_tools` writes KMC1. So the kept k-mers are dumped and re-counted with `kmc`.
-- **Temporary disk:** about 25 GB per running pool, in `KMER_DIR/tmp`. `%10` keeps it to about 250 GB.
-- **Read databases:** each pool's is ~2–3 GB and is deleted unless `KMER_KEEP_KMC=1`.
-- **Failures:** a failed pool keeps its temp folder for debugging. The others in the task continue.
+| # | Script | What it does | Output |
+|---|---|---|---|
+| 01–06 | `01_…` to `06_…` | ANGSD SNP discovery + GLs per part (`-GL 1 -doMajorMinor 1 -doMaf 1 -doBcf 1`, `-minMapQ 30 -minQ 20 -C 50 -baq 1 -only_proper_pairs 1`); reruns of failed parts; joined and renamed per chromosome | `06_per_chr_renamed/` |
+| 07 | `07_make_site_tables.sh` + `07_polarize_to_b73.py` | Biallelic SNPs re-polarized to the B73 base; ANGSD `-sites` files | `07_sites/` |
+| 08–09 | `08_angsd_counts_by_part.sh` + `08_counts_to_ad.awk`, `09_…` | B73/ALT read counts per pool (`-doCounts 1 -dumpCounts 4 -sites`) | `09_counts_by_chr/BZea_chrN.AD.bcf` |
+| 10 | `10_counts_qc.sh` + `.R` | Per-pool QC | `10_qc/` |
+| 11 | `11_filter_sites.sh` | Removes sites with ALT in clean B73 controls, depth outside 0.25–2× the median, >5% third base, or a panel allele mismatch; splits sites into in / not in the 227-plant teosinte panel (Schnable 2023) | `11_sites_filtered/` (7.51 M PASS, 2.59 M in panel; `pools.tsv`) |
+| 12 | `12_signal_check.sh` + `.R` | Donor signal per taxon on panel sites | `12_signal_check/` |
+| 13–15 | `13_extract_pool_gl.sh`, `14_run_hmm.sh` + `14_hmm_pooled.py`, `15_collect_hmm.*` | GL-based HMM | `15_introgression/` |
 
-**Step 19: expected DONOR level from assemblies.**
-- **How it's measured:** each teosinte assembly is scored exactly like a pool. Per window, d = (B73 single-copy k-mers present in the assembly) / (B73 single-copy k-mers in the window).
-- **What d is:** the level a fixed donor tract of that taxon should give.
-- **Assemblies used (PanAnd):**
+**How the SNP HMM (step 14) works:**
+- **States:** B73 / SEG / DONOR. The pool likelihood comes from interpolating the GLs: L(p) = L0(2p−1)(p−1) + L1·4p(1−p) + L2·p(2p−1).
+- **Donor ALT chance:** c = κ × panel AF, with κ learned per pool by multi-start EM.
+- **Transitions:** NAM map transitions, ρ = 0.2, rigidity 50 markers.
 
-  | Taxon | Assemblies |
-  |---|---|
-  | Zd | Gigi, Momo |
-  | Zh | RIMHU001 |
-  | Zl | RIL003 |
-  | Zv | TIL01, TIL11 |
-  | Zx | TIL18, TIL25 |
+**Results and limits:**
+- **Results:** median donor share Zd 5.4%, Zh 8.0%, Zl 6.7%, Zv 8.9%, Zx 8.6%.
+- **Limit 1:** it loses donor reads to mapping (section 2).
+- **Limit 2:** κ can collapse.
+- **Limit 3:** its control test is circular.
 
-- **Why:** the HMM then uses a measured DONOR level instead of fitting or capping d.
-- **Not covered:** Zm has no assembly here yet.
+**Dropped:** steps 13b–15b, which used the BC1 family donor alleles (`union/*.donor_alleles.vcf.gz`) as SNP-level PALT. The family alleles were wrong at 7–11% of sites even in good pools, and the run lowered DONOR in every taxon. The scripts are kept but not used.
 
-## Steps 20–21: HMM on k-mer windows
+**QC decisions:** [`QC_NOTES.md`](QC_NOTES.md); lists in `sample_lists/`.
 
-Same HMM as step 14 (imported from `14_hmm_pooled.py`):
-- NAM map → Haldane θ
-- switch s = ρθ, target state by prior π (0.844 / 0.0625 / 0.094)
-- forward–backward and posterior decoding
+---
 
-Only the emission is new. r = the pool's B73 single-copy k-mer count / a fit of the B73 controls (never including itself).
+## 9. Requirements
 
-**Emissions per window:**
-
-| State | Model |
-|---|---|
-| B73 | Normal(1, σ_w) |
-| DONOR | Normal(a·d_w, σ_w) |
-| SEG | average over pool donor fractions f = k/2n, k ~ Binomial(2n, ½), n = 6 plants (`KMER_PLANTS`), of Normal(d_w + (1 − d_w)·g(f), σ_w) |
-
-- **d_w:** the taxon's assembly level for that window (step 19).
-- **a:** a per-pool scale, fitted (0.5–1.8). Zm has no assembly, so its d is a fitted constant.
-- **g(f):** = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)). k-mers the donor lacks come only from the B73 part of the pool; λ is the pool's k-mer coverage.
-- **σ_w:** the pool's robust SD × the controls' spread in that window.
-- **Outliers:** 2% per window.
-
-**Reference fit:** refit without windows below 1 − 2σ until it stops changing.
-
-**ρ:** fitted, not fixed. Each pool is run over the ρ grid. Step 21 sums the log-likelihoods over donor pools that are neither Zm nor noisy, and uses the best ρ for all pools.
-
-**R:** in the 44-pool test, calls with R = 1 and R = 3 were identical, so the calls use R = 1. `DONOR_SHARE_R` keeps the R = 3 value for comparison.
-
-**44-pool test:**
-- **Best ρ:** 1.5 overall. Alone, Zd and Zl would pick 0.5, Zh 1, Zv 2 and Zx 3.
-- **B73 controls:** 0–0.07%.
-- **Median donor share:**
-
-  | Zd | Zh | Zl | Zv | Zx |
-  |---|---|---|---|---|
-  | 3.5% | 12.2% | 8.7% | 10.0% | 9.0% |
-
-- **Noisy pools:** σ > 0.15 is flagged NOISY: 5 of 34 donor pools.
-- **Open:**
-  - Zm still fragments, at about 100 tracts per pool.
-  - Zx and Zv tracts sometimes alternate between SEG and DONOR.
-
-**Zm** is skipped in steps 20–21 for now (`KMER_SKIP_GROUPS`), because there's no landrace assembly.
-
-**Needs:** python3 with numpy, scipy and matplotlib.
-
+- **k-mer route:**
+  - KMC 3 (`kmc`, `kmc_tools`), KCFtools and samtools, in the conda env `/rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/kmer_env`
+  - python3 with numpy, scipy and matplotlib (steps 20–21)
+- **SNP route:** angsd, bcftools/htslib, awk, base R, python3 (standard library)
+- **Slurm** for all jobs. No partition is set; uncomment `##SBATCH --partition=...` if needed.

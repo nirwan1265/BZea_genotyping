@@ -459,6 +459,46 @@ sbatch --export=ALL,ROUND=1 --dependency=afterok:$J2 23_introgression_viewer.sh
 ```
 Outputs: `KMER_DIR/family_levels_fam1/`, `hmm_fam1/`, `introgression_fam1/` (round 2: `…fam2`).
 
+**Round 1 result (15 Nov 2026): almost no change.**
+
+| | Round 0 | Round 1 | Expected |
+|---|---|---|---|
+| SEG (pool) | 6.4% | 6.34% (p = 0.57) | 6.25% |
+| DONOR (pool) | 4.6% | 4.70% | 9.38% |
+| Donor alleles | 7.8% | 7.87% | 12.5% |
+| AB (plant) | 3.22% | 3.17% (p = 0.57) | 3.13% |
+| BB (plant) | 6.21% | 6.29% | 10.94% |
+| AB/(AB+BB) | 34.1% | 33.5% (31–38% per taxon, every chromosome p < 0.0002) | 22.2% |
+| Median tracts Zv / Zx | 21 / 21 | 20 / 19 | |
+| Best ρ | 1.5 | 1.5 | |
+
+- Only **0.27% of windows** changed state, mostly SEG → DONOR in Zv and Zx. 71 of 1,292 pools changed in more than 1% of windows, and 7 in more than 5% (e.g. PN15_SID1390, Zv: SEG 12.3% → 3.5%, DONOR 2.0% → 12.1%).
+- **Why so little:** in a given window, a family has a median of only 1–2 *other* pools called DONOR. With K = 3, the family level stays close to the assembly level. Mean family level vs mean assembly level (`family_levels_fam1/summary.tsv`) agree to ~0.005 in every family.
+- **A round 2 is not worth running:** the levels can't move much further with this little data per window.
+- **The main conclusions don't depend on the round:** SEG and AB match the expectation; DONOR and BB are about half of it.
+
+**What does cause the Zv/Zx fragmentation (round 1 tracts, non-noisy pools):**
+
+| Taxon | SEG tracts / pool | Median SEG tract | DONOR tracts / pool | SEG↔DONOR switches / pool | Short B73 gaps (< 1 Mb) inside introgressions |
+|---|---|---|---|---|---|
+| Zd | 5.2 | 7.3 Mb | 3.6 | 2.5 | 13% |
+| Zh | 5.3 | 7.8 Mb | 4.7 | 3.2 | 9% |
+| Zl | 6.1 | 8.4 Mb | 3.7 | 2.5 | 6% |
+| Zv | 12.9 | 3.6 Mb | 10.3 | 10.6 | 27% |
+| Zx | 12.2 | 3.3 Mb | 10.3 | 10.4 | 29% |
+
+Zv and Zx have the same total SEG and DONOR as the other taxa, but cut into about twice as many pieces, with four times as many SEG↔DONOR switches. The viewer shows it, e.g. family Zv.0280_P1, PN15_SID1390 chr3.
+
+The two assemblies of each taxon disagree on d much more in Zv and Zx (`donor_ref`, windows with ≥ 2,000 B73 k-mers):
+
+| Taxon | Assemblies | Mean d | SD of the per-window difference | Windows where they differ by > 0.2 |
+|---|---|---|---|---|
+| Zd | Gigi vs Momo | 0.25 / 0.27 | 0.14 | 6.5% |
+| Zv | TIL01 vs TIL11 | 0.42 / 0.43 | 0.25 | 28.3% |
+| Zx | TIL18 vs TIL25 | 0.37 / 0.36 | 0.22 | 22.7% |
+
+So in a quarter of Zv/Zx windows, two plants of the same taxon differ by more than 0.2 in d. Our lines' donor plant can be just as different from the assembly mean. In those windows the true DONOR level sits where the model expects SEG, or SEG sits where it expects B73, and the call flips. This fits *parviglumis* and *mexicana* being far more diverse than *diploperennis*.
+
 **Per chromosome (round 0, step 22):** AB/(AB+BB) is 31–37% on every chromosome (expected 22%; all p < 0.0002). The BB deficit is genome-wide, not a few regions:
 
 | chr1 | chr2 | chr3 | chr4 | chr5 | chr6 | chr7 | chr8 | chr9 | chr10 |
@@ -485,16 +525,13 @@ Outputs: `KMER_DIR/family_levels_fam1/`, `hmm_fam1/`, `introgression_fam1/` (rou
 
 ## 7. Open issues and next steps
 
-1. **DONOR ↔ SEG switching inside tracts (Zv, Zx).** Zv and Zx have ~21 tracts per pool against 7–9 for the other taxa. Inside one long tract, some 5–10 Mb blocks are called SEG.
-   - Example: PN16_SID1523, chr5 100–110 Mb (around the centromere). The pool's level is 0.53–0.76, while the mexicana assemblies predict 0.37–0.55.
-   - Cause: the lines' donor plant differs locally from TIL18 and TIL25.
-   - **Fix in progress:** take the expected DONOR level from the family's own **BC1 sisters** (10x, `/rsstu/users/r/rrellan/BZea/ZEAL/demultiplex/bc1`). An F1 carries one teosinte gamete, so all BC1 sisters and all BC2S3 lines of that family carry the same donor haplotype.
-   - In a BC1's B73/donor windows, B73 k-mers the donor lacks appear at half depth, so d_w(family) = 2 × (depth ratio) − 1.
-   - Pilot (`/share/maize/ntanduk/kmer/bc1_pilot.sh`, chr2, two BC1 plants) is running. It still needs the S_* → BC1 → family table.
-   - Option if needed: estimate each family's d_w from its own DONOR pools (iteratively), with no BC1 data.
+1. **DONOR ↔ SEG switching inside tracts (Zv, Zx).** Zv and Zx have ~20 tracts per pool against 7–9 for the other taxa, and four times as many SEG↔DONOR switches.
+   - Cause: two assemblies of the same taxon differ by > 0.2 in d in 23–28% of Zv/Zx windows (6.5% in Zd), so the assembly level is often wrong for our lines' donor plant (section 5.7).
+   - Tried and failed: BC1 sisters (k-mer depth too noisy), and family levels from the family's own DONOR pools (round 1, too few DONOR pools per window; 0.27% of windows changed).
+   - **Not decided yet:** options are (a) widen the DONOR emission by the between-assembly spread of d in each window, so the model knows d is uncertain there; (b) estimate the family level from the family's SEG windows as well as DONOR windows; (c) report Zv/Zx at the tract level only (introgressed vs not), without splitting SEG and DONOR.
 2. **Noisy plates (PN11, PN13, PN15):** resequence, or keep them flagged.
 3. **Zm (landraces):** skipped. They need a maize-based DONOR level, e.g. from NAM founder assemblies.
-4. **Shortfall in DONOR (4.6% vs 9.4%):** recheck after the BC1-based levels, then interpret biologically.
+4. **Shortfall in DONOR (4.7% vs 9.4%):** unchanged by round 1 and seen in every taxon, including Zd, where the levels are reliable. Waiting on how the plots were advanced (single BC2S2 plant per plot or a bulk, and any selection during selfing).
 
 ---
 

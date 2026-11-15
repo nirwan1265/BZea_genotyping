@@ -381,6 +381,8 @@ These are expected plant fractions; single plants inside a pool can't be genotyp
 **Two kinds of measure:**
 - **Amounts:** SEG, DONOR, AB, BB and donor alleles, as shares of the genome.
 - **Ratios:** the share of the remaining donor that is still segregating, SEG/(SEG+DONOR), and its plant-level version, AB/(AB+BB) = the share of donor-carrying plants that are het. These ask how the donor that is present is split between het and homozygous, regardless of how much donor there is in total.
+  - Example: expected AB = 3.13%, BB = 10.94%, so AB/(AB+BB) = 3.13 / 14.07 = 22.2% (22 of every 100 teosinte-carrying plants are het). Observed 3.12 / (3.12 + 6.51) = 32.4%.
+  - Random loss of donor (drift) lowers AB and BB together and leaves the ratio at 22%; only losing BB plants faster than AB plants raises it.
 
 **All taxa (98 families, 1,292 pools):**
 

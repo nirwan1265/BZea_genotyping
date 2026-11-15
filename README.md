@@ -568,6 +568,11 @@ Per-pool numbers: `final_script/figures/rtiger_comparison/rtiger_vs_kmer_per_poo
 
 ### Results (current method, 1,292 non-noisy donor pools)
 
+**What AB/(AB+BB) means.** Look only at plants that carry teosinte at a locus, i.e. plants that are AB or BB there. AB/(AB+BB) is the share of those plants that are **het**. It asks *how* the teosinte that is present is held (het or homozygous), not *how much* teosinte there is.
+- **Expected for BC2S3:** AB = 3.13% and BB = 10.94%, so AB/(AB+BB) = 3.13 / (3.13 + 10.94) = **22.2%**. Out of 100 teosinte-carrying plants at a locus, about 22 should be het and 78 homozygous teosinte.
+- **Observed:** AB = 3.12% and BB = 6.51%, so AB/(AB+BB) = 3.12 / (3.12 + 6.51) = **32.4%**: about 32 het and 68 homozygous out of 100.
+- **Why it's useful:** it doesn't depend on the total amount of donor. If lines simply lost teosinte at random (drift, or segments lost before BC2), AB and BB would drop together and the ratio would stay at 22%. It rises only if BB plants are lost more than AB plants, e.g. by selection against plants homozygous for teosinte segments.
+
 | Taxon | Pools | Donor alleles | SEG (pool) | DONOR (pool) | AB (plant) | BB (plant) | AB/(AB+BB) |
 |---|---|---|---|---|---|---|---|
 | Zd | 227 | 5.6% | 5.1% | 3.0% | 2.6% | 4.3% | 37% |

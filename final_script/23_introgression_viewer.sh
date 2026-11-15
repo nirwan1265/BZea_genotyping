@@ -20,6 +20,6 @@ source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 need python3
 python3 "${FINAL_DIR}/23_introgression_viewer.py" --tracts "${D21}/tracts_all.tsv.gz" \
   --pool_summary "${D21}/pool_summary.tsv" --meta "$SAMPLE_META" --out "${D21}/introgression_viewer.html" \
-  --title "BZea BC2S3 introgressions (k-mer HMM, round ${ROUND})"
-cp "${D21}/introgression_viewer.html" "${FINAL_DIR}/figures/introgression_viewer_round${ROUND}.html"
-echo "copied to ${FINAL_DIR}/figures/introgression_viewer_round${ROUND}.html (git add + commit to share)"
+  --title "BZea BC2S3 introgressions (k-mer HMM, ${RUN_TAG})"
+cp "${D21}/introgression_viewer.html" "${FINAL_DIR}/figures/introgression_viewer_${RUN_TAG}.html"
+echo "copied to ${FINAL_DIR}/figures/introgression_viewer_${RUN_TAG}.html (git add + commit to share)"

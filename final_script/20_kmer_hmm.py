@@ -23,6 +23,12 @@ New: the observation in each 100-kb window is r = (B73 single-copy k-mers seen i
           lam = the pool's k-mer coverage (Lander-Waterman: share seen = 1 - exp(-lam)).
           Averaged over k = 1..2n-1 (binomial weights) and n = PLANTS (equal weights).
   Every state: 2% chance the window is an outlier (uniform 0-2).
+  --d_spread (option, off by default): our lines' donor plant is not an assembly plant, so its level
+          in a window can differ from the assembly mean. tau_w = how much the taxon's assemblies
+          disagree in that window (SD of the two assemblies' d, x sqrt(1.5) for a new plant vs the mean
+          of two, averaged over +-D_SPREAD_HALF windows). DONOR sd = sqrt(sigma_w^2 + (a tau_w)^2);
+          SEG sd = sqrt(sigma_w^2 + ((1 - g(f)) a tau_w)^2) (SEG moves with d by (1 - g)).
+          Taxa with one assembly (Zh, Zl): tau = 0. B73 controls: tau of the widest taxon (worst case).
   sigma_w = pool sigma (robust SD of r in B73 windows) x how much the controls disagree in that
           window relative to a typical window (clipped 0.5-3).
 
@@ -74,15 +80,17 @@ def norm_logpdf(x, m, s):
     return -0.5 * ((x - m) / s) ** 2 - np.log(s) - 0.9189385332
 
 
-def emission_ll(r, sig, dw, lam, fs, fw, eps):
-    """log P(r | state) per window, columns B73, SEG, DONOR."""
+def emission_ll(r, sig, dw, lam, fs, fw, eps, tau=None):
+    """log P(r | state) per window, columns B73, SEG, DONOR. tau: per-window SD of the DONOR level (or None)."""
     out = math.log(eps / 2.0)
     mix = lambda lp: np.logaddexp(math.log(1 - eps) + lp, out)
+    tau = np.zeros_like(r) if tau is None else tau
     lB = mix(norm_logpdf(r, 1.0, sig))
-    lD = mix(norm_logpdf(r, dw, sig))
+    lD = mix(norm_logpdf(r, dw, np.sqrt(sig ** 2 + tau ** 2)))
     g = (1 - np.exp(-(1 - fs) * lam)) / (1 - math.exp(-lam))                     # per fraction
     mu = dw[:, None] + (1 - dw[:, None]) * g[None, :]                            # windows x fractions
-    lS = np.log(np.sum(fw[None, :] * np.exp(norm_logpdf(r[:, None], mu, sig[:, None])), axis=1) + 1e-300)
+    sS = np.sqrt(sig[:, None] ** 2 + (tau[:, None] * (1 - g[None, :])) ** 2)
+    lS = np.log(np.sum(fw[None, :] * np.exp(norm_logpdf(r[:, None], mu, sS)), axis=1) + 1e-300)
     lS = mix(lS)
     return np.vstack([lB, lS, lD]).T
 
@@ -108,6 +116,8 @@ def main():
     ap.add_argument("--family_dir", default="", help="family DONOR levels (20b): <SAMPLE>.npy (leave-one-out); replaces the assembly level")
     ap.add_argument("--meta", default="", help="SAMPLE_META, for pool -> family (with --family_dir)")
     ap.add_argument("--family_scale_grid", default="0.8,0.9,1.0,1.1,1.2,1.3")
+    ap.add_argument("--d_spread", action="store_true", help="widen DONOR/SEG by the between-assembly spread of d (see top)")
+    ap.add_argument("--d_spread_half", type=int, default=5, help="windows each side to average the spread over")
     a = ap.parse_args()
 
     rho_grid = [float(x) for x in a.rho_grid.split(",")]
@@ -135,6 +145,20 @@ def main():
         taxon_asm.setdefault(tax, []).append(obs / np.maximum(B, 1))
     d_tax = {t: np.mean(v, axis=0) for t, v in taxon_asm.items()}
     d_all = np.mean([v for vs in taxon_asm.values() for v in vs], axis=0)       # for controls
+    tau_tax = {}
+    if a.d_spread:
+        okB = B >= a.min_b73_kmers
+        for t, v in taxon_asm.items():
+            if len(v) < 2: tau_tax[t] = np.zeros(len(B)); continue
+            var = np.var(np.vstack(v), axis=0, ddof=1) * (1 + 1 / len(v))     # a new plant vs the mean of n
+            var = np.where(okB, var, np.nan); k = a.d_spread_half; sm = np.empty(len(B))
+            for i in range(len(B)):                                            # smooth along the genome
+                w = var[max(0, i - k): i + k + 1]; sm[i] = np.nanmean(w) if np.isfinite(w).any() else 0.0
+            tau_tax[t] = np.sqrt(sm)
+        widest = max(tau_tax, key=lambda t: np.nanmean(tau_tax[t]))
+        tau_tax["__control__"] = tau_tax[widest]
+        print("d_spread: mean tau per taxon " + ", ".join(f"{t} {np.mean(v):.3f}" for t, v in tau_tax.items() if t != "__control__")
+              + f" | controls use {widest}")
 
     def load(s):
         c, st, o = read_windows(f"{a.win_dir}/{s}.tsv.gz")
@@ -191,10 +215,14 @@ def main():
         th_by_chr = {c: [0.0] + [H.haldane_theta(max(0.0, (cm[i[k]] - cm[i[k - 1]]) / 100.0)) for k in range(1, len(i))]
                      for c, i in idx_by_chr.items()}
         sig_w = sig_p * wscale
+        tau0 = None
+        if a.d_spread and kind == "assembly_scale":
+            tau0 = tau_tax.get(tax) if tax in tau_tax else tau_tax["__control__"]
         em_by_par = {}
         for par in grid:
             dw = np.clip(par * dw0 if dw0 is not None else np.full(len(B), par), 0.01, 0.95)
-            em_by_par[par] = emission_ll(np.where(ok, r, 1.0), np.where(ok, sig_w, 1.0), dw, lam, fs, fw, a.eps)
+            tau = None if tau0 is None else np.where(ok, par * tau0, 0.0)
+            em_by_par[par] = emission_ll(np.where(ok, r, 1.0), np.where(ok, sig_w, 1.0), dw, lam, fs, fw, a.eps, tau)
 
         W = len(B)
         ll = np.zeros(len(rho_grid)); par_best = np.zeros(len(rho_grid))
@@ -215,7 +243,7 @@ def main():
                 stR[j, idx] = H.decode_hysteresis(mx, a.rigidity)
         np.savez_compressed(f"{a.out_dir}/{S}.npz", rho_grid=np.array(rho_grid), loglik=ll, par_best=par_best,
                             param_kind=kind, states_R1=st1, states_R=stR, rigidity=a.rigidity, r=r.astype(np.float32),
-                            ok=ok, sigma=sig_p, lam=lam, taxon=tax, role=role.get(S, "NA"))
+                            ok=ok, sigma=sig_p, lam=lam, taxon=tax, role=role.get(S, "NA"), d_spread=bool(tau0 is not None))
         jb = int(np.argmax(ll)); v = st1[jb][st1[jb] >= 0]
         print(f"{S} ({tax}): sigma {sig_p:.3f} | best rho for this pool {rho_grid[jb]} | {kind} {par_best[jb]} | "
               f"SEG {100*np.mean(v==1):.2f}% DONOR {100*np.mean(v==2):.2f}%")

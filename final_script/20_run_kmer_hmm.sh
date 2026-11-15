@@ -42,7 +42,8 @@ if (( ROUND > 0 )); then
   [[ -s ${D20B}/summary.tsv ]] || die "missing ${D20B} (run: sbatch --export=ALL,ROUND=${ROUND} 20b_family_levels.sh)"
   FAM=(--family_dir "$D20B" --meta "$SAMPLE_META")
 fi
-echo "round ${ROUND}: output ${D20}"
-python3 "${FINAL_DIR}/20_kmer_hmm.py" "${FAM[@]}" --samples "$(IFS=,; echo "${TODO[*]}")" \
+SP=(); (( SPREAD == 1 )) && SP=(--d_spread)
+echo "${RUN_TAG}: output ${D20}"
+python3 "${FINAL_DIR}/20_kmer_hmm.py" "${FAM[@]}" "${SP[@]}" --samples "$(IFS=,; echo "${TODO[*]}")" \
   --pools_tsv "${D11}/pools.tsv" --win_dir "$D16" --ref_dir "$D19" --assemblies "$ASMS" \
   --map_dir "$MAP_DIR" --out_dir "$D20" --plants "$KMER_PLANTS"

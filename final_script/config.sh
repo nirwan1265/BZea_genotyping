@@ -154,6 +154,15 @@ else
   D20=${KMER_DIR}/hmm_fam${ROUND}
   D21=${KMER_DIR}/introgression_fam${ROUND}
 fi
+# SPREAD=1: widen the DONOR/SEG levels by how much the taxon's assemblies disagree per window
+# (20_kmer_hmm.py --d_spread; fixes Zv/Zx SEG<->DONOR switching). Own output folders, nothing overwritten:
+#   sbatch --export=ALL,SPREAD=1 ...   ->  hmm_spread / introgression_spread
+SPREAD=${SPREAD:-0}
+RUN_TAG=round${ROUND}
+if (( SPREAD == 1 )); then
+  (( ROUND == 0 )) || { echo "SPREAD=1 is for ROUND=0 (assembly levels) only" >&2; exit 1; }
+  D20=${KMER_DIR}/hmm_spread; D21=${KMER_DIR}/introgression_spread; RUN_TAG=spread
+fi
 D20B=${KMER_DIR}/family_levels_fam${ROUND}   # family DONOR levels used in round ROUND (made by 20b)
 KMER_HMM_POOLS_PER_TASK=30          # array size = ceil(pools / this)
 KMER_PLANTS=6                       # plants per pool (SEG pools: donor copies ~ Binomial(2n, 1/2)); comma list if it varies

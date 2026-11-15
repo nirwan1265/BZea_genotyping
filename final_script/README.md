@@ -204,6 +204,7 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
   - λ = the pool's k-mer coverage, from the median share of single-copy k-mers it sees.
 - **σ_w:** the pool's robust SD of r in B73 windows (1.4826 × MAD) × how much the controls disagree in that window relative to a typical window (clipped to 0.5–3×).
 - **Outliers:** every state has a 2% chance that the window is junk (uniform on 0–2).
+- **Option `--d_spread` (`SPREAD=1`, being tested):** our donor plant isn't an assembly plant, so in each window the DONOR level is uncertain by τ_w = how much the taxon's two assemblies disagree there (SD × √1.5, averaged over ±5 windows). DONOR sd = √(σ_w² + (a·τ_w)²); SEG sd = √(σ_w² + ((1 − g)·a·τ_w)²). Mean τ: Zv 0.18, Zx 0.16, Zd 0.06; Zh and Zl have one assembly, so τ = 0. B73 controls get the Zv τ, the widest, as a worst case. See section 5.7.
 
 ### 4.3 Transitions and decoding (unchanged from step 14)
 
@@ -499,6 +500,31 @@ The two assemblies of each taxon disagree on d much more in Zv and Zx (`donor_re
 
 So in a quarter of Zv/Zx windows, two plants of the same taxon differ by more than 0.2 in d. Our lines' donor plant can be just as different from the assembly mean. In those windows the true DONOR level sits where the model expects SEG, or SEG sits where it expects B73, and the call flips. This fits *parviglumis* and *mexicana* being far more diverse than *diploperennis*.
 
+**Fix being tested: widen the DONOR level by the assembly disagreement (`--d_spread`).** The model is told that in windows where the two assemblies disagree, the DONOR level (and so the SEG level) is uncertain. A window a bit above d then no longer looks strongly like SEG, and the HMM stays in DONOR instead of switching. Tested on the 44 batch pools (same code and settings, with and without the option):
+
+| Group (pools) | SEG % | DONOR % | Tracts / pool | SEG↔DONOR switches / pool |
+|---|---|---|---|---|
+| Zv (6) | 7.18 → 6.64 | 7.45 → 8.05 | 26.0 → 16.2 | 15.8 → 6.7 |
+| Zx (5) | 7.29 → 6.64 | 5.04 → 6.09 | 37.2 → 25.4 | 18.4 → 8.0 |
+| Zd (5) | 4.44 → 4.46 | 1.42 → 1.43 | 6.8 → 6.4 | 0.6 → 0.6 |
+| Zh (5), Zl (3) | unchanged | unchanged | unchanged | unchanged |
+| B73 controls (10) | 0.07 → 0.13 | 0.00 → 0.01 | 1.3 → 2.0 | 0 → 0 |
+
+- Zv/Zx switches drop by more than half and tracts by about a third. They are still above Zd (0.6), so some of the problem remains.
+- In Zv/Zx about 0.5 pt of SEG moves to DONOR. Some of that could be real short SEG pieces absorbed into a neighbouring DONOR tract, but it's within the noise of the SEG total.
+- Controls stay clean (largest: PN6_SID576, 0.56% SEG), even with the widest τ.
+- Best ρ stays 1.5.
+- Example: PN16_SID1473 chr4, a DONOR tract broken into 15 pieces, becomes one long DONOR tract with SEG at its start.
+
+**Run on all pools** (own folders `hmm_spread/`, `introgression_spread/`; round 0 is not touched):
+```bash
+N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' ${D11}/pools.tsv | wc -l)
+J=$(sbatch --parsable --export=ALL,SPREAD=1 --array=1-$(( (N + 29) / 30 )) 20_run_kmer_hmm.sh)
+J2=$(sbatch --parsable --export=ALL,SPREAD=1 --dependency=afterok:$J 21_kmer_collect.sh)
+sbatch --export=ALL,SPREAD=1 --dependency=afterok:$J2 22_kmer_stats.sh
+sbatch --export=ALL,SPREAD=1 --dependency=afterok:$J2 23_introgression_viewer.sh
+```
+
 **Per chromosome (round 0, step 22):** AB/(AB+BB) is 31–37% on every chromosome (expected 22%; all p < 0.0002). The BB deficit is genome-wide, not a few regions:
 
 | chr1 | chr2 | chr3 | chr4 | chr5 | chr6 | chr7 | chr8 | chr9 | chr10 |
@@ -528,7 +554,7 @@ So in a quarter of Zv/Zx windows, two plants of the same taxon differ by more th
 1. **DONOR ↔ SEG switching inside tracts (Zv, Zx).** Zv and Zx have ~20 tracts per pool against 7–9 for the other taxa, and four times as many SEG↔DONOR switches.
    - Cause: two assemblies of the same taxon differ by > 0.2 in d in 23–28% of Zv/Zx windows (6.5% in Zd), so the assembly level is often wrong for our lines' donor plant (section 5.7).
    - Tried and failed: BC1 sisters (k-mer depth too noisy), and family levels from the family's own DONOR pools (round 1, too few DONOR pools per window; 0.27% of windows changed).
-   - **Not decided yet:** options are (a) widen the DONOR emission by the between-assembly spread of d in each window, so the model knows d is uncertain there; (b) estimate the family level from the family's SEG windows as well as DONOR windows; (c) report Zv/Zx at the tract level only (introgressed vs not), without splitting SEG and DONOR.
+   - **Being tested:** widen the DONOR level by the between-assembly spread of d (`--d_spread`, `SPREAD=1`). On the 44 batch pools it more than halves the Zv/Zx switches with the controls still clean (section 5.7); next is the run on all pools. Not chosen: family levels from SEG windows too (too complex), and tract-level-only calls for Zv/Zx.
 2. **Noisy plates (PN11, PN13, PN15):** resequence, or keep them flagged.
 3. **Zm (landraces):** skipped. They need a maize-based DONOR level, e.g. from NAM founder assemblies.
 4. **Shortfall in DONOR (4.7% vs 9.4%):** unchanged by round 1 and seen in every taxon, including Zd, where the levels are reliable. Waiting on how the plots were advanced (single BC2S2 plant per plot or a bulk, and any selection during selfing).

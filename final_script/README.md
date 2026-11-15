@@ -59,6 +59,26 @@ k-mers avoid all of this, because no reads are mapped.
 
 ---
 
+### 2.1 Why this solves the "het problem" of conventional genotyping
+
+With SNP genotyping at 0.8x, heterozygotes, and in pools the SEG regions, are where calls go wrong. There are three reasons, and the k-mer approach avoids each one:
+
+| Problem with SNP calls | What happens | How the k-mer approach avoids it |
+|---|---|---|
+| **Too few reads per site** | At 0.8x most SNPs have 0 or 1 read. One read shows one allele, so a het site looks homozygous, and a single error read looks like a het. Every call leans on the HMM and imputation. | No per-site calls. Each 100-kb window adds up ~30,000 k-mers, so its score r is measured precisely from thousands of positions at once. |
+| **Reference bias** | Reads carrying teosinte alleles map worse and are filtered harder (`-C 50`, BAQ, MAPQ). In a known donor tract only ~11% of donor bases survived. ALT alleles are lost first, so **DONOR (BB) shows mixed reads and is called het/SEG, and SEG loses its ALT reads and is called B73**. | No mapping. A pool's reads are counted as k-mers directly, and only the presence of B73 k-mers is checked, so donor reads can't be lost. |
+| **Pools aren't diploid** | A pool's ALT fraction can be anything from 0 to 1 (e.g. 5/12 in a SEG region). Genotype callers built for diploids (0 / ½ / 1) mislabel these mixtures. | The model is built for pools: DONOR = d, SEG = d + (1 − d)·g(f), averaged over the donor fractions a 6-plant family can have (Binomial(12, ½)). |
+
+**Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in a Zd example, DONOR ≈ 0.27 and SEG ≈ 0.69, with B73 = 1. The DONOR level is measured from teosinte genomes, not guessed.
+
+**What we saw in our data:**
+- **SEG matches the expectation:** 6.4% observed vs 6.25% expected (family bootstrap p = 0.26).
+- **Plant-level het matches Mendel:** AB 3.2% vs 3.1%. So the k-mer calls don't inflate het, which is the classic failure.
+- **Fewer broken tracts:** the SNP route broke tracts into many short SEG pieces (44–69% of its SEG tracts were under 1 Mb) and turned DONOR into SEG when its donor-allele model drifted. In two Zd pools it reported 17% donor where the k-mers find 3–7%.
+- **A fair control test:** the B73 controls are clean (≤ 0.15% non-B73). This test is fair because the k-mer route never used the controls to filter sites; the SNP route's control test was circular.
+
+---
+
 ## 3. k-mer pipeline, steps 16–19
 
 **Idea.** Take a 100-kb window of B73. Count how many of its **single-copy** 31-mers (k-mers that occur exactly once in the whole B73 genome) appear in a pool's reads.

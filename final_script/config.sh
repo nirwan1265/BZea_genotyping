@@ -128,6 +128,21 @@ KMER_WINDOW=100000          # window size (bp)
 KMER_POOLS_PER_TASK=4       # pools per array task in step 17
 KMER_KEEP_KMC=0             # 1 = keep each pool's KMC read database (~2-3 GB per pool) in ${KMER_DIR}/kmc
 
+# Teosinte genome assemblies (PanAnd) for the expected DONOR level per window (step 19).
+# Format NAME:TAXON:FASTA. Each is scored like a pool: which B73 single-copy k-mers it has.
+ASM=/rsstu/users/r/rrellan/sara/ref/combined_genome
+DONOR_ASSEMBLIES=(
+  "Zd_Gigi:Zd:${ASM}/diplo/Zd-Gigi-REFERENCE-PanAnd-1.0_rename_chr.fa"
+  "Zd_Momo:Zd:${ASM}/diplo/Zd-Momo-REFERENCE-PanAnd-1.0_rename_chr.fa"
+  "Zh_RIMHU001:Zh:${ASM}/huehuetenagensis/Zh-RIMHU001-REFERENCE-PanAnd-1.0_rename.fa"
+  "Zl_RIL003:Zl:${ASM}/luxurians/Zl-RIL003-REFERENCE-PanAnd-1.0_rename.fa"
+  "Zv_TIL01:Zv:${ASM}/parviglumis/Zv-TIL01-REFERENCE-PanAnd-1.0_rename.fa"
+  "Zv_TIL11:Zv:${ASM}/parviglumis/Zv-TIL11-REFERENCE-PanAnd-1.0_rename.fa"
+  "Zx_TIL18:Zx:${ASM}/mexicana/Zx-TIL18-REFERENCE-PanAnd-1.0_rename.fa"
+  "Zx_TIL25:Zx:${ASM}/mexicana/Zx-TIL25-REFERENCE-PanAnd-1.0_rename.fa"
+)
+D19=${KMER_DIR}/donor_ref                                 # <NAME>.tsv.gz per assembly + B73.tsv.gz
+
 SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_NOTES.md)
 
 die() { echo "ERROR: $*" >&2; exit 1; }

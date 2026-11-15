@@ -93,6 +93,7 @@ No partition is set. If your account needs one, uncomment `##SBATCH --partition=
 | 16 | `16_kmer_b73_unique.sh` | 1 | B73 chr1-10 FASTA; all B73 31-mers; the single-copy ones (`B73_uniq`) | `KMER_DIR` |
 | 17 | `17_kmer_windows.sh` | array | Per pool: KMC count of trimmed reads → keep B73 single-copy k-mers → KCFtools 100-kb windows | `KMER_DIR/windows/` |
 | 18 | `18_kmer_check.sh` | login node | Pools missing output, missing FASTQs, k-mers per pool | `KMER_DIR/kmer_pool_qc.tsv` |
+| 19 | `19_kmer_donor_reference.sh` | 9 | Same windows for B73 itself and 8 teosinte assemblies (PanAnd): expected DONOR level per window and taxon | `KMER_DIR/donor_ref/` |
 
 ## Final outputs (`09_counts_by_chr/`)
 
@@ -339,4 +340,20 @@ bash 18_kmer_check.sh                             # after 17
 - **Temporary disk:** about 25 GB per running pool, in `KMER_DIR/tmp`. `%10` keeps it to about 250 GB.
 - **Read databases:** each pool's is ~2–3 GB and is deleted unless `KMER_KEEP_KMC=1`.
 - **Failures:** a failed pool keeps its temp folder for debugging. The others in the task continue.
+
+**Step 19: expected DONOR level from assemblies.**
+- **How it's measured:** each teosinte assembly is scored exactly like a pool. Per window, d = (B73 single-copy k-mers present in the assembly) / (B73 single-copy k-mers in the window).
+- **What d is:** the level a fixed donor tract of that taxon should give.
+- **Assemblies used (PanAnd):**
+
+  | Taxon | Assemblies |
+  |---|---|
+  | Zd | Gigi, Momo |
+  | Zh | RIMHU001 |
+  | Zl | RIL003 |
+  | Zv | TIL01, TIL11 |
+  | Zx | TIL18, TIL25 |
+
+- **Why:** the HMM then uses a measured DONOR level instead of fitting or capping d.
+- **Not covered:** Zm has no assembly here yet.
 

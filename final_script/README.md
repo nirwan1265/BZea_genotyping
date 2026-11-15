@@ -585,7 +585,7 @@ sbatch --dependency=afterok:$J2 23_introgression_viewer.sh
 1. **DONOR ↔ SEG switching inside tracts (Zv, Zx): reduced, not gone.** Cause: our donor plants differ from the assembly plants; two assemblies of the same taxon differ by > 0.2 in d in 23–28% of Zv/Zx windows (6.5% in Zd).
    - Tried: BC1 sisters (k-mer depth too noisy) and family levels (round 1; 0.27% of windows changed).
    - **Adopted:** DONOR-level uncertainty (`SPREAD=1`). It halves the switching; Zv/Zx still switch about twice as often as the other taxa (section 5.7).
-   - **The real fix:** measure our own donor plants. If tissue or seed of the teosinte donor parents (or the F1s) exists, 10–20x short-read sequencing of each is enough. No assembly is needed: d_w is just the share of the window's B73 k-mers present in that plant's reads.
+   - **The real fix:** measure our own donor plants. If tissue of the teosinte donor parents exists, 10–20x short-read sequencing of each is enough; otherwise a few plants from the same accession's seed lot get much closer than the PanAnd plants. No assembly is needed: d_w is just the share of the window's B73 k-mers present in that plant's reads. F1 or BC1 plants don't work for this, because their B73 copy still carries the k-mers the donor lacks (section 5.7).
 2. **Noisy plates (PN11, PN13, PN15):** resequence, or keep them flagged.
 3. **Zm (landraces):** skipped. They need a maize-based DONOR level, e.g. from NAM founder assemblies.
 4. **Shortfall in DONOR (5.0% vs 9.4%):** seen with every method and in every taxon, including Zd, where the levels are reliable. Waiting on how the plots were advanced (single BC2S2 plant per plot or a bulk, and any selection during selfing).

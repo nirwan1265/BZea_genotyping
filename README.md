@@ -655,13 +655,27 @@ To view it, download the file and open it in a browser. GitHub shows HTML files 
 - Zh and Zl have one assembly each, so the uncertainty can't be measured for them.
 - Zm (landraces) can't be done yet, because it needs a maize-based donor level (e.g. from NAM founder assemblies).
 
+**First check of the short tracts: relatives.** Pools from the same BC2 plant inherited their donor segments from that plant, so a real tract can show up at the same place in them. Noise is random and shouldn't line up. In the pedigree names, the part up to the last P marks the BC2 plant: `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200_P3_P2_P1.2.1.1` and `Zv.0200_P3_P2_P1.3.1.1` all come from BC2 plant `Zv.0200_P3_P2_P1`.
+
+For each tract in a pool, how often does another pool have an introgression at the same place (1,292 non-noisy pools, current method; SEG and DONOR joined):
+
+| The other pool | Short tracts (< 10 Mb) | Long tracts (≥ 10 Mb) |
+|---|---|---|
+| Same taxon, other accession (baseline) | 17.5% | 23.7% |
+| Same accession, other BC2 plant | 17.1–17.4% | 22.6–24.4% |
+| **Same BC2 plant** | **31.4%** | **43.8%** |
+
+- Pools from the same BC2 plant share tracts about 1.8× as often as unrelated pools, and **short tracts show the same increase as long ones**. If the short tracts were noise, they would stay at the baseline. So most of the short tracts RTIGER drops are probably real.
+- Pools of the same accession but another BC2 plant don't share more than the baseline. So the short tracts aren't an artifact of the accession's donor plant differing from the assemblies (that would be shared within an accession).
+- The baseline is well above zero because introgressions are common and cluster in some regions; that's why it's the comparison.
+
 **Future work:**
 1. **Read check, with data we already have.** The SNP route (steps 01–12) counted each pool's B73 and teosinte reads at SNP sites. Those reads come from mapping, which loses many donor reads, but they still show which alleles are present:
    - **B73 regions:** almost only B73 reads.
    - **DONOR regions:** mostly teosinte reads.
    - **SEG regions:** a mix of both, because the pool holds both B73 and teosinte chromosomes.
    - **Short tracts:** if real, they should show teosinte reads like longer tracts of the same state; if noise, they look like the B73 around them.
-2. **Relatives, with data we already have.** Pools from the same BC1 or BC2 plant inherited donor segments from that plant. A real short tract should show up at the same position in related pools more often than in unrelated pools of the same taxon; noise shouldn't line up. This needs the pedigree structure (which part of the name marks the BC1 and BC2 plant).
+2. **BC1 ancestors.** Every real tract in a pool must lie inside a teosinte region of the BC1 plant it descends from. This needs the link between each pool and its sequenced BC1 plant.
 3. **Gold standard: KASP markers on single plants.** A few markers inside short tracts and inside SEG tracts, genotyped on single plants from the same plots:
    - **Short tract:** real if plants carry the teosinte allele there.
    - **SEG tract:** plants should be AA, AB and BB in about 1:2:1.

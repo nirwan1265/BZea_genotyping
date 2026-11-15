@@ -163,7 +163,7 @@ The HMM itself is Nirwan's BC2S3 HMM. `20_kmer_hmm.py` imports these functions u
 | a (per pool) | grid 0.5–1.8; fitted median 0.9–1.0 in every taxon | `--scale_grid` | donor plant ≠ assembly plant |
 | Plants per pool | 6 | `KMER_PLANTS` | sampling design |
 | SEG fractions | k/12, k ~ Binomial(12, ½) | 20 | Mendelian 1:2:1 summed over 6 plants |
-| Prior π (and start) | B73 0.844, SEG 0.0625, DONOR 0.094 | `--prior` | BC2S3 expectation (top-level README) |
+| Prior π (and start) | B73 0.844, SEG 0.0625, DONOR 0.094 | `--prior` | expected state of a BC2S3 **family** = genotype of its BC2S2 parent (section 5.1) |
 | ρ | grid 0.25–8; fitted **1.5** | `--rho_grid`, step 21 | maximum likelihood over all pools |
 | R | none (R = 1) | — | R = 3 changed nothing |
 | NOISY flag | σ > 0.15 | `KMER_NOISY_SIGMA` | left out of the ρ fit and the means |
@@ -185,13 +185,26 @@ The HMM itself is Nirwan's BC2S3 HMM. `20_kmer_hmm.py` imports these functions u
 
 1,385 donor pools (Zm skipped) and 10 B73 controls. Run of 15 Nov 2026.
 
-### 5.1 Expected for BC2S3
+### 5.1 Expected for BC2S3: one plant vs one pool
 
-A BC2 carries 12.5% donor, all heterozygous. After 3 rounds of selfing, a pool from one BC2S3 family is expected to be:
+Both views give the same **12.5% donor alleles**. They differ in how that 12.5% is split, because a pool is a whole family, not one plant.
 
-| | B73 | SEG | DONOR | Donor share (DONOR + ½ SEG) |
-|---|---|---|---|---|
-| Expected | 84.4% | 6.25% | 9.4% | **12.5%** |
+**One BC2S3 plant** (top-level README). At BC2, 25% of the genome is het. Three rounds of selfing leave 1/8 of that het:
+
+| B73/B73 | het | donor/donor | donor alleles |
+|---|---|---|---|
+| 85.94% | 3.13% | 10.94% | 10.94 + ½ × 3.13 = **12.5%** |
+
+**One pool (6 plants of one BC2S3 family)**, which is what we sequence. A plot is the S3 progeny of one BC2S2 plant, so a region's state in the pool is that parent's genotype. After two selfs, 1/4 of the BC2 het regions are still het:
+
+| Pool state | Parent (BC2S2) genotype | Expected | Plants in the pool |
+|---|---|---|---|
+| B73 | B73/B73 | 75% + 25% × 3/8 = **84.4%** | all AA |
+| SEG | het | 25% × 1/4 = **6.25%** | mix of AA, AB, BB (1:2:1); pool is ~50% donor |
+| DONOR | donor/donor | 25% × 3/8 = **9.4%** | all BB |
+| donor alleles | | 9.4 + ½ × 6.25 = **12.5%** | |
+
+So **SEG is not "het"**: a SEG region holds about 25% AA, 50% AB and 25% BB plants. The plant-level het fraction (3.13%) is the AB plants inside SEG regions: 6.25% × ½. Plant-level TT (10.94%) = DONOR (9.4%) + the BB plants inside SEG regions (6.25% × ¼). Our HMM calls pool states, so it's compared with the pool table.
 
 ### 5.2 Non-noisy pools (σ ≤ 0.15): the main results
 

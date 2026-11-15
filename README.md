@@ -356,10 +356,8 @@ k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come fro
    - B73 gives **r ≈ 1**, DONOR **r ≈ d**, and SEG falls between them.
    - d is the share of B73 k-mers a donor genome keeps. It's measured per window from teosinte genome assemblies (PanAnd-1.0 from MaizeGDB, step 19): Zd and Zl ≈ 0.26, Zh 0.34, Zx 0.37, Zv 0.43.
    - SEG: k-mers the donor lacks come only from the B73 plants in the pool. For 6 plants, the pool's donor fraction follows Binomial(12, ½).
-4. **HMM along each chromosome (steps 20–21).** The same three-state HMM as before. Transitions follow the NAM genetic map (Haldane), forward–backward gives each window's most likely state, and adjacent windows in the same state become tracts.
-   - **ρ:** the switch rate is fitted by maximum likelihood over all pools, giving **1.5**. It plays the role of the number of generations in local-ancestry HMMs.
-   - **Rigidity:** none is used. With ρ fitted, a rigidity of 3 windows changed no pool.
-5. **Family DONOR levels (step 20b, rounds).** All pools of a BC1 family carry the same teosinte haplotype. So a family's real DONOR level is measured from its other pools that are DONOR in each window (leave-one-out), and the HMM is rerun. This fixes SEG/DONOR switching where a family's donor plant differs from the assembly plants (mainly Zv and Zx).
+4. **HMM along each chromosome (steps 20–21).** The windows' r values are read along each chromosome by a three-state hidden Markov model (B73 / SEG / DONOR). It uses the NAM genetic map, so a state change costs more where recombination is rare. Adjacent windows in the same state become tracts. **The model is explained step by step in [The HMM in detail](#the-hmm-in-detail) below.**
+5. **Family DONOR levels (step 20b, rounds).** All pools of a BC1 family carry the same teosinte haplotype. So a family's real DONOR level is measured from its other pools that are DONOR in each window (leave-one-out), and the HMM is rerun. In practice it changed only 0.27% of windows (round 1): a family has only 1–2 other DONOR pools per window, too few to move the level away from the assembly value.
 6. **Tests (step 22).** Observed vs expected BC2S3 proportions, with a bootstrap over families. Pools of one family share segments, so the family is the unit.
 
 ### How r is calculated: a worked example
@@ -391,6 +389,87 @@ So r(SEG) = 0.27 × 1.0 + 0.73 × 0.57 ≈ **0.69**.
 In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at the pool's B73 share of the reads ÷ how often at full depth. g comes from the standard coverage formula: the chance that a k-mer is seen at coverage c is 1 − e^(−c). The HMM doesn't assume exactly half donor. It averages over the possible donor fractions of a 6-plant pool (1/12 to 11/12), weighted by Binomial(12, ½), the 1:2:1 segregation summed over 6 plants.
 
 **Then the HMM** compares each window's r with these three expected levels (B73 ≈ 1, SEG ≈ 0.6–0.7, DONOR ≈ d). It allows for each pool's noise and takes neighbouring windows into account, using the genetic map, to call the most likely state.
+
+### The HMM in detail
+
+A hidden Markov model (HMM) is used because we can't see a pool's true state directly. We only see a noisy score r in each window. But we know two things that help:
+- each state gives r values in a typical range, and
+- the state rarely changes from one window to the next, because introgressed segments are long, several Mb.
+
+The HMM combines both to find the most likely series of states along each chromosome. This is the same three-state structure as the earlier SNP HMM (`14_hmm_pooled.py`); only the observation changed, from SNP reads to k-mer scores.
+
+**The four parts of the model:**
+
+| Part | What it is here |
+|---|---|
+| **Positions** | The 100-kb windows along one chromosome, in order. Each chromosome is run separately. Windows with fewer than 2,000 single-copy B73 k-mers, or where the B73 controls themselves see very few k-mers (repeats, gaps), are skipped. |
+| **Hidden states** | The pool's state in the window: **B73** (all 6 plants AA), **SEG** (the family segregates: each plant AA, AB or BB), **DONOR** (all 6 plants BB). |
+| **Observation** | r, the k-mer score of the window (≈ 1 for B73, ≈ d for DONOR, in between for SEG; see the worked example above). |
+| **Emission** | For each state: how likely the observed r is if the pool really is in that state. |
+| **Transition** | The chance that the state changes between one window and the next. |
+| **Start / prior** | The share of the genome expected in each state: B73 84.4%, SEG 6.25%, DONOR 9.4% (BC2S3 expectation). |
+
+#### Emissions: how well does r fit each state?
+
+Each state expects r near a certain value, with some spread (noise). The spread σ_w is measured, not assumed:
+- **Pool noise σ:** how much r scatters around 1 in the pool's B73 windows (robust SD, 1.4826 × MAD). Good pools have σ ≈ 0.08–0.10. Pools with σ > 0.15 are flagged **NOISY**, which mostly means low depth.
+- **Window factor:** windows where the 10 B73 controls disagree with each other are noisier in every pool, so σ_w = σ × (control spread in this window ÷ typical control spread), limited to 0.5–3.
+
+| State | Expected r | Emission (probability of r) |
+|---|---|---|
+| **B73** | 1 | Normal(1, σ_w) |
+| **DONOR** | a × d_w | Normal(a·d_w, σ_w) |
+| **SEG** | between d_w and 1 | average of Normal(a·d_w + (1 − a·d_w)·g(k/12), σ_w) over k = 1…11 donor copies, weighted by Binomial(12, ½) |
+
+What the terms mean:
+- **d_w:** the share of the window's B73 k-mers that the donor genome keeps, measured from the teosinte assemblies (step 19). Each window has its own value.
+- **a:** one scale factor per pool (0.5–1.8, chosen by best fit). It absorbs small differences between our donor plant and the assembly plants that apply genome-wide.
+- **k/12:** the donor fraction of a SEG pool. 6 plants carry 12 chromosome copies. A SEG family segregates 1:2:1, so the number of donor copies k follows Binomial(12, ½). The model averages over all k instead of assuming exactly half (see [What SEG means](#what-a-sample-is)).
+- **g(f):** how much of the B73-only k-mers a pool still sees when only a share (1 − f) of its chromosomes are B73. From the coverage formula: g(f) = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)), where λ is the pool's k-mer coverage, measured from the share of B73 k-mers it sees in B73 windows.
+- **Outliers:** each state also has a 2% chance that the window is junk (r anywhere from 0 to 2). One odd window then can't give overwhelming evidence for any state.
+
+**Example: one Zd window** (d = 0.27, σ = 0.09, a typical pool). For a given r, this is how well each state fits on its own, before neighbouring windows are considered:
+
+| r | B73 | SEG | DONOR | Reading |
+|---|---|---|---|---|
+| 0.27 | 0% | 1% | **99%** | clearly DONOR |
+| 0.45 | 1% | 53% | 46% | between SEG and DONOR: the neighbours decide |
+| 0.69 | 1% | **99%** | 0% | clearly SEG (about half the plants' chromosomes donor) |
+| 0.85 | 43% | 56% | 0% | B73 or SEG with few donor copies: the neighbours decide |
+| 1.00 | **96%** | 4% | 0% | clearly B73 |
+
+SEG covers a wide range (here 0.35–0.95) because a 6-plant pool can carry from 1 to 11 donor copies.
+
+#### Transitions: how often can the state change?
+
+Between two neighbouring windows, the chance of a state change is **s = ρ × θ**:
+- **θ** is the recombination fraction between the two window centres, from the NAM genetic map (Haldane: θ = ½(1 − e^(−2·Morgans))). On average a 100-kb step is 0.075 cM, but it's near 0 around centromeres and higher near chromosome ends.
+- **ρ** scales it. Our lines went through several meioses (BC1, BC2, three selfings), so segment ends are more frequent than one meiosis would give. ρ is not guessed: every pool is run with ρ = 0.25, 0.5, 1, 1.5, 2, 3, 4 and 8, and the value with the highest total likelihood over all non-noisy donor pools is used. That is **ρ = 1.5**.
+- **Where to:** if the state changes, it moves to one of the other two states in proportion to their prior (e.g. from B73, more often to DONOR (9.4%) than to SEG (6.25%)).
+
+With ρ = 1.5, the chance of a change is about **0.1% per window** on average. The model stays in the same state unless several windows in a row clearly fit another state. I checked this with the model itself, on a Zd DONOR tract at average recombination. A SEG piece inside it is called only when about **4 windows in a row (400 kb)** clearly look SEG (r = 0.69); less clear windows (r = 0.55) need 6. One noisy window can't break a tract, because the 2% outlier term caps its evidence.
+
+#### Calling the states
+
+- **Forward–backward** computes, for every window, the probability of each state given the whole chromosome. The window gets the state with the highest probability.
+- **Tracts:** adjacent windows with the same state are joined. Skipped windows take the state before them.
+- **No extra smoothing:** an earlier "rigidity" rule (require R windows in a row before switching) was tested and changed no pool once ρ was fitted, so it's not used.
+- **Plant genotypes** follow from the pool states: AA = B73 + SEG/4, AB = SEG/2, BB = DONOR + SEG/4.
+
+#### What is fitted, and where
+
+| Quantity | Fitted per | How | Code |
+|---|---|---|---|
+| r (k-mer score) | pool × window | pool count ÷ fit of the B73 controls | `20_kmer_hmm.py` |
+| σ (noise) | pool, then × window factor | robust SD of r in B73 windows; control spread | `20_kmer_hmm.py` |
+| λ (k-mer coverage) | pool | share of B73 k-mers seen | `20_kmer_hmm.py` |
+| d_w (DONOR level) | taxon × window | teosinte assemblies | `19_kmer_donor_reference.sh` |
+| a (scale on d) | pool | best likelihood over 0.5–1.8 | `20_kmer_hmm.py` |
+| ρ (switch rate) | whole data set | best total likelihood | `21_kmer_collect.py` |
+| Prior | fixed | BC2S3 expectation | `config.sh` |
+| Plants per pool | fixed | 6 | `config.sh` (`KMER_PLANTS`) |
+
+**Being tested (`--d_spread`):** in Zv and Zx the two assemblies of the same taxon often disagree on d_w, so our donor plant's level is uncertain there. This option widens the DONOR and SEG spread by that disagreement. On 44 test pools it more than halved the SEG↔DONOR switching in Zv/Zx, with the controls still clean. The run on all pools is in progress (details in [`final_script/README.md`](final_script/README.md), section 5.7).
 
 ### How k-mers fix each problem
 
@@ -430,7 +509,36 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 - **Homozygous donor is about half the expectation** (BB 6.2% vs 10.9%; p < 0.0002 in every taxon). That loss is the whole shortfall in donor alleles (7.8% vs 12.5%).
 - **The remaining donor is mostly het:** 34% of donor-carrying plants are AB, against 22% expected. This holds on every chromosome (31–37%).
 - **Interpretation:** this fits selection against plants homozygous for teosinte segments during selfing, consistent with the excess heterozygosity reported in TeoNAM and in our lab's earlier lines.
-- **Noisy pools:** 93 pools are flagged NOISY because of low depth, mostly plates PN11, PN13 and PN15, which we recommend resequencing.
+
+### Noisy pools and resequencing
+
+93 of the 1,385 donor pools are flagged **NOISY** (σ > 0.15). They are left out of the results above. Almost all of them are on three plates with low sequencing depth:
+
+| Plate | Pools | NOISY | Median σ | Mean single-copy k-mers per pool | NOISY by taxon |
+|---|---|---|---|---|---|
+| PN2 | 3 | 0 | 0.118 | 189 M | — (rest of PN2 is Zm, skipped) |
+| PN3 | 87 | 3 | 0.089 | 192 M | Zx 3 |
+| PN4 | 93 | 0 | 0.081 | 211 M | — |
+| PN5 | 92 | 0 | 0.097 | 170 M | — |
+| PN6 | 94 | 2 | 0.112 | 145 M | Zx 1, Zd 1 |
+| PN7 | 91 | 0 | 0.081 | 213 M | — |
+| PN8 | 92 | 0 | 0.087 | 199 M | — |
+| PN9 | 95 | 2 | 0.112 | 162 M | Zl 2 |
+| PN10 | 94 | 0 | 0.086 | 245 M | — |
+| **PN11** | **93** | **34** | **0.130** | **150 M** | **Zl 18, Zv 16** |
+| PN12 | 95 | 4 | 0.095 | 211 M | Zv 4 |
+| **PN13** | **88** | **23** | **0.140** | **115 M** | **Zd 18, Zv 5** |
+| PN14 | 94 | 1 | 0.090 | 207 M | Zd 1 |
+| **PN15** | **93** | **24** | **0.138** | **109 M** | **Zv 22, Zd 2** |
+| PN16 | 95 | 0 | 0.084 | 214 M | — |
+| PN17 | 96 | 0 | 0.082 | 217 M | — |
+
+**Recommendation: resequence PN11, PN13 and PN15.**
+- **Depth:** PN13 and PN15 have about half the k-mers of a typical plate (109–115 M vs ~200 M), and PN11 about 75%. On PN11, 37% of pools are NOISY.
+- **Taxa:** the noisy pools are concentrated in a few taxa, so leaving them out takes a large bite out of those taxa:
+  - Zl: 18 of its 20 noisy pools are on PN11.
+  - Zd: 18 of 22 are on PN13.
+  - Zv: 43 of 47 are on PN11, PN13 and PN15.
 
 The full statistics, per-plate table and family results are in [`final_script/README.md`](final_script/README.md).
 

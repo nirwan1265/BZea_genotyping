@@ -121,6 +121,8 @@ Zv shares the most single-copy k-mers with B73, and Zd and Zl the fewest, which 
 
 ## 4. The HMM, steps 20–21: model and every parameter
 
+A plain-language walk-through (states, emissions, transitions, worked examples, what is fitted where) is in the top-level README: [The HMM in detail](../README.md#the-hmm-in-detail). This section has the technical details.
+
 **Code:**
 - `22_kmer_stats.py` (step 22): observed vs expected tests, run by `22_kmer_stats.sh`.
 - `23_introgression_viewer.py` (step 23): interactive HTML figures, run by `23_introgression_viewer.sh`.

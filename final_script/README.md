@@ -90,6 +90,9 @@ No partition is set. If your account needs one, uncomment `##SBATCH --partition=
 | 13c | `13c_family_donor_alleles.sh` | 10 | Donor allele probability (PALT) per BC1 family from the sister-based `union/<chr>.donor_alleles.vcf.gz` | `13c_family_donor/<FAMILY>/` |
 | 14b | `14b_run_hmm_family.sh` + `14_hmm_pooled.py` | 143 | Same HMM, with `c` = the family's PALT where known | `14b_hmm_family/` |
 | 15b | `15b_collect_hmm_family.sh` + `15_collect_hmm.R` | 1 | Collects 14b; flags pools whose family run disagrees with step 15 | `15b_introgression/` |
+| 16 | `16_kmer_b73_unique.sh` | 1 | B73 chr1-10 FASTA; all B73 31-mers; the single-copy ones (`B73_uniq`) | `KMER_DIR` |
+| 17 | `17_kmer_windows.sh` | array | Per pool: KMC count of trimmed reads → keep B73 single-copy k-mers → KCFtools 100-kb windows | `KMER_DIR/windows/` |
+| 18 | `18_kmer_check.sh` | login node | Pools missing output, missing FASTQs, k-mers per pool | `KMER_DIR/kmer_pool_qc.tsv` |
 
 ## Final outputs (`09_counts_by_chr/`)
 
@@ -293,3 +296,47 @@ Same HMM and same settings as 14. The one change is `c`, the chance the donor ca
 | Zx | 2 (family) | 29.4k | 99.8% | 99.9% | 99.1% | 99.9% | 0.0005 |
 
 The family information helps most where the panel represents the donor poorly (Zd), mostly for SEG calls. For Zx the two versions are the same. Version 2 takes about 1.5× as long per pool, because it has more markers.
+
+## Steps 16–18: k-mer windows (alignment-free)
+
+**Why.** Donor reads map poorly to B73. In a Zd DONOR tract only ~34% of the expected reads mapped at all, and `-C 50` + BAQ removed another ~60% of the donor bases that did (vs ~12% in B73 regions). ALT reads are removed preferentially, so DONOR looks like SEG and SEG looks like B73. k-mers skip mapping.
+
+**How.**
+1. For each pool, KMC counts its 31-mers from the trimmed reads (`-ci1`, because at 0.8x most k-mers are seen once).
+2. It keeps only k-mers that occur exactly once in the B73 genome. Repeats are in every pool and hide the signal.
+3. KCFtools counts, per 100-kb window, how many of the window's B73 k-mers the pool has.
+4. Where the pool carries donor DNA, B73 k-mers are missing, so the count drops.
+
+**Test results** (44 pools: 10 B73 controls and 34 donor pools from all 6 taxa). Score = observed count / B73 controls:
+
+| State | Score |
+|---|---|
+| B73 | ≈ 1.0 |
+| SEG | ≈ 0.6 |
+| DONOR | ≈ 0.2 (Zd) |
+
+- **Controls:** a prototype HMM on these windows called all 10 B73 controls clean, 0–0.07% non-B73 (each control left out of its own reference).
+- **Agreement with the SNP HMM:** donor share within ~1.5 points for 24 of 34 donor pools.
+- **Where they differ:** the SNP HMM fails in specific pools:
+  - DONOR called as SEG in divergent Zl
+  - κ collapsing to 0.1–0.2 in two Zd pools
+  - Zm
+- **Noisy pools:** two Zl pools with few k-mers were too noisy to trust.
+
+The HMM on k-mer windows is not in the repo yet.
+
+**Run** (k-mer conda env active; jobs inherit it):
+```
+sbatch 16_kmer_b73_unique.sh                      # once (skips what exists)
+N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' <D11>/pools.tsv | wc -l)
+sbatch --array=1-$(( (N + 3) / 4 ))%10 17_kmer_windows.sh
+bash 18_kmer_check.sh                             # after 17
+```
+
+**Notes.**
+- **Pools done twice:** finished pools are skipped, and test-batch outputs (`KMER_DIR/batch`) are reused.
+- **Format conversion:** KCFtools reads only KMC2-format databases, and `kmc_tools` writes KMC1. So the kept k-mers are dumped and re-counted with `kmc`.
+- **Temporary disk:** about 25 GB per running pool, in `KMER_DIR/tmp`. `%10` keeps it to about 250 GB.
+- **Read databases:** each pool's is ~2–3 GB and is deleted unless `KMER_KEEP_KMC=1`.
+- **Failures:** a failed pool keeps its temp folder for debugging. The others in the task continue.
+

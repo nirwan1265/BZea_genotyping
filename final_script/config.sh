@@ -115,6 +115,19 @@ donor_alleles() { echo "${DONOR_ALLELES_DIR}/${1}.donor_alleles.vcf.gz"; }
 # helpers (no edits needed below)
 # =============================================================================
 FINAL_DIR="${SLURM_SUBMIT_DIR:-$PWD}"
+# ---------- 16-18: k-mer windows (alignment-free introgression signal) ----------
+# For each pool: count 31-mers in its trimmed reads (KMC), keep the ones that occur once
+# in the whole B73 genome, and count how many of each 100-kb window's B73 k-mers the pool
+# has (KCFtools). Donor DNA lacks many B73 k-mers, so the count drops in introgressions.
+# Run with the k-mer conda env active (kmc, kmc_tools, kcftools, samtools); jobs inherit it.
+KMER_DIR=/share/maize/ntanduk/kmer                        # B73 k-mer databases, per-pool outputs
+FASTQ_DIR=/rsstu/users/r/rrellan/sara/BZea/filtered_S     # filtered_S<plate>/<SAMPLE>/<SAMPLE>_paired_R1/R2.fq.gz
+D16=${KMER_DIR}/windows                                   # per-pool window tables: <SAMPLE>.tsv.gz
+KMER_K=31
+KMER_WINDOW=100000          # window size (bp)
+KMER_POOLS_PER_TASK=4       # pools per array task in step 17
+KMER_KEEP_KMC=0             # 1 = keep each pool's KMC read database (~2-3 GB per pool) in ${KMER_DIR}/kmc
+
 SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_NOTES.md)
 
 die() { echo "ERROR: $*" >&2; exit 1; }

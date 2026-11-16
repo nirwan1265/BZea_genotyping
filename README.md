@@ -1098,7 +1098,7 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold).
 
 ![BL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BL.png)
 
-6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08). **Q1 chr2 39.8 Mb** (−1.84 cm of blade length per teosinte copy, joint −log10 p 11.6) dominates; *FT-INTERACTING PROTEIN 1* (Zm00001eb079900) is in its interval. **Q6 chr7 185.2 Mb** (−1.2; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630; the same region as EH Q9), Q4 chr4 197.1 Mb (−1.25; the PH/EH/SL chr4 region) and Q2 chr3 184.4 Mb (+0.96; *liguleless2*, Zm00001eb147220). Q3 chr3 203.2 Mb holds *ZCN12* (Zm00001eb153190) and *CCD8* (Zm00001eb153000) but does not hold in the joint model.
+6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08). **Q1 chr2 39.8 Mb** (−1.84 per teosinte copy, joint −log10 p 11.6) dominates; *FT-INTERACTING PROTEIN 1* (Zm00001eb079900) is in its interval. **Q6 chr7 185.2 Mb** (−1.2; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630; the same region as EH Q9), Q4 chr4 197.1 Mb (−1.25; the PH/EH/SL chr4 region) and Q2 chr3 184.4 Mb (+0.96; *liguleless2*, Zm00001eb147220). Q3 chr3 203.2 Mb holds *ZCN12* (Zm00001eb153190) and *CCD8* (Zm00001eb153000) but does not hold in the joint model.
 
 <details><summary>All BL QTL with per-taxon effects and known genes in the interval</summary>
 

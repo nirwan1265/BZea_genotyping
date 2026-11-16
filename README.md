@@ -601,6 +601,8 @@ For each tract in a pool, how often does another pool have an introgression at t
 4. **Donor plants.** If seed or tissue of the donor parents (or of the same accessions) can be found, 10–20x short-read sequencing gives their own d_w directly. No assembly is needed.
 5. **Noisy plates.** Resequence PN11, PN13 and PN15.
 
+---
+
 ## Section 3 — k-mer ancestry GWAS and joint QTL mapping
 
 We ran **two analyses** on the same genotypes (k-mer teosinte ancestry per 100-kb window, Section 2) and the same phenotypes (two-year SpATS BLUEs):
@@ -1091,6 +1093,8 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - **Replication:** peaks should be checked in each year separately and within taxon.
 - **Small taxa:** *luxurians* (Zl) and *huehuetenangensis* (Zh) have 5–25 carrier plots at most QTL, so their per-taxon effects have wide CIs. The large *luxurians*-specific effects (DTS/DTA chr1, chr5) should be checked against how many accessions and F1 families the carriers come from.
 - **Thresholds** come from 100 permutations; QTL close to the line (e.g. DTS Q1, Q2) should be confirmed with 1,000.
+
+---
 
 ## Section 4 — References
 

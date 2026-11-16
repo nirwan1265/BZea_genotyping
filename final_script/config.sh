@@ -172,6 +172,17 @@ KMER_NOISY_SIGMA=0.15               # pools with sigma above this are flagged NO
 
 SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_NOTES.md)
 
+# ---- Association mapping (steps 25-26) ----
+PHENO=${FINAL_DIR}/../data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv   # plot name, traits, Sequencing_ID
+TRAITS="DTS DTA"                    # trait columns in PHENO
+D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
+D26=${D21}/assoc_gridlmm            # step-26 scans, permutations, Manhattan plots
+ASSOC_MIN_CARRIERS=20               # test only windows where at least this many plots carry donor
+ASSOC_PERM_TASKS=50                 # permutation array tasks per trait
+ASSOC_PERM_PER_TASK=20              # permutations per task (50 x 20 = 1,000)
+# R needs GridLMM (github.com/deruncie/GridLMM), data.table and ggplot2. If R lives in another env, put it on PATH:
+# export PATH=/path/to/r_env/bin:$PATH
+
 die() { echo "ERROR: $*" >&2; exit 1; }
 
 chr_len() {

@@ -35,6 +35,11 @@ J2=$(sbatch --parsable --dependency=afterok:$J 21_kmer_collect.sh)   # pick rho,
 J3=$(sbatch --parsable --dependency=afterok:$J2 22_kmer_stats.sh)
 sbatch --dependency=afterok:$J2 23_introgression_viewer.sh       # interactive HTML figures (drop-downs by family)
 sbatch --dependency=afterok:$J3 24_kmer_figures.sh              # result figures (PNG): observed vs expected
+# ---- association mapping (section 10) ----
+J4=$(sbatch --parsable --dependency=afterok:$J2 25_assoc_inputs.sh)   # dosage, SEG indicator, LOCO K, pheno
+sbatch --dependency=afterok:$J4 26_assoc_scan.sh                       # GridLMM additive + dominance scans
+sbatch --dependency=afterok:$J4 --array=1-50 26_assoc_perm.sh          # 1,000 permutations per trait
+bash 26_assoc_summary.sh                                               # after both: threshold, top windows, plots
 ```
 
 Steps 01–15 are in [section 8](#8-snp-route-steps-0115-cross-check).
@@ -592,7 +597,53 @@ sbatch --dependency=afterok:$J2 23_introgression_viewer.sh
    - **The real fix:** measure our own donor plants. If tissue of the teosinte donor parents exists, 10–20x short-read sequencing of each is enough; otherwise a few plants from the same accession's seed lot get much closer than the PanAnd plants. No assembly is needed: d_w is just the share of the window's B73 k-mers present in that plant's reads. F1 or BC1 plants don't work for this, because their B73 copy still carries the k-mers the donor lacks (section 5.7).
 2. **Noisy plates (PN11, PN13, PN15):** resequence, or keep them flagged.
 3. **Zm (landraces):** skipped. They need a maize-based DONOR level, e.g. from NAM founder assemblies.
-4. **Shortfall in DONOR (5.0% vs 9.4%):** seen with every method and in every taxon, including Zd, where the levels are reliable. Waiting on how the plots were advanced (single BC2S2 plant per plot or a bulk, and any selection during selfing).
+4. **Shortfall in DONOR (5.0% vs 9.4%):** seen with every method and in every taxon, including Zd, where the levels are reliable. Each plot is one BC2S2 mother, and one plant was selected at every selfing step (PI), so selection against homozygous teosinte is the likely cause.
+5. **Association mapping (section 10):** run the 1,000 permutations on the cluster; check the chr10 peak against ZmCCT10's B73 v5 position; repeat with the low-depth plates after resequencing.
+
+---
+
+## 10. Association mapping, steps 25–26
+
+The introgression calls are the genotypes. Every plot (pool) gets, in every 100-kb window, the expected number of teosinte allele copies per plant: **0 (B73), 1 (SEG), 2 (DONOR)**. A SEG plot holds ¼ AA, ½ AB and ¼ BB plants, so on average 1 copy. The phenotype is the plot mean, so this is the right additive predictor.
+
+**Inputs (step 25, `25_assoc_inputs.py`):**
+- **Plots:** donor pools with a phenotype, low-depth (NOISY) pools dropped. Flowering time (DTS, DTA; spatially corrected BLUEs, `data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv`): 906 plots, 887 with k-mer calls, **829 used** (58 low-depth dropped). Zd 155, Zl 63, Zv 224, Zx 387; Zh has no phenotypes.
+- **IDs:** the phenotype file's `Sequencing_ID` links each plot name to its pool.
+- **Windows:** 21,309 of 21,330 have at least 20 plots carrying donor (`ASSOC_MIN_CARRIERS`); the median window has 88.
+- **LOCO kinship:** for each chromosome, K = Z Z′ / p from the dosage of all windows on the *other* chromosomes (Z centred), scaled to mean diagonal 1. In BC2S3 lines on a B73 background, relatedness is mostly shared donor segments, which this captures, and the IDs match the genotypes by construction. (The earlier K from Beagle-imputed ANGSD SNPs is replaced.)
+
+**Model (step 26, `26_assoc_gridlmm.R`, from `scripts/Analyze_QTL_Founder2.R`):** GridLMM, ML, one chromosome at a time with its LOCO K.
+- **Additive:** y ~ taxon + (1|plot, K) + b·dosage; LRT for b (1 df). b = days per teosinte copy.
+- **Dominance:** adds c·SEG (1 if the plot is SEG); LRT for c. Plot means: B73 = 0, DONOR = 2a, SEG = ¼·0 + ½(a + d) + ¼·2a = a + d/2, so **c = d/2**. c > 0: the teosinte allele is (partly) dominant; c < 0: (partly) recessive.
+- **Taxon** is a fixed effect. (In the old script, "Family" = `sub("\\..*$", "", Line)` was already the taxon.)
+- **Threshold:** phenotypes are shuffled within taxon, the scan rerun, and the genome-wide largest −log10 p kept; the 95th percentile over 1,000 permutations is the 5% genome-wide threshold. About 20 s per permutation on 2 cores: 50 array tasks × 20 permutations ≈ 10 min each. Neighbouring windows are nearly identical, so a Bonferroni over 21,309 windows (−log10 p = 5.63) is far too strict.
+
+**First results (15 Nov 2026; threshold from only 25 permutations, −log10 p ≈ 3.8; rerun with 1,000):**
+
+| Trait | Window (peak) | Plots with donor (SEG / DONOR) | Effect per teosinte copy | −log10 p | Dominance c, −log10 p |
+|---|---|---|---|---|---|
+| DTS | chr10: ~98.2 Mb | 76 (44 / 32) | **+0.99 days** | **8.2** | −0.25, 0.3 |
+| DTS | chr9: ~1.0 Mb | 108 (62 / 46) | −0.73 days | 6.5 | +0.27, 0.4 |
+| DTS | chr7: ~142.2 Mb | 95 (54 / 41) | −0.75 days | 6.0 | +0.13, 0.2 |
+| DTS | chr3: ~202.6 Mb | 94 (51 / 43) | +0.62 days | 4.4 | −0.33, 0.5 |
+| DTA | chr10: ~98.2 Mb | 76 (44 / 32) | **+0.97 days** | **8.9** | −0.34, 0.5 |
+| DTA | chr9: ~4.4 Mb | 126 (76 / 50) | −0.57 days | 5.1 | +0.18, 0.3 |
+| DTA | chr2: ~227.9 Mb | 109 (56 / 53) | +0.54 days | 4.6 | +0.25, 0.4 |
+| DTA | chr8: ~128.8 Mb | 88 (59 / 29) | +0.65 days | 4.5 | −0.73, 1.7 |
+
+- **chr10 is the strongest signal for both traits:** teosinte alleles delay flowering by about a day per copy. ZmCCT10, the classic teosinte photoperiod gene (teosinte alleles delay flowering), is on chr10 near this region; its exact B73 v5 position still has to be checked against the peak.
+- **No dominance signal:** the dominance scan peaks at −log10 p ≈ 4 (chr1), with no permutation threshold of its own yet.
+- **Plots:**
+
+![DTS additive](figures/assoc_spread/manhattan_DTS_add.png)
+
+![DTA additive](figures/assoc_spread/manhattan_DTA_add.png)
+
+Dominance scans: `figures/assoc_spread/manhattan_DTS_dom.png`, `manhattan_DTA_dom.png`.
+
+**Outputs** (`${D21}/assoc`, `${D21}/assoc_gridlmm`): `geno_dosage.csv`, `geno_seg.csv`, `window_map.tsv`, `pheno.csv`, `K_matrix_chr*.txt`; `scan_<TRAIT>.tsv` (per window: carriers, `beta_add`, `p_add`, `h2`, `c_dom`, `p_dom`), `perm_<TRAIT>_seed<N>.tsv`, `manhattan_<TRAIT>_{add,dom}.png`.
+
+**Requirements:** R with GridLMM (`github.com/deruncie/GridLMM`), data.table, ggplot2.
 
 ---
 

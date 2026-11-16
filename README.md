@@ -32,7 +32,7 @@ B73 was crossed with teosinte, backcrossed twice to B73 and then selfed three ti
 - **A** = the B73 allele, **B** = the teosinte (donor) allele
 - **AA** = homozygous B73, **AB** = heterozygous, **BB** = homozygous teosinte
 
-**Assumptions:** B73 is AA, the teosinte donor contributes one B allele to the F1, and there is no selection or segregation distortion. (In practice one plant was selected at each selfing step, so a departure from these numbers can point to selection; see [Results](#results).) These are the same for every donor taxon: Zd (*diploperennis*), Zh (*huehuetenangensis*), Zl (*luxurians*), Zv (*parviglumis*) and Zx (*mexicana*).
+**Assumptions:** B73 is AA, the teosinte donor contributes one B allele to the F1, and there is no selection or segregation distortion. (In practice one plant was selected at each selfing step, so a departure from these numbers can point to selection; see [Results](#28-results).) These are the same for every donor taxon: Zd (*diploperennis*), Zh (*huehuetenangensis*), Zl (*luxurians*), Zv (*parviglumis*) and Zx (*mexicana*).
 
 ### Step 1 — Two backcrosses (BC2)
 
@@ -89,7 +89,7 @@ So the HMM's pool states are compared with Step 4, and converted to plant genoty
 
 - **Het is small:** only 3.1% of a plant's genome is expected to be AB. At 0.8x, single-site het calls are unreliable anyway, so we call pool states over 100-kb windows instead of genotypes at sites.
 - **Most donor should be fixed:** of the 12.5% donor alleles, most should sit in DONOR regions (9.4%), where all 6 plants are BB. SEG regions (6.25%) hold the rest, as a 1:2:1 mix of plants.
-- **What we found:** het matches the expectation (SEG 6.23%, AB 3.12%), but DONOR is only about half of it (5.0% vs 9.4%). See [Results](#results).
+- **What we found:** het matches the expectation (SEG 6.23%, AB 3.12%), but DONOR is only about half of it (5.0% vs 9.4%). See [Results](#28-results).
 
 ---
 
@@ -198,7 +198,7 @@ The trimmed pairs are aligned to **B73 RefGen v5** with **BWA-MEM**. Each BAM is
 
 All code is in [`final_script/`](final_script/), numbered in run order. **The detailed analysis (every command, parameter, output, all statistics and the method history) is in [`final_script/README.md`](final_script/README.md).** This section explains what we do and why, and the main results.
 
-### What a sample is
+### 2.1 What a sample is
 
 Each sequenced sample is a **pool of 6 BC2S3 plants from one plot**, sequenced at about **0.8x**, with no parental sequencing. B73 is the recurrent parent. Donors are teosinte:
 - *mexicana* (Zx), *parviglumis* (Zv), *diploperennis* (Zd), *luxurians* (Zl), *huehuetenangensis* (Zh)
@@ -241,7 +241,7 @@ Both views give 12.5% donor alleles. Per single plant, the same expectation is 8
 - **Tract:** a run of neighbouring windows with the same state.
 - **F1 family:** all pools that descend from one F1 plant (same accession and same first P in the name). Used to group pools in the statistics.
 
-### The problem: mapping reads and calling SNPs at 0.8x in pools
+### 2.2 The problem: mapping reads and calling SNPs at 0.8x in pools
 
 We first did it the usual way (steps 01–15): map reads to B73, count each pool's reads at SNPs (ANGSD), then run an HMM. It found too little donor and too much SEG. Three things go wrong, and they hit DONOR and SEG (het) regions hardest:
 
@@ -249,7 +249,7 @@ We first did it the usual way (steps 01–15): map reads to B73, count each pool
 2. **Too few reads per site.** At 0.8x most SNPs have 0 or 1 read. One read shows one allele, so a het site looks homozygous, and a single error read looks like a het. Every call leans on the HMM and imputation.
 3. **Pools aren't diploid.** A pool's ALT fraction can be anything from 0 to 1 (e.g. 5/12 in a SEG region). Genotype callers built for diploids (0 / ½ / 1) mislabel these mixtures.
 
-### The solution: k-mers
+### 2.3 The solution: k-mers
 
 **Prior work.** Finding introgressions by counting reference k-mers in genome windows, without mapping reads, has been developed in wheat previously:
 - **IBSpy** (Uauy lab; Quiroz-Chávez 2023), used to find einkorn introgressions in bread wheat (Ahmed et al. 2023).
@@ -259,7 +259,7 @@ k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come fro
 
 **What we added:** low-coverage *pools* instead of single plants, a three-state pool model (B73 / SEG / DONOR) with per-window DONOR levels from assemblies, and the HMM on the NAM genetic map.
 
-### How it works
+### 2.4 How it works
 
 ![How k-mers find introgressions](final_script/figures/kmer_method.svg)
 
@@ -271,11 +271,11 @@ k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come fro
    - B73 gives **r ≈ 1**, DONOR **r ≈ d**, and SEG falls between them.
    - d is the share of B73 k-mers a donor genome keeps. It's measured per window from teosinte genome assemblies (PanAnd-1.0 from MaizeGDB, step 19): Zd and Zl ≈ 0.26, Zh 0.34, Zx 0.37, Zv 0.43.
    - SEG: k-mers the donor lacks come only from the B73 plants in the pool. For 6 plants, the pool's donor fraction follows Binomial(12, ½).
-4. **HMM along each chromosome (steps 20–21).** The windows' r values are read along each chromosome by a three-state hidden Markov model (B73 / SEG / DONOR). It uses the NAM genetic map, so a state change costs more where recombination is rare. Adjacent windows in the same state become tracts. **The model is explained step by step in [The HMM in detail](#the-hmm-in-detail) below.**
-5. **Allow for our donor plants differing from the assembly plants (step 20).** Where the two assemblies of a taxon disagree on d, the model is told that the DONOR level there is uncertain, so it doesn't flip between SEG and DONOR on small differences (see τ_w under [Emissions](#emissions-how-well-does-r-fit-each-state)).
+4. **HMM along each chromosome (steps 20–21).** The windows' r values are read along each chromosome by a three-state hidden Markov model (B73 / SEG / DONOR). It uses the NAM genetic map, so a state change costs more where recombination is rare. Adjacent windows in the same state become tracts. **The model is explained step by step in [The HMM in detail](#26-the-hmm-in-detail) below.**
+5. **Allow for our donor plants differing from the assembly plants (step 20).** Where the two assemblies of a taxon disagree on d, the model is told that the DONOR level there is uncertain, so it doesn't flip between SEG and DONOR on small differences (see τ_w under [Emissions](#261-emissions-how-well-does-r-fit-each-state)).
 6. **Tests (step 22).** Observed vs expected BC2S3 proportions, with a bootstrap over F1 families. Pools of one F1 family share segments, so the F1 family is the unit.
 
-### How r is calculated: a worked example
+### 2.5 How r is calculated: a worked example
 
 Take one 100-kb window. The numbers are rounded but realistic.
 
@@ -308,7 +308,7 @@ In general, r(SEG) = d + (1 − d) × g. The HMM doesn't assume exactly half don
 
 **Then the HMM** compares each window's r with these three expected levels (B73 ≈ 1, SEG ≈ 0.6–0.7, DONOR ≈ d). It allows for each pool's noise and takes neighbouring windows into account, using the genetic map, to call the most likely state.
 
-### The HMM in detail
+### 2.6 The HMM in detail
 
 A hidden Markov model (HMM) is used because we can't see a pool's true state directly. We only see a noisy score r in each window. But we know two things that help:
 - each state gives r values in a typical range, and
@@ -327,7 +327,7 @@ The HMM combines both to find the most likely series of states along each chromo
 | **Transition** | The chance that the state changes between one window and the next. |
 | **Start / prior** | The share of the genome expected in each state: B73 84.4%, SEG 6.25%, DONOR 9.4% (BC2S3 expectation). |
 
-#### Emissions: how well does r fit each state?
+#### 2.6.1 Emissions: how well does r fit each state?
 
 Each state expects r near a certain value, with some spread (noise). The spread σ_w is measured, not assumed:
 - **Pool noise σ:** how much r scatters around 1 in the pool's B73 windows. It is a *robust* standard deviation:
@@ -353,7 +353,7 @@ What the terms mean:
   3. The a with the highest likelihood is kept. This is done for each ρ.
 
   The fitted a is mostly 0.9–1.0 in every taxon, so on average the assembly levels fit our lines well.
-- **k/12:** the donor fraction of a SEG pool. 6 plants carry 12 chromosome copies. A SEG family segregates 1:2:1, so the number of donor copies k follows Binomial(12, ½). The model averages over all k instead of assuming exactly half (see [What SEG means](#what-a-sample-is)).
+- **k/12:** the donor fraction of a SEG pool. 6 plants carry 12 chromosome copies. A SEG family segregates 1:2:1, so the number of donor copies k follows Binomial(12, ½). The model averages over all k instead of assuming exactly half (see [What SEG means](#21-what-a-sample-is)).
 - **f and g(f):** f is the donor fraction of the pool's chromosomes in the window (f = k/12). g(f) is how often the pool still finds the B73 k-mers that the donor lacks, compared with a pure-B73 pool. Those k-mers sit only on the B73 chromosomes, a share (1 − f) of the pool, so they get only that share of the reads. From the coverage formula, g(f) = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)), where λ is the pool's k-mer coverage (measured from the share of B73 k-mers it finds in B73 windows). In the worked example, f = ½ gives g = 0.57. g = 1 when the pool is all B73 (f = 0), and g = 0 when it's all donor (f = 1).
 - **Outliers:** each state also has a 2% chance that the window is junk. A junk window's r is treated as equally likely anywhere from 0 to 2 (a uniform distribution). This is a standard robustness device, a "contamination" term in the emission. Without it, one odd window (e.g. a mis-assembled or duplicated region) could give near-certain evidence for a state just because it lies far out in a normal curve's tail.
   - **The 2% is a chosen value, not estimated from the data.** The B73 controls show it's on the safe side (44-pool test, 10 controls, about 21,000 windows each):
@@ -373,7 +373,7 @@ What the terms mean:
 
 SEG covers a wide range (here 0.35–0.95) because a 6-plant pool can carry from 1 to 11 donor copies.
 
-#### Transitions: how often can the state change?
+#### 2.6.2 Transitions: how often can the state change?
 
 Between two neighbouring windows, the chance of a state change is **s = ρ × θ**:
 - **θ** is the recombination fraction between the two window centres, from the NAM genetic map (Haldane: θ = ½(1 − e^(−2·Morgans))). On average a 100-kb step is 0.075 cM, but it's near 0 around centromeres and higher near chromosome ends.
@@ -382,13 +382,13 @@ Between two neighbouring windows, the chance of a state change is **s = ρ × θ
 
 With ρ = 1.5, the chance of a change is about **0.1% per window** on average. The model stays in the same state unless several windows in a row clearly fit another state. I checked this with the model itself, on a Zd DONOR tract at average recombination. A SEG piece inside it is called only when about **4 windows in a row (400 kb)** clearly look SEG (r = 0.69); less clear windows (r = 0.55) need 6. One noisy window can't break a tract, because the 2% outlier term caps its evidence.
 
-#### Calling the states
+#### 2.6.3 Calling the states
 
 - **Forward–backward** computes, for every window, the probability of each state given the whole chromosome. The window gets the state with the highest probability.
 - **Tracts:** adjacent windows with the same state are joined. Skipped windows take the state before them.
 - **Plant genotypes** follow from the pool states: AA = B73 + SEG/4, AB = SEG/2, BB = DONOR + SEG/4.
 
-#### What is fitted, and where
+#### 2.6.4 What is fitted, and where
 
 | Quantity | Fitted per | How | Code |
 |---|---|---|---|
@@ -407,9 +407,9 @@ With ρ = 1.5, the chance of a change is about **0.1% per window** on average. T
 
 **Why the prior is fixed.** It only sets the state each chromosome starts in, and which state a switch goes to. It doesn't set how much of the genome ends up in each state: with about 2,000 windows per chromosome, the data decide. DONOR came out at 5.0% although the prior expects 9.4%, so the prior isn't forcing the result.
 
-### How k-mers solve mapping bias, low depth and pooling
+### 2.7 How k-mers solve mapping bias, low depth and pooling
 
-Back to the three problems of the SNP route ([above](#the-problem-mapping-reads-and-calling-snps-at-08x-in-pools)):
+Back to the three problems of the SNP route ([above](#22-the-problem-mapping-reads-and-calling-snps-at-08x-in-pools)):
 
 | Problem (above) | How the k-mer approach avoids it |
 |---|---|
@@ -424,9 +424,9 @@ Back to the three problems of the SNP route ([above](#the-problem-mapping-reads-
 - **Plant-level het matches Mendel:** AB 3.12% vs 3.13%. So the k-mer calls don't inflate het, which is the classic failure.
 - **Fewer broken tracts:** the SNP route broke tracts into many short SEG pieces (44–69% of its SEG tracts were under 1 Mb) and turned DONOR into SEG when its donor-allele model drifted. In two Zd pools it reported 17% donor where the k-mers find 3–7%.
 
-### Results
+### 2.8 Results
 
-1,292 donor pools (the 93 low-depth pools are left out; see [Noisy pools](#noisy-pools-and-resequencing)).
+1,292 donor pools (the 93 low-depth pools are left out; see [Noisy pools](#211-noisy-pools-and-resequencing)).
 
 | Taxon | Pools | Donor alleles | SEG (pool) | DONOR (pool) | AB (plant) | BB (plant) | AB/(AB+BB) |
 |---|---|---|---|---|---|---|---|
@@ -472,11 +472,11 @@ Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `final
 
 ![Example sample](final_script/figures/results_spread/example_PN12_SID1106.png)
 
-On such a plot there are only three colours, the three pool states. AB isn't drawn, because a pool can't show which plants are AB: inside a yellow (SEG) region about half the 6 plants are AB, a quarter AA and a quarter BB. All samples can be browsed in the [interactive viewer](#interactive-figures-step-23).
+On such a plot there are only three colours, the three pool states. AB isn't drawn, because a pool can't show which plants are AB: inside a yellow (SEG) region about half the 6 plants are AB, a quarter AA and a quarter BB. All samples can be browsed in the [interactive viewer](#212-interactive-figures-step-23).
 
 The full statistics, F1 family results and the method history are in [`final_script/README.md`](final_script/README.md).
 
-### Validation
+### 2.9 Validation
 
 - **B73 controls are clean:** all 10 have ≤ 0.56% non-B73 windows (donor share ≤ 0.28%). This is a fair test, because the k-mer route never used the controls to filter sites.
 - **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
@@ -485,13 +485,13 @@ The full statistics, F1 family results and the method history are in [`final_scr
   - **Introgressed share per pool:** RTIGER 11.0%, k-mer 11.6% (SEG + DONOR); correlation r = 0.97 across pools.
   - **Same call in 98.2% of 100-kb windows** (median pool 98.7%). 95% of the k-mer introgression is also introgressed in RTIGER, and only 0.7% of k-mer B73 windows are introgressed in RTIGER.
   - **The one systematic difference: RTIGER has no tract shorter than 10 Mb** (its shortest is 10.0 Mb, median 33 Mb). About 11% of the k-mer introgressed sequence lies in tracts under 10 Mb, and RTIGER calls it B73. RTIGER also bridges short B73 gaps inside long tracts. If the k-mer calls are limited to tracts of at least 10 Mb, the agreement rises to 98.6%.
-  - Two methods built on different data (mapped SNP reads vs k-mers, no mapping) agree on 98% of the genome. That supports both for the long tracts; for the short tracts, see [Limitations and future work](#limitations-and-future-work).
+  - Two methods built on different data (mapped SNP reads vs k-mers, no mapping) agree on 98% of the genome. That supports both for the long tracts; for the short tracts, see [Limitations and future work](#213-limitations-and-future-work).
 
 ![RTIGER vs k-mer HMM](final_script/figures/rtiger_comparison/rtiger_vs_kmer.png)
 
 Per-pool numbers: `final_script/figures/rtiger_comparison/rtiger_vs_kmer_per_pool.tsv`.
 
-### Population structure from k-mers (step 32)
+### 2.10 Population structure from k-mers (step 32)
 
 **Why the ancestry calls cannot do this.** The HMM calls say *whether* a window is teosinte, not *which* teosinte: they are built from B73 k-mers that are present or missing. A PCA of the ancestry dosage (1,286 pools × 21,309 windows) therefore does not separate the five taxa: taxon explains ≤ 2.5% of the variance of each of the first 10 PCs (F1 family ~10%). The PCs follow shared donor tracts, i.e. families.
 
@@ -510,7 +510,7 @@ sbatch --dependency=afterok:$J 32b_kmer_taxon_profile.sh
 ```
 Output in `${D32}`: `kmer_taxon_profile.tsv` (per pool: f per taxon, f_teo, containment per assembly, k-mer taxon, agreement), `pca/kmer_pca.png`, `pca/kmer_taxon_shares.png`, `pca/kmer_taxon_agreement.tsv`.
 
-### Noisy pools and resequencing
+### 2.11 Noisy pools and resequencing
 
 93 of the 1,385 donor pools are flagged **NOISY** (σ > 0.15). They are left out of the results above. Almost all of them are on three plates with low sequencing depth:
 
@@ -546,7 +546,7 @@ Output in `${D32}`: `kmer_taxon_profile.tsv` (per pool: f per taxon, f_teo, cont
 
 The full statistics and the per-plate table are in [`final_script/README.md`](final_script/README.md).
 
-### Interactive figures (step 23)
+### 2.12 Interactive figures (step 23)
 
 [`final_script/figures/introgression_viewer_spread.html`](final_script/figures/introgression_viewer_spread.html) is one self-contained page with every pool's chromosome plot ([download it](https://raw.githubusercontent.com/nirwan1265/BZea_genotyping/main/final_script/figures/introgression_viewer_spread.html) and open it in a browser).
 - **Drop-down menus:** taxon → F1 family → "All pools" or one pool. There is also a search box for a pool ID.
@@ -558,7 +558,7 @@ The full statistics and the per-plate table are in [`final_script/README.md`](fi
 
 To view it, download the file and open it in a browser. GitHub shows HTML files as code, not as a page.
 
-### Limitations and future work
+### 2.13 Limitations and future work
 
 **Short tracts aren't proven yet.** The k-mer HMM calls tracts down to a few hundred kb; RTIGER calls nothing under 10 Mb. RTIGER drops them because of its settings, not because the data show they are false. Some short k-mer tracts are probably real and some may be noise. This is the one place where the two methods truly differ, and neither has been checked there.
 
@@ -601,7 +601,7 @@ For each tract in a pool, how often does another pool have an introgression at t
 4. **Donor plants.** If seed or tissue of the donor parents (or of the same accessions) can be found, 10–20x short-read sequencing gives their own d_w directly. No assembly is needed.
 5. **Noisy plates.** Resequence PN11, PN13 and PN15.
 
-### References for this section
+### 2.14 References for this section
 
 - Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838. (IBSpy used to find einkorn introgressions in bread wheat.)
 - Quiroz-Chávez J (2023) Wheat haplotype diversity by a k-mer based approach. PhD thesis, University of East Anglia. (IBSpy.)
@@ -632,7 +632,7 @@ We ran **two analyses** on the same genotypes (k-mer teosinte ancestry per 100-k
 
 Both use taxon as a fixed effect and a leave-one-chromosome-out (LOCO) kinship built from the same ancestry calls. At the same windows the two packages give the same answer (DTS: −log10 p 5.12 / 9.68 / 9.08 in GridLMM and 5.09 / 9.67 / 9.08 in R/qtl2), so Analysis 2 describes exactly the QTL of Analysis 1.
 
-### What kind of analysis this is
+### 3.1 What kind of analysis this is
 
 The marker is not a SNP. It is the **teosinte ancestry** of each plot in each 100-kb window, from the k-mer HMM (Section 2): 0 = B73, 1 = SEG, 2 = DONOR copies per plant. Testing local ancestry against a phenotype is what human genetics calls **admixture mapping** (Smith & O'Brien 2005).
 
@@ -642,7 +642,7 @@ We combine two steps, each doing what it is good at:
 
 The resolution is that of QTL mapping: donor tracts are several Mb long, so neighbouring windows carry almost the same ancestry, and a signal points to a region (support intervals of ~0.3–15 Mb), not to a gene. Genes in the region are candidates.
 
-### Phenotypes
+### 3.2 Phenotypes
 
 Field trials at Clayton, NC in **2023** (CLY23_D4: 3 reps, 4,432 plots, 1,329 lines) and **2025** (CLY25_B5: 2 reps, 2,898 plots, 1,410 lines); 1,316 lines in both. Each BC2S3 plot is grown from one BC2S2 mother; the sequenced pool is 6 plants of that plot.
 
@@ -663,9 +663,9 @@ BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/R
 | SPAD (leaf greenness) | 0.49 | 0.54 | 0.19 |
 | BW (blade width), BL (blade length), SL (sheath length); 2023 only | 0.51, 0.56, 0.73 | | |
 
-### Analysis 1: k-mer ancestry GWAS
+### 3.3 Analysis 1: k-mer ancestry GWAS
 
-**Genotypes and kinship.**
+#### 3.3.1 Genotypes and kinship
 
 - **Plots:** donor pools with a phenotype; low-depth (NOISY) pools are dropped.
 - **Windows:** 21,309 of 21,330 100-kb windows with at least 20 plots carrying donor.
@@ -673,7 +673,7 @@ BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/R
 - **Dominance predictor:** SEG = 1 if the plot is SEG. With plot means B73 = 0, DONOR = 2a and SEG = ¼·0 + ½(a + d) + ¼·2a = a + d/2, the SEG coefficient c equals d/2 (c > 0: teosinte allele partly dominant). Tested only where a window has ≥ 5 SEG and ≥ 5 DONOR plots.
 - **Kinship, leave-one-chromosome-out (LOCO):** for the chromosome being tested, K = Z Z′ / p from the centred dosage of all windows on the **other nine** chromosomes, scaled to mean diagonal 1. In BC2S3 lines on a B73 background, relatedness is mostly shared donor tracts, which the dosage captures directly; no SNP calls or imputation are needed.
 
-**Why LOCO, and not one K for the whole genome.**
+#### 3.3.2 Why LOCO, and not one K for the whole genome
 
 A kinship matrix that includes the tested region already "contains" the QTL: lines that share the donor tract at the QTL look related, and the random effect absorbs the QTL's effect. This is **proximal contamination** (Listgarten et al. 2012; Yang et al. 2014). LOCO removes it by leaving the tested chromosome out of K (also the default in R/qtl2, Broman et al. 2019).
 
@@ -688,7 +688,9 @@ With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC 
 
 **λ_GC under LOCO (~4) is not a sign of false positives here.** λ_GC assumes most markers are null and independent. In this population each QTL is tagged by hundreds of linked windows (tracts of several Mb, and with LOCO the tested chromosome's own background is not in K), and the traits are polygenic, so the median test statistic is expected to be high (Yang et al. 2011). Significance is therefore set by **permutation**, not by λ_GC.
 
-**Model.** GridLMM (Runcie & Crawford 2019), maximum likelihood, one chromosome at a time with its LOCO K:
+#### 3.3.3 Model
+
+GridLMM (Runcie & Crawford 2019), maximum likelihood, one chromosome at a time with its LOCO K:
 
 `y = taxon (fixed) + b · dosage_w + u + e`,  `u ~ N(0, σ²_g K_LOCO)`,  `e ~ N(0, σ²_e I)`
 
@@ -698,11 +700,15 @@ With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC 
 
 **Fixed effect: taxon, not F1 family.** Plots from the same F1 plant share many of their tracts (relatives check, Section 2, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
 
-**Significance: permutations.** For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile over the permutations is the **5% genome-wide (family-wise) threshold** (Churchill & Doerge 1994). This accounts for the strong correlation between neighbouring windows; Bonferroni over 21,309 windows (−log10 p = 5.63) would be far too strict. The thresholds below come from 100 permutations per trait (1,000 are planned for publication).
+#### 3.3.4 Significance: permutations
 
-**Regions and genes.** Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one region per locus, and gives each a support interval: the windows within 1.5 −log10 p of the top window (like a 1.5-LOD drop). Every B73 v5 gene overlapping the interval is listed from the GFF3. Output: `genes/regions_genes_<TRAIT>_ALL.tsv` (one row per gene, with the region's position, top −log10 p and effect). Step 30 (`final_script/30_genes_go.R`) adds each gene's window −log10 p and effect and its GO terms: `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv`.
+For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile over the permutations is the **5% genome-wide (family-wise) threshold** (Churchill & Doerge 1994). This accounts for the strong correlation between neighbouring windows; Bonferroni over 21,309 windows (−log10 p = 5.63) would be far too strict. The thresholds below come from 100 permutations per trait (1,000 are planned for publication).
 
-### Analysis 2: joint QTL model with per-taxon effects
+#### 3.3.5 Regions and genes
+
+Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one region per locus, and gives each a support interval: the windows within 1.5 −log10 p of the top window (like a 1.5-LOD drop). Every B73 v5 gene overlapping the interval is listed from the GFF3. Output: `genes/regions_genes_<TRAIT>_ALL.tsv` (one row per gene, with the region's position, top −log10 p and effect). Step 30 (`final_script/30_genes_go.R`) adds each gene's window −log10 p and effect and its GO terms: `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv`.
+
+### 3.4 Analysis 2: joint QTL model with per-taxon effects
 
 The scan tests one window at a time, ignoring the others. Analysis 2 takes **the QTL found by the scan** (top window and support interval of each region, from `peaks_<TRAIT>_ALL.tsv`) and fits them in **R/qtl2** (Broman et al. 2019). Every statistical step is an R/qtl2 function; the script only converts the k-mer calls into R/qtl2's format.
 
@@ -713,13 +719,17 @@ The scan tests one window at a time, ignoring the others. Analysis 2 takes **the
 - **Effect per copy:** `fit1(..., contrasts = cbind(mu = c(1, 1), a = c(-1, 1)))`; the B73 allele mean is mu − a and the teosinte allele mean mu + a, so a is the effect of one teosinte copy.
 - **Significance:** the joint model does not search the genome; it tests the k QTL of a trait, so a Bonferroni correction over k (−log10 p > −log10(0.05/k), e.g. 2.08 for 6 QTL) is used for both the joint test and "taxa differ".
 
-**Why the joint model starts from the peaks, and not from all windows at once.** A joint model needs a short list of QTL to fit together. It cannot take all 21,309 windows: that is far more predictors than the 1,284 plots, and neighbouring windows are nearly identical (one tract covers dozens of them), so their effects cannot be separated. The genome scan is the step that picks the list: one window per peak (the top window), with its support interval. The joint model then asks, for those few QTL together, which ones still matter once the others are in the model, how large each is, and in which taxa. This two-step design (scan, then fit the selected QTL jointly) is how QTL mapping is usually done; TeoNAM's joint linkage mapping chooses its QTL by stepwise selection instead (Chen et al. 2019). Using the scan's peaks keeps the two analyses on exactly the same QTL.
+#### 3.4.1 Why the joint model starts from the peaks, and not from all windows at once
 
-**Why some QTL show fewer taxa.** A per-taxon effect needs carriers: plots of that taxon with the teosinte allele at the QTL. Taxa with fewer than 5 carrier plots at a QTL get no estimate. For example, DTS Q6 (chr10) has carriers from Zd (23), Zv (22) and Zx (62) but only 4 from *huehuetenangensis* and 2 from *luxurians*, so those two are not shown. Which taxa carry a tract depends on where the backcrosses happened to keep donor segments.
+A joint model needs a short list of QTL to fit together. It cannot take all 21,309 windows: that is far more predictors than the 1,284 plots, and neighbouring windows are nearly identical (one tract covers dozens of them), so their effects cannot be separated. The genome scan is the step that picks the list: one window per peak (the top window), with its support interval. The joint model then asks, for those few QTL together, which ones still matter once the others are in the model, how large each is, and in which taxa. This two-step design (scan, then fit the selected QTL jointly) is how QTL mapping is usually done; TeoNAM's joint linkage mapping chooses its QTL by stepwise selection instead (Chen et al. 2019). Using the scan's peaks keeps the two analyses on exactly the same QTL.
+
+#### 3.4.2 Why some QTL show fewer taxa
+
+A per-taxon effect needs carriers: plots of that taxon with the teosinte allele at the QTL. Taxa with fewer than 5 carrier plots at a QTL get no estimate. For example, DTS Q6 (chr10) has carriers from Zd (23), Zv (22) and Zx (62) but only 4 from *huehuetenangensis* and 2 from *luxurians*, so those two are not shown. Which taxa carry a tract depends on where the backcrosses happened to keep donor segments.
 
 This is the mixed-model counterpart of TeoNAM's joint linkage mapping (Chen et al. 2019). Effects are estimated per taxon, not per accession: a typical window has ~90 carrier plots across 82 accessions, about one per accession. Details: `final_script/README.md`, section 12.
 
-### How to run
+### 3.5 How to run
 
 ```bash
 # Analysis 1 (laptop; GridLMM), one terminal per trait
@@ -732,7 +742,7 @@ Rscript final_script/31_joint_qtl_figures.R <IN>/assoc_gridlmm_spats <IN>/joint_
 ```
 All results are in `data/introgression_spread/`: `assoc_gridlmm_spats/` (scans, summaries, permutations, peaks, genes), `joint_QTL/` (joint QTL tables, per-taxon effects, genes), `GO/` (genes with GO terms and p-values).
 
-### Results
+### 3.6 Results
 
 **Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position. Middle: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon (taxa with ≥ 5 carrier plots). Right: two columns of **−log10 p** (not effects): "Joint test" = is the QTL still significant with all other QTL in the model; "Taxa differ" = does its effect differ between taxa. For example, DTS Q1 "4.9 | 19.8" means p = 10⁻⁴·⁹ for the QTL and p = 10⁻¹⁹·⁸ for the difference between taxa. Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering).
 
@@ -754,7 +764,7 @@ All results are in `data/introgression_spread/`: `assoc_gridlmm_spats/` (scans, 
 
 "Hold in joint model" = QTL whose joint −log10 p passes Bonferroni over that trait's QTL. Other traits (SPAD, SPAD2, LAE, Kinki, StPu, StPi) are not shown.
 
-#### Days to silking (DTS)
+#### 3.6.1 Days to silking (DTS)
 
 ![DTS: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_DTS.png)
 
@@ -792,7 +802,7 @@ Bonferroni over the 6 QTL: −log10 p > 2.08 (bold).
 
 </details>
 
-#### Days to anthesis (DTA)
+#### 3.6.2 Days to anthesis (DTA)
 
 ![DTA: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_DTA.png)
 
@@ -818,7 +828,7 @@ Bonferroni over the 4 QTL: −log10 p > 1.90 (bold).
 
 </details>
 
-#### Anthesis–silking interval (ASI)
+#### 3.6.3 Anthesis–silking interval (ASI)
 
 ![ASI: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_ASI.png)
 
@@ -848,7 +858,7 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold).
 
 </details>
 
-#### Plant height (PH)
+#### 3.6.4 Plant height (PH)
 
 ![PH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_PH.png)
 
@@ -878,7 +888,7 @@ Bonferroni over the 15 QTL: −log10 p > 2.48 (bold).
 
 </details>
 
-#### Ear height (EH)
+#### 3.6.5 Ear height (EH)
 
 ![EH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EH.png)
 
@@ -907,7 +917,7 @@ Bonferroni over the 14 QTL: −log10 p > 2.45 (bold).
 
 </details>
 
-#### Ear number (EN; number of nodes with ears)
+#### 3.6.6 Ear number (EN; number of nodes with ears)
 
 ![EN: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EN.png)
 
@@ -936,7 +946,7 @@ Bonferroni over the 14 QTL: −log10 p > 2.45 (bold).
 
 </details>
 
-#### Prolificacy (Prolif; most ears on one node)
+#### 3.6.7 Prolificacy (Prolif; most ears on one node)
 
 ![Prolif: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_Prolif.png)
 
@@ -963,7 +973,7 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold).
 
 </details>
 
-#### Nodes with brace roots (NBR)
+#### 3.6.8 Nodes with brace roots (NBR)
 
 ![NBR: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_NBR.png)
 
@@ -987,7 +997,7 @@ Bonferroni over the 9 QTL: −log10 p > 2.26 (bold).
 
 </details>
 
-#### Sheath length (SL; 2023 only)
+#### 3.6.9 Sheath length (SL; 2023 only)
 
 ![SL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_SL.png)
 
@@ -1015,7 +1025,7 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold).
 
 </details>
 
-#### Blade length (BL; 2023 only)
+#### 3.6.10 Blade length (BL; 2023 only)
 
 ![BL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BL.png)
 
@@ -1036,7 +1046,7 @@ Bonferroni over the 6 QTL: −log10 p > 2.08 (bold).
 
 </details>
 
-#### Blade width (BW; 2023 only)
+#### 3.6.11 Blade width (BW; 2023 only)
 
 ![BW: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BW.png)
 
@@ -1059,7 +1069,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold).
 
 </details>
 
-#### Regions shared between traits
+#### 3.6.12 Regions shared between traits
 
 | Region | Traits (sign of the teosinte effect) | Known genes in the intervals |
 |---|---|---|
@@ -1081,7 +1091,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold).
 
 Candidate genes for each trait will be added after closer inspection of `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv`.
 
-### What is new here
+### 3.7 What is new here
 
 - **Local ancestry from k-mers in pooled, ultra-low-coverage samples.** Each sample is a pool of 6 BC2S3 plants sequenced at ~0.8×. The k-mer HMM (Section 2) turns presence and absence of B73 single-copy k-mers into B73 / SEG / DONOR calls per window, with a pool-aware emission model. k-mer GWAS methods use k-mers directly as markers in deeply sequenced individuals; here k-mers are turned into ancestry first.
 - **The same ancestry calls give the genotype and the kinship.** The LOCO kinship is built from the ancestry dosage, so relatedness is measured in shared donor tracts, with no SNP calling or imputation.
@@ -1089,7 +1099,7 @@ Candidate genes for each trait will be added after closer inspection of `data/in
 
 The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standard and cited above; what is new is putting k-mer ancestry from pooled skim-seq into them. To be checked against the literature before publication.
 
-### Limitations
+### 3.8 Limitations
 
 - **Resolution** is set by tract length: regions are Mb wide, and genes inside them are candidates only.
 - **λ_GC** is high under LOCO; the permutation threshold controls the genome-wide error, but linked windows on the same chromosome are not independent evidence, and two nearby peaks may be one QTL.
@@ -1099,7 +1109,7 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - **Small taxa:** *luxurians* (Zl) and *huehuetenangensis* (Zh) have 5–25 carrier plots at most QTL, so their per-taxon effects have wide CIs. The large *luxurians*-specific effects (DTS/DTA chr1, chr5) should be checked against how many accessions and F1 families the carriers come from.
 - **Thresholds** come from 100 permutations; QTL close to the line (e.g. DTS Q1, Q2) should be confirmed with 1,000.
 
-### References for this section
+### 3.9 References for this section
 
 - Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838.
 - Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502.

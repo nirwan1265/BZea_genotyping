@@ -123,9 +123,13 @@ We infer B73 / SEG / DONOR states along the genome for each pool with an HMM. It
 
 
 ##  QTL / Association Mapping
-We perform genome scans using **GridLMM** with **LOCO (leave-one-chromosome-out) kinship** to control relatedness while preserving power on the tested chromosome.
+### 7) Mixed-model QTL scan on k-mer ancestry
+- **Phenotypes:** SpATS spatially corrected BLUEs per year (2023, 2025), combined across years (`final_script/28_spats_blues.R`).
+- **Genotypes:** teosinte ancestry dosage per 100-kb window from the k-mer HMM (0 B73, 1 SEG, 2 DONOR).
+- **Model:** **GridLMM** (Runcie & Crawford 2019) with taxon as a fixed effect and a **LOCO (leave-one-chromosome-out) kinship** built from the same ancestry dosage, so the tested region is not absorbed by K; additive and dominance tests.
+- **Threshold:** 5% genome-wide, from permutations within taxon. Regions and the B73 v5 genes in them from the GFF3.
 
-(Details in Section 10)
+(Details in Section 7)
  
  ---
 
@@ -155,11 +159,11 @@ We perform genome scans using **GridLMM** with **LOCO (leave-one-chromosome-out)
 - **Python** (>= 3.8) with numpy, scipy, matplotlib: HMM and figures
 - **R** (>= 4.1): QC and SNP-route summaries
 
-### QTL / association mapping
+### Phenotypes and QTL / association mapping
 
-- **R**
-- **GridLMM** R package
-- **plink2** *(for LOCO kinship files)*:
+- **R** (>= 4.1) with **SpATS** (spatial BLUEs), dplyr, tidyr
+- **GridLMM** R package (`github.com/deruncie/GridLMM`), data.table, ggplot2
+- **Python** with pandas, numpy: inputs (dosage, LOCO kinship) and regions/genes
 
 ### Gene annotation resources
 
@@ -672,7 +676,148 @@ For each tract in a pool, how often does another pool have an introgression at t
 
 ## Section 7 — QTL / Association Mapping
 
-(To be added)
+### What kind of analysis this is
+
+The marker here is not a SNP. It is the **teosinte ancestry** of each plot in each 100-kb window, from the k-mer HMM (Sections 4–6): 0 = B73, 1 = SEG, 2 = DONOR copies per plant. Testing local ancestry against a phenotype is what human genetics calls **admixture mapping** (Smith & O'Brien 2005); in a backcross population it is **QTL mapping with a mixed model**.
+
+- **The model is GWAS-style**: one test per window, a linear mixed model with a kinship matrix, a genome-wide threshold.
+- **The resolution is QTL-style**: donor tracts are several Mb long, so neighbouring windows carry almost the same ancestry. A signal points to a region (support intervals of ~5–15 Mb), not to a gene. Genes in the region are candidates, not hits.
+
+So we call it **QTL mapping by mixed-model association on k-mer ancestry**. "GWAS" is fine as shorthand for the scan, as long as the resolution is stated.
+
+### Phenotypes
+
+Field trials at Clayton, NC in **2023** (CLY23_D4: 3 reps, 4,432 plots, 1,329 lines) and **2025** (CLY25_B5: 2 reps, 2,898 plots, 1,410 lines); 1,316 lines in both. Each BC2S3 plot is grown from one BC2S2 mother; the sequenced pool is 6 plants of that plot.
+
+BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/README.md`, section 11):
+1. **Per year and trait, SpATS** (Rodríguez-Álvarez et al. 2018): `y = Rep + Border + line (fixed) + 2-D P-spline surface(column, row) + random row + random column + e`. Border = plot next to a border (`B`) cell in the field map. Plots noted as no germination, hybrid, wrong line or sick are removed, plus one pass of outlier removal (|residual| > 3.5 robust SD). Heritability (H², Oakey et al. 2006) from the same model with line random.
+2. **Across years**: the year effect from a weighted `lm(BLUE ~ line + year)` (weights 1/SE²), then the weighted mean of the year-adjusted BLUEs.
+
+| Trait | H² 2023 | H² 2025 | r between years |
+|---|---|---|---|
+| DTS (days to silking) | 0.88 | 0.84 | 0.69 |
+| DTA (days to anthesis) | 0.89 | 0.82 | 0.68 |
+| ASI (DTS − DTA) | 0.61 | 0.57 | 0.43 |
+| PH (plant height) | 0.86 | 0.86 | 0.74 |
+| EH (ear height) | 0.78 | 0.74 | 0.63 |
+| EN (ear number) | 0.68 | 0.42 | 0.33 |
+| Prolif, NBR, SPAD | 0.49–0.61 | 0.47–0.55 | 0.19–0.34 |
+| BW, BL, SL (2023 only) | 0.51, 0.56, 0.73 | | |
+
+The 2023 DTS/DTA BLUEs agree with the earlier one-year file (r = 0.97). With both years, **1,284 plots** have a phenotype and k-mer calls (Zd 249, Zh 61, Zl 117, Zv 380, Zx 572); before, 829.
+
+### Genotypes and kinship
+
+- **Plots:** donor pools with a phenotype; low-depth (NOISY) pools are dropped.
+- **Windows:** 21,309 of 21,330 100-kb windows with at least 20 plots carrying donor.
+- **Additive predictor:** dosage 0 / 1 / 2 (B73 / SEG / DONOR). A SEG plot holds ¼ AA, ½ AB, ¼ BB plants, so its average is 1 teosinte copy per plant; the phenotype is a plot mean, so this is the right scale.
+- **Dominance predictor:** SEG = 1 if the plot is SEG. With plot means B73 = 0, DONOR = 2a and SEG = ¼·0 + ½(a + d) + ¼·2a = a + d/2, the SEG coefficient c equals d/2 (c > 0: teosinte allele partly dominant). Tested only where a window has ≥ 5 SEG and ≥ 5 DONOR plots.
+- **Kinship, leave-one-chromosome-out (LOCO):** for the chromosome being tested, K = Z Z′ / p from the centred dosage of all windows on the **other nine** chromosomes, scaled to mean diagonal 1. In BC2S3 lines on a B73 background, relatedness is mostly shared donor tracts, which the dosage captures directly; no SNP calls or imputation are needed.
+
+### Why LOCO, and not one K for the whole genome
+
+A kinship matrix that includes the tested region already "contains" the QTL: lines that share the donor tract at the QTL look related, and the random effect absorbs the QTL's effect. This is **proximal contamination** (Listgarten et al. 2012; Yang et al. 2014). LOCO removes it by leaving the tested chromosome out of K (also the default in R/qtl2, Broman et al. 2019).
+
+In a backcross population this matters a lot, because tracts are long and few loci carry most of the donor relatedness. Same data, same model, only K changed (DTS, 1,284 plots, taxon fixed):
+
+| K | λ_GC | Best window chr10 (ZmCCT10 region, 94–98 Mb) | Best window chr5 (~221.7 Mb) |
+|---|---|---|---|
+| **LOCO** | 3.97 | −log10 p **9.1**, +1.0 day per teosinte copy | **9.7** |
+| Whole genome | 0.65 | 2.9 | 6.1 |
+
+With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC falls **below 1**: the model over-corrects. The SNP50K/RTIGER analysis of this population (below) found the same thing ("K … is collinear with the flowering QTL, so the mixed model absorbs the very signal it protects"). LOCO is the fix.
+
+**λ_GC under LOCO (~4) is not a sign of false positives here.** λ_GC assumes most markers are null and independent. In this population each QTL is tagged by hundreds of linked windows (tracts of several Mb, and with LOCO the tested chromosome's own background is not in K), and the traits are polygenic, so the median test statistic is expected to be high (Yang et al. 2011). Significance is therefore set by **permutation**, not by λ_GC.
+
+### Model
+
+GridLMM (Runcie & Crawford 2019), maximum likelihood, one chromosome at a time with its LOCO K:
+
+`y = taxon (fixed) + b · dosage_w + u + e`,  `u ~ N(0, σ²_g K_LOCO)`,  `e ~ N(0, σ²_e I)`
+
+- b = effect per teosinte copy (trait units, e.g. days); likelihood-ratio test for b (1 df).
+- Dominance: the same model plus c · SEG_w; likelihood-ratio test for c.
+- GridLMM fits the variance proportion on a grid instead of re-optimising it for every window, which makes ~21,000 tests with a 1,284 × 1,284 K fast (~3 min per trait on 4 cores). The code started from `scripts/Analyze_QTL_Founder2.R`.
+
+**Fixed effect: taxon, not F1 family.** Plots from the same F1 plant share many of their tracts (relatives check, Sections 4–6, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. The SNP50K/RTIGER analysis below also notes that its 82-accession family factor "likely over-corrects population structure and costs some power". F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
+
+### Significance: permutations
+
+For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile over the permutations is the **5% genome-wide (family-wise) threshold** (Churchill & Doerge 1994). This accounts for the strong correlation between neighbouring windows; Bonferroni over 21,309 windows (−log10 p = 5.63) would be far too strict.
+
+### Regions and genes
+
+Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one region per locus, and gives each a support interval: the windows within 1.5 −log10 p of the top window (like a 1.5-LOD drop). Every B73 v5 gene overlapping the interval is listed from the GFF3. Output: `genes/regions_genes_<TRAIT>_ALL.tsv` (one row per gene, with the region's position, top −log10 p and effect).
+
+### How to run
+
+On the cluster: steps 25–27 (`final_script/README.md`, section 10). On a laptop:
+```bash
+bash final_script/run_assoc_local.sh DTS        # one terminal per trait
+```
+
+### Comparison with the SNP50K / RTIGER analysis of the same population
+
+F. Rodríguez-Zapata's notebook "ZEAL DTA GWAS + JLM on the SNP50K panel" (zealhmm, 2026) analysed DTA in the same BC2S3 lines (1,403 lines, same two fields, SpATS BLUEs). Differences and results:
+
+| | SNP50K / RTIGER (notebook) | k-mer / LOCO (this pipeline) |
+|---|---|---|
+| Genotype | 51,991 SNPs pileup-genotyped at ~0.4×; ancestry from RTIGER | B73 single-copy 31-mers in 100-kb windows; 3-state HMM (Sections 4–6) |
+| Teosinte share recovered | 0.111 (RTIGER) | 0.081 donor alleles; 6.2% SEG, 5.0% DONOR windows |
+| Kinship | one K (whole genome) | LOCO K from ancestry dosage |
+| Fixed effect | 82 donor accessions | 5 taxa |
+| λ_GC | 1.47 (DTA) | ~4 (DTS; see above) |
+| Regions above the 5% permutation threshold (MLM) | 1: chr10 (ZmCCT10, −log10 p 5.0, threshold 4.56) | DTS, one year, 829 plots: chr7, chr8/9, chr10 (F1 family fixed, threshold 5.0); plus chr3 with taxon fixed. Two-year runs pending. |
+| Joint linkage mapping (TASSEL stepwise, nested in taxon) | 2 QTL: near the chr8/chr9 boundary, chr10 | not run |
+
+The k-mer/LOCO scan finds the two JLM QTL (near the chr8/chr9 boundary and on chr10) **and** additional regions (chr7, chr3; and chr5 in the first two-year DTS scan). The main reason is LOCO: with a whole-genome K, our own scan loses chr10 as well (table above). The comparison is not fully matched yet (different genotype callers, different K, and our first runs used one year and 829 plots); the two-year runs on 1,284 plots will give the matched comparison. A clean test would be to run the RTIGER genotypes through the LOCO model, and the k-mer genotypes through the notebook's model.
+
+### What is new here, and what is not
+
+**Not new (credited):**
+- Linear mixed models for association and the GridLMM implementation: Runcie & Crawford (2019). Founder-based QTL mapping with GridLMM in multiparent populations: Odell et al. (2022).
+- LOCO kinship: Lippert et al. (2011); Yang et al. (2014); Broman et al. (2019).
+- Testing local ancestry (admixture mapping): Smith & O'Brien (2005). Joint linkage mapping of teosinte introgressions in maize: Chen et al. (2019, TeoNAM).
+- k-mer GWAS, where each k-mer's presence or absence is the marker: Rahman et al. (2018, HAWK), Voichek & Weigel (2020); k-mer windows for introgression screening and GWAS: KCFtools (Selvanayagam et al. 2026); k-mer haplotype calls in wheat: IBSpy (Ahmed et al. 2023).
+- Permutation thresholds: Churchill & Doerge (1994). Spatial correction: SpATS (Rodríguez-Álvarez et al. 2018).
+
+**New in this work (as far as we know; to be checked against the literature before publication):**
+- Local-ancestry calls (B73 / SEG / DONOR) from k-mers in **pooled, ultra-low-coverage** (~0.8×) BC2S3 samples, with an HMM that models the pool (Sections 4–6). k-mer GWAS methods above use k-mers as markers in deeply sequenced individuals; here k-mers are turned into ancestry first.
+- Using those ancestry calls as the genotype **and** to build a LOCO kinship in a mixed-model scan, plus a dominance test from the SEG state.
+
+The statistics are standard; the new part is the combination: k-mer ancestry from pooled skim-seq feeding a LOCO mixed model. It should be described that way, not as a new GWAS method.
+
+### Limitations
+
+- **Resolution** is set by tract length: regions are Mb wide, and genes inside them are candidates only.
+- **λ_GC** is high under LOCO; the permutation threshold controls the genome-wide error, but linked windows on the same chromosome are not independent evidence, and two nearby peaks may be one QTL.
+- **The pool is not the plot.** The genotype is 6 plants of a plot; the phenotype is the plot mean. For SEG plots, plants differ; the dosage of 1 is the expectation.
+- **Donor reference.** DONOR levels come from MaizeGDB assemblies, not from our donor plants (Section 6, limitations).
+- **Replication:** peaks should be checked in each year separately and within taxon.
+
+### Results
+
+*To be added when the two-year runs (all traits, 100 permutations each) finish.*
+
+### References for this section
+
+- Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838.
+- Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502.
+- Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
+- Churchill GA, Doerge RW (1994) Empirical threshold values for quantitative trait mapping. *Genetics* 138:963–971.
+- Lippert C, Listgarten J, Liu Y, Kadie CM, Davidson RI, Heckerman D (2011) FaST linear mixed models for genome-wide association studies. *Nat Methods* 8:833–835.
+- Listgarten J, Lippert C, Kadie CM, Davidson RI, Eskin E, Heckerman D (2012) Improved linear mixed models for genome-wide association studies. *Nat Methods* 9:525–526.
+- Oakey H, Verbyla A, Pitchford W, Cullis B, Kuchel H (2006) Joint modeling of additive and non-additive genetic line effects in single field trials. *Theor Appl Genet* 113:809–819.
+- Odell SG, Hudson AI, Praud S, Dubreuil P, Tixier M-H, Ross-Ibarra J, Runcie DE (2022) Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci. *G3* 12:jkac011.
+- Rahman A, Hallgrímsdóttir I, Eisen M, Pachter L (2018) Association mapping from sequencing reads using k-mers. *eLife* 7:e32920.
+- Rodríguez-Álvarez MX, Boer MP, van Eeuwijk FA, Eilers PHC (2018) Correcting for spatial heterogeneity in plant breeding experiments with P-splines. *Spatial Statistics* 23:52–71.
+- Rodríguez-Zapata F (2026) ZEAL DTA GWAS + JLM on the SNP50K panel — 1000-permutation FWER. Lab notebook (zealhmm).
+- Runcie DE, Crawford L (2019) Fast and flexible linear mixed models for genome-wide genetics. *PLoS Genet* 15:e1007978.
+- Selvanayagam S, et al. (2026) KCFtools: rapid alignment-free method for introgression screening and GWAS using k-mer profiles. *Bioinformatics*. doi:10.1093/bioinformatics/btag354
+- Smith MW, O'Brien SJ (2005) Mapping by admixture linkage disequilibrium: advances, limitations and guidelines. *Nat Rev Genet* 6:623–632.
+- Voichek Y, Weigel D (2020) Identifying genetic variants underlying phenotypic variation in plants without complete genomes. *Nat Genet* 52:534–540.
+- Yang J, Weedon MN, Purcell S, et al. (2011) Genomic inflation factors under polygenic inheritance. *Eur J Hum Genet* 19:807–812.
+- Yang J, Zaitlen NA, Goddard ME, Visscher PM, Price AL (2014) Advantages and pitfalls in the application of mixed-model association methods. *Nat Genet* 46:100–106.
 
 ---
 

@@ -18,6 +18,7 @@ Contents:
 11. [Phenotypes: SpATS BLUEs, step 28](#11-phenotypes-spats-blues-step-28)
 12. [Joint multi-QTL model with per-taxon effects, step 29](#12-joint-multi-qtl-model-with-per-taxon-effects-step-29)
 13. [Genes and GO terms in the QTL regions, step 30](#13-genes-and-go-terms-in-the-qtl-regions-step-30)
+14. [Figures: k-mer scan and joint QTL side by side, step 31](#14-figures-k-mer-scan-and-joint-qtl-side-by-side-step-31)
 
 ---
 
@@ -835,3 +836,14 @@ The step-26 GridLMM scan and the R/qtl2 additive scan are the same model (taxon 
 Rscript final_script/30_genes_go.R <IN>/assoc_gridlmm_spats/genes <IN>/GO/GO_terms_all_candidates.txt <IN>/GO
 ```
 Each gene also gets the −log10 p and effect of the 100-kb window it lies in, from the step-26 scan (`scan_<TRAIT>.tsv`, read from the folder above the genes folder, or a 4th argument), and the tables are sorted by that p-value, so the genes under the highest peaks come first. All genes in one window share its p-value: the scan cannot tell them apart. Outputs: `genes_GO_all.tsv` (every trait × gene) and `genes_GO_all_<TRAIT>.tsv` (one file per trait), `genes_GO_flagged.tsv`, `genes_GO_flagged_<TRAIT>.tsv`. Needs dplyr, readr, stringr, purrr.
+
+---
+
+## 14. Figures: k-mer scan and joint QTL side by side, step 31
+
+`31_joint_qtl_figures.R` draws, per trait: **(A)** the k-mer additive scan (step 26; −log10 p per window, dotted line = 5% permutation threshold when the step-26 summary has one, QTL numbered at their top windows) and **(B)** the joint QTL model at the same QTL (step 29.2): effect per teosinte copy with 95% CI in the joint model (black) and within each taxon (colours), with the −log10 p of the joint test and of "taxa differ" on the right.
+
+```bash
+Rscript final_script/31_joint_qtl_figures.R <IN>/assoc_gridlmm_spats <IN>/joint_QTL <IN>/joint_QTL/figures
+```
+Outputs: `joint_qtl_<TRAIT>.png` and `joint_qtl_all_traits.pdf`. Needs ggplot2, patchwork, data.table. Example (test run, DTS): `figures/joint_qtl_example/joint_qtl_DTS_test.png`.

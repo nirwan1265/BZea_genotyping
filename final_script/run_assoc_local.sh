@@ -10,7 +10,7 @@
 #   NPERM   permutations per trait (default 0 = scans only; one permutation ~1.5 min, so 100 = ~2.5 h per trait)
 #   THRESHOLD  -log10 p used for peaks/genes when a trait has no permutations (e.g. from DTS and PH permutations)
 #   CORES   cores for GridLMM (default 4)
-#   FIXED_COL  F1FAMILY (default) or TAXON (faster)
+#   FIXED_COL  TAXON (default) or F1FAMILY (check only: absorbs tracts shared by a whole family)
 # Output: <dir>/assoc_spats (inputs) and <dir>/assoc_gridlmm_spats (scans, summary_<TRAIT>.tsv, Manhattan plots, genes/)
 # =============================================================================
 set -euo pipefail
@@ -21,7 +21,7 @@ source <(grep '^TRAITS=' "$REPO/final_script/config.sh")
 TRAITS=${3:-$TRAITS}
 PHENO=${PHENO:-$REPO/data/phenotypes/BZea_spats_BLUEs_combined.csv}
 NPERM=${NPERM:-0}; CORES=${CORES:-4}
-export GROUP_COL=none FIXED_COL=${FIXED_COL:-F1FAMILY} MIN_N=20 MIN_CARRIERS=10
+export GROUP_COL=none FIXED_COL=${FIXED_COL:-TAXON} MIN_N=20 MIN_CARRIERS=10
 D25=$IN/assoc_spats; D26=$IN/assoc_gridlmm_spats; mkdir -p "$D26"   # new dirs: old DTS/DTA permutations are not mixed in
 
 echo "== 25: inputs ($PHENO)"

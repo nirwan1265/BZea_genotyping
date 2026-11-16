@@ -180,7 +180,7 @@ D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOC
 D26=${D21}/assoc_gridlmm            # step-26 scans, permutations, Manhattan plots
 ASSOC_MIN_CARRIERS=20               # test only windows where at least this many plots carry donor (all plots)
 ASSOC_GROUP_COL=none                # extra scans per group: TAXON (Zd/Zl/Zv/Zx), F1FAMILY, or none
-ASSOC_FIXED_COL=F1FAMILY              # fixed effect in the all-plots scan: TAXON, or F1FAMILY (slower)
+ASSOC_FIXED_COL=TAXON                 # fixed effect in the all-plots scan: TAXON (default), or F1FAMILY (check only; over-corrects)
 ASSOC_MIN_N=20                      # groups with fewer plots are not scanned
 ASSOC_GROUP_MIN_CARRIERS=10         # per-group scans: at least this many carrier plots in the group
 ASSOC_PERM_PER_TASK=10              # permutations per array task: sbatch --array=1-100 -> 1,000

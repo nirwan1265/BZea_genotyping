@@ -727,7 +727,7 @@ Dominance scans: `figures/assoc_spread/manhattan_DTS_ALL_dom.png`, `manhattan_DT
 
 **Outputs** (`${D21}/assoc`, `${D21}/assoc_gridlmm`): `geno_dosage.csv`, `geno_seg.csv`, `window_map.tsv`, `pheno.csv` (with TAXON, F1FAMILY), `K_matrix_chr*.txt`; `scan_<TRAIT>.tsv` and `scan_<TRAIT>_<GROUP>.tsv` (per window: plots, carriers, SEG and DONOR plots, `beta_add`, `p_add`, `h2`, `c_dom`, `p_dom`), `perm_<TRAIT>_seed<N>.tsv`, `summary_<TRAIT>.tsv` (per scope: threshold, top window, windows above), `manhattan_<TRAIT>_<SCOPE>_{add,dom}.png`, `genes/`.
 
-**On a laptop (no Slurm):** `bash final_script/run_assoc_local.sh <dir with tracts_all.tsv.gz and pool_summary.tsv> <B73 v5 GFF3> ["TRAITS"]` runs steps 25–27 for each trait, into `<dir>/assoc_spats` and `<dir>/assoc_gridlmm_spats`. A scan takes ~3 min per trait (1,283 plots, F1 family fixed). Permutations are off by default (`NPERM=0`; one permutation ≈ 1.5 min); `THRESHOLD=<−log10 p>` sets the line used for peaks and genes when a trait has none.
+**On a laptop (no Slurm):** `bash final_script/run_assoc_local.sh DTS` (one or more traits; one terminal per trait runs them in parallel). It reads `tracts_all.tsv.gz` and `pool_summary.tsv` from `IN` (default `~/Documents/Research/data/BZea/introgression_spread`), builds the step-25 inputs once, then per trait: scan (~3 min, 1,284 plots, taxon fixed), `NPERM` permutations (default 100, ~1.5 min each), threshold, and `genes/regions_genes_<TRAIT>_ALL.tsv`: each significant region with every B73 v5 gene in it. Gene labels on the plots are off unless `MARK_GENES=1`.
 
 **Requirements:** R with GridLMM (`github.com/deruncie/GridLMM`), data.table, ggplot2.
 

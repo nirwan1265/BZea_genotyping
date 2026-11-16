@@ -10,7 +10,8 @@ overlapping the interval, with its ID, Name and description when the GFF has the
 --find REGEX also lists every gene (genome-wide) whose ID/Name/description matches, with the
 scan's best -log10 p within --near bp of it (e.g. --find 'CCT' to locate ZmCCT10).
 
-Outputs in <out_dir>: peaks_<TAG>.tsv, peak_genes_<TAG>.tsv, find_<TAG>.tsv (with --find)
+Outputs in <out_dir>: peaks_<TAG>.tsv, peak_genes_<TAG>.tsv, find_<TAG>.tsv (with --find),
+  regions_genes_<TAG>.tsv (one row per gene with its region: chr, interval, top window, -log10 p, effect)
 """
 import argparse
 import collections
@@ -83,16 +84,24 @@ def main():
         if not any(q["chr"] == p["chr"] and p["int_start"] <= q["int_end"] and p["int_end"] >= q["int_start"] for q in kept):
             kept.append(p)
     peaks = kept
-    with open(f"{a.out_dir}/peaks_{tag}.tsv", "w") as f, open(f"{a.out_dir}/peak_genes_{tag}.tsv", "w") as g:
-        f.write("PEAK\tCHR\tSIG_START\tSIG_END\tTOP_WINDOW\tTOP_MLOG10P\tBETA_DAYS_PER_COPY\tINTERVAL_START\tINTERVAL_END\tN_GENES\n")
+    with open(f"{a.out_dir}/peaks_{tag}.tsv", "w") as f, open(f"{a.out_dir}/peak_genes_{tag}.tsv", "w") as g, \
+            open(f"{a.out_dir}/regions_genes_{tag}.tsv", "w") as rg:
+        rg.write("TRAIT\tREGION\tCHR\tINTERVAL_START\tINTERVAL_END\tTOP_WINDOW\tTOP_MLOG10P\tBETA_PER_COPY\tTHRESHOLD\t"
+                 "GENE\tGENE_START\tGENE_END\tNAME\tDESCRIPTION\n")
+        f.write("PEAK\tCHR\tSIG_START\tSIG_END\tTOP_WINDOW\tTOP_MLOG10P\tBETA_PER_COPY\tINTERVAL_START\tINTERVAL_END\tN_GENES\n")
         g.write("PEAK\tCHR\tSTART\tEND\tGENE\tNAME\tDESCRIPTION\n")
         for k, p in enumerate(peaks, 1):
             gl = [x for x in gby[p["chr"]] if x["end"] >= p["int_start"] and x["start"] <= p["int_end"]]
             f.write(f"{k}\t{p['chr']}\t{p['sig_start']}\t{p['sig_end']}\t{p['top']}\t{p['top_mlog10p']:.2f}\t{p['beta']:.3f}\t"
                     f"{p['int_start']}\t{p['int_end']}\t{len(gl)}\n")
             for x in gl: g.write(f"{k}\t{x['chr']}\t{x['start']}\t{x['end']}\t{x['id']}\t{x['name']}\t{x['desc']}\n")
+            head = (f"{tag}\t{k}\t{p['chr']}\t{p['int_start']}\t{p['int_end']}\t{p['top']}\t{p['top_mlog10p']:.2f}\t"
+                    f"{p['beta']:.3f}\t{a.threshold:.2f}")
+            for x in (gl or [None]):
+                rg.write(head + ("\t\t\t\t\t\n" if x is None else
+                                 f"\t{x['id']}\t{x['start']}\t{x['end']}\t{x['name']}\t{x['desc']}\n"))
             print(f"peak {k}: {p['chr']}:{p['int_start']/1e6:.1f}-{p['int_end']/1e6:.1f} Mb, top {p['top']} "
-                  f"-log10p {p['top_mlog10p']:.2f}, {p['beta']:+.2f} days/copy, {len(gl)} genes")
+                  f"-log10p {p['top_mlog10p']:.2f}, {p['beta']:+.2f} per copy, {len(gl)} genes")
     if a.find:
         rx = re.compile(a.find, re.I)
         with open(f"{a.out_dir}/find_{tag}.tsv", "w") as f:
@@ -104,7 +113,7 @@ def main():
                 f.write(f"{x['id']}\t{x['name']}\t{x['chr']}\t{x['start']}\t{x['end']}\t{best:.2f}\t{x['desc']}\n")
                 print(f"find: {x['id']} {x['name']} {x['chr']}:{x['start']}-{x['end']} best -log10p within "
                       f"{a.near/1e6:.0f} Mb: {best:.2f}  {x['desc'][:80]}")
-    print(f"WROTE: {a.out_dir}/peaks_{tag}.tsv peak_genes_{tag}.tsv" + (f" find_{tag}.tsv" if a.find else ""))
+    print(f"WROTE: {a.out_dir}/regions_genes_{tag}.tsv peaks_{tag}.tsv peak_genes_{tag}.tsv" + (f" find_{tag}.tsv" if a.find else ""))
 
 
 if __name__ == "__main__":

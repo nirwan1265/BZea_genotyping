@@ -878,3 +878,18 @@ Simulation test (5 taxa × 6 pools, 10% donor, 1× reads, scaled = 20): 30 / 30 
 - **Joint QTL model:** `TAXON_COL=SUBTAXON` gives one effect per race at each QTL. Cluster: copy the SUBTAXON peaks to `${D21}/assoc_gridlmm_spats_subtaxon/genes/`, then `sbatch --export=ALL,TAXON_COL=SUBTAXON --array=1-$N 29.2_joint_qtl_noperm.sh` (output `${D29}/noperm_subtaxon`).
 
 Test (DTS, no permutations): the scan peaks barely move (chr5 221.8 Mb −log10 p 9.46 vs 9.68 with taxon; chr10 9.22 vs 9.08; chr1, chr9 and chr5 206 Mb the same), so race differences in mean flowering do not drive the peaks. The joint model then splits the *mexicana* effects: at chr5 221.8 Mb the effect is in **Chalco** (+1.1 d, 8 carrier plots), ~0 in the other races; at chr10 94.5 Mb all races delay flowering (+0.6 to +1.1 d).
+
+---
+
+## 17. Running everything on the cluster
+
+GridLMM (step 26) and R/qtl2 (step 29) in one conda env:
+```bash
+conda create -n bzea_gwas -c conda-forge r-base=4.3 r-data.table r-remotes r-rcpp r-rcppeigen r-rcppparallel \
+  r-matrix r-lme4 r-glmnet r-doparallel r-foreach r-iterators r-itertools r-ggplot2 r-patchwork r-qtl2 \
+  python=3.11 numpy pandas compilers make -y
+conda activate bzea_gwas
+Rscript -e 'remotes::install_github("deruncie/GridLMM", upgrade = "never")'
+Rscript -e 'library(GridLMM); library(qtl2); library(data.table); cat("OK\n")'
+```
+Then, from `final_script/` with the env active: `bash submit_assoc_all.sh`. It submits step 25, and for the fixed effect TAXON and SUBTAXON (each in its own folder, `${D21}/assoc_gridlmm_spats` and `..._subtaxon`): the scan, 1,000 permutations (100 tasks × 10), `26_assoc_finish.sh` (threshold, Manhattan plots, peaks, genes) and the joint QTL model on those peaks (`${D29}/noperm`, `noperm_subtaxon`). `FIXEDS="TAXON" bash submit_assoc_all.sh` runs one only.

@@ -18,7 +18,7 @@ set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 need python3
 python3 -c "import matplotlib" || { echo "matplotlib missing in this env" >&2; exit 1; }
-python3 "${FINAL_DIR}/24_kmer_figures.py" --stats_dir "$D21" --meta "$SAMPLE_META" --out_dir "${D21}/figures" --label "$RUN_TAG"
+python3 "${FINAL_DIR}/24_kmer_figures.py" --stats_dir "$D21" --meta "$SAMPLE_META" --out_dir "${D21}/figures"
 mkdir -p "${FINAL_DIR}/figures/results_${RUN_TAG}"
 cp "${D21}"/figures/*.png "${D21}/figures/family_values.tsv" "${FINAL_DIR}/figures/results_${RUN_TAG}/"
 echo "copied to ${FINAL_DIR}/figures/results_${RUN_TAG}/ (git add + commit to share)"

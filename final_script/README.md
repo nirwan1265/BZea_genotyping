@@ -251,7 +251,7 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 - `rho_loglik.tsv`: log-likelihood by ρ (all pools and per taxon)
 - `blocks_<GROUP>.pdf`: one page per pool. Blue = B73 (all plants AA), yellow = SEG (plants AA, AB or BB), red = DONOR (all plants BB). Colorblind-safe.
 - `introgression_viewer.html` (step 23): interactive page with drop-downs by taxon → family → pool, a family view that lines up all pools of a family, hover details, and SVG/PNG download. Also copied to `figures/introgression_viewer_round<N>.html` to commit.
-- `family_summary.tsv`: family = first two pedigree fields, e.g. `Zd.0010_P2`. Built from `pool_summary.tsv` and `SAMPLE_META` (command in section 5.5).
+- `family_summary.tsv`: family = first two pedigree fields, e.g. `Zd.0010_P2`. Pedigree names (confirmed by the PI): in `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200` = accession, `P3` = F1 plant, `P2` = BC1 plant, `P1` = BC2 plant, `.1.1.1` = selfed line. So a "family" here is an **F1 family**: all pools from one F1 plant, which share one teosinte haplotype. Built from `pool_summary.tsv` and `SAMPLE_META` (command in section 5.5).
 - Per-pool HMM results for every ρ: `${KMER_DIR}/hmm/<SAMPLE>.npz`.
 
 ---
@@ -449,7 +449,7 @@ The top-level README has a shorter version of this: [What we changed and why](..
 
 #### Family DONOR levels (step 20b, rounds)
 
-**Why.** In round 0 the DONOR level comes from the teosinte assemblies. Our lines' donor plants differ from those assembly plants, and in Zv and Zx that causes SEG/DONOR switching inside tracts. Every pool of a BC1 family carries the same donor haplotype (one F1 gamete). So where pools of the family are called DONOR, their score r there is the family's real DONOR level.
+**Why.** In round 0 the DONOR level comes from the teosinte assemblies. Our lines' donor plants differ from those assembly plants, and in Zv and Zx that causes SEG/DONOR switching inside tracts. Every pool of an F1 family carries the same donor haplotype (one F1 gamete). So where pools of the family are called DONOR, their score r there is the family's real DONOR level.
 
 **How (`20b_family_levels.py`).** For each pool and window, using the previous round's calls at its best ρ and only non-noisy pools:
 - n = the number of the **other** pools of its family (leave-one-out) called DONOR in that window, and m = their median r.

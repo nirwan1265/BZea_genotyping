@@ -1,7 +1,7 @@
 import random
 random.seed(4)
 W,Hh=1100,1110
-B73="#2850C0"; SEG="#6A2C9E"; DON="#C0202A"; OK="#2E8B57"; GRAY="#9AA3AD"; INK="#1F2933"; SOFT="#5B6670"
+B73="#3A6FB5"; SEG="#B8860B"; DON="#BB5566"; OK="#2E8B57"; GRAY="#9AA3AD"; INK="#1F2933"; SOFT="#5B6670"
 o=[]
 def t(x,y,s,size=15,w="normal",fill=INK,anchor="start",style=""):
     o.append(f'<text x="{x}" y="{y}" font-size="{size}" font-weight="{w}" fill="{fill}" text-anchor="{anchor}" {style}>{s}</text>')
@@ -23,10 +23,10 @@ def cross(x,y,c=DON): o.append(f'<path d="M{x-6},{y-6} l12,12 M{x+6},{y-6} l-12,
 
 o.append(f'<rect x="0" y="0" width="{W}" height="{Hh}" fill="#FFFFFF"/>')
 t(W/2,38,"Calling introgressions with k-mers (no read mapping)",22,"bold",anchor="middle")
-t(W/2,62,"one 100-kb window of the B73 genome, one pool of 6 BC2S3 plants",14,fill=SOFT,anchor="middle")
+t(W/2,62,"one 100-kb window of the B73 genome · one sequenced sample = a pool of 6 BC2S3 plants from one plot",14,fill=SOFT,anchor="middle")
 
 # ---------- panel 1 ----------
-y=90; panel(y,1,"Make the B73 k-mer list (step 16)","Cut B73 into every 31-letter word (k-mer). Keep only words that occur ONCE in the whole genome.")
+y=90; panel(y,1,"Make the B73 k-mer list (step 16)","Cut the B73 reference genome (RefGen v5) into every 31-letter word (k-mer). Keep only words that occur ONCE.")
 gy=y+95
 rect(80,gy-6,940,12,"#E6EAF0",6); t(70,gy+5,"B73",14,"bold",anchor="end")
 rect(520,gy-6,190,12,"#C9CED6",6)
@@ -41,7 +41,7 @@ stick(110,170,gy+58,B73); t(180,gy+63,"single-copy k-mer: kept (680 M of 817 M)"
 stick(560,620,gy+58,GRAY); t(630,gy+63,"repeat k-mer: dropped (present in every genome)",13.5)
 
 # ---------- panel 2 ----------
-y=290; panel(y,2,"Look the k-mers up in each pool's reads (step 17)","Count all k-mers in the pool's raw reads (KMC). Reads are never mapped, so donor reads are not lost.")
+y=290; panel(y,2,"Look the k-mers up in each sample's reads (step 17)","Count all k-mers in the sample's raw reads (KMC). Reads are never mapped, so donor reads are not lost.")
 # B73 region
 by=y+128; t(80,by-62,"B73 region",14,"bold",fill=B73)
 rect(80,by-6,420,12,"#E6EAF0",6)
@@ -110,7 +110,7 @@ while i<n:
     rect(xa,sy,max(4,xb-xa+6),20,{0:B73,1:SEG,2:DON}[states[i]])
     i=j
 t(px0,sy+42,"called states",12.5,fill=SOFT)
-for k,(lab,c) in enumerate([("B73 (AA)",B73),("SEG (AB, segregating)",SEG),("DONOR (BB)",DON)]):
+for k,(lab,c) in enumerate([("B73 (all plants AA)",B73),("SEG (plants AA, AB or BB)",SEG),("DONOR (all plants BB)",DON)]):
     rect(px0+200+k*240,sy+31,14,14,c,3); t(px0+220+k*240,sy+43,lab,13)
 svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{Hh}" viewBox="0 0 {W} {Hh}" font-family="Helvetica, Arial, sans-serif">'+"".join(o)+"</svg>"
 open(__import__("os").path.join(__import__("os").path.dirname(__import__("os").path.abspath(__file__)), "kmer_method.svg"),"w").write(svg)

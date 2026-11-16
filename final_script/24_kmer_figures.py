@@ -55,7 +55,7 @@ def main():
     ap.add_argument("--stats_dir", required=True, help="step 21/22 output dir (pool_summary.tsv, stats_overall.tsv, stats_by_chrom.tsv)")
     ap.add_argument("--meta", required=True)
     ap.add_argument("--out_dir", required=True)
-    ap.add_argument("--label", default="", help="added to the figure titles, e.g. 'current method'")
+    ap.add_argument("--label", default="", help="optional text added to the figure titles")
     a = ap.parse_args()
     os.makedirs(a.out_dir, exist_ok=True)
     plt.rcParams.update({"font.family": "DejaVu Sans", "figure.dpi": 100, "savefig.dpi": 200, "axes.titlesize": 11,
@@ -68,22 +68,31 @@ def main():
             st[r["SCOPE"]][r["MEASURE"]] = (100 * float(r["OBSERVED"]), 100 * float(r["CI_LOW"]), 100 * float(r["CI_HIGH"]),
                                             float(r["P"]), int(r["FAMILIES"]), int(r["POOLS"]))
 
-    # ---- fig 1: overall
-    ms = ["SEG", "AB", "DONOR", "BB", "DONOR_ALLELES"]
-    fig, ax = plt.subplots(figsize=(7.5, 4.2)); style(ax)
-    for i, m in enumerate(ms):
-        o, lo, hi, p, nf, npool = st["ALL"][m]
-        ax.bar(i, o, width=0.5, color=BAR, zorder=3)
-        ax.errorbar(i, o, yerr=[[o - lo], [hi - o]], fmt="none", ecolor=INK2, elinewidth=1.2, capsize=4, zorder=5)
-        exp_line(ax, i - 0.36, i + 0.36, EXP[m])
-        ax.annotate(f"{o:.2f}%", (i, max(hi, EXP[m] if abs(EXP[m] - hi) < 0.6 else hi)), xytext=(0, 5), textcoords="offset points",
-                    ha="center", fontsize=8.5, color=INK)
-    ax.set_xticks(range(len(ms))); ax.set_xticklabels([f"{LAB[m]}\nexp. {EXP[m] + 1e-9:.2f}%" for m in ms], fontsize=9, color=INK)
-    ax.set_ylabel("% of genome"); ax.set_ylim(0, 14.5)
+    # ---- fig 1: overall, in three groups (what the HMM calls / what that means per plant / total donor)
+    groups = [("Pool states\n(called by the HMM)", ["SEG", "DONOR"]),
+              ("Plant genotypes\n(from the pool states)", ["AB", "BB"]),
+              ("Donor alleles\n(total)", ["DONOR_ALLELES"])]
+    lab1 = {"SEG": "SEG", "DONOR": "DONOR", "AB": "AB", "BB": "BB", "DONOR_ALLELES": "Donor\nalleles"}
+    fig, axs = plt.subplots(1, 3, figsize=(10, 4.4), gridspec_kw={"width_ratios": [2, 2, 1.15]}, sharey=True)
+    for ax, (gname, ms) in zip(axs, groups):
+        style(ax)
+        for i, m in enumerate(ms):
+            o, lo, hi, p, nf, npool = st["ALL"][m]
+            ax.bar(i, o, width=0.55, color=BAR, zorder=3)
+            ax.errorbar(i, o, yerr=[[o - lo], [hi - o]], fmt="none", ecolor=INK2, elinewidth=1.2, capsize=4, zorder=5)
+            exp_line(ax, i - 0.38, i + 0.38, EXP[m])
+            ax.annotate(f"{o:.2f}%", (i, max(hi, EXP[m] if abs(EXP[m] - hi) < 0.6 else hi)), xytext=(0, 5),
+                        textcoords="offset points", ha="center", fontsize=8.5, color=INK)
+        ax.set_xticks(range(len(ms))); ax.set_xlim(-0.6, len(ms) - 0.4)
+        ax.set_xticklabels([f"{lab1[m]}\nexp. {EXP[m] + 1e-9:.2f}%" for m in ms], fontsize=9, color=INK)
+        ax.set_title(gname, loc="center", fontsize=10, pad=8)
+    axs[0].set_ylabel("% of genome"); axs[0].set_ylim(0, 14.5)
     nf, npool = st["ALL"]["SEG"][4:6]
-    title(ax, f"Observed vs expected BC2S3, all taxa{sub}",
-          f"{npool:,} non-noisy pools, {nf} families. Bars: observed (95% family-bootstrap CI). Black line: expected.")
-    fig.tight_layout(); fig.savefig(f"{a.out_dir}/fig1_overall.png"); plt.close(fig)
+    fig.suptitle(f"Observed vs expected BC2S3, all taxa{sub}", x=0.01, ha="left", fontsize=11, fontweight="bold", color=INK)
+    fig.text(0.01, 0.875, f"{npool:,} pools, {nf} F1 families. Bars: observed (95% bootstrap CI). Black line: expected.\n"
+             "Plant genotypes come from the pool states: AB = SEG/2, BB = DONOR + SEG/4. Donor alleles = DONOR + SEG/2.",
+             fontsize=8.5, color=INK2)
+    fig.tight_layout(rect=(0, 0, 1, 0.86)); fig.savefig(f"{a.out_dir}/fig1_overall.png"); plt.close(fig)
 
     # ---- fig 2: by taxon, one panel per measure
     ms2 = ["DONOR_ALLELES", "BB", "AB", "AB_OF_DONOR_PLANTS"]
@@ -137,7 +146,7 @@ def main():
     a1.annotate(f"all pools {st['ALL']['DONOR_ALLELES'][0]:.1f}%", (len(rows) - 0.2, st["ALL"]["DONOR_ALLELES"][0]), xytext=(4, 0),
                 textcoords="offset points", va="center", fontsize=8.5, color=INK2)
     a1.set_ylabel("Donor alleles (% of genome)"); a1.set_ylim(0, 18)
-    a1.set_title(f"Per family{sub}: donor alleles (top) and share of donor-carrying plants that are het (bottom)", loc="left")
+    a1.set_title(f"Per F1 family{sub}: donor alleles (top) and share of donor-carrying plants that are het (bottom)", loc="left")
     a2.bar(x, [r[4] for r in rows], width=0.78, color=cols, zorder=3)
     exp_line(a2, -0.8, len(rows) - 0.2, EXP["AB_OF_DONOR_PLANTS"], "expected 22.2%")
     a2.axhline(st["ALL"]["AB_OF_DONOR_PLANTS"][0], color=INK2, lw=1, zorder=2)
@@ -157,7 +166,7 @@ def main():
     labs = [f"{NAME[t]}: {sum(1 for r in rows if r[0] == t)} fam., {sum(r[2] for r in rows if r[0] == t)} pools" for t in present]
     a1.legend(hs, labs, ncol=3, fontsize=8.5, frameon=False,
               loc="upper left", bbox_to_anchor=(0, 1.0))
-    fig.text(0.01, 0.005, "Each bar is one family (mean of its non-noisy pools), sorted by donor alleles within taxon. "
+    fig.text(0.01, 0.005, "Each bar is one F1 family (mean of its pools), sorted by donor alleles within taxon. "
              "Grey line: mean over all pools. Black line: expected BC2S3.", fontsize=8.5, color=INK2)
     fig.tight_layout(rect=(0, 0.06, 1, 1)); fig.savefig(f"{a.out_dir}/fig3_by_family.png"); plt.close(fig)
 
@@ -189,7 +198,7 @@ def main():
     med = float(np.median(v)); ax.plot([med, med], [0, top], color=INK2, lw=1, zorder=4)
     ax.annotate(f"median {med:.1f}%", (med, top), xytext=(-4, -10), textcoords="offset points", ha="right", fontsize=8.5, color=INK2)
     ax.set_xlabel("Donor share of the pool (% of genome)"); ax.set_ylabel("Pools")
-    title(ax, f"Donor share per pool{sub}", f"{len(v):,} non-noisy donor pools; {np.mean(v >= 12.5) * 100:.0f}% reach the expected 12.5%.")
+    title(ax, f"Donor share per pool{sub}", f"{len(v):,} donor pools; {np.mean(v >= 12.5) * 100:.0f}% reach the expected 12.5%.")
     fig.tight_layout(); fig.savefig(f"{a.out_dir}/fig5_pool_share.png"); plt.close(fig)
     print(f"WROTE: {a.out_dir}/fig1_overall.png fig2_by_taxon.png fig3_by_family.png fig4_by_chromosome.png fig5_pool_share.png family_values.tsv")
 

@@ -11,7 +11,7 @@
 ##          step-26 summary has one), QTL numbered at their top window.
 ## Panel B: per QTL, effect per teosinte copy (trait units) with 95% CI: black = joint model (all QTL together, all taxa),
 ##          colours = within each taxon (taxa with >= 5 carrier plots). Right: -log10 p of the joint test and of
-##          "taxa differ".
+##          "taxa differ" (two columns; these are p-values, not effects).
 ## Outputs: joint_qtl_<TRAIT>.png (one per trait) and joint_qtl_all_traits.pdf (one page per trait).
 ## Needs:   R with ggplot2, patchwork, data.table.
 ## =============================================================================
@@ -81,14 +81,18 @@ make_fig <- function(trait) {
     labs(x = "Effect per teosinte copy (95% CI)", y = NULL, title = "Joint QTL model (R/qtl2) and per-taxon effects") +
     theme_classic(base_size = 11) + theme(plot.title = element_text(size = 11), legend.position = "bottom") +
     guides(colour = guide_legend(nrow = 2))
-  tx <- q[, .(lab = factor(lab, levels = lev),
-              txt = sprintf("joint %.1f | taxa differ %s", mlog10p_joint,
-                            ifelse(is.na(mlog10p_taxa_differ), "NA", sprintf("%.1f", mlog10p_taxa_differ))))]
-  pC <- ggplot(tx, aes(0, lab, label = txt)) + geom_text(hjust = 0, size = 3) +
-    scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  ## -log10 p of the joint test and of "taxa differ", as two labelled columns
+  tx <- rbind(q[, .(lab = factor(lab, levels = lev), col = "Joint\ntest", v = sprintf("%.1f", mlog10p_joint))],
+              q[, .(lab = factor(lab, levels = lev), col = "Taxa\ndiffer",
+                    v = ifelse(is.na(mlog10p_taxa_differ), "NA", sprintf("%.1f", mlog10p_taxa_differ)))])
+  pC <- ggplot(tx, aes(col, lab, label = v)) + geom_text(size = 3.2) +
+    scale_x_discrete(position = "top") +
     labs(title = expression(-log[10](italic(p))), x = NULL, y = NULL) +
-    theme_void(base_size = 11) + theme(plot.title = element_text(size = 10, hjust = 0))
-  (pA | pB | pC) + plot_layout(widths = c(2.3, 1.3, 0.55))
+    theme_void(base_size = 11) +
+    theme(plot.title = element_text(size = 10, hjust = 0.5), axis.text.x.top = element_text(size = 9, lineheight = 0.9))
+  pB <- pB + labs(caption = sprintf("Taxa with < %d carrier plots at a QTL have no per-taxon estimate.", 5)) +
+    theme(plot.caption = element_text(size = 8, colour = "grey30", hjust = 0))
+  (pA | pB | pC) + plot_layout(widths = c(2.3, 1.3, 0.35))
 }
 
 figs <- list()

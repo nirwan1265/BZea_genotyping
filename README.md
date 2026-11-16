@@ -122,12 +122,13 @@ We infer B73 / SEG / DONOR states along the genome for each pool with an HMM. It
 - Per-pool state per window, tracts, summary statistics (`pool_summary.tsv`, `family_summary.tsv`), chromosome paintings (`blocks_<taxon>.pdf`)
 
 
-##  QTL / Association Mapping
-### 7) Mixed-model QTL scan on k-mer ancestry
+##  k-mer ancestry GWAS and joint QTL mapping
+### 7) k-mer ancestry GWAS, then a joint QTL model on its peaks
 - **Phenotypes:** SpATS spatially corrected BLUEs per year (2023, 2025), combined across years (`final_script/28_spats_blues.R`).
 - **Genotypes:** teosinte ancestry dosage per 100-kb window from the k-mer HMM (0 B73, 1 SEG, 2 DONOR).
-- **Model:** **GridLMM** (Runcie & Crawford 2019) with taxon as a fixed effect and a **LOCO (leave-one-chromosome-out) kinship** built from the same ancestry dosage, so the tested region is not absorbed by K; additive and dominance tests.
-- **Threshold:** 5% genome-wide, from permutations within taxon. Regions and the B73 v5 genes in them from the GFF3.
+- **k-mer ancestry GWAS:** **GridLMM** (Runcie & Crawford 2019) with taxon as a fixed effect and a **LOCO (leave-one-chromosome-out) kinship** built from the same ancestry dosage, so the tested region is not absorbed by K; 5% genome-wide threshold from permutations within taxon.
+- **Joint QTL model:** the peaks fitted together in **R/qtl2** (Broman et al. 2019): effect of each QTL adjusted for the others, its effect in each taxon, and a test that the taxa differ.
+- **Genes:** B73 v5 genes in each QTL interval, with GO terms.
 
 (Details in Section 7)
  
@@ -674,7 +675,7 @@ For each tract in a pool, how often does another pool have an introgression at t
 - Rabiner LR (1989) A tutorial on hidden Markov models and selected applications in speech recognition. *Proc IEEE* 77:257–286.
 - Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
 
-## Section 7 — QTL / Association Mapping
+## Section 7 — k-mer ancestry GWAS and joint QTL mapping
 
 We ran **two analyses** on the same genotypes (k-mer teosinte ancestry per 100-kb window, Sections 4–6) and the same phenotypes (two-year SpATS BLUEs):
 
@@ -690,12 +691,13 @@ Both use taxon as a fixed effect and a leave-one-chromosome-out (LOCO) kinship b
 
 ### What kind of analysis this is
 
-The marker here is not a SNP. It is the **teosinte ancestry** of each plot in each 100-kb window, from the k-mer HMM (Sections 4–6): 0 = B73, 1 = SEG, 2 = DONOR copies per plant. Testing local ancestry against a phenotype is what human genetics calls **admixture mapping** (Smith & O'Brien 2005); in a backcross population it is **QTL mapping with a mixed model**.
+The marker is not a SNP. It is the **teosinte ancestry** of each plot in each 100-kb window, from the k-mer HMM (Sections 4–6): 0 = B73, 1 = SEG, 2 = DONOR copies per plant. Testing local ancestry against a phenotype is what human genetics calls **admixture mapping** (Smith & O'Brien 2005).
 
-- **The model is GWAS-style**: one test per window, a linear mixed model with a kinship matrix, a genome-wide threshold.
-- **The resolution is QTL-style**: donor tracts are several Mb long, so neighbouring windows carry almost the same ancestry. A signal points to a region (support intervals of ~5–15 Mb), not to a gene. Genes in the region are candidates, not hits.
+We combine two steps, each doing what it is good at:
+- **The k-mer ancestry GWAS finds the peaks.** It is GWAS-style: one mixed-model test per window across the whole genome, with a kinship matrix and a permutation threshold.
+- **The joint QTL model describes them.** It fits the peaks together, as in QTL mapping, to tell which peaks are separate QTL, how large each is, and whether the teosinte taxa differ.
 
-So we call it **QTL mapping by mixed-model association on k-mer ancestry**. "GWAS" is fine as shorthand for the scan, as long as the resolution is stated.
+The resolution is that of QTL mapping: donor tracts are several Mb long, so neighbouring windows carry almost the same ancestry, and a signal points to a region (support intervals of ~0.3–15 Mb), not to a gene. Genes in the region are candidates.
 
 ### Phenotypes
 
@@ -715,8 +717,6 @@ BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/R
 | EN (ear number) | 0.68 | 0.42 | 0.33 |
 | Prolif, NBR, SPAD | 0.49–0.61 | 0.47–0.55 | 0.19–0.34 |
 | BW, BL, SL (2023 only) | 0.51, 0.56, 0.73 | | |
-
-The 2023 DTS/DTA BLUEs agree with the earlier one-year file (r = 0.97). With both years, **1,284 plots** have a phenotype and k-mer calls (Zd 249, Zh 61, Zl 117, Zv 380, Zx 572); before, 829.
 
 ### Analysis 1: k-mer ancestry GWAS
 
@@ -759,7 +759,7 @@ With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC 
 
 ### Analysis 2: joint QTL model with per-taxon effects
 
-The scan tests one window at a time, ignoring the others. Analysis 2 takes **the QTL found by the scan** (top window and support interval of each region, from `peaks_<TRAIT>_ALL.tsv`) and fits them in **R/qtl2** (Broman et al. 2019), a standard package for QTL mapping in multiparent populations. Every statistical step is an R/qtl2 function; the script only converts the k-mer calls into R/qtl2's format.
+The scan tests one window at a time, ignoring the others. Analysis 2 takes **the QTL found by the scan** (top window and support interval of each region, from `peaks_<TRAIT>_ALL.tsv`) and fits them in **R/qtl2** (Broman et al. 2019). Every statistical step is an R/qtl2 function; the script only converts the k-mer calls into R/qtl2's format.
 
 - **Genotypes:** teosinte allele probability per window = dosage / 2 (B73 0, SEG 0.5, DONOR 1); kinship `calc_kinship(probs, "loco")`.
 - **Joint effect:** each QTL is fitted with taxon and **all other QTL** as covariates (`fit1`). This gives its effect per teosinte copy adjusted for the others, and a conditional test. A QTL whose signal disappears once the others are in the model is a shadow of a linked QTL, not an independent one.
@@ -767,6 +767,10 @@ The scan tests one window at a time, ignoring the others. Analysis 2 takes **the
 - **Do the taxa differ?** LOD of the model with a separate QTL effect per taxon (`scan1` with `intcovar = taxon`) minus LOD of the model with one shared effect; likelihood-ratio test with (taxa − 1) df.
 - **Effect per copy:** `fit1(..., contrasts = cbind(mu = c(1, 1), a = c(-1, 1)))`; the B73 allele mean is mu − a and the teosinte allele mean mu + a, so a is the effect of one teosinte copy.
 - **Significance:** the joint model does not search the genome; it tests the k QTL of a trait, so a Bonferroni correction over k (−log10 p > −log10(0.05/k), e.g. 2.08 for 6 QTL) is used for both the joint test and "taxa differ".
+
+**Why the joint model starts from the peaks, and not from all windows at once.** A joint model needs a short list of QTL to fit together. It cannot take all 21,309 windows: that is far more predictors than the 1,284 plots, and neighbouring windows are nearly identical (one tract covers dozens of them), so their effects cannot be separated. The genome scan is the step that picks the list: one window per peak (the top window), with its support interval. The joint model then asks, for those few QTL together, which ones still matter once the others are in the model, how large each is, and in which taxa. This two-step design (scan, then fit the selected QTL jointly) is how QTL mapping is usually done; TeoNAM's joint linkage mapping chooses its QTL by stepwise selection instead (Chen et al. 2019). Using the scan's peaks keeps the two analyses on exactly the same QTL.
+
+**Why some QTL show fewer taxa.** A per-taxon effect needs carriers: plots of that taxon with the teosinte allele at the QTL. Taxa with fewer than 5 carrier plots at a QTL get no estimate. For example, DTS Q6 (chr10) has carriers from Zd (23), Zv (22) and Zx (62) but only 4 from *huehuetenangensis* and 2 from *luxurians*, so those two are not shown. Which taxa carry a tract depends on where the backcrosses happened to keep donor segments.
 
 This is the mixed-model counterpart of TeoNAM's joint linkage mapping (Chen et al. 2019). Effects are estimated per taxon, not per accession: a typical window has ~90 carrier plots across 82 accessions, about one per accession. Details: `final_script/README.md`, section 12.
 
@@ -785,7 +789,7 @@ All results are in `data/introgression_spread/`: `assoc_gridlmm_spats/` (scans, 
 
 ### Results
 
-**Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position. Right: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon; far right, −log10 p of the joint test and of "taxa differ". Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering).
+**Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position. Middle: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon (taxa with ≥ 5 carrier plots). Right: two columns of **−log10 p** (not effects): "Joint test" = is the QTL still significant with all other QTL in the model; "Taxa differ" = does its effect differ between taxa. For example, DTS Q1 "4.9 | 19.8" means p = 10⁻⁴·⁹ for the QTL and p = 10⁻¹⁹·⁸ for the difference between taxa. Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering).
 
 **Overview (1,196–1,286 plots per trait; thresholds from 100 permutations):**
 
@@ -821,12 +825,12 @@ All results are in `data/introgression_spread/`: `assoc_gridlmm_spats/` (scans, 
 Bonferroni over 6 QTL: −log10 p > 2.08. **DTS has about five regions:** chr10 acts alike in all taxa, chr1 and the two chr5 QTL are taxon-specific (mostly *luxurians*), and chr9 is the only region where teosinte makes flowering earlier.
 
 **Candidate genes (in the support intervals; candidates, not proven causal):**
-- **Q6, chr10:** *ZmCCT10* (Zm00001eb418700, annotated "GHD7_2"; 96.18 Mb), the main teosinte photoperiod gene; teosinte alleles delay flowering under long days (Hung et al. 2012; Yang et al. 2013).
-- **Q3, chr5:** the top window (221.7–221.8 Mb) holds 8 genes, among them Zm00001eb257680, annotated as a SnRK1-interacting protein with "regulation of flower development", the putative maize homolog of rice *HDR1* (Heading Date Repressor 1), which binds the SnRK1-type kinase OsK4 and delays heading in long days (Sun et al. 2016). Not characterised for flowering in maize. Orthology still to be confirmed.
-- **Q2, chr5:** *ZAG3* (*bearded-ear1*, AGL6-like MADS-box).
-- **Q5, chr9:** *COL6* and a CONSTANS-like gene (Zm00001eb380460, same CCT family as Ghd7).
-- **Q4, chr9:** *MADS74* (JOINTLESS/SVP-like MADS-box; SVP-like genes repress flowering).
-- **Q1, chr1:** a circadian clock-coupling factor (ZGT).
+- **Q6, chr10:** *ZmCCT10* (**Zm00001eb418700**, annotated "GHD7_2"; 96.18 Mb), the main teosinte photoperiod gene; teosinte alleles delay flowering under long days (Hung et al. 2012; Yang et al. 2013).
+- **Q3, chr5:** **Zm00001eb257680**, annotated as **Protein HEADING DATE REPRESSOR 1** (SnRK1-interacting protein; GO "regulation of flower development"), in the top window (221.7–221.8 Mb, 8 genes). Its functional ortholog in rice, *HDR1* (*Heading Date Repressor 1*), is a nuclear protein that suppresses flowering under long days: it upregulates *Hd1* and downregulates *Ehd1*, which lowers the florigens *Hd3a* and *RFT1*; it interacts with the kinase OsK4, another long-day repressor (Sun et al. 2016). The *hdr1* mutant flowers early in long days only, i.e. HDR1 acts through the photoperiod pathway, which fits a teosinte allele that delays silking. Not characterised for flowering in maize. Orthology still to be confirmed with a gene tree.
+- **Q2, chr5:** *ZAG3* / *bearded-ear1* (*bde1*; **Zm00001eb250710**), an AGL6-like MADS-box gene needed for maize floral development (Thompson et al. 2009). Its Arabidopsis homolog *AGL6* promotes flowering: it represses the *FLC*/*MAF* floral repressors and raises *FT* (Yoo et al. 2011a), acts through the AGL6–ELF3–FT module (Lee et al. 2024), and affects the circadian clock through *ZEITLUPE* (Yoo et al. 2011b). Also in the interval: a PHOTOPERIOD-INDEPENDENT EARLY FLOWERING 1 homolog (**Zm00001eb251100**).
+- **Q5, chr9:** *COL6* (**Zm00001eb380990**, CONSTANS-LIKE) and a CONSTANS-like gene of the same CCT family as Ghd7 (**Zm00001eb380460**).
+- **Q4, chr9:** *MADS74* (**Zm00001eb372960**; JOINTLESS/SVP-like MADS-box; SVP-like genes repress flowering).
+- **Q1, chr1:** a circadian clock-coupling factor ZGT (**Zm00001eb020350**).
 
 <details><summary>All DTS QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -854,7 +858,7 @@ Bonferroni over the 6 QTL: −log10 p > 2.08 (bold).
 | **Q1 chr1 76.3 Mb** | +0.64 d | 4.6 | 13.1 (yes) | The same *luxurians* QTL as DTS Q1 (Zl +3.4 d, others ≈ 0–0.2). |
 | **Q2 chr2 226.3 Mb** | +0.51 d | 4.6 | 4.0 (yes) | DTA only. Larger in *luxurians* (+1.9) and *diploperennis* (+1.1) than in Zv/Zx (+0.3). |
 
-All four hold in the joint model (Bonferroni over 4 QTL: −log10 p > 1.90). **The chr5 QTL of DTS are absent for DTA:** they delay silking but not pollen shedding, and the chr5 ~218 Mb region shows up for ASI (+0.35 d; below). Candidate genes: *ZmCCT10* (Q4); clock-coupling factor ZGT (Q1).
+All four hold in the joint model (Bonferroni over 4 QTL: −log10 p > 1.90). **The chr5 QTL of DTS are absent for DTA:** they delay silking but not pollen shedding, and the chr5 ~218 Mb region shows up for ASI (+0.35 d; below). Candidate genes: *ZmCCT10* (Zm00001eb418700; Q4); clock-coupling factor ZGT (Zm00001eb020350; Q1).
 
 <details><summary>All DTA QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -873,7 +877,7 @@ Bonferroni over the 4 QTL: −log10 p > 1.90 (bold).
 
 ![ASI: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_ASI.png)
 
-ASI = DTS − DTA. 13 regions, 6 hold in the joint model (Bonferroni over 13: −log10 p > 2.41). The strongest, **Q13 chr7 165.6 Mb** (−0.36 d, joint −log10 p 14.0), shortens the interval in all taxa. **Q12 chr5 218.3 Mb** (+0.35 d; *luxurians* +1.1) lengthens it; it lies just next to the DTS chr5 QTL, which delays silking but not anthesis. **Q1 chr1 4.5 Mb** (+0.24 d) acts alike in all taxa. Many chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. Candidate genes in intervals: *tga1* (Q10, chr4), ADAGIO3 (Q11, circadian), *MADS73* (Q12), GA2ox2 (Q2).
+ASI = DTS − DTA. 13 regions, 6 hold in the joint model (Bonferroni over 13: −log10 p > 2.41). The strongest, **Q13 chr7 165.6 Mb** (−0.36 d, joint −log10 p 14.0), shortens the interval in all taxa. **Q12 chr5 218.3 Mb** (+0.35 d; *luxurians* +1.1) lengthens it; it lies just next to the DTS chr5 QTL, which delays silking but not anthesis. **Q1 chr1 4.5 Mb** (+0.24 d) acts alike in all taxa. Many chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. Candidate genes in intervals: *tga1* (Zm00001eb175150; Q10, chr4), ADAGIO3 (Zm00001eb201580; Q11, circadian), *MADS73* (Zm00001eb255670; Q12), *GA2ox2* (Zm00001eb077080; Q2).
 
 <details><summary>All ASI QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -901,7 +905,7 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold).
 
 ![PH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_PH.png)
 
-15 regions, 9 hold in the joint model (Bonferroni over 15: −log10 p > 2.48); effects are in cm per teosinte copy and mostly **alike across taxa** (no "taxa differ" test passes). Strongest: **Q15 chr10 97.0 Mb** (+5.7 cm; the ZmCCT10 region: later flowering, taller plants), **Q14 chr9 139.8 Mb** (+4.7 cm), **Q13 chr7 139.1 Mb** (−4.8 cm), **Q4 chr4 198.4 Mb** (+4.3 cm), **Q3 chr3 12.8 Mb** (−3.75 cm; the window holding *ramosa2*), Q1 chr1 201.8 Mb (−4.1 cm), Q2 chr2 2.5 Mb (−2.6 cm) and Q5 chr5 2.6 Mb (+3.2 cm). The five chr6 peaks (Q8–Q12) lose their signal in the joint model: one shared chr6 region, or a shadow of the other QTL.
+15 regions, 9 hold in the joint model (Bonferroni over 15: −log10 p > 2.48); effects are in cm per teosinte copy and mostly **alike across taxa** (no "taxa differ" test passes). Strongest: **Q15 chr10 97.0 Mb** (+5.7 cm; the ZmCCT10 region: later flowering, taller plants), **Q14 chr9 139.8 Mb** (+4.7 cm), **Q13 chr7 139.1 Mb** (−4.8 cm), **Q4 chr4 198.4 Mb** (+4.3 cm), **Q3 chr3 12.8 Mb** (−3.75 cm; the window holding *ramosa2*, Zm00001eb123060), Q1 chr1 201.8 Mb (−4.1 cm), Q2 chr2 2.5 Mb (−2.6 cm) and Q5 chr5 2.6 Mb (+3.2 cm). The five chr6 peaks (Q8–Q12) lose their signal in the joint model: one shared chr6 region, or a shadow of the other QTL.
 
 <details><summary>All PH QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -931,7 +935,7 @@ Bonferroni over the 15 QTL: −log10 p > 2.48 (bold).
 
 ![EH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EH.png)
 
-14 regions, 8 hold (Bonferroni over 14: −log10 p > 2.45). Ear height follows flowering: several QTL hold known flowering genes in their intervals: **Q10 chr8 126.2 Mb** (+3.0 cm; *ZCN8*, the maize florigen), **Q11 chr9 116.8 Mb** (+2.3 cm; *ZmCCT9*, Huang et al. 2018), **Q9 chr7 184.2 Mb** (+2.1 cm; *dlf1* and a PRR37-like gene) and Q14 chr10 97.0 Mb (+2.1 cm; *ZmCCT10*; joint −log10 p 2.3, just below the cut). **Q4 chr3 12.8 Mb** (−2.1 cm) is the same window as PH Q3 (*ra2*, plus a BZR1 homolog and CYP734A6 for brassinosteroids); **Q1 chr2 25.8 Mb** (+1.9 cm) holds *GA2ox2* (gibberellin inactivation); Q7 chr5 2.5 Mb and Q5 chr4 198.4 Mb are shared with PH. Q8 chr6 105 Mb (+2.9 cm) is the only QTL where taxa differ (Zv +6.2 cm).
+14 regions, 8 hold (Bonferroni over 14: −log10 p > 2.45). Ear height follows flowering: several QTL hold known flowering genes in their intervals: **Q10 chr8 126.2 Mb** (+3.0 cm; *ZCN8*, Zm00001eb353250, the maize florigen), **Q11 chr9 116.8 Mb** (+2.3 cm; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018), **Q9 chr7 184.2 Mb** (+2.1 cm; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630) and Q14 chr10 97.0 Mb (+2.1 cm; *ZmCCT10*; joint −log10 p 2.3, just below the cut). **Q4 chr3 12.8 Mb** (−2.1 cm) is the same window as PH Q3 (*ra2*, plus a BZR1 homolog, Zm00001eb122520, and CYP734A6, Zm00001eb122680, for brassinosteroids); **Q1 chr2 25.8 Mb** (+1.9 cm) holds *GA2ox2* (Zm00001eb077080; gibberellin inactivation); Q7 chr5 2.5 Mb and Q5 chr4 198.4 Mb are shared with PH. Q8 chr6 105 Mb (+2.9 cm) is the only QTL where taxa differ (Zv +6.2 cm).
 
 <details><summary>All EH QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -960,7 +964,7 @@ Bonferroni over the 14 QTL: −log10 p > 2.45 (bold).
 
 ![EN: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EN.png)
 
-14 regions, 10 hold (Bonferroni over 14: −log10 p > 2.45). **Every effect is positive: teosinte alleles add ears**, as expected from multi-eared teosinte, and alike across taxa. Strongest: **Q2 chr2 22.4 Mb** (+0.19 per copy, joint −log10 p 19.6), **Q1 chr1 22.9 Mb** (+0.21, 16.7; *ZmD14*, the strigolactone receptor, is in the interval), **Q5 chr4 166.9 Mb** (+0.21, 16.3) and **Q9 chr7 143.6 Mb** (+0.16, 11.0). Q3 chr3 12.4 Mb (+0.09) holds *ra2*; Q11 chr8 133.6 Mb holds *Rap2.7* and *lg4a* but does not hold in the joint model.
+14 regions, 10 hold (Bonferroni over 14: −log10 p > 2.45). **Every effect is positive: teosinte alleles add ears**, as expected from multi-eared teosinte, and alike across taxa. Strongest: **Q2 chr2 22.4 Mb** (+0.19 per copy, joint −log10 p 19.6), **Q1 chr1 22.9 Mb** (+0.21, 16.7; *ZmD14* (Zm00001eb007670), the strigolactone receptor, is in the interval), **Q5 chr4 166.9 Mb** (+0.21, 16.3) and **Q9 chr7 143.6 Mb** (+0.16, 11.0). Q3 chr3 12.4 Mb (+0.09) holds *ra2* (Zm00001eb123060); Q11 chr8 133.6 Mb holds *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880) but does not hold in the joint model.
 
 <details><summary>All EN QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -989,7 +993,7 @@ Bonferroni over the 14 QTL: −log10 p > 2.45 (bold).
 
 ![Prolif: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_Prolif.png)
 
-12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). **The same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q6 chr3 11.4 Mb** (+0.16, 12.8), **Q5 chr2 191.2 Mb** (+0.14, 13.1), Q11 chr7 142.2 Mb and Q12 chr9 32.1 Mb. The QTL that hold are all positive and alike across taxa. Q4 chr1 213.9 Mb holds *CKX10* (cytokinin oxidase).
+12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). **The same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q6 chr3 11.4 Mb** (+0.16, 12.8), **Q5 chr2 191.2 Mb** (+0.14, 13.1), Q11 chr7 142.2 Mb and Q12 chr9 32.1 Mb. The QTL that hold are all positive and alike across taxa. Q4 chr1 213.9 Mb holds *CKX10* (Zm00001eb040280; cytokinin oxidase).
 
 <details><summary>All Prolif QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1016,7 +1020,7 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold).
 
 ![NBR: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_NBR.png)
 
-9 regions, 3 hold (Bonferroni over 9: −log10 p > 2.26): **Q9 chr10 98.2 Mb** (+0.17 per copy; next to the ZmCCT10 region; taxa differ, Zv +0.26), **Q6 chr8 126.2 Mb** (+0.12; *ZCN8*) and **Q7 chr9 139.9 Mb** (+0.09; *PRR73*; same region as PH Q14). The five chr1 peaks (negative effects) share their signal and do not hold individually; *ZmD14* is in the Q2 interval.
+9 regions, 3 hold (Bonferroni over 9: −log10 p > 2.26): **Q9 chr10 98.2 Mb** (+0.17 per copy; next to the ZmCCT10 region; taxa differ, Zv +0.26), **Q6 chr8 126.2 Mb** (+0.12; *ZCN8*, Zm00001eb353250) and **Q7 chr9 139.9 Mb** (+0.09; *PRR73*, Zm00001eb397240; same region as PH Q14). The five chr1 peaks (negative effects) share their signal and do not hold individually; *ZmD14* (Zm00001eb007670) is in the Q2 interval.
 
 <details><summary>All NBR QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1068,7 +1072,7 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold).
 
 ![BL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BL.png)
 
-6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08). **Q1 chr2 39.8 Mb** (−1.84 per copy, joint −log10 p 11.6) dominates; *FT-INTERACTING PROTEIN 1* is in its interval. **Q6 chr7 185.2 Mb** (−1.2; *dlf1* and a PRR37-like gene, the same region as EH Q9), Q4 chr4 197.1 Mb (−1.25; the PH/EH/SL chr4 region) and Q2 chr3 184.4 Mb (+0.96; *liguleless2*). Q3 chr3 203.2 Mb holds *ZCN12* and *CCD8* but does not hold in the joint model.
+6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08). **Q1 chr2 39.8 Mb** (−1.84 per copy, joint −log10 p 11.6) dominates; *FT-INTERACTING PROTEIN 1* (Zm00001eb079900) is in its interval. **Q6 chr7 185.2 Mb** (−1.2; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630; the same region as EH Q9), Q4 chr4 197.1 Mb (−1.25; the PH/EH/SL chr4 region) and Q2 chr3 184.4 Mb (+0.96; *liguleless2*, Zm00001eb147220). Q3 chr3 203.2 Mb holds *ZCN12* (Zm00001eb153190) and *CCD8* (Zm00001eb153000) but does not hold in the joint model.
 
 <details><summary>All BL QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1089,7 +1093,7 @@ Bonferroni over the 6 QTL: −log10 p > 2.08 (bold).
 
 ![BW: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BW.png)
 
-8 regions, 6 hold (Bonferroni over 8: −log10 p > 2.20). **All effects are negative.** Strongest: **Q4 chr5 39.2 Mb** (−0.31 per copy, joint −log10 p 9.4), **Q3 chr4 237.6 Mb** (−0.22), Q6 chr6 146.4 Mb, Q8 chr9 1.8 Mb (the DTA chr9 region), Q7 chr7 136.2 Mb and Q1 chr4 166.3 Mb (the EN/Prolif chr4 region). Q5 chr6 133.1 Mb holds *fea4* but does not hold in the joint model.
+8 regions, 6 hold (Bonferroni over 8: −log10 p > 2.20). **All effects are negative.** Strongest: **Q4 chr5 39.2 Mb** (−0.31 per copy, joint −log10 p 9.4), **Q3 chr4 237.6 Mb** (−0.22), Q6 chr6 146.4 Mb, Q8 chr9 1.8 Mb (the DTA chr9 region), Q7 chr7 136.2 Mb and Q1 chr4 166.3 Mb (the EN/Prolif chr4 region). Q5 chr6 133.1 Mb holds *fea4* (Zm00001eb280500) but does not hold in the joint model.
 
 <details><summary>All BW QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1146,20 +1150,13 @@ F. Rodríguez-Zapata's notebook "ZEAL DTA GWAS + JLM on the SNP50K panel" (zealh
 
 The k-mer/LOCO scan finds both JLM QTL (chr10, and chr9 at 2.0 Mb, next to the chr8/chr9 boundary) **and** two more (chr1, chr2), both larger in *luxurians* and *diploperennis*. The main reason is LOCO: with a whole-genome K, our own scan loses chr10 as well. A fully matched test would run the RTIGER genotypes through the LOCO model, and the k-mer genotypes through the notebook's model.
 
-### What is new here, and what is not
+### What is new here
 
-**Not new (credited):**
-- Linear mixed models for association and the GridLMM implementation: Runcie & Crawford (2019). Founder-based QTL mapping with GridLMM in multiparent populations: Odell et al. (2022).
-- LOCO kinship: Lippert et al. (2011); Yang et al. (2014); Broman et al. (2019).
-- Testing local ancestry (admixture mapping): Smith & O'Brien (2005). Joint linkage mapping of teosinte introgressions in maize: Chen et al. (2019, TeoNAM).
-- k-mer GWAS, where each k-mer's presence or absence is the marker: Rahman et al. (2018, HAWK), Voichek & Weigel (2020); k-mer windows for introgression screening and GWAS: KCFtools (Selvanayagam et al. 2026); k-mer haplotype calls in wheat: IBSpy (Ahmed et al. 2023).
-- Permutation thresholds: Churchill & Doerge (1994). Spatial correction: SpATS (Rodríguez-Álvarez et al. 2018).
+- **Local ancestry from k-mers in pooled, ultra-low-coverage samples.** Each sample is a pool of 6 BC2S3 plants sequenced at ~0.8×. The k-mer HMM (Sections 4–6) turns presence and absence of B73 single-copy k-mers into B73 / SEG / DONOR calls per window, with a pool-aware emission model. k-mer GWAS methods use k-mers directly as markers in deeply sequenced individuals; here k-mers are turned into ancestry first.
+- **The same ancestry calls give the genotype and the kinship.** The LOCO kinship is built from the ancestry dosage, so relatedness is measured in shared donor tracts, with no SNP calling or imputation.
+- **Scan and joint model on the same QTL.** A k-mer ancestry GWAS finds the peaks; a joint QTL model on those peaks gives each QTL's effect adjusted for the others, its effect in each teosinte taxon, and a test that the taxa differ. The dominance test comes from the SEG state.
 
-**New in this work (as far as we know; to be checked against the literature before publication):**
-- Local-ancestry calls (B73 / SEG / DONOR) from k-mers in **pooled, ultra-low-coverage** (~0.8×) BC2S3 samples, with an HMM that models the pool (Sections 4–6). k-mer GWAS methods above use k-mers as markers in deeply sequenced individuals; here k-mers are turned into ancestry first.
-- Using those ancestry calls as the genotype **and** to build a LOCO kinship in a mixed-model scan, plus a dominance test from the SEG state.
-
-The statistics are standard; the new part is the combination: k-mer ancestry from pooled skim-seq feeding a LOCO mixed model. It should be described that way, not as a new GWAS method.
+The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standard and cited above; what is new is putting k-mer ancestry from pooled skim-seq into them. To be checked against the literature before publication.
 
 ### Limitations
 
@@ -1191,9 +1188,13 @@ The statistics are standard; the new part is the combination: k-mer ancestry fro
 - Yang J, Weedon MN, Purcell S, et al. (2011) Genomic inflation factors under polygenic inheritance. *Eur J Hum Genet* 19:807–812.
 - Yang J, Zaitlen NA, Goddard ME, Visscher PM, Price AL (2014) Advantages and pitfalls in the application of mixed-model association methods. *Nat Genet* 46:100–106.
 - Hung H-Y, Shannon LM, Tian F, et al. (2012) ZmCCT and the genetic basis of day-length adaptation underlying the postdomestication spread of maize. *PNAS* 109:E1913–E1921.
+- Lee K, Yoon H, Seo PJ (2024) The AGL6–ELF3–FT circuit controls flowering time in *Arabidopsis*. *Plant Signal Behav* 19:2358684. doi:10.1080/15592324.2024.2358684
+- Thompson BE, Bartling L, Whipple C, Hall DH, Sakai H, Schmidt R, Hake S (2009) *bearded-ear* encodes a MADS box transcription factor critical for maize floral development. *Plant Cell* 21:2578–2590.
+- Yoo SK, Wu X, Lee JS, Ahn JH (2011a) AGAMOUS-LIKE 6 is a floral promoter that negatively regulates the FLC/MAF clade genes and positively regulates FT in Arabidopsis. *Plant J* 65:62–76. doi:10.1111/j.1365-313X.2010.04402.x
+- Yoo SK, Hong SM, Lee JS, Ahn JH (2011b) A genetic screen for leaf movement mutants identifies a potential role for AGAMOUS-LIKE 6 (AGL6) in circadian-clock control. *Mol Cells* 31. doi:10.1007/s10059-011-0035-5
 - Yang Q, Li Z, Li W, et al. (2013) CACTA-like transposable element in *ZmCCT* attenuated photoperiod sensitivity and accelerated the postdomestication spread of maize. *PNAS* 110:16969–16974.
 - Huang C, Sun H, Xu D, et al. (2018) ZmCCT9 enhances maize adaptation to higher latitudes. *PNAS* 115:E334–E341.
-- Sun X, Zhang Z, Wu J, et al. (2016) The *Oryza sativa* regulator HDR1 associates with the kinase OsK4 to control photoperiodic flowering. *PLoS Genet* 12:e1005927.
+- Sun X, Zhang Z, Wu J, Cui X, Feng D, Wang K, Xu M, Zhou L, Han X, Gu X, Lu T (2016) The *Oryza sativa* regulator HDR1 associates with the kinase OsK4 to control photoperiodic flowering. *PLoS Genet* 12:e1005927. doi:10.1371/journal.pgen.1005927
 
 ---
 

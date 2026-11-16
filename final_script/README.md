@@ -734,6 +734,8 @@ Dominance scans: `figures/assoc_spread/manhattan_DTS_ALL_dom.png`, `manhattan_DT
 
 **On a laptop (no Slurm):** `bash final_script/run_assoc_local.sh DTS` (one or more traits; one terminal per trait runs them in parallel). It reads `tracts_all.tsv.gz` and `pool_summary.tsv` from `IN` (default `~/Documents/Research/data/BZea/introgression_spread`), builds the step-25 inputs once, then per trait: scan (~3 min, 1,284 plots, taxon fixed), `NPERM` permutations (default 100, ~1.5 min each), threshold, and `genes/regions_genes_<TRAIT>_ALL.tsv`: each significant region with every B73 v5 gene in it. Gene labels on the plots are off unless `MARK_GENES=1`.
 
+**More permutations on a laptop:** `bash final_script/run_perm_local.sh DTS` adds permutations in chunks of 100 (one file per seed, `perm_<TRAIT>_seed<N>.tsv`) until `TOTAL` (1,000) is reached, keeping the ones already done, then reruns the summary (threshold, Manhattan plots) and step 27 (peaks, genes). `JOBS` chunks run at once with `CORES` each. One permutation takes ~1.5–2 min on 2 cores, so 900 more is ~5–8 h per trait with 4–6 chunks in parallel.
+
 **Requirements:** R with GridLMM (`github.com/deruncie/GridLMM`), data.table, ggplot2.
 
 ---

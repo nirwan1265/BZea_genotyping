@@ -1,8 +1,20 @@
-# BZea Analysis
+# BZea: k-mer introgression calling and QTL mapping in maize × teosinte BC2S3 pools
 
-This repository documents the end-to-end processing for **low-pass sequencing** data, starting from raw paired-end FASTQ files and proceeding through a reproducible genotype + ancestry + association workflow.
+This repository goes from raw paired-end reads of **pooled, low-coverage (~0.8×)** BC2S3 samples to **teosinte introgression calls** and **QTL** for flowering, height, ear and leaf traits. B73 was crossed to 5 teosinte taxa, backcrossed twice to B73 and selfed three times; each sample is a pool of 6 plants from one BC2S3 plot.
 
-> **Pipeline:** [`final_script/`](final_script/README.md). Introgressions are called from **k-mers** (no read mapping) with an HMM on 100-kb windows (steps 16–21). The SNP route (ANGSD sites, read counts, GL-HMM; steps 01–15) is kept as a cross-check. Each sample is a pool of 6 plants from one BC2S3 plot. **Detailed analysis, every command and all statistics:** [`final_script/README.md`](final_script/README.md).
+- **Introgressions are called from k-mers**, not from mapped SNPs: for each pool, which B73 single-copy 31-mers its reads contain, per 100-kb window, decoded with an HMM that models the pool (B73 / SEG / DONOR).
+- **QTL are mapped on that k-mer ancestry**: a genome scan (k-mer ancestry GWAS, GridLMM with leave-one-chromosome-out kinship) finds the peaks, and a joint QTL model (R/qtl2) fits them together, with an effect for each teosinte taxon.
+
+> **Pipeline and every command:** [`final_script/`](final_script/README.md). Results tables: [`data/introgression_spread/`](data/introgression_spread/). Figures: [`figures/`](figures/).
+
+## Contents
+
+- [The BZea population](#bzea-breeding-scheme): breeding scheme and expected genotype proportions
+- [Overview](#overview) and [software](#software-and-packages)
+- [Section 1 — Pre-processing](#section-1--pre-processing): demultiplexing, trimming, alignment
+- [Section 2 — Introgression calling](#section-2--introgression-calling): the k-mer HMM, results, validation, population structure
+- [Section 3 — k-mer ancestry GWAS and joint QTL mapping](#section-3--k-mer-ancestry-gwas-and-joint-qtl-mapping): phenotypes, methods, results for 11 traits, candidate genes
+- [Section 4 — References](#section-4--references)
 
 ## BZea Breeding Scheme
 
@@ -81,58 +93,25 @@ So the HMM's pool states are compared with Step 4, and converted to plant genoty
 
 ---
 
-# General Overview of BZea genotyping, introgression and QTL analysis
+## Overview
 
-## Genotyping
+### 1. Pre-processing (Section 1)
+- **Demultiplexing** by barcode (`sabre`) into per-sample paired FASTQs.
+- **Trimming** of adapters, primers and low-quality bases (Trimmomatic).
+- **Alignment** to B73 RefGen v5 (`bwa mem`), sorting, duplicate marking, indexing; used by the SNP route.
 
-### 1) Demultiplexing by barcode (sabre)
-- Split pooled FASTQs into per-sample FASTQs using barcode/index definitions using `sabre`.
-- Outputs: `sample_R1.fastq.gz`, `sample_R2.fastq.gz` (+ reports/logs)
+### 2. Introgression calling (Section 2)
+- **k-mer windows** (KMC 3 + KCFtools): for each pool, the B73 single-copy 31-mers seen in its reads, per 100-kb window; no read mapping (`final_script/` steps 16–19).
+- **Expected DONOR level** per window from the teosinte genome assemblies (MaizeGDB / PanAnd).
+- **HMM** with three states, B73 / SEG / DONOR, genetic-map transitions and pool-aware emissions (steps 20–21). Outputs: per-pool state per window, tracts, `pool_summary.tsv`, `family_summary.tsv`, chromosome paintings, interactive figures.
+- **Population structure from k-mers** (sourmash; step 32).
+- **SNP route** (ANGSD sites and read counts, GL-HMM; steps 01–15), kept as a cross-check.
 
-### 2) Adapter/primer trimming + quality filtering (Trimmomatic)
-- Remove adapter/primer contamination and low-quality bases.
-- Outputs: trimmed paired FASTQs (+ unpaired reads, trimming logs)
-
-### 3) Alignment + BAM processing (required before GL calling)
-- Align to the **B73 reference** (e.g., B73 Ref v5) using `bwa mem`.
-- Post-processing:
-  - sort BAM
-  - mark duplicates
-  - index BAM
-  - basic QC (mapping %, coverage summaries)
-- Outputs: `sample.sorted.markdup.bam` + `.bai` (+ QC summaries)
-
-### 4) SNP sites and per-pool read counts (ANGSD)
-- ANGSD SNP discovery, B73-polarized sites, per-pool B73/ALT read counts, site filters with a teosinte panel (`final_script/` steps 01–12).
-- Used as a cross-check and for SNP-level work.
-
-### 5) k-mer windows (KMC + KCFtools)
-- For each pool, the B73 single-copy 31-mers seen in its reads, per 100-kb window (`final_script/` steps 16–19). No read mapping.
-
-## HMM introgression analysis
-
-### 6) HMM introgression analysis
-We infer B73 / SEG / DONOR states along the genome for each pool with an HMM. It uses genetic-map transitions, ρ fitted by maximum likelihood, and emissions from the k-mer windows, with expected donor levels from teosinte assemblies, widened where our donor plants can differ from the assembly plants (`final_script/` steps 20–21).
-
-**Inputs**
-- k-mer window tables (step 17) and assembly-based donor levels (step 19)
-- NAM genetic maps (cM positions per chromosome)
-
-**Outputs**
-- Per-pool state per window, tracts, summary statistics (`pool_summary.tsv`, `family_summary.tsv`), chromosome paintings (`blocks_<taxon>.pdf`)
-
-
-##  k-mer ancestry GWAS and joint QTL mapping
-### 7) k-mer ancestry GWAS, then a joint QTL model on its peaks
-- **Phenotypes:** SpATS spatially corrected BLUEs per year (2023, 2025), combined across years (`final_script/28_spats_blues.R`).
-- **Genotypes:** teosinte ancestry dosage per 100-kb window from the k-mer HMM (0 B73, 1 SEG, 2 DONOR).
-- **k-mer ancestry GWAS:** **GridLMM** (Runcie & Crawford 2019) with taxon as a fixed effect and a **LOCO (leave-one-chromosome-out) kinship** built from the same ancestry dosage, so the tested region is not absorbed by K; 5% genome-wide threshold from permutations within taxon.
-- **Joint QTL model:** the peaks fitted together in **R/qtl2** (Broman et al. 2019): effect of each QTL adjusted for the others, its effect in each taxon, and a test that the taxa differ.
-- **Genes:** B73 v5 genes in each QTL interval, with GO terms.
-
-(Details in Section 7)
- 
- ---
+### 3. k-mer ancestry GWAS and joint QTL mapping (Section 3)
+- **Phenotypes:** SpATS spatially corrected BLUEs per year (2023, 2025), combined across years (step 28).
+- **k-mer ancestry GWAS:** GridLMM, taxon as fixed effect, **LOCO kinship** from the ancestry dosage, 5% genome-wide permutation threshold (steps 25–27).
+- **Joint QTL model:** the peaks fitted together in R/qtl2: effect of each QTL adjusted for the others, its effect in each taxon, and a test that the taxa differ (step 29).
+- **Genes and GO terms** in each QTL interval, side-by-side figures (steps 30–31).
 
 ## Software and packages
 
@@ -172,17 +151,21 @@ We infer B73 / SEG / DONOR states along the genome for each pool with an HMM. It
 
 ---
 
-## Section 1 — Demultiplex pooled FASTQs
+## Section 1 — Pre-processing
+
+Three steps turn the raw pooled reads into per-sample trimmed reads (used by the k-mer route) and sorted, deduplicated BAMs (used by the SNP route).
+
+### 1.1 Demultiplex pooled FASTQs
 
 **Goal:** Split pooled lane-level paired-end FASTQs into per-sample FASTQs using a barcode map.
 
-### Inputs
+#### Inputs
 - Pooled lane FASTQs:
   - `..._R1_001.fastq.gz`
   - `..._R2_001.fastq.gz`
 - Barcode map file (`.txt`)
 
-### Barcode file format
+#### Barcode file format
 Tab-separated **2 columns**:
 
 1. **BARCODE** (exact barcode sequence)
@@ -198,13 +181,13 @@ GATCTAGA    Sample_003
 
 Unmatched reads are written to the `no_bc_match_*` files.
 
-### Outputs
+#### Outputs
 - Per-sample paired FASTQs written by sabre (based on column 2 of the barcode file)
 - Unmatched reads:
   - `no_bc_match_S<...>_R1.fq.gz`
   - `no_bc_match_S<...>_R2.fq.gz`
 
-### Run
+#### Run
 ```bash
 bsub < scripts/01_demultiplex_sabre.tcsh
 ```
@@ -213,21 +196,21 @@ Script: [`scripts/01_demultiplex_sabre.sh`](scripts/01_demultiplex_sabre.sh)
 
 ---
 
-## Section 2 — Trim adapters/primers + quality filter (Trimmomatic PE)
+### 1.2 Trim adapters/primers + quality filter (Trimmomatic PE)
 
 **Goal:** Remove adapters/primers
 
-### Inputs
+#### Inputs
 - Demultiplexed paired FASTQs:
   - `*_R1.fq.gz`
   - `*_R2.fq.gz`
 
-### Outputs
+#### Outputs
 - Paired reads (used for alignment):
   - `*_paired_R1.fq.gz`
   - `*_paired_R2.fq.gz`
 
-### Parameters used
+#### Parameters used
 - `ILLUMINACLIP:<adapters.fa>:2:30:10`
 - `LEADING:3`
 - `TRAILING:3`
@@ -235,7 +218,7 @@ Script: [`scripts/01_demultiplex_sabre.sh`](scripts/01_demultiplex_sabre.sh)
 - `MINLEN:36`
 
 
-### Run
+#### Run
 ```bash
 bsub < scripts/02_trim_trimmomatic.tcsh
 ```
@@ -244,7 +227,7 @@ Script: [`scripts/02_trim_trimmomatic.sh`](scripts/02_trim_trimmomatic.sh)
 
 ---
 
-## Section 3 — BAM preprocessing (sort → mark/remove duplicates → index)
+### 1.3 BAM preprocessing (sort → mark/remove duplicates → index)
 
 **Goal:** Ensure each sample BAM is **coordinate-sorted**, **deduplicated**, and **indexed** before genotype likelihood (GL) generation with `bcftools mpileup`.
 
@@ -253,18 +236,18 @@ Ensure the files are:
 - Mark/remove duplicates
 - Index BAMs files
 
-### Inputs
+#### Inputs
 - Aligned BAMs (usually from BWA/BWA-MEM2), one per sample:
   - `PN*_SID*.bam`
 
-### Outputs
+#### Outputs
 For each input `PN*_SID*.bam`
 - Sorted BAM: `PN*_SID*.sorted.bam`
 - Deduplicated BAM (duplicates removed): `PN*_SID*.sorted.rmdup.bam`
 - Metrics: `PN*_SID*.dedup_metrics.txt`
 - Index: `PN*_SID*.sorted.rmdup.bam.bai`
 
-### Run
+#### Run
 ```bash
 bash scripts/03_bam_sort_dedup_index.sh
 ```
@@ -273,7 +256,7 @@ Script: [`scripts/03_bam_sort_dedup_index.sh`](scripts/03_bam_sort_dedup_index.s
 
 ---
 
-## Sections 4–6 — Introgression calling
+## Section 2 — Introgression calling
 
 All code is in [`final_script/`](final_script/), numbered in run order. **The detailed analysis (every command, parameter, output, all statistics and the method history) is in [`final_script/README.md`](final_script/README.md).** This section explains what we do and why, and the main results.
 
@@ -697,9 +680,9 @@ For each tract in a pool, how often does another pool have an introgression at t
 - Brown CT, Irber L (2016) sourmash: a library for MinHash sketching of DNA. *J Open Source Softw* 1:27.
 - Irber L, Brooks PT, Reiter T, et al. (2022) Lightweight compositional analysis of metagenomes with FracMinHash and minimum metagenome covers. *bioRxiv* doi:10.1101/2022.01.11.475838
 
-## Section 7 — k-mer ancestry GWAS and joint QTL mapping
+## Section 3 — k-mer ancestry GWAS and joint QTL mapping
 
-We ran **two analyses** on the same genotypes (k-mer teosinte ancestry per 100-kb window, Sections 4–6) and the same phenotypes (two-year SpATS BLUEs):
+We ran **two analyses** on the same genotypes (k-mer teosinte ancestry per 100-kb window, Section 2) and the same phenotypes (two-year SpATS BLUEs):
 
 | | **Analysis 1: k-mer ancestry GWAS** (step 26, GridLMM) | **Analysis 2: joint QTL model** (step 29.2, R/qtl2) |
 |---|---|---|
@@ -713,7 +696,7 @@ Both use taxon as a fixed effect and a leave-one-chromosome-out (LOCO) kinship b
 
 ### What kind of analysis this is
 
-The marker is not a SNP. It is the **teosinte ancestry** of each plot in each 100-kb window, from the k-mer HMM (Sections 4–6): 0 = B73, 1 = SEG, 2 = DONOR copies per plant. Testing local ancestry against a phenotype is what human genetics calls **admixture mapping** (Smith & O'Brien 2005).
+The marker is not a SNP. It is the **teosinte ancestry** of each plot in each 100-kb window, from the k-mer HMM (Section 2): 0 = B73, 1 = SEG, 2 = DONOR copies per plant. Testing local ancestry against a phenotype is what human genetics calls **admixture mapping** (Smith & O'Brien 2005).
 
 We combine two steps, each doing what it is good at:
 - **The k-mer ancestry GWAS finds the peaks.** It is GWAS-style: one mixed-model test per window across the whole genome, with a kinship matrix and a permutation threshold.
@@ -775,7 +758,7 @@ With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC 
 - Dominance: the same model plus c · SEG_w; likelihood-ratio test for c.
 - GridLMM fits the variance proportion on a grid instead of re-optimising it for every window, which makes ~21,000 tests with a 1,284 × 1,284 K fast (~3 min per trait on 4 cores). The code started from `scripts/Analyze_QTL_Founder2.R`.
 
-**Fixed effect: taxon, not F1 family.** Plots from the same F1 plant share many of their tracts (relatives check, Sections 4–6, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
+**Fixed effect: taxon, not F1 family.** Plots from the same F1 plant share many of their tracts (relatives check, Section 2, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
 
 **Significance: permutations.** For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile over the permutations is the **5% genome-wide (family-wise) threshold** (Churchill & Doerge 1994). This accounts for the strong correlation between neighbouring windows; Bonferroni over 21,309 windows (−log10 p = 5.63) would be far too strict. The thresholds below come from 100 permutations per trait (1,000 are planned for publication).
 
@@ -1162,7 +1145,7 @@ Candidate genes for each trait will be added after closer inspection of `data/in
 
 ### What is new here
 
-- **Local ancestry from k-mers in pooled, ultra-low-coverage samples.** Each sample is a pool of 6 BC2S3 plants sequenced at ~0.8×. The k-mer HMM (Sections 4–6) turns presence and absence of B73 single-copy k-mers into B73 / SEG / DONOR calls per window, with a pool-aware emission model. k-mer GWAS methods use k-mers directly as markers in deeply sequenced individuals; here k-mers are turned into ancestry first.
+- **Local ancestry from k-mers in pooled, ultra-low-coverage samples.** Each sample is a pool of 6 BC2S3 plants sequenced at ~0.8×. The k-mer HMM (Section 2) turns presence and absence of B73 single-copy k-mers into B73 / SEG / DONOR calls per window, with a pool-aware emission model. k-mer GWAS methods use k-mers directly as markers in deeply sequenced individuals; here k-mers are turned into ancestry first.
 - **The same ancestry calls give the genotype and the kinship.** The LOCO kinship is built from the ancestry dosage, so relatedness is measured in shared donor tracts, with no SNP calling or imputation.
 - **Scan and joint model on the same QTL.** A k-mer ancestry GWAS finds the peaks; a joint QTL model on those peaks gives each QTL's effect adjusted for the others, its effect in each teosinte taxon, and a test that the taxa differ. The dominance test comes from the SEG state.
 
@@ -1173,7 +1156,7 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - **Resolution** is set by tract length: regions are Mb wide, and genes inside them are candidates only.
 - **λ_GC** is high under LOCO; the permutation threshold controls the genome-wide error, but linked windows on the same chromosome are not independent evidence, and two nearby peaks may be one QTL.
 - **The pool is not the plot.** The genotype is 6 plants of a plot; the phenotype is the plot mean. For SEG plots, plants differ; the dosage of 1 is the expectation.
-- **Donor reference.** DONOR levels come from MaizeGDB assemblies, not from our donor plants (Section 6, limitations).
+- **Donor reference.** DONOR levels come from MaizeGDB assemblies, not from our donor plants (Section 2, Limitations).
 - **Replication:** peaks should be checked in each year separately and within taxon.
 - **Small taxa:** *luxurians* (Zl) and *huehuetenangensis* (Zh) have 5–25 carrier plots at most QTL, so their per-taxon effects have wide CIs. The large *luxurians*-specific effects (DTS/DTA chr1, chr5) should be checked against how many accessions and F1 families the carriers come from.
 - **Thresholds** come from 100 permutations; QTL close to the line (e.g. DTS Q1, Q2) should be confirmed with 1,000.
@@ -1211,46 +1194,20 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 ---
 
 
-## Section 8 — References
+## Section 4 — References
 
-Viterbi decoding (your viterbi_standard)
+References specific to each part are listed at the end of Sections 2 and 3. Tools and methods used throughout:
 
-Andrew J. Viterbi. Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. IEEE Transactions on Information Theory (1967) 13(2):260–269.
-Cite for: the Viterbi algorithm as the canonical DP decoding of the most likely state path.
-
-Forward–backward / posterior probabilities (your forward_backward)
-
-Leonard E. Baum et al. A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. Annals of Mathematical Statistics (1970) 41(1):164–171.
-Cite for: forward–backward foundations (Baum–Welch/related HMM inference), i.e. why computing posteriors per marker is standard.
-
-General HMM reference everyone cites (nice because it’s explicitly “a tutorial”)
-
-Lawrence R. Rabiner. A tutorial on hidden Markov models and selected applications in speech recognition. Proceedings of the IEEE (1989) 77(2):257–286.
-Cite for: standard HMM definitions, log-space recursions, decoding vs posterior inference.
-
-A shorter HMM intro that is already cited inside the RTIGER/robust-HMM ecosystem (and reviewers won’t complain about it)
-
-Lawrence R. Rabiner & Juang. An introduction to hidden Markov models. IEEE ASSP Magazine (1986) 3(1):4–16. DOI: 10.1109/MASSP.1986.1165342.
-Cite for: quick “what is an HMM” grounding (often used when your paper isn’t mainly about HMM theory).
-
-Haldane mapping function (your haldane_theta)
-
-J. B. S. Haldane. The combination of linkage values and the calculation of distances between the loci of linked factors. Journal of Genetics (1919).
-Cite for: 
-haldance function
- transition-from-distance model (exactly what you coded).
-
-TIGER-style genotyping-by-sequencing for crossover localization
-
-Benjamin A. Rowan et al. Rapid and inexpensive whole-genome genotyping-by-sequencing for crossover localization and fine-scale genetic mapping. G3: Genes|Genomes|Genetics (2015) 5(3):385–398. DOI: 10.1534/g3.114.016501.
-Cite for: the broader “recombinant genome genotyping with noisy markers” tradition that RTIGER builds on.
-
-ANGSD (if your emissions are fed by ANGSD genotype likelihoods)
-
-Thorfinn Sand Korneliussen et al. ANGSD: Analysis of Next Generation Sequencing Data. BMC Bioinformatics (2014) 15:356. DOI: 10.1186/s12859-014-0356-4.
-Cite for: the GL framework / using genotype likelihoods instead of hard genotype calls (which is exactly why your emissions are log-likelihoods).
-
-Where your eta_hh_from_rh, eta_rr_from_rh, and rh_penalty fit (how to cite it cleanly)
-
-If you’re describing those as “robustness knobs inspired by RTIGER/robust-HMM principles”, cite Campos-Martin et al. 2023 (and optionally Rowan et al. 2015) and say something like:
-“We implemented an RTIGER-inspired robust-emission adjustment that allows ambiguous heterozygous-like observations to partially support adjacent ancestry/genotype states, improving stability under low-coverage noise.”
+- Bolger AM, Lohse M, Usadel B (2014) Trimmomatic: a flexible trimmer for Illumina sequence data. *Bioinformatics* 30:2114–2120.
+- Danecek P, Bonfield JK, Liddle J, et al. (2021) Twelve years of SAMtools and BCFtools. *GigaScience* 10:giab008.
+- Korneliussen TS, Albrechtsen A, Nielsen R (2014) ANGSD: Analysis of Next Generation Sequencing Data. *BMC Bioinformatics* 15:356. doi:10.1186/s12859-014-0356-4
+- Li H (2013) Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM. *arXiv* 1303.3997.
+- Picard toolkit. Broad Institute. https://broadinstitute.github.io/picard/
+- sabre: barcode demultiplexing and trimming tool for FastQ files. https://github.com/najoshi/sabre
+- Kokot M, Długosz M, Deorowicz S (2017) KMC 3: counting and manipulating k-mer statistics. *Bioinformatics* 33:2759–2761.
+- Baum LE, Petrie T, Soules G, Weiss N (1970) A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. *Ann Math Stat* 41:164–171.
+- Viterbi AJ (1967) Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. *IEEE Trans Inf Theory* 13:260–269.
+- Rabiner LR (1989) A tutorial on hidden Markov models and selected applications in speech recognition. *Proc IEEE* 77:257–286.
+- Haldane JBS (1919) The combination of linkage values and the calculation of distances between the loci of linked factors. *J Genet* 8:299–309.
+- Rowan BA, Patel V, Weigel D, Schneeberger K (2015) Rapid and inexpensive whole-genome genotyping-by-sequencing for crossover localization and fine-scale genetic mapping. *G3* 5:385–398.
+- Campos-Martín R, et al. (2023) Reliable genotyping of recombinant genomes using a robust hidden Markov model. *Plant Physiol*. (RTIGER.)

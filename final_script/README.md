@@ -17,6 +17,7 @@ Contents:
 10. [Association mapping, steps 25–27](#10-association-mapping-steps-2526)
 11. [Phenotypes: SpATS BLUEs, step 28](#11-phenotypes-spats-blues-step-28)
 12. [Joint multi-QTL model with per-taxon effects, step 29](#12-joint-multi-qtl-model-with-per-taxon-effects-step-29)
+13. [Genes and GO terms in the QTL regions, step 30](#13-genes-and-go-terms-in-the-qtl-regions-step-30)
 
 ---
 
@@ -821,3 +822,14 @@ One array task per trait, 16 cores: ~5 min for the scans, 1–2 h for 2 × 1,000
 The step-26 GridLMM scan and the R/qtl2 additive scan are the same model (taxon fixed, LOCO kinship, additive dosage) in two packages, so they check each other. R/qtl2 runs on the cluster; GridLMM runs on the laptop.
 
 **References:** Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502. Chen Q, et al. (2019) TeoNAM. *Genetics* 213:1065–1078.
+
+---
+
+## 13. Genes and GO terms in the QTL regions, step 30
+
+`30_genes_go.R` joins every gene in the significant regions (step 27, `regions_genes_<TRAIT>_ALL.tsv`, or `peak_genes_<TRAIT>_ALL.tsv`) to a GO annotation table (`GeneID GeneName Family_Subfamily ProteinClass GO_MF GO_BP GO_CC`) with `dplyr::left_join`, and flags genes whose name, family or GO terms match keywords for the trait: flowering time (DTS, DTA, ASI), height (PH, EH), or branching and inflorescence (EN, Prolif, NBR, SL, BL, BW). The keyword lists are at the top of the script. Flagging is a filter for reading, not evidence.
+
+```bash
+Rscript final_script/30_genes_go.R <IN>/assoc_gridlmm_spats/genes <IN>/GO/GO_terms_all_candidates.txt <IN>/GO
+```
+Outputs: `genes_GO_all.tsv` (every trait × gene, with the region's −log10 p and effect when `regions_genes` files are used), `genes_GO_flagged.tsv`, `genes_GO_flagged_<TRAIT>.tsv`. Needs dplyr, readr, stringr, purrr.

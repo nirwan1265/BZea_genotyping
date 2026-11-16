@@ -832,4 +832,4 @@ The step-26 GridLMM scan and the R/qtl2 additive scan are the same model (taxon 
 ```bash
 Rscript final_script/30_genes_go.R <IN>/assoc_gridlmm_spats/genes <IN>/GO/GO_terms_all_candidates.txt <IN>/GO
 ```
-Outputs: `genes_GO_all.tsv` (every trait × gene, with the region's −log10 p and effect when `regions_genes` files are used), `genes_GO_flagged.tsv`, `genes_GO_flagged_<TRAIT>.tsv`. Needs dplyr, readr, stringr, purrr.
+Each gene also gets the −log10 p and effect of the 100-kb window it lies in, from the step-26 scan (`scan_<TRAIT>.tsv`, read from the folder above the genes folder, or a 4th argument), and the tables are sorted by that p-value, so the genes under the highest peaks come first. All genes in one window share its p-value: the scan cannot tell them apart. Outputs: `genes_GO_all.tsv` (every trait × gene), `genes_GO_flagged.tsv`, `genes_GO_flagged_<TRAIT>.tsv`. Needs dplyr, readr, stringr, purrr.

@@ -3,11 +3,15 @@
 ## 30 — Genes in the significant regions (step 27) joined to their GO annotation, with trait-relevant
 ##      genes flagged by keyword.
 ##
-## Usage:  Rscript 30_genes_go.R <genes dir (step 27 output)> <GO file> <out dir>
+## Usage:  Rscript 30_genes_go.R <genes dir (step 27 output)> <GO file> <out dir> [scan dir]
+##   scan dir (default: the folder above the genes dir): scan_<TRAIT>.tsv from step 26. Each gene then gets the
+##   -log10 p and effect of the 100-kb window(s) it lies in (the best window if it spans several), and the
+##   tables are sorted by that p-value.
 ##   genes dir: regions_genes_<TRAIT>_ALL.tsv (preferred: has the region's -log10 p and effect) or peak_genes_<TRAIT>_ALL.tsv
 ##   GO file:   tab-separated, columns GeneID GeneName Family_Subfamily ProteinClass GO_MF GO_BP GO_CC
 ## Outputs (<out dir>):
-##   genes_GO_all.tsv            every gene in every region, with GO (one row per trait x gene)
+##   genes_GO_all.tsv            every gene in every region, with GO and its window's -log10 p and effect
+##                               (one row per trait x gene; sorted by trait, then -log10 p)
 ##   genes_GO_flagged.tsv        genes whose name / family / GO matches the keywords for that trait
 ##   genes_GO_flagged_<TRAIT>.tsv
 ## Needs: R with dplyr, readr, stringr, purrr (tidyverse).
@@ -20,6 +24,7 @@ suppressPackageStartupMessages({ library(dplyr); library(readr); library(stringr
 args <- commandArgs(TRUE)
 if (length(args) < 3) stop("usage: Rscript 30_genes_go.R <genes dir> <GO file> <out dir>")
 genes_dir <- args[1]; go_file <- args[2]; out_dir <- args[3]
+scan_dir <- if (length(args) >= 4) args[4] else dirname(normalizePath(genes_dir))
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 ## ---- keywords per trait group (regular expressions, case-insensitive) ----
@@ -65,7 +70,29 @@ all$keywords <- map2_chr(all$text, all$group, function(t, g) {
   hits <- str_extract_all(t, regex(kw[[g]], ignore_case = TRUE))[[1]]
   paste(unique(tolower(hits)), collapse = ";")
 })
-all <- all %>% select(-text) %>% arrange(TRAIT, REGION, GENE_START)
+all <- all %>% select(-text)
+
+## ---- p-value of the window each gene lies in (step-26 scan) ----
+win <- map_dfr(unique(all$TRAIT), function(t) {
+  f <- file.path(scan_dir, sprintf("scan_%s.tsv", t))
+  if (!file.exists(f)) { message("no ", f, ": gene p-values for ", t, " left empty"); return(NULL) }
+  read_tsv(f, col_types = cols(.default = "c")) %>%
+    transmute(TRAIT = t, CHR = chr, WIN_START = as.numeric(start), WIN_END = as.numeric(end),
+              GENE_MLOG10P = as.numeric(mlog10p_add), GENE_BETA_PER_COPY = as.numeric(beta_add))
+})
+if (nrow(win)) {
+  gw <- all %>% distinct(TRAIT, CHR, GENE, GENE_START, GENE_END) %>%
+    inner_join(win, by = c("TRAIT", "CHR"), relationship = "many-to-many") %>%
+    filter(WIN_END >= GENE_START, WIN_START <= GENE_END) %>%
+    group_by(TRAIT, GENE) %>% slice_max(GENE_MLOG10P, n = 1, with_ties = FALSE) %>% ungroup() %>%
+    transmute(TRAIT, GENE, GENE_WINDOW = paste0(CHR, ":", WIN_START, "-", WIN_END), GENE_MLOG10P, GENE_BETA_PER_COPY)
+  all <- all %>% left_join(gw, by = c("TRAIT", "GENE"))
+} else all <- all %>% mutate(GENE_WINDOW = NA_character_, GENE_MLOG10P = NA_real_, GENE_BETA_PER_COPY = NA_real_)
+## region rank within trait (1 = strongest region)
+all <- all %>% group_by(TRAIT, REGION) %>% mutate(REGION_BEST_MLOG10P = suppressWarnings(max(GENE_MLOG10P, na.rm = TRUE))) %>%
+  ungroup() %>% mutate(REGION_BEST_MLOG10P = ifelse(is.finite(REGION_BEST_MLOG10P), REGION_BEST_MLOG10P, NA)) %>%
+  relocate(GENE_WINDOW, GENE_MLOG10P, GENE_BETA_PER_COPY, .after = GENE_END) %>%
+  arrange(TRAIT, desc(GENE_MLOG10P), REGION, GENE_START)
 write_tsv(all, file.path(out_dir, "genes_GO_all.tsv"), na = "")
 fl <- all %>% filter(flag)
 write_tsv(fl, file.path(out_dir, "genes_GO_flagged.tsv"), na = "")
@@ -74,6 +101,7 @@ fl %>% group_split(TRAIT) %>% walk(~ write_tsv(.x, file.path(out_dir, sprintf("g
 ## ---- summary ----
 summ <- all %>% group_by(TRAIT) %>%
   summarise(regions = n_distinct(REGION), genes = n_distinct(GENE), with_GO = n_distinct(GENE[GeneName != ""]),
-            flagged = n_distinct(GENE[flag]), .groups = "drop")
+            flagged = n_distinct(GENE[flag]), top_gene = GENE[which.max(GENE_MLOG10P)][1],
+            top_mlog10p = suppressWarnings(max(GENE_MLOG10P, na.rm = TRUE)), .groups = "drop")
 print(as.data.frame(summ), row.names = FALSE)
 message("WROTE ", out_dir, "/genes_GO_all.tsv, genes_GO_flagged.tsv, genes_GO_flagged_<TRAIT>.tsv")

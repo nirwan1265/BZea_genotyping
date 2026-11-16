@@ -4,3 +4,5 @@
 .Ruserdata
 __pycache__/
 data/phenotypes/spats_cache/
+data/introgression_spread/assoc_spats/
+.DS_Store

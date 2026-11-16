@@ -736,8 +736,8 @@ BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/R
 | ASI (DTS − DTA) | 0.61 | 0.57 | 0.43 |
 | PH (plant height) | 0.86 | 0.86 | 0.74 |
 | EH (ear height) | 0.78 | 0.74 | 0.63 |
-| EN (ear number) | 0.68 | 0.42 | 0.33 |
-| Prolif (prolificacy, number of ears) | 0.61 | 0.55 | 0.21 |
+| EN (ear number: nodes with ears) | 0.68 | 0.42 | 0.33 |
+| Prolif (prolificacy: most ears on one node) | 0.61 | 0.55 | 0.21 |
 | NBR (nodes with brace roots) | 0.52 | 0.47 | 0.34 |
 | SPAD (leaf greenness) | 0.49 | 0.54 | 0.19 |
 | BW (blade width), BL (blade length), SL (sheath length); 2023 only | 0.51, 0.56, 0.73 | | |
@@ -986,11 +986,11 @@ Bonferroni over the 14 QTL: −log10 p > 2.45 (bold).
 
 </details>
 
-#### Ear number (EN)
+#### Ear number (EN; number of nodes with ears)
 
 ![EN: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EN.png)
 
-14 regions, 10 hold (Bonferroni over 14: −log10 p > 2.45). **Every effect is positive: teosinte alleles add ears**, as expected from multi-eared teosinte, and alike across taxa. Strongest: **Q2 chr2 22.4 Mb** (+0.19 per copy, joint −log10 p 19.6), **Q1 chr1 22.9 Mb** (+0.21, 16.7; *ZmD14* (Zm00001eb007670), the strigolactone receptor, is in the interval), **Q5 chr4 166.9 Mb** (+0.21, 16.3) and **Q9 chr7 143.6 Mb** (+0.16, 11.0). Q3 chr3 12.4 Mb (+0.09) holds *ra2* (Zm00001eb123060); Q11 chr8 133.6 Mb holds *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880) but does not hold in the joint model.
+14 regions, 10 hold (Bonferroni over 14: −log10 p > 2.45). EN counts the stem nodes that bear an ear. **Every effect is positive: teosinte alleles add ear-bearing nodes**, as expected from teosinte, which bears ears at many nodes, and alike across taxa. Strongest: **Q2 chr2 22.4 Mb** (+0.19 per copy, joint −log10 p 19.6), **Q1 chr1 22.9 Mb** (+0.21, 16.7; *ZmD14* (Zm00001eb007670), the strigolactone receptor, is in the interval), **Q5 chr4 166.9 Mb** (+0.21, 16.3) and **Q9 chr7 143.6 Mb** (+0.16, 11.0). Q3 chr3 12.4 Mb (+0.09) holds *ra2* (Zm00001eb123060); Q11 chr8 133.6 Mb holds *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880) but does not hold in the joint model.
 
 <details><summary>All EN QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1015,11 +1015,11 @@ Bonferroni over the 14 QTL: −log10 p > 2.45 (bold).
 
 </details>
 
-#### Prolificacy (Prolif; number of ears)
+#### Prolificacy (Prolif; most ears on one node)
 
 ![Prolif: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_Prolif.png)
 
-12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). Prolificacy is the number of ears per plant. **The same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q6 chr3 11.4 Mb** (+0.16, 12.8), **Q5 chr2 191.2 Mb** (+0.14, 13.1), Q11 chr7 142.2 Mb and Q12 chr9 32.1 Mb. The QTL that hold are all positive and alike across taxa. Q4 chr1 213.9 Mb holds *CKX10* (Zm00001eb040280; cytokinin oxidase).
+12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q6 chr3 11.4 Mb** (+0.16, 12.8), **Q5 chr2 191.2 Mb** (+0.14, 13.1), Q11 chr7 142.2 Mb and Q12 chr9 32.1 Mb. The QTL that hold are all positive (teosinte adds ears per node) and alike across taxa: the same loci raise both the number of ear-bearing nodes and the number of ears per node. Q4 chr1 213.9 Mb holds *CKX10* (Zm00001eb040280; cytokinin oxidase).
 
 <details><summary>All Prolif QTL with per-taxon effects and known genes in the interval</summary>
 

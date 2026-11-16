@@ -20,7 +20,8 @@
 ##   Rscript 26_assoc_gridlmm.R scan    <in_dir> <trait> <out_dir> [cores]
 ##   Rscript 26_assoc_gridlmm.R perm    <in_dir> <trait> <out_dir> <n_perm> <seed> [cores]
 ##   Rscript 26_assoc_gridlmm.R summary <in_dir> <trait> <out_dir>
-## Environment (optional): GROUP_COL (TAXON | F1FAMILY | none; default TAXON), MIN_N (default 20),
+## Environment (optional): GROUP_COL (TAXON | F1FAMILY | none; default TAXON), FIXED_COL (fixed effect,
+##   TAXON or F1FAMILY; default TAXON), MIN_N (default 20),
 ##   MIN_CARRIERS (per-group scans, default 10)
 ## in_dir = step-25 output (pheno.csv, geno_dosage.csv, geno_seg.csv, window_map.tsv, K_matrix_chr*.txt)
 ## ============================================================
@@ -35,12 +36,14 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 GROUP_COL <- Sys.getenv("GROUP_COL", "TAXON")
 MIN_N <- as.integer(Sys.getenv("MIN_N", "20"))
 MIN_CARRIERS <- as.integer(Sys.getenv("MIN_CARRIERS", "10"))
+FIXED_COL <- Sys.getenv("FIXED_COL", "TAXON")          # fixed effect in the ALL scan: TAXON or F1FAMILY
 cores <- as.integer(if (mode == "perm") (if (length(args) >= 7) args[7] else 1) else (if (length(args) >= 5) args[5] else 1))
 
 ## ---------- inputs ----------
 ph <- fread(file.path(in_dir, "pheno.csv"), data.table = FALSE)
 dat <- data.frame(Line = ph[[1]], y = as.numeric(ph[[trait]]), TAXON = factor(ph$TAXON), stringsAsFactors = FALSE)
 if (GROUP_COL != "none") dat$GROUP <- as.character(ph[[GROUP_COL]])
+dat$FIX <- factor(ph[[FIXED_COL]])
 read_geno <- function(f) {
   g <- fread(f, data.table = FALSE)
   X <- as.matrix(g[, -1, drop = FALSE]); storage.mode(X) <- "double"; rownames(X) <- g[[1]]; X
@@ -78,7 +81,8 @@ scope_windows <- function(rows, sc) {
 scan_chr <- function(d, rows, chr, keep, dom_ok, dominance, V_setup = NULL) {
   mk <- map$Marker[map$chr == chr & keep[map$Marker]]
   if (length(mk) < 1) return(NULL)
-  fml <- if (length(unique(d$TAXON)) > 1) y ~ TAXON + (1 | Line) else y ~ 1 + (1 | Line)
+  d$FIX <- droplevels(d$FIX)
+  fml <- if (nlevels(d$FIX) > 1) y ~ FIX + (1 | Line) else y ~ 1 + (1 | Line)
   K <- Kall[[chr]][d$Line, d$Line]
   add <- GridLMM_GWAS(formula = fml, test_formula = ~1, reduced_formula = ~0, data = d,
                       X = D[d$Line, mk, drop = FALSE], X_ID = "Line", relmat = list(Line = K),
@@ -160,19 +164,42 @@ if (mode == "summary") {
       off <- c(0, cumsum(cl))[seq_along(cl)]; names(off) <- names(cl)
       res$x <- res$pos + off[as.character(res$chr_n)]
       mids <- off + cl / 2
+      gp <- if (file.exists(file.path(in_dir, "gene_positions.tsv"))) fread(file.path(in_dir, "gene_positions.tsv"), data.table = FALSE) else NULL
       for (what in c("add", "dom")) {
-        if (all(is.na(res[[paste0("mlog10p_", what)]]))) next
-        p <- ggplot(res[!is.na(res[[paste0("mlog10p_", what)]]), ],
-                    aes(x = x / 1e6, y = .data[[paste0("mlog10p_", what)]], colour = factor(chr_n %% 2))) +
-          geom_point(size = 0.6, show.legend = FALSE) + scale_colour_manual(values = c("#2a78d6", "#0b3a73")) +
-          scale_x_continuous(breaks = mids / 1e6, labels = names(mids), limits = c(0, sum(cl) / 1e6)) +
-          labs(x = "Chromosome", y = expression(-log[10](p)),
-               title = sprintf("%s, %s effect, %s (%d plots)", trait, if (what == "add") "additive" else "dominance",
-                               if (sc == "ALL") "all taxa" else sc, top$n_plots)) +
-          theme_classic(base_size = 11)
-        if (what == "add" && is.finite(thr)) p <- p + geom_hline(yintercept = thr, colour = "#0b0b0b") +
-            annotate("text", x = 0, y = thr, label = "5% permutation", hjust = 0, vjust = -0.4, size = 3)
-        ggsave(file.path(out_dir, sprintf("manhattan_%s_%s_%s.png", trait, safe(sc), what)), p, width = 10, height = 3.6, dpi = 200)
+        yv <- paste0("mlog10p_", what)
+        rr <- res[!is.na(res[[yv]]), ]
+        if (nrow(rr) == 0) next
+        lam <- median(qchisq(1 - rr[[paste0("p_", what)]], 1)) / qchisq(0.5, 1)   # genomic inflation
+        ytop <- max(c(rr[[yv]], if (what == "add" && is.finite(thr)) thr), na.rm = TRUE)
+        p <- ggplot(rr, aes(x = x / 1e6, y = .data[[yv]], colour = factor(chr_n %% 2))) +
+          geom_point(size = 0.7, show.legend = FALSE) + scale_colour_manual(values = c("0" = "#9E9E9E", "1" = "#000000")) +
+          scale_x_continuous(breaks = mids / 1e6, labels = names(mids), limits = c(0, sum(cl) / 1e6), expand = c(0.01, 0)) +
+          labs(x = NULL, y = expression(-log[10](italic(P))),
+               title = sprintf("%s %s (%s; %d plots)  \u2014  \u03bb_GC = %.2f%s", trait,
+                               if (what == "add") "additive" else "dominance",
+                               if (sc == "ALL") "all taxa, taxon + K" else paste0(sc, ", K"), top$n_plots, lam,
+                               if (what == "add" && is.finite(thr)) sprintf("; perm 5%% = %.2f", thr) else "")) +
+          theme_classic(base_size = 12) +
+          theme(plot.title = element_text(face = "bold", hjust = 1, size = 11), axis.text = element_text(colour = "black"),
+                panel.grid.major.y = element_line(colour = "#ECECEC", linewidth = 0.3))
+        if (what == "add" && is.finite(thr)) p <- p + geom_hline(yintercept = thr, linetype = "dotted", colour = "black", linewidth = 0.6)
+        if (!is.null(gp) && nrow(gp) > 0) {                 # known genes: star at the window holding the gene, label on top
+          g <- gp; g$chr_n <- as.integer(sub("chr", "", g$CHR)); g$mid <- (g$START + g$END) / 2
+          g$y <- sapply(seq_len(nrow(g)), function(k) {
+            w <- rr[rr$chr_n == g$chr_n[k] & rr$start <= g$mid[k] & rr$end >= g$mid[k], yv]
+            if (length(w)) max(w) else NA })
+          g <- g[!is.na(g$y), ]
+          if (nrow(g)) {
+            g$x <- (g$mid + off[as.character(g$chr_n)]) / 1e6
+            ylab <- ytop * 1.12 + 0.3
+            p <- p + geom_segment(data = g, aes(x = x, xend = x, y = y, yend = ylab), inherit.aes = FALSE, colour = "#7F7F7F", linewidth = 0.4) +
+              geom_point(data = g, aes(x = x, y = y), inherit.aes = FALSE, shape = 8, size = 3.2, stroke = 1.1, colour = "#E2412B") +
+              geom_text(data = g, aes(x = x, y = ylab, label = NAME), inherit.aes = FALSE, angle = 60, hjust = 0, vjust = 0,
+                        size = 3.6, fontface = "italic") +
+              coord_cartesian(ylim = c(0, ylab * 1.35), clip = "off")
+          }
+        }
+        ggsave(file.path(out_dir, sprintf("manhattan_%s_%s_%s.png", trait, safe(sc), what)), p, width = 11, height = 4.2, dpi = 300, bg = "white")
       }
     }
   }

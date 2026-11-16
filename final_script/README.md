@@ -715,6 +715,10 @@ The introgression calls are the genotypes. Every plot (pool) gets, in every 100-
 
 Dominance scans: `figures/assoc_spread/manhattan_DTS_ALL_dom.png`, `manhattan_DTA_ALL_dom.png`.
 
+**Known genes on the plots.** `data/flowering_genes.tsv` lists genes by name and B73 v5 ID (zmcct10 = cct1, cct2, zcn8 = pebp8, zcn12 = pebp12, zmads69 = mads69; add rows freely). Step 25 looks up their positions in the GFF3 (`GENES_TSV`, `GFF_GLOB`) and writes `gene_positions.tsv`; step 26 marks each gene with a red star at the window that holds it and labels it, on every Manhattan plot (all plots and per taxon). Points are black and grey by chromosome; the dotted line is the scope's 5% permutation threshold; the title gives λ_GC.
+
+**Plant height or other traits:** the scans are trait-agnostic. Add the trait as a column in the phenotype CSV (plot name, traits, `Sequencing_ID`) and list it in `TRAITS` in `config.sh`. The repo's phenotype file has only DTS and DTA; the spatial correction (`scripts/Correction_spatial_Spats.R`) also handles only DTS and DTA so far.
+
 **Peaks and genes (step 27, `27_assoc_genes.py`):** for each scope at its permutation threshold, significant windows are joined into peaks (gap < 5 Mb), each with a support interval (windows within 1.5 −log10 p of the top), and every B73 v5 gene in the interval is listed from the GFF3 (`GFF_GLOB`). `--find 'CCT'` also lists every CCT-domain gene (ZmCCT10 and relatives) with the best −log10 p within 5 Mb. Output: `${D21}/assoc_gridlmm/genes/`.
 
 **Outputs** (`${D21}/assoc`, `${D21}/assoc_gridlmm`): `geno_dosage.csv`, `geno_seg.csv`, `window_map.tsv`, `pheno.csv` (with TAXON, F1FAMILY), `K_matrix_chr*.txt`; `scan_<TRAIT>.tsv` and `scan_<TRAIT>_<GROUP>.tsv` (per window: plots, carriers, SEG and DONOR plots, `beta_add`, `p_add`, `h2`, `c_dom`, `p_dom`), `perm_<TRAIT>_seed<N>.tsv`, `summary_<TRAIT>.tsv` (per scope: threshold, top window, windows above), `manhattan_<TRAIT>_<SCOPE>_{add,dom}.png`, `genes/`.

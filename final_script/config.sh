@@ -178,11 +178,13 @@ TRAITS="DTS DTA"                    # trait columns in PHENO
 D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
 D26=${D21}/assoc_gridlmm            # step-26 scans, permutations, Manhattan plots
 ASSOC_MIN_CARRIERS=20               # test only windows where at least this many plots carry donor (all plots)
-ASSOC_GROUP_COL=TAXON               # extra scans per group: TAXON (Zd/Zl/Zv/Zx), F1FAMILY, or none
+ASSOC_GROUP_COL=none                # extra scans per group: TAXON (Zd/Zl/Zv/Zx), F1FAMILY, or none
+ASSOC_FIXED_COL=F1FAMILY              # fixed effect in the all-plots scan: TAXON, or F1FAMILY (slower)
 ASSOC_MIN_N=20                      # groups with fewer plots are not scanned
 ASSOC_GROUP_MIN_CARRIERS=10         # per-group scans: at least this many carrier plots in the group
 ASSOC_PERM_PER_TASK=10              # permutations per array task: sbatch --array=1-100 -> 1,000
-GFF_GLOB="/rsstu/users/r/rrellan/sara/ref/gff3/Zea_mays.Zm-B73-REFERENCE-NAM-5.0.57.chromosome.*.gff3"   # B73 v5 genes (step 27)
+GFF_GLOB="/rsstu/users/r/rrellan/sara/ref/gff3/Zea_mays.Zm-B73-REFERENCE-NAM-5.0.57.chromosome.*.gff3"   # B73 v5 genes (steps 25, 27)
+GENES_TSV=${FINAL_DIR}/../data/flowering_genes.tsv   # genes marked on the Manhattan plots (NAME, GENE_ID; add rows freely)
 # R needs GridLMM (github.com/deruncie/GridLMM), data.table and ggplot2. If R lives in another env, put it on PATH:
 # export PATH=/path/to/r_env/bin:$PATH
 

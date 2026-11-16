@@ -20,10 +20,12 @@ Outputs in <out_dir>:
   window_map.tsv       Marker chr start end pos n_carriers n_seg n_donor
   pheno.csv            the phenotype rows kept, plus TAXON, F1FAMILY (accession + F1 plant) and SAMPLE
   K_matrix_chr{c}.txt  LOCO kinship, first column ID, header row of IDs
+  gene_positions.tsv   with --genes and --gff: NAME GENE_ID CHR START END of genes to mark on the plots
 """
 import argparse
 import collections
 import csv
+import glob
 import gzip
 import os
 
@@ -41,6 +43,8 @@ def main():
     ap.add_argument("--out_dir", required=True)
     ap.add_argument("--window", type=int, default=100000)
     ap.add_argument("--min_carriers", type=int, default=20)
+    ap.add_argument("--genes", default=None, help="TSV with NAME and GENE_ID (B73 v5) of genes to mark on the plots")
+    ap.add_argument("--gff", default=None, help="glob of B73 v5 GFF3 file(s), quoted")
     a = ap.parse_args()
     os.makedirs(a.out_dir, exist_ok=True)
 
@@ -109,6 +113,26 @@ def main():
             f.write("ID," + ",".join(lines) + "\n")
             for i, l in enumerate(lines): f.write(l + "," + ",".join(f"{x:.6f}" for x in K[i]) + "\n")
     print(f"WROTE: {a.out_dir}/geno_dosage.csv geno_seg.csv window_map.tsv pheno.csv K_matrix_chr1..{len(chroms)}.txt")
+
+    if a.genes and a.gff:                       # positions of the genes to mark, from the GFF3
+        want = {r["GENE_ID"]: r["NAME"] for r in csv.DictReader(open(a.genes), delimiter="\t")}
+        found = {}
+        for fn in sorted(glob.glob(a.gff)):
+            with open(fn) as f:
+                for line in f:
+                    p = line.split("\t")
+                    if len(p) < 9 or p[2] != "gene": continue
+                    at = dict(kv.split("=", 1) for kv in p[8].strip().split(";") if "=" in kv)
+                    gid = at.get("gene_id", at.get("ID", "").replace("gene:", ""))
+                    if gid in want:
+                        c = p[0] if p[0].startswith("chr") else "chr" + p[0]
+                        found[gid] = (c, int(p[3]), int(p[4]))
+        with open(f"{a.out_dir}/gene_positions.tsv", "w") as f:
+            f.write("NAME\tGENE_ID\tCHR\tSTART\tEND\n")
+            for gid, nm in want.items():
+                if gid in found: f.write(f"{nm}\t{gid}\t{found[gid][0]}\t{found[gid][1]}\t{found[gid][2]}\n")
+        missing = [want[g] for g in want if g not in found]
+        print(f"genes to mark: {len(found)} of {len(want)} found in the GFF" + (f" (missing: {', '.join(missing)})" if missing else ""))
 
 
 if __name__ == "__main__":

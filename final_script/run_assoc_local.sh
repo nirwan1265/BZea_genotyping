@@ -42,7 +42,8 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 if [[ ! -f "$D25/pheno.csv" || "$PHENO" -nt "$D25/pheno.csv" || "$IN/tracts_all.tsv.gz" -nt "$D25/pheno.csv" ]]; then
   echo "== 25: inputs ($PHENO)"
   "$PY" "$REPO/final_script/25_assoc_inputs.py" --tracts "$IN/tracts_all.tsv.gz" --pool_summary "$IN/pool_summary.tsv" \
-    --pheno "$PHENO" --out_dir "$D25" --min_carriers 20 --genes "$REPO/data/flowering_genes.tsv" --gff "$GFF"
+    --pheno "$PHENO" --out_dir "$D25" --min_carriers 20 \
+    $( [[ "$MARK_GENES" == 1 ]] && echo --genes "$REPO/data/flowering_genes.tsv" --gff "$GFF" )
 fi
 if [[ "$MARK_GENES" == 1 ]]; then
   if [[ -f "$D25/gene_positions.tsv.off" ]]; then mv "$D25/gene_positions.tsv.off" "$D25/gene_positions.tsv"; fi

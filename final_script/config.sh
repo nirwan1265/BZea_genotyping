@@ -186,7 +186,8 @@ ASSOC_MIN_N=20                      # groups with fewer plots are not scanned
 ASSOC_GROUP_MIN_CARRIERS=10         # per-group scans: at least this many carrier plots in the group
 ASSOC_PERM_PER_TASK=10              # permutations per array task: sbatch --array=1-100 -> 1,000
 GFF_GLOB="/rsstu/users/r/rrellan/sara/ref/gff3/Zea_mays.Zm-B73-REFERENCE-NAM-5.0.57.chromosome.*.gff3"   # B73 v5 genes (steps 25, 27)
-GENES_TSV=${FINAL_DIR}/../data/flowering_genes.tsv   # genes marked on the Manhattan plots (NAME, GENE_ID; add rows freely)
+MARK_GENES=${MARK_GENES:-0}         # 1 = label the genes in GENES_TSV on the Manhattan plots (default: no labels)
+GENES_TSV=${FINAL_DIR}/../data/flowering_genes.tsv   # genes to label when MARK_GENES=1 (NAME, GENE_ID)
 # R needs GridLMM (github.com/deruncie/GridLMM), data.table and ggplot2. If R lives in another env, put it on PATH:
 # export PATH=/path/to/r_env/bin:$PATH
 

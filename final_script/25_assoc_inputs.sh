@@ -18,4 +18,6 @@ set -euo pipefail
 source "${SLURM_SUBMIT_DIR:-$PWD}/config.sh"
 need python3
 python3 "${FINAL_DIR}/25_assoc_inputs.py" --tracts "${D21}/tracts_all.tsv.gz" --pool_summary "${D21}/pool_summary.tsv" \
-  --pheno "$PHENO" --out_dir "$D25" --min_carriers "$ASSOC_MIN_CARRIERS" --genes "$GENES_TSV" --gff "$GFF_GLOB"
+  --pheno "$PHENO" --out_dir "$D25" --min_carriers "$ASSOC_MIN_CARRIERS" \
+  $( [[ "${MARK_GENES:-0}" == 1 ]] && echo --genes "$GENES_TSV" --gff "$GFF_GLOB" )
+[[ "${MARK_GENES:-0}" == 1 ]] || rm -f "$D25/gene_positions.tsv"     # no gene labels on the plots

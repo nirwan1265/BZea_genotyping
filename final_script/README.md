@@ -783,33 +783,41 @@ Two field trials at Clayton, NC: **2023** (CLY23_D4, 3 reps, 4,432 plots, 1,329 
 
 ## 12. Joint multi-QTL model with per-taxon effects, step 29
 
-The scan (step 26) tests one window at a time. Step 29 (`29_joint_qtl.R`) fits the QTL **together** and gives each QTL a separate effect **in each taxon**, like joint linkage mapping in TeoNAM (Chen et al. 2019), but inside the same mixed model with LOCO kinship. Base R plus data.table; no GridLMM, so it runs on the cluster.
+Step 29 (`29_joint_qtl.R`) runs the QTL analysis in **R/qtl2** (Broman et al. 2019, CRAN). Every statistical step is an R/qtl2 function; the script only converts the k-mer calls into R/qtl2's format and collects the results. (An earlier hand-written version is in `old_scripts/29_joint_qtl_handwritten.R`.)
 
-**Model:** `y = taxon + Σ_q Σ_t b_qt · dosage_q · [taxon = t] + u + e`, `u ~ N(0, σ²_g K_LOCO)`. b_qt = effect per teosinte copy of QTL q in taxon t.
+| What | R/qtl2 function |
+|---|---|
+| **Genotypes:** teosinte allele probability per 100-kb window = dosage / 2 (B73 0, SEG 0.5, DONOR 1), as allele probabilities with two alleles, B (B73) and T (teosinte). A SEG plot is ½ teosinte alleles on average. | (input object of class `calc_genoprob`) |
+| **Kinship:** leave-one-chromosome-out | `calc_kinship(probs, "loco")` |
+| **Additive scan:** taxon as covariate, LOCO kinship, 1 df | `scan1(probs, y, K, addcovar = taxon)` |
+| **Per-taxon scan:** the QTL effect may differ by taxon | `scan1(..., intcovar = taxon)` |
+| **Thresholds:** 5% genome-wide, permutations within taxon, for both scans | `scan1perm(..., perm_strata = taxon)` |
+| **QTL and 1.5-LOD support intervals** (one per chromosome by default) | `find_peaks(threshold, drop = 1.5)` |
+| **Do taxa differ?** LOD(per-taxon) − LOD(additive) at the QTL, df = taxa − 1 | (difference of the two scans) |
+| **Joint model:** each QTL with taxon and all other QTL as covariates: conditional LOD, effect per teosinte copy ± SE | `fit1(..., addcovar = taxon + other QTL, contrasts = cbind(mu = c(1, 1), a = c(-1, 1)))` |
+| **Per-taxon effects:** the same fit within each taxon (≥ 5 carrier plots) | `fit1` on that taxon's plots |
 
-**Steps:**
-1. **Threshold:** phenotypes shuffled within taxon, genome scan rerun, largest −log10 p kept; 95th percentile of 1,000 permutations (~1 s each). Or `THRESHOLD=` / `SUMMARY=<step-26 summary_<TRAIT>.tsv>`.
-2. **Forward selection** (multi-locus mixed model, Segura et al. 2012): scan with the selected QTL as cofactors (one pooled effect each); add the top window if it passes the threshold; repeat. A new QTL must be ≥ 5 Mb from, and have r² ≤ 0.5 with, every selected QTL: neighbouring windows differ in only a few plots, and a pair of them otherwise fits those plots with huge opposite effects. For speed the variance ratio is fitted once per chromosome and step (P3D/EMMAX; Kang et al. 2010; Zhang et al. 2010).
-3. **Backward:** the weakest QTL is dropped while its conditional test (exact ML, LOCO K of its chromosome) is below the threshold.
-4. **Final model, per QTL** (exact ML, LOCO K of the QTL's chromosome):
-   - **presence:** all QTL nested in taxon vs this QTL removed (LRT, df = its number of taxon effects);
-   - **heterogeneity:** nested in taxon vs one pooled effect (LRT, df − 1): do the taxa differ?
-   - pooled effect and SE; per-taxon effects and SEs; PVE (variance of the QTL's fitted contribution / variance of y);
-   - support interval: the chromosome rescanned with the other QTL as cofactors, windows within 1.5 −log10 p of the top; B73 v5 genes in it.
-   - A taxon gets its own effect only with ≥ 5 carrier plots at the QTL; carriers of smaller taxa share one "other" effect.
+With `contrasts = cbind(mu = c(1, 1), a = c(-1, 1))`, the B73 allele mean is mu − a and the teosinte allele mean is mu + a, so **a is the effect of one teosinte copy** (dosage 0 → 2 changes the mean by 2a).
 
-**Why taxon and not accession for the per-QTL effects:** a typical window has ~90 carrier plots over 82 accessions, about one carrier per accession, so accession-level effects cannot be estimated. Taxon level has enough carriers (tens per taxon).
+**Why taxon, not accession, for the per-QTL effects:** a typical window has ~90 carrier plots over 82 accessions, about one per accession, so accession effects cannot be estimated. Taxa have tens of carriers each.
 
 **Run (cluster):**
 ```bash
+Rscript -e 'install.packages(c("qtl2", "data.table"), repos = "https://cloud.r-project.org")'   # once
 cd final_script; git pull; source config.sh
 J=$(sbatch --parsable 25_assoc_inputs.sh)                            # inputs with the two-year BLUEs
 N=$(wc -w <<< "$TRAITS"); sbatch --dependency=afterok:$J --array=1-$N 29_joint_qtl.sh
 ```
-One array task per trait (~20 min: eigen-decompositions ~1 min, 1,000 permutations ~17 min). Laptop: `Rscript final_script/29_joint_qtl.R <IN>/assoc_spats DTS <IN>/joint_qtl`.
+One array task per trait, 16 cores: ~5 min for the scans, 1–2 h for 2 × 1,000 permutations (one permutation ≈ 22 s on one core). Rerunning reuses the saved permutations. Laptop: `Rscript final_script/29_joint_qtl.R <IN>/assoc_spats DTS <IN>/qtl2`.
 
-**Outputs** (`${D29}`): `joint_qtl_<TRAIT>.tsv` (one row per QTL: position, support interval, carriers, pooled effect ± SE, −log10 p presence and heterogeneity, PVE, polygenic h²), `joint_qtl_<TRAIT>_by_taxon.tsv` (QTL × taxon: carriers, SEG, DONOR, effect per copy ± SE, −log10 p), `joint_qtl_<TRAIT>_genes.tsv`, `joint_qtl_<TRAIT>_steps.tsv` (selection log), `joint_qtl_<TRAIT>_perm.tsv`.
+**Outputs** (`${D29}`):
+- `qtl2_<TRAIT>_qtl.tsv`: one row per QTL: position, support interval, found by (additive or per-taxon scan), carriers, LOD, joint (conditional) LOD and −log10 p, effect per teosinte copy ± SE in the joint model, LOD and −log10 p for "taxa differ", PVE alone.
+- `qtl2_<TRAIT>_by_taxon.tsv`: QTL × taxon: plots, carriers (SEG / DONOR), effect per copy ± SE, LOD.
+- `qtl2_<TRAIT>_genes.tsv`: B73 v5 genes in each support interval.
+- `qtl2_<TRAIT>_scan.tsv` (LOD per window, both scans), `qtl2_<TRAIT>_perm.tsv`, `qtl2_<TRAIT>_manhattan.png`.
 
-**Test (DTS, two-year BLUEs, 1,284 plots; threshold from only 20 permutations, 4.46):** 4 QTL — chr1 ~85.8 Mb (+0.58 d per copy; strongly taxon-specific: Zl +4.2 d, others ≈ 0–0.8), chr5 ~221.8 Mb (+0.87 d; Zl +3.7, Zd +1.9, Zv/Zx +0.4), chr9 ~11 Mb (−0.56 d; similar across taxa), chr10 ~94.6 Mb (+1.0 d; similar across taxa: Zd 1.1, Zv 0.8, Zx 0.9). Together 17.5% of the DTS variance beyond taxon means. To be rerun with 1,000 permutations.
+**Test (DTS, two-year BLUEs, 1,284 plots; thresholds from only 4 permutations, so rough):** QTL on chr1 ~85.9 Mb (+0.74 d per teosinte copy in the joint model), chr5 ~221.8 Mb (+0.98), chr7 ~142 Mb (−0.61), chr9 ~11 Mb (−0.56) and chr10 ~94.8 Mb (+0.99; ZmCCT10 region). Taxa differ strongly at chr1 (Zl +3.3 d, others ≈ 0–0.9) and chr5 (Zl +3.8, Zd +1.7, Zv/Zx +0.5); chr7, chr9 and chr10 act alike across taxa (chr10: Zd 1.2, Zv 0.9, Zx 0.9). The earlier hand-written version gave the same QTL and effects.
 
-**References:** Segura V, et al. (2012) An efficient multi-locus mixed-model approach for genome-wide association studies in structured populations. *Nat Genet* 44:825–830. Kang HM, et al. (2010) Variance component model to account for sample structure in genome-wide association studies. *Nat Genet* 42:348–354. Zhang Z, et al. (2010) Mixed linear model approach adapted for genome-wide association studies. *Nat Genet* 42:355–360. Chen Q, et al. (2019) TeoNAM. *Genetics* 213:1065–1078.
+The step-26 GridLMM scan and the R/qtl2 additive scan are the same model (taxon fixed, LOCO kinship, additive dosage) in two packages, so they check each other. R/qtl2 runs on the cluster; GridLMM runs on the laptop.
+
+**References:** Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502. Chen Q, et al. (2019) TeoNAM. *Genetics* 213:1065–1078.

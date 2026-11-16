@@ -570,6 +570,25 @@ The full statistics, F1 family results and the method history are in [`final_scr
 
 Per-pool numbers: `final_script/figures/rtiger_comparison/rtiger_vs_kmer_per_pool.tsv`.
 
+### Population structure from k-mers (step 32)
+
+**Why the ancestry calls cannot do this.** The HMM calls say *whether* a window is teosinte, not *which* teosinte: they are built from B73 k-mers that are present or missing. A PCA of the ancestry dosage (1,286 pools × 21,309 windows) therefore does not separate the five taxa: taxon explains ≤ 2.5% of the variance of each of the first 10 PCs (F1 family ~10%). The PCs follow shared donor tracts, i.e. families.
+
+**A k-mer profile that does.** The donor DNA carries k-mers that B73 does not have, and these differ between teosinte taxa. Following the idea of reading population structure from k-mer content without alignment (Hrytsenko et al. 2025), step 32 uses **sourmash** (Brown & Irber 2016; Irber et al. 2022) to compare every pool with the teosinte assemblies:
+1. **Sketch** (32a): k = 31, FracMinHash with scaled = 1,000 (every k-mer whose hash is in the lowest 1/1,000 of the hash space; the same k-mers are kept in every sample, so sketches compare directly). One sketch for B73, one per assembly (Zd Gigi, Zd Momo, Zh RIMHU001, Zl RIL003, Zv TIL01, Zv TIL11, Zx TIL18, Zx TIL25), one per pool from its trimmed reads.
+2. **Taxon-specific k-mers** (32b): for each assembly, its k-mers minus B73's; for each taxon, the union over its assemblies minus the k-mers of the other four taxa.
+3. **Profile per pool** (32b): the share of each taxon's specific k-mers found in the pool's reads, f_taxon. Its largest value is the pool's **k-mer taxon**, which is checked against the pedigree taxon. The share of all teosinte k-mers found, f_teo, measures how much donor DNA the pool has, independently of the HMM.
+4. **PCA** (32c): each pool's f values divided by their sum (depth and donor amount cancel; only *which* teosinte is left), centred log-ratio, `prcomp`. Points coloured by pedigree taxon; arrows = taxa.
+
+On simulated pools (5 taxa, 6 pools each, 10% donor, 1× reads) the k-mer taxon matched the pedigree taxon in 30 of 30 pools and the PCA separated all five taxa (PC1–PC4). Real data: *to be added after the run*.
+
+```bash
+N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' ${D11}/pools.tsv | wc -l)
+J=$(sbatch --parsable --array=1-$(( 9 + (N + 9) / 10 ))%60 32a_sourmash_sketch.sh)   # needs: pip install sourmash
+sbatch --dependency=afterok:$J 32b_kmer_taxon_profile.sh
+```
+Output in `${D32}`: `kmer_taxon_profile.tsv` (per pool: f per taxon, f_teo, containment per assembly, k-mer taxon, agreement), `pca/kmer_pca.png`, `pca/kmer_taxon_shares.png`, `pca/kmer_taxon_agreement.tsv`.
+
 ### Noisy pools and resequencing
 
 93 of the 1,385 donor pools are flagged **NOISY** (σ > 0.15). They are left out of the results above. Almost all of them are on three plates with low sequencing depth:
@@ -674,6 +693,9 @@ For each tract in a pool, how often does another pool have an introgression at t
 - Campos-Martín R, et al. (2023) Reliable genotyping of recombinant genomes using a robust hidden Markov model. *Plant Physiology*. (RTIGER.)
 - Rabiner LR (1989) A tutorial on hidden Markov models and selected applications in speech recognition. *Proc IEEE* 77:257–286.
 - Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
+- Hrytsenko Y, Daniels NM, Schwartz RS (2025) Determining population structure from k-mer frequencies. *PeerJ* 13:e18939. doi:10.7717/peerj.18939
+- Brown CT, Irber L (2016) sourmash: a library for MinHash sketching of DNA. *J Open Source Softw* 1:27.
+- Irber L, Brooks PT, Reiter T, et al. (2022) Lightweight compositional analysis of metagenomes with FracMinHash and minimum metagenome covers. *bioRxiv* doi:10.1101/2022.01.11.475838
 
 ## Section 7 — k-mer ancestry GWAS and joint QTL mapping
 

@@ -19,6 +19,7 @@ Contents:
 12. [Joint multi-QTL model with per-taxon effects, step 29](#12-joint-multi-qtl-model-with-per-taxon-effects-step-29)
 13. [Genes and GO terms in the QTL regions, step 30](#13-genes-and-go-terms-in-the-qtl-regions-step-30)
 14. [Figures: k-mer scan and joint QTL side by side, step 31](#14-figures-k-mer-scan-and-joint-qtl-side-by-side-step-31)
+15. [Population structure from k-mers (sourmash), step 32](#15-population-structure-from-k-mers-sourmash-step-32)
 
 ---
 
@@ -849,3 +850,20 @@ Each gene also gets the −log10 p and effect of the 100-kb window it lies in, f
 Rscript final_script/31_joint_qtl_figures.R <IN>/assoc_gridlmm_spats <IN>/joint_QTL <IN>/joint_QTL/figures
 ```
 Outputs: `joint_qtl_<TRAIT>.png` and `joint_qtl_all_traits.pdf`. Needs ggplot2, patchwork, data.table. Example (test run, DTS): `figures/joint_qtl_example/joint_qtl_DTS_test.png`.
+
+---
+
+## 15. Population structure from k-mers (sourmash), step 32
+
+The ancestry dosage cannot separate the taxa (it says teosinte or not, not which teosinte; taxon explains ≤ 2.5% of each of its first 10 PCs). Step 32 uses the non-B73 k-mers instead, with **sourmash** (FracMinHash sketches, k = 31, scaled = `SOURMASH_SCALED` = 1,000):
+- `32a_sourmash_sketch.sh` (array): task 1 = B73, tasks 2–9 = the 8 assemblies in `DONOR_ASSEMBLIES`, tasks 10+ = pools (10 per task) from the trimmed reads. Skips done sketches.
+- `32b_kmer_taxon_profile.py` (via `32b_kmer_taxon_profile.sh`): non-B73 hashes per assembly, taxon-specific sets (taxon union minus the other taxa), and per pool: f per taxon, f_teo (all teosinte k-mers), containment per assembly, k-mer taxon (largest f) and agreement with the pedigree taxon.
+- `32c_kmer_pca.R` (run by the same job): centred log-ratio of each pool's f shares, `prcomp`, PC1–2 and PC3–4 coloured by pedigree taxon; stacked taxon shares per pool; agreement table.
+
+```bash
+pip install sourmash        # once, in the env used for the jobs
+N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' ${D11}/pools.tsv | wc -l)
+J=$(sbatch --parsable --array=1-$(( 9 + (N + 9) / 10 ))%60 32a_sourmash_sketch.sh)
+sbatch --dependency=afterok:$J 32b_kmer_taxon_profile.sh
+```
+Simulation test (5 taxa × 6 pools, 10% donor, 1× reads, scaled = 20): 30 / 30 pools assigned to their taxon, all five taxa separated on PC1–PC4. Output: `${D32}/kmer_taxon_profile.tsv`, `${D32}/pca/`.

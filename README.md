@@ -763,7 +763,7 @@ In a backcross population this matters a lot, because tracts are long and few lo
 | **LOCO** | 3.97 | −log10 p **9.1**, +1.0 day per teosinte copy | **9.7** |
 | Whole genome | 0.65 | 2.9 | 6.1 |
 
-With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC falls **below 1**: the model over-corrects. The SNP50K/RTIGER analysis of this population (below) found the same thing ("K … is collinear with the flowering QTL, so the mixed model absorbs the very signal it protects"). LOCO is the fix.
+With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC falls **below 1**: the model over-corrects. LOCO is the fix.
 
 **λ_GC under LOCO (~4) is not a sign of false positives here.** λ_GC assumes most markers are null and independent. In this population each QTL is tagged by hundreds of linked windows (tracts of several Mb, and with LOCO the tested chromosome's own background is not in K), and the traits are polygenic, so the median test statistic is expected to be high (Yang et al. 2011). Significance is therefore set by **permutation**, not by λ_GC.
 
@@ -775,7 +775,7 @@ With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC 
 - Dominance: the same model plus c · SEG_w; likelihood-ratio test for c.
 - GridLMM fits the variance proportion on a grid instead of re-optimising it for every window, which makes ~21,000 tests with a 1,284 × 1,284 K fast (~3 min per trait on 4 cores). The code started from `scripts/Analyze_QTL_Founder2.R`.
 
-**Fixed effect: taxon, not F1 family.** Plots from the same F1 plant share many of their tracts (relatives check, Sections 4–6, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. The SNP50K/RTIGER analysis below also notes that its 82-accession family factor "likely over-corrects population structure and costs some power". F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
+**Fixed effect: taxon, not F1 family.** Plots from the same F1 plant share many of their tracts (relatives check, Sections 4–6, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
 
 **Significance: permutations.** For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile over the permutations is the **5% genome-wide (family-wise) threshold** (Churchill & Doerge 1994). This accounts for the strong correlation between neighbouring windows; Bonferroni over 21,309 windows (−log10 p = 5.63) would be far too strict. The thresholds below come from 100 permutations per trait (1,000 are planned for publication).
 
@@ -1160,22 +1160,6 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold).
 
 Candidate genes for each trait will be added after closer inspection of `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv`.
 
-### Comparison with the SNP50K / RTIGER analysis of the same population
-
-F. Rodríguez-Zapata's notebook "ZEAL DTA GWAS + JLM on the SNP50K panel" (zealhmm, 2026) analysed DTA in the same BC2S3 lines (1,403 lines, same two fields, SpATS BLUEs).
-
-| | SNP50K / RTIGER (notebook) | k-mer / LOCO (this pipeline) |
-|---|---|---|
-| Genotype | 51,991 SNPs pileup-genotyped at ~0.4×; ancestry from RTIGER | B73 single-copy 31-mers in 100-kb windows; 3-state HMM (Sections 4–6) |
-| Teosinte share recovered | 0.111 (RTIGER) | 0.081 donor alleles; 6.2% SEG, 5.0% DONOR windows |
-| Kinship | one K (whole genome) | LOCO K from ancestry dosage |
-| Fixed effect | 82 donor accessions | 5 taxa |
-| λ_GC | 1.47 (DTA) | ~4 (see "Why LOCO") |
-| DTA regions above the 5% permutation threshold (mixed model) | 1: chr10 (ZmCCT10, −log10 p 5.0, threshold 4.56) | 4: chr10 101.2 Mb (10.3), chr9 2.0 Mb (6.1), chr2 226.3 Mb (5.2), chr1 76.3 Mb (5.1); threshold 4.90 |
-| Joint QTL model | TASSEL stepwise JLM, nested in taxon: 2 QTL, near the chr8/chr9 boundary and chr10 | R/qtl2 joint model: all 4 hold; chr1 and chr2 effects differ between taxa |
-
-The k-mer/LOCO scan finds both JLM QTL (chr10, and chr9 at 2.0 Mb, next to the chr8/chr9 boundary) **and** two more (chr1, chr2), both larger in *luxurians* and *diploperennis*. The main reason is LOCO: with a whole-genome K, our own scan loses chr10 as well. A fully matched test would run the RTIGER genotypes through the LOCO model, and the k-mer genotypes through the notebook's model.
-
 ### What is new here
 
 - **Local ancestry from k-mers in pooled, ultra-low-coverage samples.** Each sample is a pool of 6 BC2S3 plants sequenced at ~0.8×. The k-mer HMM (Sections 4–6) turns presence and absence of B73 single-copy k-mers into B73 / SEG / DONOR calls per window, with a pool-aware emission model. k-mer GWAS methods use k-mers directly as markers in deeply sequenced individuals; here k-mers are turned into ancestry first.
@@ -1206,7 +1190,6 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - Odell SG, Hudson AI, Praud S, Dubreuil P, Tixier M-H, Ross-Ibarra J, Runcie DE (2022) Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci. *G3* 12:jkac011.
 - Rahman A, Hallgrímsdóttir I, Eisen M, Pachter L (2018) Association mapping from sequencing reads using k-mers. *eLife* 7:e32920.
 - Rodríguez-Álvarez MX, Boer MP, van Eeuwijk FA, Eilers PHC (2018) Correcting for spatial heterogeneity in plant breeding experiments with P-splines. *Spatial Statistics* 23:52–71.
-- Rodríguez-Zapata F (2026) ZEAL DTA GWAS + JLM on the SNP50K panel — 1000-permutation FWER. Lab notebook (zealhmm).
 - Runcie DE, Crawford L (2019) Fast and flexible linear mixed models for genome-wide genetics. *PLoS Genet* 15:e1007978.
 - Selvanayagam S, et al. (2026) KCFtools: rapid alignment-free method for introgression screening and GWAS using k-mer profiles. *Bioinformatics*. doi:10.1093/bioinformatics/btag354
 - Smith MW, O'Brien SJ (2005) Mapping by admixture linkage disequilibrium: advances, limitations and guidelines. *Nat Rev Genet* 6:623–632.

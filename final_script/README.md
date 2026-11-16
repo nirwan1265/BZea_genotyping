@@ -768,10 +768,10 @@ Two field trials at Clayton, NC: **2023** (CLY23_D4, 3 reps, 4,432 plots, 1,329 
 | PH | plant height | 0.86 | 0.86 | 0.74 |
 | EH | ear height | 0.78 | 0.74 | 0.63 |
 | EN | ear number | 0.68 | 0.42 | 0.33 |
-| Prolif | prolificacy | 0.61 | 0.55 | 0.21 |
-| NBR | (fieldbook code) | 0.52 | 0.47 | 0.34 |
+| Prolif | prolificacy (number of ears) | 0.61 | 0.55 | 0.21 |
+| NBR | nodes with brace roots | 0.52 | 0.47 | 0.34 |
 | SPAD | leaf greenness | 0.49 | 0.54 | 0.19 |
-| BW, BL, SL | 2023 only | 0.51, 0.56, 0.73 | | |
+| BW, BL, SL | blade width, blade length, sheath length (2023 only) | 0.51, 0.56, 0.73 | | |
 | Kinki, SPAD2 | 2023 only | 0.29, 0.40 | | |
 | LAE | 2025 only | | 0.40 | |
 | StPu, StPi | binary (line share) | | | 0.16, 0.09 |

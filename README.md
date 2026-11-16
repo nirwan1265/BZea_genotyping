@@ -737,8 +737,10 @@ BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/R
 | PH (plant height) | 0.86 | 0.86 | 0.74 |
 | EH (ear height) | 0.78 | 0.74 | 0.63 |
 | EN (ear number) | 0.68 | 0.42 | 0.33 |
-| Prolif, NBR, SPAD | 0.49–0.61 | 0.47–0.55 | 0.19–0.34 |
-| BW, BL, SL (2023 only) | 0.51, 0.56, 0.73 | | |
+| Prolif (prolificacy, number of ears) | 0.61 | 0.55 | 0.21 |
+| NBR (nodes with brace roots) | 0.52 | 0.47 | 0.34 |
+| SPAD (leaf greenness) | 0.49 | 0.54 | 0.19 |
+| BW (blade width), BL (blade length), SL (sheath length); 2023 only | 0.51, 0.56, 0.73 | | |
 
 ### Analysis 1: k-mer ancestry GWAS
 
@@ -899,7 +901,9 @@ Bonferroni over the 4 QTL: −log10 p > 1.90 (bold).
 
 ![ASI: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_ASI.png)
 
-ASI = DTS − DTA. 13 regions, 6 hold in the joint model (Bonferroni over 13: −log10 p > 2.41). The strongest, **Q13 chr7 165.6 Mb** (−0.36 d, joint −log10 p 14.0), shortens the interval in all taxa. **Q12 chr5 218.3 Mb** (+0.35 d; *luxurians* +1.1) lengthens it; it lies just next to the DTS chr5 QTL, which delays silking but not anthesis. **Q1 chr1 4.5 Mb** (+0.24 d) acts alike in all taxa. Many chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. Candidate genes in intervals: *tga1* (Zm00001eb175150; Q10, chr4), ADAGIO3 (Zm00001eb201580; Q11, circadian), *MADS73* (Zm00001eb255670; Q12), *GA2ox2* (Zm00001eb077080; Q2).
+ASI = anthesis–silking interval, DTS − DTA. 13 regions, 6 hold in the joint model (Bonferroni over 13: −log10 p > 2.41). The strongest, **Q13 chr7 165.6 Mb** (−0.36 d, joint −log10 p 14.0), shortens the interval in all taxa (Zd −0.45, Zl −0.53, Zv −0.35, Zx −0.31 d). **Q12 chr5 218.3 Mb** (+0.35 d; *luxurians* +1.1) lengthens it; it lies just next to the DTS chr5 QTL, which delays silking but not anthesis. **Q1 chr1 4.5 Mb** (+0.24 d) acts alike in all taxa. Many chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. **Candidate genes:**
+- **Q13, chr7 (the strongest ASI QTL):** *bhlh90* (**Zm00001eb323880**, bHLH transcription factor 90; 165.74 Mb, in a window with −log10 p 13.2 next to the top window). MaizeGDB annotates it as the ortholog of Arabidopsis *FLOWERING BHLH 4* (Neupane et al. 2025); Gramene lists Arabidopsis *FBH3* (AT1G51140) as its closest homolog and rice *OsFBH1* / *POH1* (Os08g0506700) as its closest rice gene. In Arabidopsis the four FBH proteins bind E-boxes in the *CONSTANS* promoter and activate *CO*: their overexpression causes early flowering regardless of photoperiod, and *CO* levels drop in the *fbh* quadruple mutant (Ito et al. 2012). In rice, POH1 forms a dimer with HBP1, both bind the *Hd1* promoter and activate *Hd1*; their overexpression delays flowering by suppressing *Ehd1*, *Hd3a* and *RFT1* (Yin et al. 2023). Not characterised for flowering in maize.
+- Other genes in the intervals: *tga1* (Zm00001eb175150; Q10, chr4), ADAGIO3 (Zm00001eb201580; Q11, circadian), *MADS73* (Zm00001eb255670; Q12), *GA2ox2* (Zm00001eb077080; Q2).
 
 <details><summary>All ASI QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1011,11 +1015,11 @@ Bonferroni over the 14 QTL: −log10 p > 2.45 (bold).
 
 </details>
 
-#### Prolificacy (Prolif)
+#### Prolificacy (Prolif; number of ears)
 
 ![Prolif: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_Prolif.png)
 
-12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). **The same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q6 chr3 11.4 Mb** (+0.16, 12.8), **Q5 chr2 191.2 Mb** (+0.14, 13.1), Q11 chr7 142.2 Mb and Q12 chr9 32.1 Mb. The QTL that hold are all positive and alike across taxa. Q4 chr1 213.9 Mb holds *CKX10* (Zm00001eb040280; cytokinin oxidase).
+12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). Prolificacy is the number of ears per plant. **The same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q6 chr3 11.4 Mb** (+0.16, 12.8), **Q5 chr2 191.2 Mb** (+0.14, 13.1), Q11 chr7 142.2 Mb and Q12 chr9 32.1 Mb. The QTL that hold are all positive and alike across taxa. Q4 chr1 213.9 Mb holds *CKX10* (Zm00001eb040280; cytokinin oxidase).
 
 <details><summary>All Prolif QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1038,11 +1042,11 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold).
 
 </details>
 
-#### NBR
+#### Nodes with brace roots (NBR)
 
 ![NBR: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_NBR.png)
 
-9 regions, 3 hold (Bonferroni over 9: −log10 p > 2.26): **Q9 chr10 98.2 Mb** (+0.17 per copy; next to the ZmCCT10 region; taxa differ, Zv +0.26), **Q6 chr8 126.2 Mb** (+0.12; *ZCN8*, Zm00001eb353250) and **Q7 chr9 139.9 Mb** (+0.09; *PRR73*, Zm00001eb397240; same region as PH Q14). The five chr1 peaks (negative effects) share their signal and do not hold individually; *ZmD14* (Zm00001eb007670) is in the Q2 interval.
+Number of stem nodes that carry brace roots. 9 regions, 3 hold (Bonferroni over 9: −log10 p > 2.26), all with teosinte adding brace-root nodes: **Q9 chr10 98.2 Mb** (+0.17 nodes per copy; next to the ZmCCT10 region, so later-flowering plants with more nodes; taxa differ, Zv +0.26), **Q6 chr8 126.2 Mb** (+0.12; *ZCN8*, Zm00001eb353250) and **Q7 chr9 139.9 Mb** (+0.09; *PRR73*, Zm00001eb397240; same region as PH Q14). The five chr1 peaks (negative effects) share their signal and do not hold individually; *ZmD14* (Zm00001eb007670) is in the Q2 interval.
 
 <details><summary>All NBR QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1062,11 +1066,11 @@ Bonferroni over the 9 QTL: −log10 p > 2.26 (bold).
 
 </details>
 
-#### SL (2023 only)
+#### Sheath length (SL; 2023 only)
 
 ![SL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_SL.png)
 
-13 regions, 12 hold (Bonferroni over 13: −log10 p > 2.41). Strongest: **Q9 chr7 141.7 Mb** (−0.32 per copy; same region as PH Q13), **Q2 chr2 6.2 Mb** (−0.24), **Q10 chr9 157.2 Mb** (−0.25), **Q3 chr4 200.6 Mb** (+0.28; same region as PH Q4 and EH Q5) and **Q4 chr5 2.5 Mb** (+0.26; same as PH Q5, EH Q7). SL shares several regions with plant height.
+13 regions, 12 hold (Bonferroni over 13: −log10 p > 2.41). Strongest: **Q9 chr7 141.7 Mb** (−0.32 per copy; same region as PH Q13), **Q2 chr2 6.2 Mb** (−0.24), **Q10 chr9 157.2 Mb** (−0.25), **Q3 chr4 200.6 Mb** (+0.28; same region as PH Q4 and EH Q5) and **Q4 chr5 2.5 Mb** (+0.26; same as PH Q5, EH Q7). Sheath length shares several regions with plant height, as expected: the sheath wraps the internode, and longer internodes make both taller plants and longer sheaths.
 
 <details><summary>All SL QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1090,11 +1094,11 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold).
 
 </details>
 
-#### BL (2023 only)
+#### Blade length (BL; 2023 only)
 
 ![BL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BL.png)
 
-6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08). **Q1 chr2 39.8 Mb** (−1.84 per copy, joint −log10 p 11.6) dominates; *FT-INTERACTING PROTEIN 1* (Zm00001eb079900) is in its interval. **Q6 chr7 185.2 Mb** (−1.2; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630; the same region as EH Q9), Q4 chr4 197.1 Mb (−1.25; the PH/EH/SL chr4 region) and Q2 chr3 184.4 Mb (+0.96; *liguleless2*, Zm00001eb147220). Q3 chr3 203.2 Mb holds *ZCN12* (Zm00001eb153190) and *CCD8* (Zm00001eb153000) but does not hold in the joint model.
+6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08). **Q1 chr2 39.8 Mb** (−1.84 cm of blade length per teosinte copy, joint −log10 p 11.6) dominates; *FT-INTERACTING PROTEIN 1* (Zm00001eb079900) is in its interval. **Q6 chr7 185.2 Mb** (−1.2; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630; the same region as EH Q9), Q4 chr4 197.1 Mb (−1.25; the PH/EH/SL chr4 region) and Q2 chr3 184.4 Mb (+0.96; *liguleless2*, Zm00001eb147220). Q3 chr3 203.2 Mb holds *ZCN12* (Zm00001eb153190) and *CCD8* (Zm00001eb153000) but does not hold in the joint model.
 
 <details><summary>All BL QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1111,11 +1115,11 @@ Bonferroni over the 6 QTL: −log10 p > 2.08 (bold).
 
 </details>
 
-#### BW (2023 only)
+#### Blade width (BW; 2023 only)
 
 ![BW: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BW.png)
 
-8 regions, 6 hold (Bonferroni over 8: −log10 p > 2.20). **All effects are negative.** Strongest: **Q4 chr5 39.2 Mb** (−0.31 per copy, joint −log10 p 9.4), **Q3 chr4 237.6 Mb** (−0.22), Q6 chr6 146.4 Mb, Q8 chr9 1.8 Mb (the DTA chr9 region), Q7 chr7 136.2 Mb and Q1 chr4 166.3 Mb (the EN/Prolif chr4 region). Q5 chr6 133.1 Mb holds *fea4* (Zm00001eb280500) but does not hold in the joint model.
+8 regions, 6 hold (Bonferroni over 8: −log10 p > 2.20). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves. Strongest: **Q4 chr5 39.2 Mb** (−0.31 per copy, joint −log10 p 9.4), **Q3 chr4 237.6 Mb** (−0.22), Q6 chr6 146.4 Mb, Q8 chr9 1.8 Mb (the DTA chr9 region), Q7 chr7 136.2 Mb and Q1 chr4 166.3 Mb (the EN/Prolif chr4 region). Q5 chr6 133.1 Mb holds *fea4* (Zm00001eb280500) but does not hold in the joint model.
 
 <details><summary>All BW QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1210,6 +1214,9 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - Yang J, Weedon MN, Purcell S, et al. (2011) Genomic inflation factors under polygenic inheritance. *Eur J Hum Genet* 19:807–812.
 - Yang J, Zaitlen NA, Goddard ME, Visscher PM, Price AL (2014) Advantages and pitfalls in the application of mixed-model association methods. *Nat Genet* 46:100–106.
 - Hung H-Y, Shannon LM, Tian F, et al. (2012) ZmCCT and the genetic basis of day-length adaptation underlying the postdomestication spread of maize. *PNAS* 109:E1913–E1921.
+- Ito S, Song YH, Josephson-Day AR, Miller RJ, Breton G, Olmstead RG, Imaizumi T (2012) FLOWERING BHLH transcriptional activators control expression of the photoperiodic flowering regulator CONSTANS in *Arabidopsis*. *PNAS* 109:3582–3587. doi:10.1073/pnas.1118876109
+- Neupane SP, et al. (2025) Genetic basis of Fusarium ear rot resistance and productivity traits in a heterozygous multi-parent recombinant inbred intercross (RIX) maize population. *BMC Plant Biol* 25:639. (MaizeGDB annotation of *bhlh90*.)
+- Yin Y, Yan Z, Guan J, Huo Y, Wang T, Li T, Cui Z, Ma W, Wang X, Chen W (2023) Two interacting basic helix-loop-helix transcription factors control flowering time in rice. *Plant Physiol* 192:205–221. doi:10.1093/plphys/kiad077
 - Lee K, Yoon H, Seo PJ (2024) The AGL6–ELF3–FT circuit controls flowering time in *Arabidopsis*. *Plant Signal Behav* 19:2358684. doi:10.1080/15592324.2024.2358684
 - Thompson BE, Bartling L, Whipple C, Hall DH, Sakai H, Schmidt R, Hake S (2009) *bearded-ear* encodes a MADS box transcription factor critical for maize floral development. *Plant Cell* 21:2578–2590.
 - Yoo SK, Wu X, Lee JS, Ahn JH (2011a) AGAMOUS-LIKE 6 is a floral promoter that negatively regulates the FLC/MAF clade genes and positively regulates FT in Arabidopsis. *Plant J* 65:62–76. doi:10.1111/j.1365-313X.2010.04402.x

@@ -885,10 +885,10 @@ Test (DTS, no permutations): the scan peaks barely move (chr5 221.8 Mb −log10 
 
 GridLMM (step 26) and R/qtl2 (step 29) in one conda env:
 ```bash
-conda create -n bzea_gwas -c conda-forge r-base=4.3 r-data.table r-remotes r-rcpp r-rcppeigen r-rcppparallel \
+conda create -p /usr/local/usrapps/maize/ntanduk/bzea_gwas -c conda-forge r-base=4.3 r-data.table r-remotes r-rcpp r-rcppeigen r-rcppparallel \
   r-matrix r-lme4 r-glmnet r-doparallel r-foreach r-iterators r-itertools r-ggplot2 r-patchwork r-qtl2 \
   python=3.11 numpy pandas compilers make -y
-conda activate bzea_gwas
+conda activate /usr/local/usrapps/maize/ntanduk/bzea_gwas
 Rscript -e 'remotes::install_github("deruncie/GridLMM", upgrade = "never")'
 Rscript -e 'library(GridLMM); library(qtl2); library(data.table); cat("OK\n")'
 ```

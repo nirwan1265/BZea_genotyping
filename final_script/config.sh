@@ -177,9 +177,12 @@ PHENO=${FINAL_DIR}/../data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv
 TRAITS="DTS DTA"                    # trait columns in PHENO
 D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
 D26=${D21}/assoc_gridlmm            # step-26 scans, permutations, Manhattan plots
-ASSOC_MIN_CARRIERS=20               # test only windows where at least this many plots carry donor
-ASSOC_PERM_TASKS=50                 # permutation array tasks per trait
-ASSOC_PERM_PER_TASK=20              # permutations per task (50 x 20 = 1,000)
+ASSOC_MIN_CARRIERS=20               # test only windows where at least this many plots carry donor (all plots)
+ASSOC_GROUP_COL=TAXON               # extra scans per group: TAXON (Zd/Zl/Zv/Zx), F1FAMILY, or none
+ASSOC_MIN_N=20                      # groups with fewer plots are not scanned
+ASSOC_GROUP_MIN_CARRIERS=10         # per-group scans: at least this many carrier plots in the group
+ASSOC_PERM_PER_TASK=10              # permutations per array task: sbatch --array=1-100 -> 1,000
+GFF_GLOB="/rsstu/users/r/rrellan/sara/ref/gff3/Zea_mays.Zm-B73-REFERENCE-NAM-5.0.57.chromosome.*.gff3"   # B73 v5 genes (step 27)
 # R needs GridLMM (github.com/deruncie/GridLMM), data.table and ggplot2. If R lives in another env, put it on PATH:
 # export PATH=/path/to/r_env/bin:$PATH
 

@@ -37,9 +37,10 @@ sbatch --dependency=afterok:$J2 23_introgression_viewer.sh       # interactive H
 sbatch --dependency=afterok:$J3 24_kmer_figures.sh              # result figures (PNG): observed vs expected
 # ---- association mapping (section 10) ----
 J4=$(sbatch --parsable --dependency=afterok:$J2 25_assoc_inputs.sh)   # dosage, SEG indicator, LOCO K, pheno
-sbatch --dependency=afterok:$J4 26_assoc_scan.sh                       # GridLMM additive + dominance scans
-sbatch --dependency=afterok:$J4 --array=1-50 26_assoc_perm.sh          # 1,000 permutations per trait
-bash 26_assoc_summary.sh                                               # after both: threshold, top windows, plots
+sbatch --dependency=afterok:$J4 26_assoc_scan.sh                       # GridLMM additive + dominance, all plots and per taxon
+sbatch --dependency=afterok:$J4 --array=1-100 26_assoc_perm.sh         # 1,000 permutations per trait and scope
+bash 26_assoc_summary.sh                                               # after both: thresholds, top windows, plots
+bash 27_assoc_genes.sh                                                 # peaks and the B73 v5 genes in them
 ```
 
 Steps 01–15 are in [section 8](#8-snp-route-steps-0115-cross-check).
@@ -665,11 +666,14 @@ The introgression calls are the genotypes. Every plot (pool) gets, in every 100-
 - **Windows:** 21,309 of 21,330 have at least 20 plots carrying donor (`ASSOC_MIN_CARRIERS`); the median window has 88.
 - **LOCO kinship:** for each chromosome, K = Z Z′ / p from the dosage of all windows on the *other* chromosomes (Z centred), scaled to mean diagonal 1. In BC2S3 lines on a B73 background, relatedness is mostly shared donor segments, which this captures, and the IDs match the genotypes by construction. (The earlier K from Beagle-imputed ANGSD SNPs is replaced.)
 
-**Model (step 26, `26_assoc_gridlmm.R`, from `scripts/Analyze_QTL_Founder2.R`):** GridLMM, ML, one chromosome at a time with its LOCO K.
+**Model (step 26, `26_assoc_gridlmm.R`, from `scripts/Analyze_QTL_Founder2.R`):** GridLMM, ML, one chromosome at a time with its LOCO K. Every trait is scanned in several **scopes**:
+- **ALL:** all 829 plots, taxon as a fixed effect.
+- **Per group** (`ASSOC_GROUP_COL`, default `TAXON`): Zd (155 plots), Zl (63), Zv (224), Zx (387), each on its own, with no fixed effect. Only windows with at least 10 carrier plots in that group are tested. `ASSOC_GROUP_COL=F1FAMILY` scans F1 families instead, but only 12 of the 91 have at least 20 plots (largest 41), so power is low.
 - **Additive:** y ~ taxon + (1|plot, K) + b·dosage; LRT for b (1 df). b = days per teosinte copy.
 - **Dominance:** adds c·SEG (1 if the plot is SEG); LRT for c. Plot means: B73 = 0, DONOR = 2a, SEG = ¼·0 + ½(a + d) + ¼·2a = a + d/2, so **c = d/2**. c > 0: the teosinte allele is (partly) dominant; c < 0: (partly) recessive.
-- **Taxon** is a fixed effect. (In the old script, "Family" = `sub("\\..*$", "", Line)` was already the taxon.)
-- **Threshold:** phenotypes are shuffled within taxon, the scan rerun, and the genome-wide largest −log10 p kept; the 95th percentile over 1,000 permutations is the 5% genome-wide threshold. About 20 s per permutation on 2 cores: 50 array tasks × 20 permutations ≈ 10 min each. Neighbouring windows are nearly identical, so a Bonferroni over 21,309 windows (−log10 p = 5.63) is far too strict.
+- **Taxon** is a fixed effect in ALL. (In the old script, "Family" = `sub("\\..*$", "", Line)` was already the taxon.)
+- **Dominance** is tested only where the scope has at least 5 SEG and 5 DONOR plots; otherwise SEG and dosage carry the same information.
+- **Threshold, per scope:** phenotypes are shuffled (within taxon for ALL, within the group otherwise), the scan rerun, and the genome-wide largest −log10 p kept; the 95th percentile over 1,000 permutations is that scope's 5% genome-wide threshold. About 1 min per permutation for all scopes on 2 cores: 100 array tasks × 10 permutations ≈ 20 min each. Neighbouring windows are nearly identical, so a Bonferroni over 21,309 windows (−log10 p = 5.63) is far too strict.
 
 **First results (15 Nov 2026; threshold from only 25 permutations, −log10 p ≈ 3.8; rerun with 1,000):**
 
@@ -684,16 +688,35 @@ The introgression calls are the genotypes. Every plot (pool) gets, in every 100-
 | DTA | chr2: ~227.9 Mb | 109 (56 / 53) | +0.54 days | 4.6 | +0.25, 0.4 |
 | DTA | chr8: ~128.8 Mb | 88 (59 / 29) | +0.65 days | 4.5 | −0.73, 1.7 |
 
-- **chr10 is the strongest signal for both traits:** teosinte alleles delay flowering by about a day per copy. ZmCCT10, the classic teosinte photoperiod gene (teosinte alleles delay flowering), is on chr10 near this region; its exact B73 v5 position still has to be checked against the peak.
+- **chr10 is the strongest signal for both traits:** teosinte alleles delay flowering by about a day per copy. The support interval (windows within 1.5 −log10 p of the top) is about 89–105 Mb, a low-recombination region. ZmCCT10, the classic teosinte photoperiod gene (teosinte alleles delay flowering), is on chr10; step 27 checks whether it falls inside the interval.
+
+**Per taxon** (best window per chromosome; no permutation thresholds yet):
+
+| Trait | Taxon (plots) | Strongest windows: position, effect per copy, −log10 p |
+|---|---|---|
+| DTS | Zd (155) | chr10 ~11.8 Mb +1.7 d, 5.2 · chr3 ~223 Mb +1.4 d, 4.1 |
+| DTS | Zl (63) | nothing above 2 (too few plots) |
+| DTS | Zv (224) | chr10 ~92.2 Mb +1.5 d, 5.0 · chr3 ~226 Mb +1.2 d, 3.7 · chr7 ~154 Mb −1.0 d, 3.4 |
+| DTS | Zx (387) | chr9 ~31.6 Mb −0.9 d, 5.0 · chr7 ~184 Mb +0.7 d, 4.2 · chr5 ~177 Mb +1.1 d, 3.9 |
+| DTA | Zd (155) | chr10 ~40 Mb +1.7 d, 4.3 · chr3 ~224 Mb +1.3 d, 3.8 |
+| DTA | Zl (63) | chr1 ~186 Mb +1.3 d, 2.9 |
+| DTA | Zv (224) | **chr10 ~92.2 Mb +1.6 d, 6.7** · chr3 ~225 Mb +1.1 d, 4.1 |
+| DTA | Zx (387) | chr5 ~14.7 Mb +0.8 d, 4.1 · chr6 ~121 Mb −0.8 d, 3.5 |
+
+- The chr10 signal in the combined scan comes mainly from **Zv** (*parviglumis*); Zx shows no chr10 peak.
+- chr3 ~223–226 Mb shows up in both Zd and Zv (teosinte later), and chr9 (teosinte earlier) in Zx and in the combined scan.
+- Per-taxon scans have far fewer plots, so they find fewer and weaker peaks; Zl (63 plots) is too small.
 - **No dominance signal:** the dominance scan peaks at −log10 p ≈ 4 (chr1), with no permutation threshold of its own yet.
-- **Plots:**
+- **Plots** (all plots; per-taxon plots are in `figures/assoc_spread/manhattan_<TRAIT>_<TAXON>_add.png`):
 
-![DTS additive](figures/assoc_spread/manhattan_DTS_add.png)
+![DTS additive](figures/assoc_spread/manhattan_DTS_ALL_add.png)
 
-![DTA additive](figures/assoc_spread/manhattan_DTA_add.png)
+![DTA additive](figures/assoc_spread/manhattan_DTA_ALL_add.png)
 
-Dominance scans: `figures/assoc_spread/manhattan_DTS_dom.png`, `manhattan_DTA_dom.png`.
+Dominance scans: `figures/assoc_spread/manhattan_DTS_ALL_dom.png`, `manhattan_DTA_ALL_dom.png`.
 
-**Outputs** (`${D21}/assoc`, `${D21}/assoc_gridlmm`): `geno_dosage.csv`, `geno_seg.csv`, `window_map.tsv`, `pheno.csv`, `K_matrix_chr*.txt`; `scan_<TRAIT>.tsv` (per window: carriers, `beta_add`, `p_add`, `h2`, `c_dom`, `p_dom`), `perm_<TRAIT>_seed<N>.tsv`, `manhattan_<TRAIT>_{add,dom}.png`.
+**Peaks and genes (step 27, `27_assoc_genes.py`):** for each scope at its permutation threshold, significant windows are joined into peaks (gap < 5 Mb), each with a support interval (windows within 1.5 −log10 p of the top), and every B73 v5 gene in the interval is listed from the GFF3 (`GFF_GLOB`). `--find 'CCT'` also lists every CCT-domain gene (ZmCCT10 and relatives) with the best −log10 p within 5 Mb. Output: `${D21}/assoc_gridlmm/genes/`.
+
+**Outputs** (`${D21}/assoc`, `${D21}/assoc_gridlmm`): `geno_dosage.csv`, `geno_seg.csv`, `window_map.tsv`, `pheno.csv` (with TAXON, F1FAMILY), `K_matrix_chr*.txt`; `scan_<TRAIT>.tsv` and `scan_<TRAIT>_<GROUP>.tsv` (per window: plots, carriers, SEG and DONOR plots, `beta_add`, `p_add`, `h2`, `c_dom`, `p_dom`), `perm_<TRAIT>_seed<N>.tsv`, `summary_<TRAIT>.tsv` (per scope: threshold, top window, windows above), `manhattan_<TRAIT>_<SCOPE>_{add,dom}.png`, `genes/`.
 
 **Requirements:** R with GridLMM (`github.com/deruncie/GridLMM`), data.table, ggplot2.

@@ -18,7 +18,7 @@ Outputs in <out_dir>:
   geno_dosage.csv      Line, then one column per window "chrN:midpoint" (0/1/2)
   geno_seg.csv         same layout, SEG indicator (0/1)
   window_map.tsv       Marker chr start end pos n_carriers n_seg n_donor
-  pheno.csv            the phenotype rows kept, plus TAXON and SAMPLE
+  pheno.csv            the phenotype rows kept, plus TAXON, F1FAMILY (accession + F1 plant) and SAMPLE
   K_matrix_chr{c}.txt  LOCO kinship, first column ID, header row of IDs
 """
 import argparse
@@ -94,8 +94,8 @@ def main():
             Mk = M[:, ok]
             for i, l in enumerate(lines): f.write(l + "," + ",".join(map(str, Mk[i])) + "\n")
     with open(f"{a.out_dir}/pheno.csv", "w", newline="") as f:
-        w = csv.writer(f); w.writerow(head + ["TAXON", "SAMPLE"])
-        for r in keep: w.writerow(r + [P[r[isid]]["GROUP"], r[isid]])
+        w = csv.writer(f); w.writerow(head + ["TAXON", "F1FAMILY", "SAMPLE"])
+        for r in keep: w.writerow(r + [P[r[isid]]["GROUP"], "_".join(r[0].split("_")[:2]), r[isid]])
 
     # LOCO kinship from the dosage of all variable windows on the other chromosomes
     var = D.std(0) > 0

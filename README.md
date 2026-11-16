@@ -98,7 +98,7 @@ So the HMM's pool states are compared with Step 4, and converted to plant genoty
 ### 1. Pre-processing (Section 1)
 - **Demultiplexing** by barcode (`sabre`) into per-sample paired FASTQs.
 - **Trimming** of adapters, primers and low-quality bases (Trimmomatic).
-- **Alignment** to B73 RefGen v5 (`bwa mem`), sorting, duplicate marking, indexing; used by the SNP route.
+- **Alignment** to B73 RefGen v5 (BWA-MEM), sorting, duplicate removal, indexing; used by the SNP route only.
 
 ### 2. Introgression calling (Section 2)
 - **k-mer windows** (KMC 3 + KCFtools): for each pool, the B73 single-copy 31-mers seen in its reads, per 100-kb window; no read mapping (`final_script/` steps 16–19).
@@ -153,106 +153,44 @@ So the HMM's pool states are compared with Step 4, and converted to plant genoty
 
 ## Section 1 — Pre-processing
 
-Three steps turn the raw pooled reads into per-sample trimmed reads (used by the k-mer route) and sorted, deduplicated BAMs (used by the SNP route).
+The sequencing lanes hold many pooled samples. Pre-processing splits them into one pair of FASTQ files per sample, trims them, and (for the SNP route only) aligns them to B73. The two downstream routes use different products:
 
-### 1.1 Demultiplex pooled FASTQs
+| Product | Used by |
+|---|---|
+| Trimmed paired reads, `filtered_S<plate>/<SAMPLE>/<SAMPLE>_paired_R{1,2}.fq.gz` | **k-mer route** (Section 2): k-mer counting (step 17) and k-mer sketches (step 32a). No alignment needed. |
+| Sorted, deduplicated, indexed BAMs (`bam_list.txt`) | **SNP route** (cross-check): ANGSD site discovery and read counts (steps 01–12). |
 
-**Goal:** Split pooled lane-level paired-end FASTQs into per-sample FASTQs using a barcode map.
+Samples are named `PN<plate>_SID<number>` (e.g. `PN12_SID1106`); `name_change_final.txt` maps them to the pedigree names (Section 3).
 
-#### Inputs
-- Pooled lane FASTQs:
-  - `..._R1_001.fastq.gz`
-  - `..._R2_001.fastq.gz`
-- Barcode map file (`.txt`)
+### 1.1 Demultiplexing
 
-#### Barcode file format
-Tab-separated **2 columns**:
-
-1. **BARCODE** (exact barcode sequence)
-2. **OUTPUT_PREFIX** (sample name)
-
-Example:
+Each lane's paired FASTQs (`..._R1_001.fastq.gz`, `..._R2_001.fastq.gz`) are split by the inline barcode at the start of read 1 with **sabre** (paired-end mode). The barcode file has two tab-separated columns, the barcode sequence and the sample name:
 
 ```txt
-ACGTACGT    Sample_001
-TGCATGCA    Sample_002
-GATCTAGA    Sample_003
+ACGTACGT    PN12_SID1106
+TGCATGCA    PN12_SID1107
 ```
 
-Unmatched reads are written to the `no_bc_match_*` files.
+sabre writes one read pair per sample and puts reads whose barcode matches no sample into `no_bc_match_*_R1.fq.gz` / `_R2.fq.gz`; their share is a quick check of barcode quality per lane.
 
-#### Outputs
-- Per-sample paired FASTQs written by sabre (based on column 2 of the barcode file)
-- Unmatched reads:
-  - `no_bc_match_S<...>_R1.fq.gz`
-  - `no_bc_match_S<...>_R2.fq.gz`
+### 1.2 Trimming and quality filtering
 
-#### Run
-```bash
-bsub < scripts/01_demultiplex_sabre.tcsh
-```
+**Trimmomatic** (paired-end mode) removes adapter and primer sequence and low-quality bases:
 
-Script: [`scripts/01_demultiplex_sabre.sh`](scripts/01_demultiplex_sabre.sh)
+| Setting | What it does |
+|---|---|
+| `ILLUMINACLIP:<adapters.fa>:2:30:10` | removes adapter/primer matches (2 seed mismatches, palindrome score 30, simple score 10) |
+| `LEADING:3`, `TRAILING:3` | trims bases below quality 3 at the read ends |
+| `SLIDINGWINDOW:4:15` | cuts the read when the mean quality of 4 bases falls below 15 |
+| `MINLEN:36` | drops reads shorter than 36 bp |
 
----
+Only pairs in which both reads survive (`*_paired_R1.fq.gz`, `*_paired_R2.fq.gz`) are kept; these are the reads used by the k-mer route.
 
-### 1.2 Trim adapters/primers + quality filter (Trimmomatic PE)
+### 1.3 Alignment and BAM processing (SNP route)
 
-**Goal:** Remove adapters/primers
+The trimmed pairs are aligned to **B73 RefGen v5** with **BWA-MEM**. Each BAM is then coordinate-sorted, PCR duplicates are removed, and the BAM is indexed (SAMtools and Picard). The k-mer route does not use the BAMs; they feed the SNP route only, which is kept as a cross-check (Section 2, "The problem").
 
-#### Inputs
-- Demultiplexed paired FASTQs:
-  - `*_R1.fq.gz`
-  - `*_R2.fq.gz`
-
-#### Outputs
-- Paired reads (used for alignment):
-  - `*_paired_R1.fq.gz`
-  - `*_paired_R2.fq.gz`
-
-#### Parameters used
-- `ILLUMINACLIP:<adapters.fa>:2:30:10`
-- `LEADING:3`
-- `TRAILING:3`
-- `SLIDINGWINDOW:4:15`
-- `MINLEN:36`
-
-
-#### Run
-```bash
-bsub < scripts/02_trim_trimmomatic.tcsh
-```
-
-Script: [`scripts/02_trim_trimmomatic.sh`](scripts/02_trim_trimmomatic.sh)
-
----
-
-### 1.3 BAM preprocessing (sort → mark/remove duplicates → index)
-
-**Goal:** Ensure each sample BAM is **coordinate-sorted**, **deduplicated**, and **indexed** before genotype likelihood (GL) generation with `bcftools mpileup`.
-
-Ensure the files are:
-- sorted
-- Mark/remove duplicates
-- Index BAMs files
-
-#### Inputs
-- Aligned BAMs (usually from BWA/BWA-MEM2), one per sample:
-  - `PN*_SID*.bam`
-
-#### Outputs
-For each input `PN*_SID*.bam`
-- Sorted BAM: `PN*_SID*.sorted.bam`
-- Deduplicated BAM (duplicates removed): `PN*_SID*.sorted.rmdup.bam`
-- Metrics: `PN*_SID*.dedup_metrics.txt`
-- Index: `PN*_SID*.sorted.rmdup.bam.bai`
-
-#### Run
-```bash
-bash scripts/03_bam_sort_dedup_index.sh
-```
-
-Script: [`scripts/03_bam_sort_dedup_index.sh`](scripts/03_bam_sort_dedup_index.sh)
+> **Scripts:** the pre-processing commands (sabre, Trimmomatic, BWA, BAM processing) are not yet in this repository; they will be added under `scripts/`. The outputs are at `/rsstu/users/r/rrellan/sara/BZea/filtered_S` (trimmed reads) and `/rsstu/users/r/rrellan/DOE_CAREER/BZea/dedup_filtered` (BAMs) on the NCSU cluster.
 
 ---
 

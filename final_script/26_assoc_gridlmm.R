@@ -21,7 +21,8 @@
 ##   Rscript 26_assoc_gridlmm.R perm    <in_dir> <trait> <out_dir> <n_perm> <seed> [cores]
 ##   Rscript 26_assoc_gridlmm.R summary <in_dir> <trait> <out_dir>
 ## Environment (optional): GROUP_COL (TAXON | F1FAMILY | none; default TAXON), FIXED_COL (fixed effect,
-##   TAXON or F1FAMILY; default TAXON), MIN_N (default 20),
+##   TAXON, SUBTAXON (Zx split by race) or F1FAMILY; default TAXON), PERM_STRATA (default: SUBTAXON when it is the
+##   fixed effect, else TAXON), MIN_N (default 20),
 ##   MIN_CARRIERS (per-group scans, default 10)
 ## in_dir = step-25 output (pheno.csv, geno_dosage.csv, geno_seg.csv, window_map.tsv, K_matrix_chr*.txt)
 ## ============================================================
@@ -42,6 +43,9 @@ cores <- as.integer(if (mode == "perm") (if (length(args) >= 7) args[7] else 1) 
 ## ---------- inputs ----------
 ph <- fread(file.path(in_dir, "pheno.csv"), data.table = FALSE)
 dat <- data.frame(Line = ph[[1]], y = as.numeric(ph[[trait]]), TAXON = factor(ph$TAXON), stringsAsFactors = FALSE)
+## permutations shuffle within this column in the ALL scope: the fixed effect when it is SUBTAXON, else TAXON
+PERM_STRATA <- Sys.getenv("PERM_STRATA", if (FIXED_COL == "SUBTAXON") "SUBTAXON" else "TAXON")
+dat$STRATA <- factor(ph[[PERM_STRATA]])
 if (GROUP_COL != "none") dat$GROUP <- as.character(ph[[GROUP_COL]])
 dat$FIX <- factor(ph[[FIXED_COL]])
 read_geno <- function(f) {
@@ -127,7 +131,7 @@ if (mode == "perm") {
   for (b in seq_len(n_perm)) {
     for (sc in scopes) {
       rows <- scope_rows(sc); d <- dat[rows, ]
-      blk <- if (sc == "ALL") d$TAXON else rep(1, nrow(d))           # shuffle within taxon (ALL) or within the group
+      blk <- if (sc == "ALL") d$STRATA else rep(1, nrow(d))          # shuffle within PERM_STRATA (ALL) or within the group
       for (g in unique(blk)) { i <- which(blk == g); d$y[i] <- d$y[i][sample.int(length(i))] }
       m <- 0
       for (chr in chrs) {

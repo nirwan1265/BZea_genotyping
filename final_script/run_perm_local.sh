@@ -21,7 +21,8 @@ GFF=${GFF:-$HOME/Documents/Research/data/GFF3/Zea_mays.Zm-B73-REFERENCE-NAM-5.0.
 TOTAL=${TOTAL:-1000}; CHUNK=${CHUNK:-100}; JOBS=${JOBS:-4}; CORES=${CORES:-2}
 PY=${PY:-$(command -v python || command -v python3)}
 export GROUP_COL=none FIXED_COL=${FIXED_COL:-TAXON} MIN_N=20 MIN_CARRIERS=10
-D25=$IN/assoc_spats; D26=$IN/assoc_gridlmm_spats
+SUF=$( [[ "$FIXED_COL" == TAXON ]] && echo "" || echo "_$(echo $FIXED_COL | tr A-Z a-z)" )
+D25=$IN/assoc_spats$SUF; D26=$IN/assoc_gridlmm_spats$SUF
 [[ -f "$D25/pheno.csv" ]] || { echo "missing $D25/pheno.csv: run run_assoc_local.sh first"; exit 1; }
 NSEED=$(( (TOTAL + CHUNK - 1) / CHUNK ))
 

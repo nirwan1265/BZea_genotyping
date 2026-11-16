@@ -19,7 +19,7 @@
 ##   PEAKS=<step-27 peaks_<TRAIT>_ALL.tsv>  the k-mer GridLMM scan's peaks: the same top windows and support intervals,
 ##                                          so both analyses describe the same QTL (29.2_joint_qtl_noperm.sh); or
 ##   THRESHOLD_LOD=<LOD>                    peaks of the R/qtl2 additive scan above this LOD
-## Env:    NPERM (1000), CORES (1), PEAKDROP (Inf: one QTL per chromosome per scan; e.g. 2 allows more, but tracts
+## Env:    TAXON_COL (TAXON | SUBTAXON), NPERM (1000), CORES (1), PEAKDROP (Inf: one QTL per chromosome per scan; e.g. 2 allows more, but tracts
 ##         are long and neighbouring peaks on a chromosome are rarely separable), DROP (1.5),
 ##         MIN_TAXON_CARRIERS (5), GFF (B73 v5 GFF3: genes in the intervals)
 ## Needs:  R with qtl2 and data.table (both on CRAN).
@@ -52,7 +52,8 @@ map <- fread(file.path(in_dir, "window_map.tsv"), data.table = FALSE)
 ph <- ph[!is.na(as.numeric(ph[[trait]])) & ph[[1]] %in% rownames(G), ]
 ids <- ph[[1]]; G <- G[ids, , drop = FALSE]
 y <- matrix(as.numeric(ph[[trait]]), ncol = 1, dimnames = list(ids, trait))
-taxon <- setNames(ph$TAXON, ids); taxa <- sort(unique(taxon))
+TAXON_COL <- Sys.getenv("TAXON_COL", "TAXON")   # TAXON, or SUBTAXON (Zx split by race): covariate and per-group effects
+taxon <- setNames(ph[[TAXON_COL]], ids); taxa <- sort(unique(taxon))
 covar <- model.matrix(~ factor(taxon))[, -1, drop = FALSE]; rownames(covar) <- ids     # taxon (no intercept)
 intc <- covar                                                                            # per-taxon QTL effects
 chrs <- unique(map$chr); cn <- sub("^chr", "", chrs)

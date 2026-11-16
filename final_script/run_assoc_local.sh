@@ -16,7 +16,7 @@
 #   THRESHOLD -log10 p used when a trait has no permutations (NPERM=0)
 #   CORES     cores for GridLMM (default 4)
 #   PY        python with pandas (default: python, else python3)
-#   FIXED_COL TAXON (default) or F1FAMILY (check only)
+#   FIXED_COL TAXON (default), SUBTAXON (mexicana split by race; output in assoc_gridlmm_spats_subtaxon) or F1FAMILY
 #   MARK_GENES=1  label the known flowering genes on the Manhattan plots (default 0: no labels)
 # Output in $IN/assoc_gridlmm_spats/:
 #   manhattan_<TRAIT>_ALL_{add,dom}.png, summary_<TRAIT>.tsv, scan_<TRAIT>.tsv
@@ -33,16 +33,19 @@ NPERM=${NPERM:-100}; CORES=${CORES:-4}; MARK_GENES=${MARK_GENES:-0}
 PY=${PY:-$(command -v python || command -v python3)}   # conda python first (has pandas)
 export GROUP_COL=none FIXED_COL=${FIXED_COL:-TAXON} MIN_N=20 MIN_CARRIERS=10
 for f in "$IN/tracts_all.tsv.gz" "$IN/pool_summary.tsv" "$GFF" "$PHENO"; do [[ -f "$f" ]] || { echo "missing: $f"; exit 1; }; done
-D25=$IN/assoc_spats; D26=$IN/assoc_gridlmm_spats; mkdir -p "$D26"
+SUF=$( [[ "$FIXED_COL" == TAXON ]] && echo "" || echo "_$(echo $FIXED_COL | tr A-Z a-z)" )   # e.g. _subtaxon
+# taxon and SUBTAXON runs kept apart (inputs too, so a running job is not disturbed)
+D25=$IN/assoc_spats$SUF; D26=$IN/assoc_gridlmm_spats$SUF; mkdir -p "$D26"
 
 # ---- step 25 once (a lock so parallel terminals don't build it at the same time) ----
-LOCK=$IN/.assoc_spats.lock
+LOCK=$IN/.assoc_spats$SUF.lock
 until mkdir "$LOCK" 2>/dev/null; do echo "waiting for another terminal to finish the inputs ..."; sleep 15; done
 trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
-if [[ ! -f "$D25/pheno.csv" || "$PHENO" -nt "$D25/pheno.csv" || "$IN/tracts_all.tsv.gz" -nt "$D25/pheno.csv" ]]; then
+if [[ ! -f "$D25/pheno.csv" || "$PHENO" -nt "$D25/pheno.csv" || "$IN/tracts_all.tsv.gz" -nt "$D25/pheno.csv" ]] \
+   || ! head -1 "$D25/pheno.csv" | grep -q SUBTAXON; then
   echo "== 25: inputs ($PHENO)"
   "$PY" "$REPO/final_script/25_assoc_inputs.py" --tracts "$IN/tracts_all.tsv.gz" --pool_summary "$IN/pool_summary.tsv" \
-    --pheno "$PHENO" --out_dir "$D25" --min_carriers 20 \
+    --pheno "$PHENO" --out_dir "$D25" --min_carriers 20 --metadata "$REPO/data/metadata_BZea.csv" \
     $( [[ "$MARK_GENES" == 1 ]] && echo --genes "$REPO/data/flowering_genes.tsv" --gff "$GFF" )
 fi
 if [[ "$MARK_GENES" == 1 ]]; then

@@ -867,3 +867,14 @@ J=$(sbatch --parsable --array=1-$(( 9 + (N + 9) / 10 ))%60 32a_sourmash_sketch.s
 sbatch --dependency=afterok:$J 32b_kmer_taxon_profile.sh
 ```
 Simulation test (5 taxa × 6 pools, 10% donor, 1× reads, scaled = 20): 30 / 30 pools assigned to their taxon, all five taxa separated on PC1–PC4. Output: `${D32}/kmer_taxon_profile.tsv`, `${D32}/pca/`.
+
+---
+
+## 16. Mexicana races as sub-taxa (SUBTAXON)
+
+*Mexicana* (Zx, 570 plots) comes from four races that differ in origin and adaptation: **Chalco** (14 accessions, 115 plots; highland, median 2,388 m), **Mesa Central** (16, 165), **Durango** (3, 146) and **Nobogame** (2, 142); `data/metadata_BZea.csv` (`taxa_code`). *Parviglumis* is all Balsas. Step 25 with `--metadata` adds `SUBTAXON` (Zd, Zh, Zl, Zv, Zx_Chal, Zx_Dura, Zx_Mesa, Zx_Nobo) and `ELEVATION` to `pheno.csv`.
+
+- **Scan:** `FIXED_COL=SUBTAXON` (8 groups instead of 5; permutations then shuffle within SUBTAXON). Laptop: `FIXED_COL=SUBTAXON bash final_script/run_assoc_local.sh DTS`; inputs and results go to `assoc_spats_subtaxon/` and `assoc_gridlmm_spats_subtaxon/`, so the taxon run is untouched. More permutations: `FIXED_COL=SUBTAXON bash final_script/run_perm_local.sh DTS`.
+- **Joint QTL model:** `TAXON_COL=SUBTAXON` gives one effect per race at each QTL. Cluster: copy the SUBTAXON peaks to `${D21}/assoc_gridlmm_spats_subtaxon/genes/`, then `sbatch --export=ALL,TAXON_COL=SUBTAXON --array=1-$N 29.2_joint_qtl_noperm.sh` (output `${D29}/noperm_subtaxon`).
+
+Test (DTS, no permutations): the scan peaks barely move (chr5 221.8 Mb −log10 p 9.46 vs 9.68 with taxon; chr10 9.22 vs 9.08; chr1, chr9 and chr5 206 Mb the same), so race differences in mean flowering do not drive the peaks. The joint model then splits the *mexicana* effects: at chr5 221.8 Mb the effect is in **Chalco** (+1.1 d, 8 carrier plots), ~0 in the other races; at chr10 94.5 Mb all races delay flowering (+0.6 to +1.1 d).

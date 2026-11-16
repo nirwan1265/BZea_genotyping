@@ -18,7 +18,8 @@ Outputs in <out_dir>:
   geno_dosage.csv      Line, then one column per window "chrN:midpoint" (0/1/2)
   geno_seg.csv         same layout, SEG indicator (0/1)
   window_map.tsv       Marker chr start end pos n_carriers n_seg n_donor
-  pheno.csv            the phenotype rows kept, plus TAXON, F1FAMILY (accession + F1 plant) and SAMPLE
+  pheno.csv            the phenotype rows kept, plus TAXON, F1FAMILY (accession + F1 plant), SAMPLE, and with
+                       --metadata SUBTAXON (Zx split by race: Zx_Chal, Zx_Dura, Zx_Mesa, Zx_Nobo) and ELEVATION
   K_matrix_chr{c}.txt  LOCO kinship, first column ID, header row of IDs
   gene_positions.tsv   with --genes and --gff: NAME GENE_ID CHR START END of genes to mark on the plots
 """
@@ -45,6 +46,7 @@ def main():
     ap.add_argument("--min_carriers", type=int, default=20)
     ap.add_argument("--genes", default=None, help="TSV with NAME and GENE_ID (B73 v5) of genes to mark on the plots")
     ap.add_argument("--gff", default=None, help="glob of B73 v5 GFF3 file(s), quoted")
+    ap.add_argument("--metadata", default=None, help="data/metadata_BZea.csv: accession-id -> taxa_code (race), elevation")
     a = ap.parse_args()
     os.makedirs(a.out_dir, exist_ok=True)
 
@@ -97,9 +99,24 @@ def main():
             f.write("Line," + ",".join(names[j] for j in np.where(ok)[0]) + "\n")
             Mk = M[:, ok]
             for i, l in enumerate(lines): f.write(l + "," + ",".join(map(str, Mk[i])) + "\n")
+    # SUBTAXON: the taxon, with mexicana split by race (Chalco, Durango, Mesa Central, Nobogame) from the metadata
+    race = {}; elev = {}
+    if a.metadata:
+        with open(a.metadata, encoding="utf-8-sig") as f:
+            for r in csv.DictReader(f):
+                race[r["accession-id"]] = r["taxa_code"]; elev[r["accession-id"]] = r.get("elevation", "")
+    def subtaxon(taxon, line):
+        acc = line.split("_")[0]
+        if taxon == "Zx" and acc in race: return "Zx_" + race[acc]
+        return taxon
     with open(f"{a.out_dir}/pheno.csv", "w", newline="") as f:
-        w = csv.writer(f); w.writerow(head + ["TAXON", "F1FAMILY", "SAMPLE"])
-        for r in keep: w.writerow(r + [P[r[isid]]["GROUP"], "_".join(r[0].split("_")[:2]), r[isid]])
+        w = csv.writer(f); w.writerow(head + ["TAXON", "F1FAMILY", "SAMPLE", "SUBTAXON", "ELEVATION"])
+        for r in keep:
+            tx = P[r[isid]]["GROUP"]
+            w.writerow(r + [tx, "_".join(r[0].split("_")[:2]), r[isid], subtaxon(tx, r[0]), elev.get(r[0].split("_")[0], "")])
+    if a.metadata:
+        from collections import Counter
+        print("SUBTAXON:", dict(Counter(subtaxon(P[r[isid]]["GROUP"], r[0]) for r in keep)))
 
     # LOCO kinship from the dosage of all variable windows on the other chromosomes
     var = D.std(0) > 0

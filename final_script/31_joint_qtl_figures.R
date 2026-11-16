@@ -23,9 +23,11 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 traits <- if (length(args) > 3) args[-(1:3)] else
   sub("^qtl2_(.+)_qtl\\.tsv$", "\\1", list.files(jq_dir, pattern = "^qtl2_.+_qtl\\.tsv$"))
 if (!length(traits)) stop("no qtl2_<TRAIT>_qtl.tsv in ", jq_dir)
-taxon_col <- c(Zd = "#E69F00", Zh = "#56B4E9", Zl = "#009E73", Zv = "#CC79A7", Zx = "#0072B2", other = "#999999")
+taxon_col <- c(Zd = "#E69F00", Zh = "#56B4E9", Zl = "#009E73", Zv = "#CC79A7", Zx = "#0072B2",
+               Zx_Chal = "#08306B", Zx_Mesa = "#2171B5", Zx_Dura = "#6BAED6", Zx_Nobo = "#9E9AC8", other = "#999999")
 taxon_lab <- c(Zd = "Zd diploperennis", Zh = "Zh huehuetenangensis", Zl = "Zl luxurians", Zv = "Zv parviglumis",
-               Zx = "Zx mexicana", other = "other")
+               Zx = "Zx mexicana", Zx_Chal = "Zx Chalco", Zx_Mesa = "Zx Mesa Central", Zx_Dura = "Zx Durango",
+               Zx_Nobo = "Zx Nobogame", other = "other")
 
 make_fig <- function(trait) {
   sf <- file.path(scan_dir, sprintf("scan_%s.tsv", trait))

@@ -6,7 +6,7 @@
 #     y = Rep + Border + genotype (fixed) + f(col, row) + RowF + ColF + e
 #   f = 2-D P-spline surface (PSANOVA). RowF/ColF = random row and column effects.
 #   Border = 1 for plots next to a "B" (border) cell in the field map (2023 only; 2025 has none).
-#   One outlier pass: plots with |standardised residual| > OUTLIER_SD are set to NA and the model refit.
+#   One outlier pass (continuous traits only): plots with |standardised residual| > OUTLIER_SD are set to NA and the model refit.
 #   Genotype as random gives the broad-sense heritability H2 (Oakey) for the summary.
 #   Binary traits (ST, StPu, StPi) are not fitted: the BLUE is the line mean (share of plots = 1).
 # Stage 2, across years (two-stage, weighted):
@@ -50,6 +50,7 @@ TRAITS_ONLY   <- strsplit(env("TRAITS_ONLY", ""), " +")[[1]]
 DO_H2         <- env("H2", "1") == "1"
 REF_YEAR      <- env("REF_YEAR", "2023")
 BINARY        <- c("ST", "StPu", "StPi")
+DISCRETE      <- c("EN", "Prolif", "Kinki", "NBR", "LAE")
 CHECKS        <- c("B73", "PurpleCheck")
 CACHE         <- file.path(OUT, "spats_cache")    # one RDS per year x trait; delete to refit
 dir.create(CACHE, showWarnings = FALSE, recursive = TRUE)
@@ -118,9 +119,9 @@ read_2025 <- function() {
 nseg_for <- function(d) c(max(8, min(20, round(length(unique(d$col)) / 3))),
                           max(8, min(20, round(length(unique(d$row)) / 3))))
 
-fit_spats <- function(d, trait, geno_random, use_rep = TRUE) {
+fit_spats <- function(d, trait, geno_random, use_rep = TRUE, use_border = TRUE) {
   d$Rep <- droplevels(d$Rep); d$Border <- droplevels(d$Border)
-  terms <- c(if (use_rep && nlevels(d$Rep) > 1) "Rep", if (nlevels(d$Border) > 1) "Border")
+  terms <- c(if (use_rep && nlevels(d$Rep) > 1) "Rep", if (use_border && nlevels(d$Border) > 1) "Border")
   fx <- if (length(terms)) paste("~", paste(terms, collapse = " + ")) else NULL
   if (!is.null(fx)) fx <- as.formula(fx)
   SpATS(response = trait, genotype = "geno", genotype.as.random = geno_random,
@@ -161,28 +162,31 @@ run_year <- function(year, d, map) {
     # Rep can be confounded with genotype when a trait was scored mostly in one rep: then drop Rep
     try_fit <- function(dt) {
       f <- tryCatch(fit_spats(dt, t, FALSE, TRUE), error = function(e) NULL)
-      if (!is.null(f)) return(list(fit = f, rep = TRUE))
-      f <- tryCatch(fit_spats(dt, t, FALSE, FALSE), error = function(e) { message("  ", t, ": SpATS failed: ", conditionMessage(e)); NULL })
-      list(fit = f, rep = FALSE)
+      if (!is.null(f)) return(list(fit = f, rep = TRUE, border = TRUE))
+      f <- tryCatch(fit_spats(dt, t, FALSE, FALSE), error = function(e) NULL)
+      if (!is.null(f)) return(list(fit = f, rep = FALSE, border = TRUE))
+      # scored in one rep with ~1 plot per line: Border is then only estimable from checks; drop it too
+      f <- tryCatch(fit_spats(dt, t, FALSE, FALSE, FALSE), error = function(e) { message("  ", t, ": SpATS failed: ", conditionMessage(e)); NULL })
+      list(fit = f, rep = FALSE, border = FALSE)
     }
-    tf <- try_fit(dt); fit <- tf$fit; use_rep <- tf$rep
+    tf <- try_fit(dt); fit <- tf$fit; use_rep <- tf$rep; use_border <- tf$border
     if (is.null(fit)) next
     n_out <- 0
-    if (OUTLIER_SD > 0) {
+    if (OUTLIER_SD > 0 && !t %in% DISCRETE) {   # count/score traits: a robust SD is ~0, no outlier pass
       r <- residuals(fit); z <- r / (1.4826 * mad(r, na.rm = TRUE))
       out <- which(abs(z) > OUTLIER_SD)
       if (length(out)) { n_out <- length(out); dt <- dt[-out, ]; dt$geno <- droplevels(dt$geno)
-                        tf <- try_fit(dt); if (is.null(tf$fit)) next; fit <- tf$fit; use_rep <- tf$rep }
+                        tf <- try_fit(dt); if (is.null(tf$fit)) next; fit <- tf$fit; use_rep <- tf$rep; use_border <- tf$border }
     }
     p <- predict(fit, which = "geno")
     blues[[t]] <- data.frame(year = as.character(year), trait = t, new_genotype = as.character(p$geno),
                              BLUE = p$predicted.values, SE = p$standard.errors)
     h2 <- NA
-    if (DO_H2) h2 <- tryCatch(unname(getHeritability(fit_spats(dt, t, TRUE, use_rep))), error = function(e) NA)
+    if (DO_H2) h2 <- tryCatch(unname(getHeritability(fit_spats(dt, t, TRUE, use_rep, use_border))), error = function(e) NA)
     pdf(file.path(PLOTS, sprintf("%s_%s.pdf", year, t)), width = 11, height = 8)
     try(plot(fit, main = paste(year, t)), silent = TRUE); dev.off()
     summ[[t]] <- data.frame(year = as.character(year), trait = t, plots = nrow(dt), lines = nrow(p), outliers = n_out,
-                            H2 = round(h2, 3), method = if (use_rep) "SpATS" else "SpATS, no Rep (Rep confounded with line)")
+                            H2 = round(h2, 3), method = paste0("SpATS", if (!use_rep) ", no Rep" else "", if (!use_border) ", no Border" else ""))
     saveRDS(list(b = blues[[t]], s = summ[[t]]), cache)
     message(sprintf("  %-6s plots %4d  lines %4d  outliers %3d  H2 %s  (%.0f s)", t, nrow(dt), nrow(p), n_out,
                     ifelse(is.na(h2), "NA", sprintf("%.2f", h2)), as.numeric(difftime(Sys.time(), t0, units = "secs"))))

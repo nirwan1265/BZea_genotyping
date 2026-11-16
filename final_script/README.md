@@ -14,6 +14,8 @@ Contents:
 7. [Open issues and next steps](#7-open-issues-and-next-steps)
 8. [SNP route, steps 01–15 (cross-check)](#8-snp-route-steps-0115-cross-check)
 9. [Requirements](#9-requirements)
+10. [Association mapping, steps 25–27](#10-association-mapping-steps-2526)
+11. [Phenotypes: SpATS BLUEs, step 28](#11-phenotypes-spats-blues-step-28)
 
 ---
 
@@ -35,6 +37,8 @@ J2=$(sbatch --parsable --dependency=afterok:$J 21_kmer_collect.sh)   # pick rho,
 J3=$(sbatch --parsable --dependency=afterok:$J2 22_kmer_stats.sh)
 sbatch --dependency=afterok:$J2 23_introgression_viewer.sh       # interactive HTML figures (drop-downs by family)
 sbatch --dependency=afterok:$J3 24_kmer_figures.sh              # result figures (PNG): observed vs expected
+# ---- phenotypes (section 11): once, or when the fieldbooks change; ~35 min ----
+sbatch 28_spats_blues.sh                                       # or locally: Rscript final_script/28_spats_blues.R
 # ---- association mapping (section 10) ----
 J4=$(sbatch --parsable --dependency=afterok:$J2 25_assoc_inputs.sh)   # dosage, SEG indicator, LOCO K, pheno
 sbatch --dependency=afterok:$J4 26_assoc_scan.sh                       # GridLMM additive + dominance, all plots and per taxon
@@ -717,10 +721,55 @@ Dominance scans: `figures/assoc_spread/manhattan_DTS_ALL_dom.png`, `manhattan_DT
 
 **Known genes on the plots.** `data/flowering_genes.tsv` lists genes by name and B73 v5 ID (zmcct10 = cct1, cct2, zcn8 = pebp8, zcn12 = pebp12, zmads69 = mads69; add rows freely). Step 25 looks up their positions in the GFF3 (`GENES_TSV`, `GFF_GLOB`) and writes `gene_positions.tsv`; step 26 marks each gene with a red star at the window that holds it and labels it, on every Manhattan plot (all plots and per taxon). Points are black and grey by chromosome; the dotted line is the scope's 5% permutation threshold; the title gives λ_GC.
 
-**Plant height or other traits:** the scans are trait-agnostic. Add the trait as a column in the phenotype CSV (plot name, traits, `Sequencing_ID`) and list it in `TRAITS` in `config.sh`. The repo's phenotype file has only DTS and DTA; the spatial correction (`scripts/Correction_spatial_Spats.R`) also handles only DTS and DTA so far.
+**Other traits:** the scans are trait-agnostic. Step 28 (section 11) writes spatially corrected BLUEs for all traits of both years to `data/phenotypes/BZea_spats_BLUEs_combined.csv`, now the default `PHENO`; `TRAITS` in `config.sh` lists the traits scanned. With these phenotypes **1,286 plots** have a phenotype and k-mer calls (Zd 249, Zh 61, Zl 117, Zv 380, Zx 572), up from 829: the old flowering-time file covered only 906 lines. The first results above are from the old file.
 
 **Peaks and genes (step 27, `27_assoc_genes.py`):** for each scope at its permutation threshold, significant windows are joined into peaks (gap < 5 Mb), each with a support interval (windows within 1.5 −log10 p of the top), and every B73 v5 gene in the interval is listed from the GFF3 (`GFF_GLOB`). `--find 'CCT'` also lists every CCT-domain gene (ZmCCT10 and relatives) with the best −log10 p within 5 Mb. Output: `${D21}/assoc_gridlmm/genes/`.
 
 **Outputs** (`${D21}/assoc`, `${D21}/assoc_gridlmm`): `geno_dosage.csv`, `geno_seg.csv`, `window_map.tsv`, `pheno.csv` (with TAXON, F1FAMILY), `K_matrix_chr*.txt`; `scan_<TRAIT>.tsv` and `scan_<TRAIT>_<GROUP>.tsv` (per window: plots, carriers, SEG and DONOR plots, `beta_add`, `p_add`, `h2`, `c_dom`, `p_dom`), `perm_<TRAIT>_seed<N>.tsv`, `summary_<TRAIT>.tsv` (per scope: threshold, top window, windows above), `manhattan_<TRAIT>_<SCOPE>_{add,dom}.png`, `genes/`.
 
 **Requirements:** R with GridLMM (`github.com/deruncie/GridLMM`), data.table, ggplot2.
+
+---
+
+## 11. Phenotypes: SpATS BLUEs, step 28
+
+Two field trials at Clayton, NC: **2023** (CLY23_D4, 3 reps, 4,432 plots, 1,329 lines, planted 4 Apr 2023) and **2025** (CLY25_B5, 2 reps, 2,898 plots, 1,410 lines). 1,316 lines are in both. Raw files are in `data/phenotypes/raw/`: the two fieldbooks, the two field maps (plot numbers on a row × column grid; `B` = border, `X` = alley) and `name_change_final.txt` (Sequencing_ID → line name). B73 and the Purple check are in both trials and help fit the spatial trend; they are not in the outputs.
+
+**Stage 1, per year and trait (`28_spats_blues.R`, SpATS):**
+`y = Rep + Border + line (fixed) + f(column, row) + random row + random column + e`
+- f is a 2-D P-spline surface (PSANOVA); segments = number of columns or rows / 3, between 8 and 20 (as in `scripts/Correction_spatial_Spats.R`).
+- **Border** = 1 for plots next to a `B` cell (2023; the 2025 map has no border cells). Alleys stay as gaps in the coordinates.
+- **Plots excluded** by their notes: NG, hybrid, wrong line, "B73?", afflicted, sickly (17 plots in 2023, 50 in 2025; `EXCLUDE_NOTES`).
+- **Outliers** (continuous traits only): plots with |residual| > 3.5 robust SD are removed and the model refit once. Count and score traits (EN, Prolif, Kinki, NBR, LAE) get no outlier pass.
+- **H²** (Oakey) from the same model with line random.
+- Kinki and Prolif in 2023 were scored mostly in Rep 1 (1,382 of 1,612 plots); if Rep is then confounded with line, the model drops Rep (and Border if needed).
+- **Binary traits** (ST, StPu, StPi) are not fitted: the value is the share of the line's plots scored 1.
+- **DTS, DTA** = date − planting date. 2025's planting date is not in the fieldbook, so 2025 counts from 1 Jan (`PLANT_2025` fixes this). That shift is a constant, removed by the year effect below. **ASI** = DTS − DTA. **SPAD**: 2023 SPAD1 (mid July) is paired with 2025 SPAD; 2023 SPAD2 (early August) is its own trait.
+
+**Stage 2, across years:** a weighted `lm(BLUE ~ line + year)` (weights 1/SE²) gives the year effect; the combined BLUE is the weighted mean of the year-adjusted BLUEs, on the 2023 scale. Lines seen in one year keep their adjusted BLUE.
+
+**Results (H², and the correlation of line BLUEs between years):**
+
+| Trait | What | H² 2023 | H² 2025 | r 2023–2025 |
+|---|---|---|---|---|
+| DTS | days to silking | 0.88 | 0.84 | 0.69 |
+| DTA | days to anthesis | 0.89 | 0.82 | 0.68 |
+| ASI | DTS − DTA | 0.61 | 0.57 | 0.43 |
+| PH | plant height | 0.86 | 0.86 | 0.74 |
+| EH | ear height | 0.78 | 0.74 | 0.63 |
+| EN | ear number | 0.68 | 0.42 | 0.33 |
+| Prolif | prolificacy | 0.61 | 0.55 | 0.21 |
+| NBR | (fieldbook code) | 0.52 | 0.47 | 0.34 |
+| SPAD | leaf greenness | 0.49 | 0.54 | 0.19 |
+| BW, BL, SL | 2023 only | 0.51, 0.56, 0.73 | | |
+| Kinki, SPAD2 | 2023 only | 0.29, 0.40 | | |
+| LAE | 2025 only | | 0.40 | |
+| StPu, StPi | binary (line share) | | | 0.16, 0.09 |
+| ST | binary, almost all 0 | | | |
+
+- The 2023 flowering BLUEs match the earlier file (`BZea_FloweringTime_spats_BLUE_weighted.csv`, 906 lines): r = 0.97 for DTS and DTA. That file was 2023 only.
+- Flowering and plant height repeat well across years. Prolif, SPAD, StPu and StPi do not (r < 0.25); Prolif may be scored on a different scale in the two years (2023: 1–4, 2025: 0–7).
+
+**Outputs (`data/phenotypes/`):** `BZea_spats_BLUEs_{2023,2025,combined}.csv` (line name, traits, Sequencing_ID; one row per sequenced pool; step 25 reads these), `BZea_spats_BLUEs_long.tsv` (year, trait, line, BLUE, SE; checks included), `BZea_spats_summary.tsv`, `spats_plots/<year>_<trait>.pdf` (SpATS diagnostic plots), `spats_cache/` (one RDS per year × trait, not in git; a rerun skips cached traits, delete to refit).
+
+**Requirements:** R with SpATS, dplyr, tidyr.

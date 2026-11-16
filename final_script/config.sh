@@ -175,7 +175,7 @@ SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_N
 # ---- Association mapping (steps 25-26) ----
 PHENO=${FINAL_DIR}/../data/phenotypes/BZea_spats_BLUEs_combined.csv   # step 28: plot name, traits, Sequencing_ID (2023+2025)
 # old flowering-time file: ${FINAL_DIR}/../data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv
-TRAITS="DTS DTA"                    # trait columns in PHENO
+TRAITS="DTS DTA ASI PH EH EN BW BL SL SPAD SPAD2 Prolif Kinki NBR LAE StPu StPi"   # trait columns in PHENO (ST left out: ~all 0)
 D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
 D26=${D21}/assoc_gridlmm            # step-26 scans, permutations, Manhattan plots
 ASSOC_MIN_CARRIERS=20               # test only windows where at least this many plots carry donor (all plots)

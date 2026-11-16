@@ -177,7 +177,7 @@ if (mode == "summary") {
           labs(x = NULL, y = expression(-log[10](italic(P))),
                title = sprintf("%s %s (%s; %d plots)  \u2014  \u03bb_GC = %.2f%s", trait,
                                if (what == "add") "additive" else "dominance",
-                               if (sc == "ALL") "all taxa, taxon + K" else paste0(sc, ", K"), top$n_plots, lam,
+                               if (sc == "ALL") paste0("all taxa, ", tolower(FIXED_COL), " + K") else paste0(sc, ", K"), top$n_plots, lam,
                                if (what == "add" && is.finite(thr)) sprintf("; perm 5%% = %.2f", thr) else "")) +
           theme_classic(base_size = 12) +
           theme(plot.title = element_text(face = "bold", hjust = 1, size = 11), axis.text = element_text(colour = "black"),

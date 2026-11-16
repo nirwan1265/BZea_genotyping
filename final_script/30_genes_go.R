@@ -12,6 +12,7 @@
 ## Outputs (<out dir>):
 ##   genes_GO_all.tsv            every gene in every region, with GO and its window's -log10 p and effect
 ##                               (one row per trait x gene; sorted by trait, then -log10 p)
+##   genes_GO_all_<TRAIT>.tsv    the same, one file per trait
 ##   genes_GO_flagged.tsv        genes whose name / family / GO matches the keywords for that trait
 ##   genes_GO_flagged_<TRAIT>.tsv
 ## Needs: R with dplyr, readr, stringr, purrr (tidyverse).
@@ -94,6 +95,7 @@ all <- all %>% group_by(TRAIT, REGION) %>% mutate(REGION_BEST_MLOG10P = suppress
   relocate(GENE_WINDOW, GENE_MLOG10P, GENE_BETA_PER_COPY, .after = GENE_END) %>%
   arrange(TRAIT, desc(GENE_MLOG10P), REGION, GENE_START)
 write_tsv(all, file.path(out_dir, "genes_GO_all.tsv"), na = "")
+all %>% group_split(TRAIT) %>% walk(~ write_tsv(.x, file.path(out_dir, sprintf("genes_GO_all_%s.tsv", .x$TRAIT[1])), na = ""))
 fl <- all %>% filter(flag)
 write_tsv(fl, file.path(out_dir, "genes_GO_flagged.tsv"), na = "")
 fl %>% group_split(TRAIT) %>% walk(~ write_tsv(.x, file.path(out_dir, sprintf("genes_GO_flagged_%s.tsv", .x$TRAIT[1])), na = ""))
@@ -104,4 +106,4 @@ summ <- all %>% group_by(TRAIT) %>%
             flagged = n_distinct(GENE[flag]), top_gene = GENE[which.max(GENE_MLOG10P)][1],
             top_mlog10p = suppressWarnings(max(GENE_MLOG10P, na.rm = TRUE)), .groups = "drop")
 print(as.data.frame(summ), row.names = FALSE)
-message("WROTE ", out_dir, "/genes_GO_all.tsv, genes_GO_flagged.tsv, genes_GO_flagged_<TRAIT>.tsv")
+message("WROTE ", out_dir, "/genes_GO_all.tsv, genes_GO_all_<TRAIT>.tsv, genes_GO_flagged.tsv, genes_GO_flagged_<TRAIT>.tsv")

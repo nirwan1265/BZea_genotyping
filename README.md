@@ -292,6 +292,7 @@ Both views give 12.5% donor alleles. Per single plant, the same expectation is 8
 - In a SEG region, the family's BC2S2 parent was AB, so its BC2S3 offspring segregate 1:2:1. **Each of the 6 plants in the pool can be AA, AB or BB.**
 - On average a SEG pool holds ¼ AA, ½ AB and ¼ BB plants. The exact mix differs from pool to pool (e.g. 2 AA, 3 AB, 1 BB), and the model allows for that.
 - A SEG call says "this family is still segregating here". It does not say that any one plant is AB.
+- **SEG vs "het" in SNP-based callers.** In a SEG region the pool's reads show both alleles, just like a het site in a single plant, so a diploid SNP genotyper would call it het. But in a pool, "both alleles present" only means the 6 plants are a mix: any combination of AA, AB and BB plants, as long as both alleles are there. That's why we call this state SEG, not het. (The pooled SNP HMM in step 14 also uses B73 / SEG / DONOR; a single-plant SNP model would label it het.)
 - To get plant genotypes from pool states: **AA = B73 + SEG/4, AB = SEG/2, BB = DONOR + SEG/4**.
 
 **How the pools were sampled, and why SEG looks the way it does.**

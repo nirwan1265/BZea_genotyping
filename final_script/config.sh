@@ -173,7 +173,8 @@ KMER_NOISY_SIGMA=0.15               # pools with sigma above this are flagged NO
 SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_NOTES.md)
 
 # ---- Association mapping (steps 25-26) ----
-PHENO=${FINAL_DIR}/../data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv   # plot name, traits, Sequencing_ID
+PHENO=${FINAL_DIR}/../data/phenotypes/BZea_spats_BLUEs_combined.csv   # step 28: plot name, traits, Sequencing_ID (2023+2025)
+# old flowering-time file: ${FINAL_DIR}/../data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv
 TRAITS="DTS DTA"                    # trait columns in PHENO
 D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
 D26=${D21}/assoc_gridlmm            # step-26 scans, permutations, Manhattan plots

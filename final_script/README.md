@@ -811,6 +811,8 @@ N=$(wc -w <<< "$TRAITS"); sbatch --dependency=afterok:$J --array=1-$N 29_joint_q
 ```
 One array task per trait, 16 cores: ~5 min for the scans, 1–2 h for 2 × 1,000 permutations (one permutation ≈ 22 s on one core). Rerunning reuses the saved permutations. Laptop: `Rscript final_script/29_joint_qtl.R <IN>/assoc_spats DTS <IN>/qtl2`.
 
+**Without permutations, on the k-mer scan's peaks (`29.2_joint_qtl_noperm.sh`):** `NPERM=0 PEAKS=<peaks_<TRAIT>_ALL.tsv>` takes the QTL from the k-mer GridLMM scan (step 27: top window and support interval of each region), so both analyses describe the **same QTL**. R/qtl2 still rescans the genome, and the QTL table puts its LOD / −log10 p next to GridLMM's at each peak, then adds the joint and per-taxon effects. ~5 min per trait. Copy the laptop peak files to `${D21}/assoc_gridlmm_spats/genes/` first. Output: `${D29}/noperm/`. Test (DTS): at the three k-mer peaks, GridLMM −log10 p 5.12 / 9.68 / 9.08 and R/qtl2 5.09 / 9.67 / 9.08; effects 0.77 / 1.00 / 1.02 vs 0.77 / 1.00 / 1.02 days per copy: the two packages agree.
+
 **Outputs** (`${D29}`):
 - `qtl2_<TRAIT>_qtl.tsv`: one row per QTL: position, support interval, found by (additive or per-taxon scan), carriers, LOD, joint (conditional) LOD and −log10 p, effect per teosinte copy ± SE in the joint model, LOD and −log10 p for "taxa differ", PVE alone.
 - `qtl2_<TRAIT>_by_taxon.tsv`: QTL × taxon: plots, carriers (SEG / DONOR), effect per copy ± SE, LOD.

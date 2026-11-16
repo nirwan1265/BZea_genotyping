@@ -15,6 +15,10 @@
 ##   Effect per teosinte copy: fit1(contrasts = cbind(mu = c(1, 1), a = c(-1, 1))), coefficient a.
 ##
 ## Usage:  Rscript 29_joint_qtl.R <assoc input dir (step 25)> <TRAIT> <out dir>
+## Without permutations (NPERM=0), the QTL come from:
+##   PEAKS=<step-27 peaks_<TRAIT>_ALL.tsv>  the k-mer GridLMM scan's peaks: the same top windows and support intervals,
+##                                          so both analyses describe the same QTL (29.2_joint_qtl_noperm.sh); or
+##   THRESHOLD_LOD=<LOD>                    peaks of the R/qtl2 additive scan above this LOD
 ## Env:    NPERM (1000), CORES (1), PEAKDROP (Inf: one QTL per chromosome per scan; e.g. 2 allows more, but tracts
 ##         are long and neighbouring peaks on a chromosome are rarely separable), DROP (1.5),
 ##         MIN_TAXON_CARRIERS (5), GFF (B73 v5 GFF3: genes in the intervals)
@@ -35,6 +39,7 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 envn <- function(k, d) { v <- Sys.getenv(k, ""); if (v == "") d else as.numeric(v) }
 NPERM <- envn("NPERM", 1000); CORES <- envn("CORES", 1); PEAKDROP <- envn("PEAKDROP", Inf); DROP <- envn("DROP", 1.5)
 MIN_TC <- envn("MIN_TAXON_CARRIERS", 5); GFF <- Sys.getenv("GFF", "")
+PEAKS <- Sys.getenv("PEAKS", ""); THRESHOLD_LOD <- Sys.getenv("THRESHOLD_LOD", "")
 say <- function(...) message(sprintf(...)); t0 <- Sys.time()
 lod2p <- function(lod, df) -pchisq(2 * log(10) * lod, df, lower.tail = FALSE, log.p = TRUE) / log(10)   # -log10 p
 
@@ -69,18 +74,24 @@ add <- scan1(probs, y, K, addcovar = covar, cores = CORES)
 int <- scan1(probs, y, K, addcovar = covar, intcovar = intc, cores = CORES)
 say("scans done (%.1f min)", as.numeric(difftime(Sys.time(), t0, units = "mins")))
 perm_file <- file.path(out_dir, sprintf("qtl2_%s_perm.tsv", trait))
-if (file.exists(perm_file) && nrow(fread(perm_file)) >= NPERM) {
-  pm <- fread(perm_file, data.table = FALSE)
-} else {
-  strata <- setNames(as.integer(factor(taxon)), ids)
-  pa <- scan1perm(probs, y, K, addcovar = covar, n_perm = NPERM, perm_strata = strata, cores = CORES)
-  pi <- scan1perm(probs, y, K, addcovar = covar, intcovar = intc, n_perm = NPERM, perm_strata = strata, cores = CORES)
-  pm <- data.frame(perm = seq_len(NPERM), max_lod_additive = pa[, 1], max_lod_per_taxon = pi[, 1])
-  fwrite(pm, perm_file, sep = "\t")
-}
-thr_add <- unname(quantile(pm$max_lod_additive, 0.95)); thr_int <- unname(quantile(pm$max_lod_per_taxon, 0.95))
-say("5%% thresholds (%d permutations within taxon): additive LOD %.2f (-log10 p %.2f), per-taxon LOD %.2f",
-    nrow(pm), thr_add, lod2p(thr_add, 1), thr_int)
+thr_add <- NA; thr_int <- NA
+if (NPERM > 0) {
+  if (file.exists(perm_file) && nrow(fread(perm_file)) >= NPERM) {
+    pm <- fread(perm_file, data.table = FALSE)
+  } else {
+    strata <- setNames(as.integer(factor(taxon)), ids)
+    pa <- scan1perm(probs, y, K, addcovar = covar, n_perm = NPERM, perm_strata = strata, cores = CORES)
+    pi <- scan1perm(probs, y, K, addcovar = covar, intcovar = intc, n_perm = NPERM, perm_strata = strata, cores = CORES)
+    pm <- data.frame(perm = seq_len(NPERM), max_lod_additive = pa[, 1], max_lod_per_taxon = pi[, 1])
+    fwrite(pm, perm_file, sep = "\t")
+  }
+  thr_add <- unname(quantile(pm$max_lod_additive, 0.95)); thr_int <- unname(quantile(pm$max_lod_per_taxon, 0.95))
+  say("5%% thresholds (%d permutations within taxon): additive LOD %.2f (-log10 p %.2f), per-taxon LOD %.2f",
+      nrow(pm), thr_add, lod2p(thr_add, 1), thr_int)
+} else if (THRESHOLD_LOD != "") {
+  thr_add <- as.numeric(THRESHOLD_LOD); thr_int <- NA
+  say("no permutations; additive threshold given: LOD %.2f (-log10 p %.2f)", thr_add, lod2p(thr_add, 1))
+} else if (PEAKS == "") stop("NPERM=0 needs PEAKS=<step-27 peaks file> or THRESHOLD_LOD=")
 
 sc <- data.frame(Marker = rownames(add), lod_additive = round(add[, 1], 3), lod_per_taxon = round(int[, 1], 3))
 sc$lod_taxa_differ <- round(sc$lod_per_taxon - sc$lod_additive, 3)
@@ -88,18 +99,34 @@ sc$mlog10p_additive <- round(lod2p(sc$lod_additive, 1), 3)
 sc <- merge(map[, c("Marker", "chr", "start", "end", "pos", "n_carriers")], sc, by = "Marker", sort = FALSE)
 fwrite(sc, file.path(out_dir, sprintf("qtl2_%s_scan.tsv", trait)), sep = "\t")
 
-## ---------- QTL: peaks of the additive scan and of the per-taxon scan ----------
-peaks <- function(s, thr, lab) { p <- find_peaks(s, pmap, threshold = thr, peakdrop = PEAKDROP, drop = DROP)
-  if (nrow(p)) p$found_by <- lab; p }
-pk <- rbind(peaks(add, thr_add, "additive"), peaks(int, thr_int, "per-taxon"))
-if (!nrow(pk)) { say("no QTL above the thresholds"); quit(save = "no") }
-pk$Marker <- mapply(function(ch, p) find_marker(pmap, ch, p), pk$chr, pk$pos)
-## a per-taxon peak inside an additive peak's interval is the same QTL
-pk <- pk[order(pk$found_by != "additive", -pk$lod), ]
-keep <- rep(TRUE, nrow(pk))
-for (i in seq_len(nrow(pk))) for (j in seq_len(i - 1)) if (keep[j] && pk$chr[i] == pk$chr[j] &&
-    pk$pos[i] >= pk$ci_lo[j] && pk$pos[i] <= pk$ci_hi[j]) keep[i] <- FALSE
-pk <- pk[keep, ]; pk <- pk[order(match(pk$chr, cn), pk$pos), ]
+## ---------- QTL ----------
+if (PEAKS != "") {
+  ## the same QTL as the k-mer scan (step 26/27): its top windows and support intervals
+  if (!file.exists(PEAKS)) { say("no peaks file %s: nothing to fit", PEAKS); quit(save = "no") }
+  kp <- fread(PEAKS, data.table = FALSE)
+  if (!nrow(kp)) { say("peaks file %s is empty", PEAKS); quit(save = "no") }
+  bcol <- intersect(c("BETA_PER_COPY", "BETA_DAYS_PER_COPY"), names(kp))[1]
+  kp <- kp[kp$TOP_WINDOW %in% map$Marker, ]
+  pk <- data.frame(chr = sub("^chr", "", kp$CHR), pos = map$pos[match(kp$TOP_WINDOW, map$Marker)] / 1e6,
+                   ci_lo = kp$INTERVAL_START / 1e6, ci_hi = kp$INTERVAL_END / 1e6, found_by = "k-mer scan (step 26)",
+                   Marker = kp$TOP_WINDOW, gridlmm_mlog10p = kp$TOP_MLOG10P, gridlmm_beta = kp[[bcol]], stringsAsFactors = FALSE)
+  pk$lod <- sc$lod_additive[match(pk$Marker, sc$Marker)]
+} else {
+  peaks <- function(s, thr, lab) { if (is.na(thr)) return(NULL)
+    p <- find_peaks(s, pmap, threshold = thr, peakdrop = PEAKDROP, drop = DROP)
+    if (nrow(p)) p$found_by <- lab; p }
+  pk <- rbind(peaks(add, thr_add, "additive"), peaks(int, thr_int, "per-taxon"))
+  if (is.null(pk) || !nrow(pk)) { say("no QTL above the thresholds"); quit(save = "no") }
+  pk$Marker <- mapply(function(ch, p) find_marker(pmap, ch, p), pk$chr, pk$pos)
+  ## a per-taxon peak inside an additive peak's interval is the same QTL
+  pk <- pk[order(pk$found_by != "additive", -pk$lod), ]
+  keep <- rep(TRUE, nrow(pk))
+  for (i in seq_len(nrow(pk))) for (j in seq_len(i - 1)) if (keep[j] && pk$chr[i] == pk$chr[j] &&
+      pk$pos[i] >= pk$ci_lo[j] && pk$pos[i] <= pk$ci_hi[j]) keep[i] <- FALSE
+  pk <- pk[keep, ]
+  pk$gridlmm_mlog10p <- NA; pk$gridlmm_beta <- NA
+}
+pk <- pk[order(match(pk$chr, cn), pk$pos), ]
 Q <- pk$Marker
 say("QTL: %s", paste(sprintf("%s (%s)", Q, pk$found_by), collapse = ", "))
 
@@ -118,7 +145,9 @@ for (i in seq_along(Q)) {
   li <- sc$lod_taxa_differ[sc$Marker == q]
   rows[[q]] <- data.frame(trait = trait, qtl = q, chr = paste0("chr", ch), pos_Mb = pk$pos[i],
                           interval_start_Mb = pk$ci_lo[i], interval_end_Mb = pk$ci_hi[i], found_by = pk$found_by[i],
-                          carriers = sum(G[, q] > 0), lod = round(sc$lod_additive[sc$Marker == q], 2),
+                          carriers = sum(G[, q] > 0), gridlmm_mlog10p = round(pk$gridlmm_mlog10p[i], 2),
+                          gridlmm_effect_per_copy = round(pk$gridlmm_beta[i], 3),
+                          lod = round(sc$lod_additive[sc$Marker == q], 2), mlog10p = round(lod2p(sc$lod_additive[sc$Marker == q], 1), 2),
                           lod_joint = round(f$lod, 2), mlog10p_joint = round(lod2p(f$lod, 1), 2),
                           effect_per_copy_joint = round(f$coef["a"], 3), se = round(f$SE["a"], 3),
                           lod_taxa_differ = round(li, 2), mlog10p_taxa_differ = round(lod2p(li, length(taxa) - 1), 2),
@@ -161,9 +190,9 @@ if (GFF != "" && file.exists(GFF)) {
 png(file.path(out_dir, sprintf("qtl2_%s_manhattan.png", trait)), width = 2400, height = 1400, res = 200)
 par(mfrow = c(2, 1), mar = c(3, 4, 2, 1))
 plot(add, pmap, col = "black", altcol = "grey50", main = sprintf("%s: additive (taxon + LOCO K), %d plots", trait, length(ids)))
-abline(h = thr_add, lty = 3)
+if (!is.na(thr_add)) abline(h = thr_add, lty = 3)
 plot(int, pmap, col = "black", altcol = "grey50", main = sprintf("%s: per-taxon QTL effects (intcovar = taxon)", trait))
-abline(h = thr_int, lty = 3)
+if (!is.na(thr_int)) abline(h = thr_int, lty = 3)
 invisible(dev.off())
 
 print(as.data.frame(R[, .(qtl, interval_start_Mb, interval_end_Mb, found_by, lod, lod_joint, effect_per_copy_joint, se, lod_taxa_differ)]), row.names = FALSE)

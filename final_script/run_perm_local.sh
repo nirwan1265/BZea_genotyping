@@ -30,8 +30,14 @@ for T in "$@"; do
   for s in $(seq 1 $NSEED); do [[ -s "$D26/perm_${T}_seed${s}.tsv" ]] || todo+=("$s"); done
   echo "== $T: ${#todo[@]} of $NSEED chunks of $CHUNK permutations to run (JOBS=$JOBS, CORES=$CORES each)"
   if (( ${#todo[@]} )); then
-    printf '%s\n' "${todo[@]}" | xargs -P "$JOBS" -I{} sh -c \
-      "Rscript '$REPO/final_script/26_assoc_gridlmm.R' perm '$D25' '$T' '$D26' $CHUNK {} $CORES > '$D26/perm_${T}_seed{}.log' 2>&1 && echo '  $T seed {} done'"
+    n=0
+    for s in "${todo[@]}"; do                 # JOBS chunks at a time (plain bash: works with macOS bash 3.2)
+      ( Rscript "$REPO/final_script/26_assoc_gridlmm.R" perm "$D25" "$T" "$D26" "$CHUNK" "$s" "$CORES" \
+          > "$D26/perm_${T}_seed${s}.log" 2>&1 && echo "  $T seed $s done ($(date +%H:%M))" \
+          || echo "  $T seed $s FAILED, see $D26/perm_${T}_seed${s}.log" ) &
+      n=$((n + 1)); if (( n % JOBS == 0 )); then wait; fi
+    done
+    wait
   fi
   Rscript "$REPO/final_script/26_assoc_gridlmm.R" summary "$D25" "$T" "$D26"
   thr=$(awk -F'\t' 'NR>1 && $2=="ALL"{print $6}' "$D26/summary_${T}.tsv")

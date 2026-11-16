@@ -412,7 +412,7 @@ BB, donor alleles and AB/(AB+BB) differ from the expectation at p < 0.0002 in ev
 **What it shows.**
 - **Het is as expected.** AB (3.12%) and SEG (6.23%) don't differ from the BC2S3 expectation (p = 0.93).
 - **Homozygous donor is missing.** BB is 6.5% instead of 10.9%, and DONOR is 5.0% instead of 9.4%. That loss is the whole shortfall in donor alleles (8.1% vs 12.5%).
-- **The remaining donor is mostly het.** 32% of donor-carrying plants are AB, against 22% expected. The same pattern holds in all five taxa.
+- **A larger share of the remaining donor is het.** 32% of donor-carrying plants are AB, against 22% expected. AB itself is as expected (3.1%); the share rises only because BB fell. The same pattern holds in all five taxa.
 - **This fits other work.** Lab mates' lines and TeoNAM reported more heterozygosity than expected after selection during selfing. Here, het is normal in absolute terms but strongly elevated relative to fixation.
 - **Interpretation:** selection against plants homozygous for teosinte segments (BB) during the selfing generations. Recessive teosinte alleles that hurt plant type, flowering or seed set are exposed only in BB plants. Losing those plants removes fixed donor segments, while the same segments survive in heterozygotes.
 

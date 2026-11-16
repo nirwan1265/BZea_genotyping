@@ -16,6 +16,7 @@ Contents:
 9. [Requirements](#9-requirements)
 10. [Association mapping, steps 25–27](#10-association-mapping-steps-2526)
 11. [Phenotypes: SpATS BLUEs, step 28](#11-phenotypes-spats-blues-step-28)
+12. [Joint multi-QTL model with per-taxon effects, step 29](#12-joint-multi-qtl-model-with-per-taxon-effects-step-29)
 
 ---
 
@@ -45,6 +46,7 @@ sbatch --dependency=afterok:$J4 26_assoc_scan.sh                       # GridLMM
 sbatch --dependency=afterok:$J4 --array=1-100 26_assoc_perm.sh         # 1,000 permutations per trait and scope
 bash 26_assoc_summary.sh                                               # after both: thresholds, top windows, plots
 bash 27_assoc_genes.sh                                                 # peaks and the B73 v5 genes in them
+N=$(wc -w <<< "$TRAITS"); sbatch --dependency=afterok:$J4 --array=1-$N 29_joint_qtl.sh   # joint QTL model, per-taxon effects (section 12)
 ```
 
 Steps 01–15 are in [section 8](#8-snp-route-steps-0115-cross-check).
@@ -776,3 +778,38 @@ Two field trials at Clayton, NC: **2023** (CLY23_D4, 3 reps, 4,432 plots, 1,329 
 **Outputs (`data/phenotypes/`):** `BZea_spats_BLUEs_{2023,2025,combined}.csv` (line name, traits, Sequencing_ID; one row per sequenced pool; step 25 reads these), `BZea_spats_BLUEs_long.tsv` (year, trait, line, BLUE, SE; checks included), `BZea_spats_summary.tsv`, `spats_plots/<year>_<trait>.pdf` (SpATS diagnostic plots), `spats_cache/` (one RDS per year × trait, not in git; a rerun skips cached traits, delete to refit).
 
 **Requirements:** R with SpATS, dplyr, tidyr.
+
+---
+
+## 12. Joint multi-QTL model with per-taxon effects, step 29
+
+The scan (step 26) tests one window at a time. Step 29 (`29_joint_qtl.R`) fits the QTL **together** and gives each QTL a separate effect **in each taxon**, like joint linkage mapping in TeoNAM (Chen et al. 2019), but inside the same mixed model with LOCO kinship. Base R plus data.table; no GridLMM, so it runs on the cluster.
+
+**Model:** `y = taxon + Σ_q Σ_t b_qt · dosage_q · [taxon = t] + u + e`, `u ~ N(0, σ²_g K_LOCO)`. b_qt = effect per teosinte copy of QTL q in taxon t.
+
+**Steps:**
+1. **Threshold:** phenotypes shuffled within taxon, genome scan rerun, largest −log10 p kept; 95th percentile of 1,000 permutations (~1 s each). Or `THRESHOLD=` / `SUMMARY=<step-26 summary_<TRAIT>.tsv>`.
+2. **Forward selection** (multi-locus mixed model, Segura et al. 2012): scan with the selected QTL as cofactors (one pooled effect each); add the top window if it passes the threshold; repeat. A new QTL must be ≥ 5 Mb from, and have r² ≤ 0.5 with, every selected QTL: neighbouring windows differ in only a few plots, and a pair of them otherwise fits those plots with huge opposite effects. For speed the variance ratio is fitted once per chromosome and step (P3D/EMMAX; Kang et al. 2010; Zhang et al. 2010).
+3. **Backward:** the weakest QTL is dropped while its conditional test (exact ML, LOCO K of its chromosome) is below the threshold.
+4. **Final model, per QTL** (exact ML, LOCO K of the QTL's chromosome):
+   - **presence:** all QTL nested in taxon vs this QTL removed (LRT, df = its number of taxon effects);
+   - **heterogeneity:** nested in taxon vs one pooled effect (LRT, df − 1): do the taxa differ?
+   - pooled effect and SE; per-taxon effects and SEs; PVE (variance of the QTL's fitted contribution / variance of y);
+   - support interval: the chromosome rescanned with the other QTL as cofactors, windows within 1.5 −log10 p of the top; B73 v5 genes in it.
+   - A taxon gets its own effect only with ≥ 5 carrier plots at the QTL; carriers of smaller taxa share one "other" effect.
+
+**Why taxon and not accession for the per-QTL effects:** a typical window has ~90 carrier plots over 82 accessions, about one carrier per accession, so accession-level effects cannot be estimated. Taxon level has enough carriers (tens per taxon).
+
+**Run (cluster):**
+```bash
+cd final_script; git pull; source config.sh
+J=$(sbatch --parsable 25_assoc_inputs.sh)                            # inputs with the two-year BLUEs
+N=$(wc -w <<< "$TRAITS"); sbatch --dependency=afterok:$J --array=1-$N 29_joint_qtl.sh
+```
+One array task per trait (~20 min: eigen-decompositions ~1 min, 1,000 permutations ~17 min). Laptop: `Rscript final_script/29_joint_qtl.R <IN>/assoc_spats DTS <IN>/joint_qtl`.
+
+**Outputs** (`${D29}`): `joint_qtl_<TRAIT>.tsv` (one row per QTL: position, support interval, carriers, pooled effect ± SE, −log10 p presence and heterogeneity, PVE, polygenic h²), `joint_qtl_<TRAIT>_by_taxon.tsv` (QTL × taxon: carriers, SEG, DONOR, effect per copy ± SE, −log10 p), `joint_qtl_<TRAIT>_genes.tsv`, `joint_qtl_<TRAIT>_steps.tsv` (selection log), `joint_qtl_<TRAIT>_perm.tsv`.
+
+**Test (DTS, two-year BLUEs, 1,284 plots; threshold from only 20 permutations, 4.46):** 4 QTL — chr1 ~85.8 Mb (+0.58 d per copy; strongly taxon-specific: Zl +4.2 d, others ≈ 0–0.8), chr5 ~221.8 Mb (+0.87 d; Zl +3.7, Zd +1.9, Zv/Zx +0.4), chr9 ~11 Mb (−0.56 d; similar across taxa), chr10 ~94.6 Mb (+1.0 d; similar across taxa: Zd 1.1, Zv 0.8, Zx 0.9). Together 17.5% of the DTS variance beyond taxon means. To be rerun with 1,000 permutations.
+
+**References:** Segura V, et al. (2012) An efficient multi-locus mixed-model approach for genome-wide association studies in structured populations. *Nat Genet* 44:825–830. Kang HM, et al. (2010) Variance component model to account for sample structure in genome-wide association studies. *Nat Genet* 42:348–354. Zhang Z, et al. (2010) Mixed linear model approach adapted for genome-wide association studies. *Nat Genet* 42:355–360. Chen Q, et al. (2019) TeoNAM. *Genetics* 213:1065–1078.

@@ -178,6 +178,7 @@ PHENO=${FINAL_DIR}/../data/phenotypes/BZea_spats_BLUEs_combined.csv   # step 28:
 TRAITS="DTS DTA ASI PH EH EN BW BL SL SPAD SPAD2 Prolif Kinki NBR LAE StPu StPi"   # trait columns in PHENO (ST left out: ~all 0)
 D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
 D26=${D21}/assoc_gridlmm            # step-26 scans, permutations, Manhattan plots
+D29=${D21}/joint_qtl                # step-29 joint multi-QTL model with per-taxon effects
 ASSOC_MIN_CARRIERS=20               # test only windows where at least this many plots carry donor (all plots)
 ASSOC_GROUP_COL=none                # extra scans per group: TAXON (Zd/Zl/Zv/Zx), F1FAMILY, or none
 ASSOC_FIXED_COL=TAXON                 # fixed effect in the all-plots scan: TAXON (default), or F1FAMILY (check only; over-corrects)

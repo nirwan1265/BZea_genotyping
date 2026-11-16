@@ -756,6 +756,12 @@ On the cluster: steps 25–27 (`final_script/README.md`, section 10). On a lapto
 bash final_script/run_assoc_local.sh DTS        # one terminal per trait
 ```
 
+### Joint multi-QTL model with per-taxon effects (step 29)
+
+The scan tests one window at a time. Step 29 then fits the significant QTL **together**, each with its own effect **per taxon**, in the same mixed model with LOCO kinship: `y = taxon + Σ_q Σ_t b_qt · dosage_q · [taxon = t] + u + e`. QTL are chosen by forward selection with the selected QTL as cofactors (multi-locus mixed model, Segura et al. 2012) at a 5% permutation threshold, then backward elimination. For each QTL it reports the pooled effect, the per-taxon effects, a test that the QTL is present, a **test that the taxa differ** (nested vs pooled effect), the variance explained and the genes in its support interval. This is the mixed-model counterpart of TeoNAM's joint linkage mapping (Chen et al. 2019). Effects are estimated per taxon, not per accession: a typical window has ~90 carrier plots across 82 accessions, about one per accession. Details: `final_script/README.md`, section 12.
+
+First test (DTS, two-year BLUEs, preliminary threshold): four QTL, chr1 ~85.8 Mb, chr5 ~221.8 Mb, chr9 ~11 Mb and chr10 ~94.6 Mb (ZmCCT10 region), together 17.5% of the variance beyond taxon means. chr10 and chr9 act alike in all taxa; the chr1 and chr5 effects come mostly from *luxurians* (Zl) and, at chr5, *diploperennis* (Zd).
+
 ### Comparison with the SNP50K / RTIGER analysis of the same population
 
 F. Rodríguez-Zapata's notebook "ZEAL DTA GWAS + JLM on the SNP50K panel" (zealhmm, 2026) analysed DTA in the same BC2S3 lines (1,403 lines, same two fields, SpATS BLUEs). Differences and results:
@@ -809,6 +815,8 @@ The statistics are standard; the new part is the combination: k-mer ancestry fro
 - Listgarten J, Lippert C, Kadie CM, Davidson RI, Eskin E, Heckerman D (2012) Improved linear mixed models for genome-wide association studies. *Nat Methods* 9:525–526.
 - Oakey H, Verbyla A, Pitchford W, Cullis B, Kuchel H (2006) Joint modeling of additive and non-additive genetic line effects in single field trials. *Theor Appl Genet* 113:809–819.
 - Odell SG, Hudson AI, Praud S, Dubreuil P, Tixier M-H, Ross-Ibarra J, Runcie DE (2022) Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci. *G3* 12:jkac011.
+- Kang HM, Sul JH, Service SK, et al. (2010) Variance component model to account for sample structure in genome-wide association studies. *Nat Genet* 42:348–354.
+- Segura V, Vilhjálmsson BJ, Platt A, et al. (2012) An efficient multi-locus mixed-model approach for genome-wide association studies in structured populations. *Nat Genet* 44:825–830.
 - Rahman A, Hallgrímsdóttir I, Eisen M, Pachter L (2018) Association mapping from sequencing reads using k-mers. *eLife* 7:e32920.
 - Rodríguez-Álvarez MX, Boer MP, van Eeuwijk FA, Eilers PHC (2018) Correcting for spatial heterogeneity in plant breeding experiments with P-splines. *Spatial Statistics* 23:52–71.
 - Rodríguez-Zapata F (2026) ZEAL DTA GWAS + JLM on the SNP50K panel — 1000-permutation FWER. Lab notebook (zealhmm).

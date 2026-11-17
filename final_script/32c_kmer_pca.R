@@ -77,6 +77,22 @@ if (length(a) >= 3 && file.exists(a[3])) {
          title = "Per accession: pools whose k-mer taxon differs from the pedigree taxon") + theme_classic(base_size = 11)
   ggsave(file.path(out, "kmer_mismatch_elevation.png"), p3, width = 8, height = 4.5, dpi = 200)
   message("WROTE ", out, "/kmer_mismatch_elevation.png, kmer_accession_agreement.tsv")
+  ## PCA coloured by the elevation of the donor accession, and a mexicana-vs-parviglumis index along elevation
+  se <- merge(sc, m[, .(accession = `accession-id`, elevation)], by = "accession", all.x = TRUE)
+  pe <- function(x, y) ggplot(se[order(elevation)], aes(.data[[x]], .data[[y]], colour = elevation)) +
+    geom_point(size = 1.4, alpha = 0.85) + scale_colour_viridis_c(name = "Elevation (m)", option = "D") +
+    labs(x = sprintf("%s (%.1f%%)", x, ve[as.integer(sub("PC", "", x))]), y = sprintf("%s (%.1f%%)", y, ve[as.integer(sub("PC", "", y))])) +
+    theme_classic(base_size = 11)
+  vx <- d[label %in% c("Zv", "Zx") & f_Zx + f_Zv > 0, .(accession, taxon = label, mx = f_Zx / (f_Zx + f_Zv))]
+  vx <- merge(vx[, .(mx = median(mx), pools = .N), by = .(taxon, accession)], m[, .(accession = `accession-id`, elevation)], by = "accession")
+  pm <- ggplot(vx, aes(elevation, mx, colour = taxon, size = pools)) + geom_point(alpha = 0.8) +
+    scale_colour_manual(values = cols, labels = labs_, name = "Pedigree taxon") + scale_size_area(max_size = 4, name = "Pools") +
+    labs(x = "Elevation of the accession (m)", y = "f_Zx / (f_Zx + f_Zv), median per accession") + theme_classic(base_size = 11)
+  p5 <- (pe("PC1", "PC2") | pe("PC3", "PC4") | pm) + plot_layout(guides = "keep") +
+    plot_annotation(title = "Teosinte k-mer profiles and the elevation of the donor accession")
+  ggsave(file.path(out, "kmer_pca_elevation.png"), p5, width = 17, height = 5, dpi = 200)
+  fwrite(vx[order(taxon, elevation)], file.path(out, "kmer_mexicana_index.tsv"), sep = "\t")
+  message("WROTE ", out, "/kmer_pca_elevation.png, kmer_mexicana_index.tsv")
 }
 message("WROTE ", out, "/kmer_pca.png, kmer_taxon_shares.png, kmer_taxon_agreement.tsv, kmer_pca_scores.tsv")
 PS <- Sys.getenv("POOL_SUMMARY", "")

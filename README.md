@@ -594,10 +594,19 @@ On simulated pools (5 taxa, 6 pools each, 10% donor, 1× reads) the k-mer taxon 
   | 1,400–1,600 m (7) | 10 of 86 (12%) |
   | 1,600–2,000 m (4) | 24 of 44 (55%) |
 
-  The three accessions where most pools look like *mexicana* are Zv.0200 (Cerro Nananchi, Morelos, 1,400 m; 6 of 6), Zv.0250 (Ruinas de Malinalco, México, 1,901 m; 10 of 11) and Zv.0270 (Amatlán de Quetzalcóatl, Morelos, 1,654 m; 9 of 12). Higher-elevation *parviglumis* is closer to the elevation range of *mexicana*, and the two subspecies have diverged with ongoing gene flow (Aguirre-Liguori et al. 2019), so these accessions may carry *mexicana*-like DNA. A labelling error would more likely affect single pools than most pools of an accession. Either way, they are worth checking against the seed records.
+  > **Worth noting: three *parviglumis* accessions look like *mexicana* in most of their pools.**
+  > - Zv.0200 (Cerro Nananchi, Morelos, 1,400 m): 6 of 6 pools
+  > - Zv.0250 (Ruinas de Malinalco, México, 1,901 m): 10 of 11 pools
+  > - Zv.0270 (Amatlán de Quetzalcóatl, Morelos, 1,654 m): 9 of 12 pools
+  >
+  > This fits the known gene flow between the two subspecies (Aguirre-Liguori et al. 2019): higher-elevation *parviglumis* is closer to the elevation range of *mexicana*. A labelling error would more likely affect single pools than most pools of an accession. These three are worth checking against the seed records. In the k-mer HMM, these pools also fit a lower DONOR level than the Zv assemblies give (scale factor a: median 0.8, against 0.9 for the other Zv pools), as expected if their donor DNA is partly *mexicana*-like (Zx keeps fewer B73 k-mers than Zv: d = 0.37 vs 0.43).
 - **In *diploperennis*,** the mismatches come mostly from Zd.0030 and Zd.0040 (both from Milpillas, 1,390 m, listed as race "Zea-diploperennis-Na"): their assignments are weaker (median ratio 1.8 and 1.5, against 3.0 and 3.5 for Zd.0010 and Zd.0020), so they are less like the two Zd assemblies.
 
 ![Per accession: pools whose k-mer taxon differs from the pedigree taxon, by elevation](data/introgression_spread/sourmash/pca/kmer_mismatch_elevation.png)
+
+**Elevation.** Colouring the PCA by the elevation of the donor accession, and placing every *parviglumis* and *mexicana* accession on one axis, f_Zx / (f_Zx + f_Zv) (the share of its *mexicana*-or-*parviglumis* k-mers that are *mexicana*), shows a continuous cline rather than two separate groups: within *parviglumis* the index rises with elevation (Spearman ρ = 0.49 over 36 accessions, p = 0.003), and the highest *parviglumis* accessions reach the values of *mexicana*. Within *mexicana* it does not change with elevation (ρ = 0.12, 37 accessions). The amount of donor DNA a pool carries (HMM donor share) does not depend on the donor's elevation (ρ = 0.00 over all accessions).
+
+![k-mer PCA coloured by elevation, and the mexicana index along elevation](data/introgression_spread/sourmash/pca/kmer_pca_elevation.png)
 
 **An independent check of the HMM's donor share.** The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.98 (Zh), 0.97 (Zl), 0.94 (Zv) and 0.97 (Zx) (1,292 pools, NOISY pools left out).
 

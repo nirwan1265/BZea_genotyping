@@ -1071,7 +1071,21 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Every gene in each interva
 | **Q4 chr4 198.4 Mb** | — | +4.11 cm | 2.9 | 0.1 (no) | No significant difference between taxa (Zd +7.56, Zh +10.21, Zl +14.45, Zv +5.63, Zx +3.49). Same region as EH Q5 and SL Q3. |
 | **Q7 chr5 117.8 Mb** | — | -3.60 cm | 2.7 | 0.0 (no) | No significant difference between taxa (Zd +0.14, Zl -3.22, Zv -5.14, Zx -2.69). |
 
-The chr6 peaks (Q8–Q13), Q5 chr4 218.7 Mb and Q6 chr5 64.2 Mb (*td1*, Zm00001eb228140) lose their signal in the joint model. A chr5 2.6 Mb peak (shared with EH and SL) is just below the threshold (−log10 p 4.18 vs 4.19).
+**Candidate genes:**
+- **Q3, chr3 12.8 Mb:** Zm00001eb123060 (*ra2*, *ramosa2*; 12.83 Mb, in the window next to the top window, −log10 p 6.9). *ra2* encodes a LATERAL ORGAN BOUNDARY (LOB) domain transcription factor. It is one of the three *ramosa* genes that keep the short branches of the maize inflorescence (the spikelet pairs) short:
+  - In *ra2* mutants, spikelet pairs are replaced by longer branches that carry single spikelets or groups of several spikelets, the tassel has more secondary branches, the branches stand more upright, and the ears branch. *ra2* is switched on briefly in the small group of cells that will become each new branch meristem of the tassel and the ear (long branches, spikelet pairs and spikelets), but not in the vegetative shoot meristem. It acts upstream of the other branching genes and is needed for normal expression of *ra1* (Bortiri et al. 2006).
+  - Xie et al. (2023) showed how RA2 limits tassel branching: it binds the promoter of *tassel sheath4* (*TSH4*, Zm00001eb316740), an SBP-box gene that promotes branching, and represses it. CRISPR *ra2* knockouts had about four times as many tassel branches as the wild type, and plants overexpressing RA2 about half as many. The circadian clock protein ZmELF3.1 (Zm00001eb159890) binds both RA2 and ZmELF4.2 (Zm00001eb311850) and makes RA2 bind and repress *TSH4* more strongly; *Zmelf3.1* mutants flower later and have 28–57% more tassel branches. This links the flowering clock to tassel branching.
+
+  Neither paper reports an effect of *ra2* on plant height; the mutants were described for their inflorescences. In our lines the teosinte allele at Q3 makes plants 3.77 cm shorter per copy, alike across taxa, and the same window lowers the ear (EH Q4, −2.06 cm per copy). We did not score tassel branching, so we cannot check whether this segment changes the tassel the way *ra2* mutants do. *ra2* is the best-known gene in the interval (12.4–13.7 Mb, 41 genes), not a proven cause of the height effect.
+- **Q6, chr5 64.2 Mb (does not hold in the joint model):** Zm00001eb228910 (*na2*, *nana plant2*; GRMZM2G057000 in B73 v3; 67.09 Mb, in a window with −log10 p 4.7). *na2* is the maize ortholog of the *Arabidopsis* brassinosteroid gene *DWARF1* (*DWF1*), a Δ24-sterol reductase. Brassinosteroids (BRs) are steroid hormones that make cells elongate. Best et al. (2016) found:
+  - Loss of *na2* makes a severe dwarf. *na2-1* (a premature stop codon) plants reach about 10% of the height of their wild-type siblings, because every internode is shorter. Three more alleles from an EMS-mutagenized B73 population also gave short plants; two of them change amino acids that are conserved in nearly all the land plants they compared. The mutants also make fewer tillers, stay de-etiolated when grown in the dark, and often set pistils in the tassel (tassel seed; 60% of field-grown *na2-1* plants).
+  - The mutants accumulate the DWF1 substrate 24-methylenecholesterol (6-fold) and have 130-fold less campesterol, the next compound in the pathway, so BR synthesis is blocked at this step.
+  - Maize has a second copy, *na2-like* (GRMZM2G455658), but it carries frameshift mutations and is hardly expressed, so *na2* is the working copy.
+  - In double mutants with the gibberellin (GA) mutant *d5*, BR and GA deficiency reduced plant height additively, while other traits such as tillering showed epistasis, and GA treatment made *na2-1* plants taller. So both hormones set plant height, but not through one shared pathway.
+
+  In our lines the teosinte segment at the *na2* window makes plants 3.97 cm shorter per copy in the scan. In the joint model the Q6 effect falls to −2.15 cm and is not significant (−log10 p 1.2), so the signal is explained by the other QTL and *na2* is a weak candidate here. The same interval (60.6–69.1 Mb) holds *td1* (*thick tassel dwarf1*, Zm00001eb228140; 63.49 Mb, −log10 p 5.0), the maize ortholog of the *Arabidopsis* meristem-size gene *CLAVATA1*, whose loss increases tassel branching (Xie et al. 2023).
+
+The chr6 peaks (Q8–Q13), Q5 chr4 218.7 Mb and Q6 chr5 64.2 Mb (*td1*, Zm00001eb228140; *na2*, Zm00001eb228910) lose their signal in the joint model. A chr5 2.6 Mb peak (shared with EH and SL) is just below the threshold (−log10 p 4.18 vs 4.19).
 
 <details><summary>All PH QTL with per-taxon effects and all genes in the interval</summary>
 
@@ -1475,7 +1489,9 @@ All references cited in this README, in alphabetical order.
 - Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838. (IBSpy used to find einkorn introgressions in bread wheat.)
 - Ashikari M, Sakakibara H, Lin S, Yamamoto T, Takashi T, Nishimura A, Angeles ER, Qian Q, Kitano H, Matsuoka M (2005) Cytokinin oxidase regulates rice grain production. *Science* 309:741–745. (Cited from Ni et al. 2024.)
 - Baum LE, Petrie T, Soules G, Weiss N (1970) A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. *Ann Math Stat* 41:164–171.
+- Best NB, Hartwig T, Budka J, Fujioka S, Johal G, Schulz B, Dilkes BP (2016) *nana plant2* encodes a maize ortholog of the *Arabidopsis* brassinosteroid biosynthesis gene *DWARF1*, identifying developmental interactions between brassinosteroids and gibberellins. *Plant Physiol* 171:2633–2647. doi:10.1104/pp.16.00399
 - Bolger AM, Lohse M, Usadel B (2014) Trimmomatic: a flexible trimmer for Illumina sequence data. *Bioinformatics* 30:2114–2120.
+- Bortiri E, Chuck G, Vollbrecht E, Rocheford T, Martienssen R, Hake S (2006) *ramosa2* encodes a LATERAL ORGAN BOUNDARY domain protein that determines the fate of stem cells in branch meristems of maize. *Plant Cell* 18:574–585. doi:10.1105/tpc.105.039032
 - Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502.
 - Broman KW, Sen Ś (2009) *A Guide to QTL Mapping with R/qtl*. Springer, New York.
 - Brown CT, Irber L (2016) sourmash: a library for MinHash sketching of DNA. *J Open Source Softw* 1:27.
@@ -1521,6 +1537,7 @@ All references cited in this README, in alphabetical order.
 - Voichek Y, Weigel D (2020) Identifying genetic variants underlying phenotypic variation in plants without complete genomes. *Nat Genet* 52:534–540.
 - Wang D, Gao Z, Dong M, et al. (2026) Integrated GWAS and Fst analysis identify flowering-time regulatory genes in maize. *Plant Genome* 19:e70185. doi:10.1002/tpg2.70185
 - Wang H, Studer AJ, Zhao Q, Meeley R, Doebley JF (2015) Evidence that the origin of naked kernels during maize domestication was caused by a single amino acid substitution in *tga1*. *Genetics* 200:965–974. doi:10.1534/genetics.115.175752
+- Xie Y, Zhao Y, Chen L, Wang Y, Xue W, Kong D, Li C, Zhou L, Li H, Zhao Y, Wang B, Xu M, Zhao B, Bilska-Kos A, Wang H (2023) ZmELF3.1 integrates the RA2-TSH4 module to repress maize tassel branching. *New Phytol*. doi:10.1111/nph.19329
 - Yang J, Weedon MN, Purcell S, et al. (2011) Genomic inflation factors under polygenic inheritance. *Eur J Hum Genet* 19:807–812.
 - Yang J, Zaitlen NA, Goddard ME, Visscher PM, Price AL (2014) Advantages and pitfalls in the application of mixed-model association methods. *Nat Genet* 46:100–106.
 - Yang Q, Li Z, Li W, et al. (2013) CACTA-like transposable element in *ZmCCT* attenuated photoperiod sensitivity and accelerated the postdomestication spread of maize. *PNAS* 110:16969–16974.

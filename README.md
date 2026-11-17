@@ -1068,7 +1068,12 @@ Number of stem nodes that carry brace roots. 8 regions, 4 hold (Bonferroni over 
 | **Q4 chr1 262.4 Mb** | — | -0.09 | 3.1 | 1.7 (no) | No significant difference between taxa (Zd -0.21, Zh +0.01, Zl -0.17, Zv -0.16, Zx -0.04). |
 
 **Candidate gene:**
-- **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (97.41 Mb, in a window with −log10 p 9.0; the top window has 10.3). The gene is uncharacterized; its protein family is named after *Arabidopsis* SICKLE. Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). One of their strongest SNPs for brace root diameter is on chr10 (chr10.S_95437751, in older B73 coordinates), and it explains 13.95% of the variance. Zm00001eb418930 is among the 27 candidate genes they list within 50 kb of the SNPs found by both of their GWAS models; its function has not been tested.
+- **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (GRMZM2G174736 in B73 v3; 97.41 Mb, in a window with −log10 p 9.0; the top window has 10.3). Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). Their significant chr10 SNP for brace root diameter (chr10.S_95437751, in older B73 coordinates) explains 13.95% of the variance, and GRMZM2G174736 is one of their candidate genes for brace root diameter:
+  - They annotate it as a hydroxyproline-rich glycoprotein (HRGP, also called extensin), a structural protein of the cell wall. HRGPs help assemble the cell wall, are expressed in specific tissues and stages, and some act in root development.
+  - It is one of three cell-wall candidates they highlight for brace root diameter, with an expansin (GRMZM2G445169, which loosens the cell wall) and a homolog of the *Arabidopsis* receptor kinase FEI (GRMZM2G479243). They propose that these genes shape brace roots through the cell wall.
+  - In public RNA-seq of 13 tissues, including brace roots, it is expressed at moderate to high levels, but not only in brace roots. Its function has not been tested.
+
+  The current B73 v5 annotation lists the gene as uncharacterized (protein family: SICKLE).
 
   In our lines the teosinte allele adds 0.17 brace-root nodes per copy (joint −log10 p 5.7), and the effect differs between taxa: it is largest in *parviglumis* (+0.26), smaller in *mexicana* (+0.09) and *diploperennis* (+0.05).
 

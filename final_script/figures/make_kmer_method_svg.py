@@ -49,7 +49,7 @@ for i,(a,b) in enumerate([(90,230),(150,300),(260,410),(330,480),(110,250),(380,
     ry=by+22+(i%3)*12; line(a,ry,b,ry,"#7C8794",5,'stroke-linecap="round"')
 for i in range(6):
     x=100+i*66; stick(x,x+52,by-22,B73); check(x+26,by-42)
-t(290,by+80,"every B73 k-mer is found",13.5,"bold",fill=OK,anchor="middle")
+t(290,by+80,"every B73 k-mer that a read covers is found",13.5,"bold",fill=OK,anchor="middle")
 # donor region
 dx=560; t(dx,by-62,"donor (teosinte) region",14,"bold",fill=DON)
 rect(dx,by-6,460,12,"#E6EAF0",6)
@@ -69,24 +69,25 @@ circ(dx+40,by+104,5,DON); t(dx+52,by+109,"teosinte SNP",12.5,fill=SOFT)
 line(dx+170,by+104,dx+210,by+104,"#C9A0A3",5,'stroke-linecap="round"'); t(dx+218,by+109,"read",12.5,fill=SOFT)
 
 # ---------- panel 3 ----------
-y=568; panel(y,3,"Score the window (step 20)","r = B73 single-copy k-mers seen in the pool ÷ what a B73 pool of the same depth sees (fit of the B73 controls)")
+y=568; panel(y,3,"Score the window (step 20)","r = k-mers found in the pool ÷ k-mers our sequenced B73 control samples find at the same depth")
 base=y+200; x0=170; h=130
 line(x0-20,base,x0+560,base,SOFT,1.5)
 line(x0-20,base-h,x0+560,base-h,SOFT,1,'stroke-dasharray="5,5"'); t(x0-28,base-h+5,"1.0",13,fill=SOFT,anchor="end"); t(x0-28,base+5,"0",13,fill=SOFT,anchor="end")
-for i,(lab,val,c,desc) in enumerate([("B73",1.0,B73,"all plants AA"),("SEG",0.69,SEG,"about half B73, half donor"),("DONOR",0.27,DON,"all plants BB (Zd)")]):
+for i,(lab,val,c,desc) in enumerate([("B73",1.0,B73,"all plants AA"),("SEG",0.66,SEG,"about half B73, half donor"),("DONOR",0.27,DON,"all plants BB (Zd)")]):
     x=x0+30+i*180; rect(x,base-h*val,90,h*val,c,4)
     t(x+45,base-h*val-10,f"r ≈ {val:.2f}" if val!=1.0 else "r ≈ 1",14,"bold",anchor="middle")
     t(x+45,base+22,lab,15,"bold",fill=c,anchor="middle"); t(x+45,base+40,desc,12,fill=SOFT,anchor="middle")
-ex=[("Example window (Zd):",INK,"bold"),
-    ("B73 has 30,000 single-copy k-mers.",INK,"normal"),
-    ("A B73 pool at this depth finds 13,000.",INK,"normal"),
+ex=[("Average window, typical Zd pool:",INK,"bold"),
+    ("B73 reference: ~32,000 single-copy k-mers.",INK,"normal"),
+    ("Our sequenced B73 controls find ~30% at",INK,"normal"),
+    ("this depth: ~9,600 = the expected count.",INK,"normal"),
     ("DONOR: the Zd genome has only 27% of",DON,"normal"),
-    ("these k-mers, so the pool finds ~3,500:",DON,"normal"),
-    ("r = 3,500 / 13,000 = 0.27.",DON,"bold"),
+    ("these k-mers, so the pool finds ~2,600:",DON,"normal"),
+    ("r = 2,600 / 9,600 = 0.27.",DON,"bold"),
     ("SEG: shared k-mers (27%) are found as usual;",SEG,"normal"),
     ("the rest come only from the B73 half,",SEG,"normal"),
-    ("found ~57% as often: 0.27 + 0.73 × 0.57 = 0.69.",SEG,"bold")]
-for k,(txt,c,wt) in enumerate(ex): t(x0+605,base-128+k*19,txt,13,wt,fill=c)
+    ("found 0.54 as often: 0.27 + 0.73 × 0.54 = 0.66.",SEG,"bold")]
+for k,(txt,c,wt) in enumerate(ex): t(x0+605,base-140+k*18,txt,13,wt,fill=c)
 # ---------- panel 4 ----------
 y=845; panel(y,4,"HMM along each chromosome (steps 20-21)","Windows → B73 / SEG / DONOR. Switches follow the NAM genetic map; switch rate ρ fitted by maximum likelihood.")
 px0,px1,pyb,ph=110,1040,y+175,95

@@ -85,10 +85,10 @@ Finding introgressions by counting reference k-mers in windows, without mapping,
 | Problem | How the k-mer approach avoids it |
 |---|---|
 | **1. Donor reads are lost** | No mapping. Raw reads are counted as k-mers and only the presence of B73 k-mers is checked, so donor reads can't be filtered away. |
-| **2. Too few reads per site** | No per-site calls. Each 100-kb window adds up ~30,000 k-mers, so r is measured from thousands of positions at once. |
+| **2. Too few reads per site** | No per-site calls. Each 100-kb window adds up ~32,000 k-mers, so r is measured from thousands of positions at once. |
 | **3. Pools aren't diploid** | The model is built for pools: DONOR = d, SEG = d + (1 − d)·g(f), averaged over Binomial(12, ½) donor fractions of a 6-plant family. |
 
-**Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in a Zd example, DONOR ≈ 0.27 and SEG ≈ 0.69, with B73 = 1. The DONOR level is measured from teosinte genomes, not guessed.
+**Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in a Zd example, DONOR ≈ 0.27 and SEG ≈ 0.66, with B73 = 1. The DONOR level is measured from teosinte genomes, not guessed.
 
 **What we saw in our data:**
 - **SEG matches the expectation:** 6.4% observed vs 6.25% expected (family bootstrap p = 0.26).
@@ -163,33 +163,40 @@ The HMM itself is Nirwan's BC2S3 HMM. `20_kmer_hmm.py` imports these functions u
 
 #### How r is calculated: a worked example
 
-Take one 100-kb window. The numbers are rounded but realistic.
+An average window in a typical Zd pool. The numbers are genome-wide averages from our data, rounded; real windows vary around them.
 
-**Step 1: what B73 has.** B73's window contains **30,000** single-copy k-mers (step 16).
+**Step 1: which k-mers are counted (B73 reference).** The B73 reference has 680 M single-copy k-mers in 21,330 windows, so an average window has **~32,000** (step 16). This is the same for every pool and every taxon.
 
-**Step 2: what a pure-B73 pool would find.** At 0.8x a pool doesn't see every k-mer, because many parts of the window aren't covered by any read. The 10 B73 control pools tell us how many a B73 pool of this depth finds in this window; say **13,000**. That's the expected count.
+**Step 2: how many a B73 sample at this depth finds (B73 controls).** At 0.8x many parts of the window are not covered by any read, so a sample finds only part of the 32,000. A typical pool contains about 200 M of the 680 M single-copy k-mers, i.e. **about 30%** (plate averages range from 109 M to 245 M; see the plate table under Results). So in this window our B73 control samples, rescaled to the pool's depth, find about 30% × 32,000 ≈ **9,600**. That's the expected count. It depends on the pool's depth, not on its taxon.
 
 **Step 3: r = what our pool found ÷ the expected count.**
 
 | Our pool in this window is… | k-mers found | r |
 |---|---|---|
-| B73 (all plants AA) | ~13,000 | 13,000 / 13,000 ≈ **1.0** |
-| DONOR (all plants BB, Zd) | ~3,500 | 3,500 / 13,000 ≈ **0.27** |
-| SEG (about half B73, half donor) | ~9,000 | ≈ **0.69** (below) |
+| B73 (all plants AA) | ~9,600 | 9,600 / 9,600 ≈ **1.0** |
+| DONOR (all plants BB, Zd) | ~2,600 | 2,600 / 9,600 ≈ **0.27** |
+| SEG (about half B73, half donor) | ~6,300 | 6,300 / 9,600 ≈ **0.66** (below) |
 
-**Where the DONOR level comes from (step 19).** We take a complete Zd genome assembly (Gigi, Momo) and count how many of the window's 30,000 B73 k-mers appear anywhere in it. Say 8,100: 8,100 / 30,000 = **d = 0.27**, so Zd keeps 27% of B73's k-mers here. A pool that is all Zd in this window can only find that 27%, so its expected r is 0.27.
+**Where the DONOR level comes from (step 19).** We take the complete Zd genome assemblies (Gigi and Momo, PanAnd-1.0 from MaizeGDB) and count how many of the window's ~32,000 B73 k-mers appear anywhere in them. Genome-wide it's 27% (Gigi 0.26, Momo 0.28), i.e. about 8,600 of 32,000: **d = 0.27**. A pool that is all Zd in this window can only find that 27%, so it finds 0.27 × 9,600 ≈ 2,600 and its expected r is 0.27. A real example: the Zd tract of PN13_SID1199 (chr2:22–25 Mb, section 2) has r ≈ 0.20, where the Zd assemblies give 0.26.
 
-d is measured like this for every window and every taxon. Genome-wide it's Zd 0.27, Zl 0.26, Zh 0.34, Zx 0.37 and Zv 0.43; Zv is closest to maize, so it keeps the most. In later rounds (step 20b), d comes from the family's own DONOR pools instead.
+d depends on the taxon and on the window:
+- **Taxon:** genome-wide Zd 0.27, Zl 0.26, Zh 0.34, Zx 0.37 and Zv 0.43. Zv is closest to maize, so it keeps the most.
+- **Window:** for Zd, the per-window median is 0.23, and 80% of windows are between 0.13 and 0.42. The HMM uses each window's own d.
 
-**Why SEG falls in between.** In a SEG region the pool is a mix of B73 and donor chromosomes. Split the 30,000 k-mers in two:
-- **Shared with the donor (27%):** every chromosome carries them, so they're found as often as in a B73 pool (ratio 1.0).
-- **Missing from the donor (73%):** only the B73 chromosomes carry them. With half the chromosomes B73, they get half the reads, so at this depth they're found about **57%** as often.
+Sequencing the **actual donor parents** of our lines would have been better, because d would then be measured on the plants our lines came from. We don't have them, so we use the MaizeGDB assemblies of the same taxa.
 
-So r(SEG) = 0.27 × 1.0 + 0.73 × 0.57 ≈ **0.69**.
+**Why SEG falls in between.** In a SEG region the pool is a mix of B73 and donor chromosomes. Split the window's k-mers in two:
+- **Shared with the donor (27%):** every chromosome carries them, so they're found as often as in a B73 sample (ratio 1.0).
+- **Missing from the donor (73%):** only the B73 chromosomes carry them, about half the chromosomes, so they get about half the reads. Half the reads doesn't mean half the k-mers found, because at low depth many k-mers are missed either way:
+  - A B73 sample at this depth finds **30%** of the k-mers. From the coverage formula (the chance a k-mer is seen at coverage c is 1 − e^(−c)), that means a k-mer coverage of c = 0.36.
+  - With half the reads (c = 0.18), it finds 1 − e^(−0.18) = **16%**.
+  - So these k-mers are found 16.3 / 30 = **0.54** times as often as in a B73 sample. That ratio is **g**.
 
-In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at the pool's B73 share of the reads ÷ how often at full depth. g comes from the standard coverage formula: the chance that a k-mer is seen at coverage c is 1 − e^(−c). The HMM doesn't assume exactly half donor. It averages over the possible donor fractions of a 6-plant pool (1/12 to 11/12), weighted by Binomial(12, ½), the 1:2:1 segregation summed over 6 plants.
+So r(SEG) = 0.27 × 1.0 + 0.73 × 0.54 ≈ **0.66**.
 
-**Then the HMM** compares each window's r with these three expected levels (B73 ≈ 1, SEG ≈ 0.6–0.7, DONOR ≈ d). It allows for each pool's noise and takes neighbouring windows into account, using the genetic map, to call the most likely state.
+In general, r(SEG) = d + (1 − d) × g. g depends on the pool's depth, so each pool gets its own. The HMM doesn't assume exactly half donor. It averages over the possible donor fractions of a 6-plant pool (1/12 to 11/12), weighted by Binomial(12, ½), the 1:2:1 segregation summed over 6 plants.
+
+**Then the HMM** compares each window's r with these three expected levels (B73 ≈ 1, SEG ≈ 0.66, DONOR ≈ d). It allows for each pool's noise and takes neighbouring windows into account, using the genetic map, to call the most likely state.
 
 ### 4.2 States and emissions
 
@@ -242,7 +249,7 @@ In general, r(SEG) = d + (1 − d) × g, where g = how often a k-mer is seen at 
 | Parameter | Value | Where | Source / justification |
 |---|---|---|---|
 | k-mer size | 31 | `KMER_K` | standard (KMC, KCFtools) |
-| Window | 100 kb | `KMER_WINDOW` | ~30,000 single-copy k-mers per window |
+| Window | 100 kb | `KMER_WINDOW` | ~32,000 single-copy k-mers per window on average (680 M / 21,330) |
 | Single-copy | count = 1 in B73 v5 | step 16 | removes repeats |
 | KMC minimum count | 1 | steps 17, 19 | at 0.8x most k-mers are seen once |
 | Reference fit | NNLS of B73 controls, refit without windows below 1 − 2σ | `--cut_sigma 2` | robust; no fixed cutoff |

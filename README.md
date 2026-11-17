@@ -917,11 +917,11 @@ All results are in `data/introgression_spread/`:
 | DTS | 1284 | 5.25 | 2 | 2 | chr5 221.8 Mb (−log10 p 9.7, +1.00 d per copy) |
 | DTA | 1284 | 5.14 | 3 | 3 | chr10 94.5 Mb (−log10 p 9.3, +0.92 d per copy) |
 | ASI | 1284 | 4.35 | 12 | 6 | chr7 165.6 Mb (−log10 p 13.7, -0.36 d per copy) |
+| NBR | 1274 | 4.21 | 8 | 4 | chr10 98.2 Mb (−log10 p 10.3, +0.17 per copy) |
 | PH | 1283 | 4.19 | 16 | 8 | chr10 97.0 Mb (−log10 p 10.8, +5.64 cm per copy) |
 | EH | 1282 | 4.27 | 18 | 7 | chr4 198.4 Mb (−log10 p 7.6, +3.00 cm per copy) |
 | EN | 1282 | 4.57 | 20 | 11 | chr2 22.4 Mb (−log10 p 18.6, +0.17 per copy) |
 | Prolif | 1286 | 4.55 | 15 | 10 | chr1 23.2 Mb (−log10 p 20.3, +0.20 per copy) |
-| NBR | 1274 | 4.21 | 8 | 4 | chr10 98.2 Mb (−log10 p 10.3, +0.17 per copy) |
 | SL | 1196 | 4.06 | 13 | 12 | chr7 141.7 Mb (−log10 p 9.2, -0.32 per copy) |
 | BL | 1197 | 4.14 | 6 | 5 | chr2 39.8 Mb (−log10 p 12.0, -1.58 per copy) |
 | BW | 1197 | 4.22 | 7 | 6 | chr6 146.4 Mb (−log10 p 9.2, -0.29 per copy) |
@@ -1054,7 +1054,51 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Every gene in each interva
 
 </details>
 
-#### 3.6.4 Plant height (PH)
+#### 3.6.4 Nodes with brace roots (NBR)
+
+![NBR: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_NBR.png)
+
+Number of stem nodes that carry brace roots. 8 regions, 4 hold (Bonferroni over 8: −log10 p > 2.20).
+
+| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|
+| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | +0.17 | 5.7 | 3.1 (yes) | Differs between taxa (Zd +0.05, Zv +0.26, Zx +0.09). The strongest NBR QTL; largest in *parviglumis*. |
+| **Q6 chr9 139.9 Mb** | — | +0.09 | 4.6 | 0.1 (no) | No significant difference between taxa (Zd +0.01, Zl +0.14, Zv +0.07, Zx +0.12). Same region as PH Q15. |
+| **Q5 chr8 126.2 Mb** | — | +0.12 | 4.6 | 1.1 (no) | No significant difference between taxa (Zd +0.08, Zh +0.33, Zl +0.14, Zv +0.09, Zx +0.10). |
+| **Q4 chr1 262.4 Mb** | — | -0.09 | 3.1 | 1.7 (no) | No significant difference between taxa (Zd -0.21, Zh +0.01, Zl -0.17, Zv -0.16, Zx -0.04). |
+
+**Candidate gene:**
+- **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (97.41 Mb, in a window with −log10 p 9.0; the top window has 10.3). The gene is uncharacterized; its protein family is named after *Arabidopsis* SICKLE. Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). One of their strongest SNPs for brace root diameter is on chr10 (chr10.S_95437751, in older B73 coordinates), and it explains 13.95% of the variance. Zm00001eb418930 is among the 27 candidate genes they list within 50 kb of the SNPs found by both of their GWAS models; its function has not been tested.
+
+  In our lines the teosinte allele adds 0.17 brace-root nodes per copy (joint −log10 p 5.7), and the effect differs between taxa: it is largest in *parviglumis* (+0.26), smaller in *mexicana* (+0.09) and *diploperennis* (+0.05).
+
+  **Is this just flowering time?** The QTL is 1.2 Mb from *ZmCCT10* (Zm00001eb418700), whose teosinte allele delays flowering (DTS Q2, DTA Q3), and a later-flowering plant can make more nodes. Three results argue against that:
+  - NBR is hardly correlated with flowering time in our lines (r = 0.10 with DTS, 0.11 with DTA). In a linear model with taxon (1,269 pools), adding DTS as a covariate barely changes the Q8 effect (+0.18 → +0.17 nodes per copy, p = 10⁻⁸). Adding DTS, DTA and plant height together lowers it to +0.11 (p = 5 × 10⁻⁵), mostly because of plant height (r = 0.33 with NBR), which has its own QTL in this region (PH Q16).
+  - The flowering effect of this region is the same in all taxa (DTS Q2: taxa differ −log10 p 1.0), but the NBR effect differs between taxa (3.1).
+  - The NBR peak (98.2 Mb) is 3.7 Mb from the flowering peak (94.5 Mb).
+
+  So the brace-root effect is not explained by flowering time. Our tracts are too long to separate Zm00001eb418930 from *ZmCCT10*, though: only 4 of the 1,269 pools have a different state at the two genes. Script: `final_script/nbr_q8_flowering_check.py`.
+
+The other chr1 peaks (negative effects) share their signal and do not hold individually. Two QTL have no overall effect but differ between taxa: **Q7 chr10 25.4 Mb** (joint −log10 p 0.2, taxa differ 6.1: only *diploperennis* carriers add brace-root nodes, +0.40) and **Q2 chr1 23.4 Mb** (taxa differ 2.6; *ZmD14*, Zm00001eb007670, is in the interval).
+
+<details><summary>All NBR QTL with per-taxon effects and all genes in the interval</summary>
+
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval |
+|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 11.1 Mb | 9.3–13.0 | 4.7 | -0.08 ± 0.03 | 2.0 | 0.5 | Zd -0.06 (17), Zh +0.02 (11), Zl -0.03 (6), Zv -0.04 (37), Zx -0.08 (64) | [125 genes](qtl_genes/NBR_qtl_genes.tsv) |
+| Q2 | chr1 23.4 Mb | 21.9–25.6 | 4.4 | -0.07 ± 0.03 | 1.6 | **2.6** | Zd +0.10 (14), Zh -0.37 (10), Zl -0.08 (13), Zv -0.14 (33), Zx -0.04 (58) | [97 genes](qtl_genes/NBR_qtl_genes.tsv) |
+| Q3 | chr1 205.3 Mb | 199.0–211.1 | 4.4 | -0.07 ± 0.03 | 2.2 | 1.4 | Zd -0.28 (8), Zh -0.28 (5), Zl +0.00 (8), Zv -0.00 (33), Zx -0.07 (78) | [323 genes](qtl_genes/NBR_qtl_genes.tsv) |
+| Q4 | chr1 262.4 Mb | 257.2–264.5 | 5.0 | -0.09 ± 0.03 | **3.1** | 1.7 | Zd -0.21 (13), Zh +0.01 (6), Zl -0.17 (8), Zv -0.16 (34), Zx -0.04 (77) | [184 genes](qtl_genes/NBR_qtl_genes.tsv) |
+| Q5 | chr8 126.2 Mb | 125.0–127.6 | 4.4 | +0.12 ± 0.03 | **4.6** | 1.1 | Zd +0.08 (23), Zh +0.33 (10), Zl +0.14 (9), Zv +0.09 (36), Zx +0.10 (61) | [66 genes](qtl_genes/NBR_qtl_genes.tsv) |
+| Q6 | chr9 139.9 Mb | 131.3–145.4 | 4.3 | +0.09 ± 0.02 | **4.6** | 0.1 | Zd +0.01 (26), Zl +0.14 (25), Zv +0.07 (43), Zx +0.12 (88) | [386 genes](qtl_genes/NBR_qtl_genes.tsv) |
+| Q7 | chr10 25.4 Mb | 25.0–26.9 | 5.2 | +0.02 ± 0.04 | 0.2 | **6.1** | Zd +0.40 (22), Zv +0.00 (24), Zx -0.02 (57) | [34 genes](qtl_genes/NBR_qtl_genes.tsv) |
+| Q8 | chr10 98.2 Mb | 96.9–99.6 | 10.3 | +0.17 ± 0.04 | **5.7** | **3.1** | Zd +0.05 (23), Zv +0.26 (25), Zx +0.09 (64) | [50 genes](qtl_genes/NBR_qtl_genes.tsv) |
+
+Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Every gene in each interval, with its GO annotation and the k-mer GWAS −log10 p of its window: [`qtl_genes/NBR_qtl_genes.tsv`](qtl_genes/NBR_qtl_genes.tsv).
+
+</details>
+
+#### 3.6.5 Plant height (PH)
 
 ![PH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_PH.png)
 
@@ -1121,7 +1165,7 @@ Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Every gene in each interva
 
 </details>
 
-#### 3.6.5 Ear height (EH)
+#### 3.6.6 Ear height (EH)
 
 ![EH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EH.png)
 
@@ -1166,7 +1210,7 @@ Bonferroni over the 18 QTL: −log10 p > 2.56 (bold). Every gene in each interva
 
 </details>
 
-#### 3.6.6 Ear number (EN; number of nodes with ears)
+#### 3.6.7 Ear number (EN; number of nodes with ears)
 
 ![EN: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EN.png)
 
@@ -1217,7 +1261,7 @@ Bonferroni over the 20 QTL: −log10 p > 2.60 (bold). Every gene in each interva
 
 </details>
 
-#### 3.6.7 Prolificacy (Prolif; most ears on one node)
+#### 3.6.8 Prolificacy (Prolif; most ears on one node)
 
 ![Prolif: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_Prolif.png)
 
@@ -1257,38 +1301,6 @@ Bonferroni over the 20 QTL: −log10 p > 2.60 (bold). Every gene in each interva
 | Q15 | chr9 32.1 Mb | 25.4–32.7 | 5.4 | +0.09 ± 0.02 | **5.8** | 0.1 | Zd +0.08 (24), Zh -0.02 (8), Zl +0.13 (22), Zv +0.07 (48), Zx +0.10 (95) | [156 genes](qtl_genes/Prolif_qtl_genes.tsv) |
 
 Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Every gene in each interval, with its GO annotation and the k-mer GWAS −log10 p of its window: [`qtl_genes/Prolif_qtl_genes.tsv`](qtl_genes/Prolif_qtl_genes.tsv).
-
-</details>
-
-#### 3.6.8 Nodes with brace roots (NBR)
-
-![NBR: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_NBR.png)
-
-Number of stem nodes that carry brace roots. 8 regions, 4 hold (Bonferroni over 8: −log10 p > 2.20).
-
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q8 chr10 98.2 Mb** | — | +0.17 | 5.7 | 3.1 (yes) | Differs between taxa (Zd +0.05, Zv +0.26, Zx +0.09). Next to the ZmCCT10 region: later-flowering plants with more nodes; largest in *parviglumis*. |
-| **Q6 chr9 139.9 Mb** | Zm00001eb397240 (PRR73) | +0.09 | 4.6 | 0.1 (no) | No significant difference between taxa (Zd +0.01, Zl +0.14, Zv +0.07, Zx +0.12). Same region as PH Q15. |
-| **Q5 chr8 126.2 Mb** | Zm00001eb353250 (ZCN8) | +0.12 | 4.6 | 1.1 (no) | No significant difference between taxa (Zd +0.08, Zh +0.33, Zl +0.14, Zv +0.09, Zx +0.10). *ZCN8* is the maize florigen. |
-| **Q4 chr1 262.4 Mb** | — | -0.09 | 3.1 | 1.7 (no) | No significant difference between taxa (Zd -0.21, Zh +0.01, Zl -0.17, Zv -0.16, Zx -0.04). |
-
-The other chr1 peaks (negative effects) share their signal and do not hold individually. Two QTL have no overall effect but differ between taxa: **Q7 chr10 25.4 Mb** (joint −log10 p 0.2, taxa differ 6.1: only *diploperennis* carriers add brace-root nodes, +0.40) and **Q2 chr1 23.4 Mb** (taxa differ 2.6; *ZmD14*, Zm00001eb007670, is in the interval).
-
-<details><summary>All NBR QTL with per-taxon effects and all genes in the interval</summary>
-
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval |
-|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 11.1 Mb | 9.3–13.0 | 4.7 | -0.08 ± 0.03 | 2.0 | 0.5 | Zd -0.06 (17), Zh +0.02 (11), Zl -0.03 (6), Zv -0.04 (37), Zx -0.08 (64) | [125 genes](qtl_genes/NBR_qtl_genes.tsv) |
-| Q2 | chr1 23.4 Mb | 21.9–25.6 | 4.4 | -0.07 ± 0.03 | 1.6 | **2.6** | Zd +0.10 (14), Zh -0.37 (10), Zl -0.08 (13), Zv -0.14 (33), Zx -0.04 (58) | [97 genes](qtl_genes/NBR_qtl_genes.tsv) |
-| Q3 | chr1 205.3 Mb | 199.0–211.1 | 4.4 | -0.07 ± 0.03 | 2.2 | 1.4 | Zd -0.28 (8), Zh -0.28 (5), Zl +0.00 (8), Zv -0.00 (33), Zx -0.07 (78) | [323 genes](qtl_genes/NBR_qtl_genes.tsv) |
-| Q4 | chr1 262.4 Mb | 257.2–264.5 | 5.0 | -0.09 ± 0.03 | **3.1** | 1.7 | Zd -0.21 (13), Zh +0.01 (6), Zl -0.17 (8), Zv -0.16 (34), Zx -0.04 (77) | [184 genes](qtl_genes/NBR_qtl_genes.tsv) |
-| Q5 | chr8 126.2 Mb | 125.0–127.6 | 4.4 | +0.12 ± 0.03 | **4.6** | 1.1 | Zd +0.08 (23), Zh +0.33 (10), Zl +0.14 (9), Zv +0.09 (36), Zx +0.10 (61) | [66 genes](qtl_genes/NBR_qtl_genes.tsv) |
-| Q6 | chr9 139.9 Mb | 131.3–145.4 | 4.3 | +0.09 ± 0.02 | **4.6** | 0.1 | Zd +0.01 (26), Zl +0.14 (25), Zv +0.07 (43), Zx +0.12 (88) | [386 genes](qtl_genes/NBR_qtl_genes.tsv) |
-| Q7 | chr10 25.4 Mb | 25.0–26.9 | 5.2 | +0.02 ± 0.04 | 0.2 | **6.1** | Zd +0.40 (22), Zv +0.00 (24), Zx -0.02 (57) | [34 genes](qtl_genes/NBR_qtl_genes.tsv) |
-| Q8 | chr10 98.2 Mb | 96.9–99.6 | 10.3 | +0.17 ± 0.04 | **5.7** | **3.1** | Zd +0.05 (23), Zv +0.26 (25), Zx +0.09 (64) | [50 genes](qtl_genes/NBR_qtl_genes.tsv) |
-
-Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Every gene in each interval, with its GO annotation and the k-mer GWAS −log10 p of its window: [`qtl_genes/NBR_qtl_genes.tsv`](qtl_genes/NBR_qtl_genes.tsv).
 
 </details>
 
@@ -1544,6 +1556,7 @@ All references cited in this README, in alphabetical order.
 - Smith MW, O'Brien SJ (2005) Mapping by admixture linkage disequilibrium: advances, limitations and guidelines. *Nat Rev Genet* 6:623–632.
 - Stitzer MC, Seetharam AS, et al., Hufford MB (2025) Extensive genome evolution distinguishes maize within a stable tribe of grasses. *bioRxiv* doi:10.1101/2025.01.22.633974. (PanAnd assemblies.)
 - Studer AJ, Wang H, Doebley JF (2017) Selection during maize domestication targeted a gene network controlling plant and inflorescence architecture. *Genetics* 207:755–765. doi:10.1534/genetics.117.300071
+- Sun D, Chen S, Cui Z, Lin J, Liu M, Jin Y, Zhang A, Gao Y, Cao H, Ruan Y (2022) Genome-wide association study reveals the genetic basis of brace root angle and diameter in maize. *Front Genet* 13:963852. doi:10.3389/fgene.2022.963852
 - Sun X, Zhang Z, Wu J, Cui X, Feng D, Wang K, Xu M, Zhou L, Han X, Gu X, Lu T (2016) The *Oryza sativa* regulator HDR1 associates with the kinase OsK4 to control photoperiodic flowering. *PLoS Genet* 12:e1005927. doi:10.1371/journal.pgen.1005927
 - Viterbi AJ (1967) Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. *IEEE Trans Inf Theory* 13:260–269.
 - Voichek Y, Weigel D (2020) Identifying genetic variants underlying phenotypic variation in plants without complete genomes. *Nat Genet* 52:534–540.

@@ -854,7 +854,7 @@ Each gene also gets the −log10 p and effect of the 100-kb window it lies in, f
 `31_joint_qtl_figures.R` draws, per trait: **(A)** the k-mer additive scan (step 26; −log10 p per window, dotted line = 5% permutation threshold when the step-26 summary has one, QTL numbered at their top windows) and **(B)** the joint QTL model at the same QTL (step 29.2): effect per teosinte copy with 95% CI in the joint model (black) and within each taxon (colours), with the −log10 p of the joint test and of "taxa differ" on the right.
 
 ```bash
-Rscript final_script/31_joint_qtl_figures.R <IN>/assoc_gridlmm_spats <IN>/joint_QTL <IN>/joint_QTL/figures
+Rscript final_script/31_joint_qtl_figures.R <IN>/assoc_gridlmm_spats <IN>/joint_qtl/noperm <IN>/joint_qtl/noperm/figures
 ```
 Outputs: `joint_qtl_<TRAIT>.png` and `joint_qtl_all_traits.pdf`. Needs ggplot2, patchwork, data.table. Example (test run, DTS): `figures/joint_qtl_example/joint_qtl_DTS_test.png`.
 

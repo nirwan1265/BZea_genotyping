@@ -749,14 +749,14 @@ We ran **two analyses** on the same genotypes (k-mer teosinte ancestry per 100-k
 | | **Analysis 1: k-mer ancestry GWAS** (step 26, GridLMM) | **Analysis 2: joint QTL model** (step 29.2, R/qtl2) |
 |---|---|---|
 | Question | Where in the genome are the QTL? | How many separate QTL, how large is each, and does the effect differ between teosinte taxa? |
-| What is tested | Every window, one at a time | Only the QTL found by Analysis 1, all fitted together |
+| What is tested | Every window, one at a time | The QTL found by Analysis 1, plus any second QTL that a conditional scan finds inside one of its regions; all fitted together |
 | Effect | One effect per teosinte copy, shared by all taxa | The effect of each QTL adjusted for the others, and its effect within each taxon |
 | Significance | 5% genome-wide threshold from permutations | Bonferroni over the QTL of that trait (no genome search, so no permutations needed) |
 | Output | Manhattan plot, regions, genes in each region | QTL table, per-taxon effects, test that taxa differ |
 
 Both use taxon as a fixed effect and a leave-one-chromosome-out (LOCO) kinship built from the same ancestry calls. At the same windows the two packages give the same answer (DTS: −log10 p 5.12 / 9.68 / 9.08 in GridLMM and 5.09 / 9.67 / 9.08 in R/qtl2), so Analysis 2 describes exactly the QTL of Analysis 1.
 
-### 3.1 What kind of analysis this is
+### 3.1 Combining a k-mer ancestry GWAS with joint QTL mapping
 
 The marker is not a SNP. It is the **teosinte ancestry** of each plot in each 100-kb window, from the k-mer HMM (Section 2): 0 = B73, 1 = SEG, 2 = DONOR copies per plant. Testing local ancestry against a phenotype is what human genetics calls **admixture mapping** (Smith & O'Brien 2005).
 
@@ -764,11 +764,11 @@ We combine two steps, each doing what it is good at:
 - **The k-mer ancestry GWAS finds the peaks.** It is GWAS-style: one mixed-model test per window across the whole genome, with a kinship matrix and a permutation threshold.
 - **The joint QTL model describes them.** It fits the peaks together, as in QTL mapping, to tell which peaks are separate QTL, how large each is, and whether the teosinte taxa differ.
 
-The resolution is that of QTL mapping: donor tracts are several Mb long, so neighbouring windows carry almost the same ancestry, and a signal points to a region (support intervals of ~0.3–15 Mb), not to a gene. Genes in the region are candidates.
+Neither analysis can point to a single gene, and the joint model does not narrow the regions. The limit is the length of the donor tracts. A tract is several Mb long (median about 10 Mb, section 2.6.5), so within a plot, all the windows inside one tract have the same ancestry. When the scan tests those windows, it sees almost the same genotypes in each, so they all get similar p-values, and the peak is a broad hill rather than a sharp spike. The scan reports the hill as a region with a support interval (the windows within 1.5 −log10 p of the top window), which here spans about 0.3 to 15 Mb. What the joint model adds is not a narrower region, but the answer to whether two hills are two separate QTL or one QTL seen twice through linked tracts. The genes inside a support interval are therefore candidates, not the identified cause.
 
 ### 3.2 Phenotypes
 
-Field trials at Clayton, NC in **2023** (CLY23_D4: 3 reps, 4,432 plots, 1,329 lines) and **2025** (CLY25_B5: 2 reps, 2,898 plots, 1,410 lines); 1,316 lines in both. Each BC2S3 plot is grown from one BC2S2 mother; the sequenced pool is 6 plants of that plot.
+Field trials at Clayton, NC in **2023** (CLY23_D4: 3 reps, 4,432 plots, 1,329 lines) and **2025** (CLY25_B5: 2 reps, 2,898 plots, 1,410 lines); 1,316 lines in both. Each BC2S3 plot is grown from one BC2S2 mother.
 
 BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/README.md`, section 11):
 1. **Per year and trait, SpATS** (Rodríguez-Álvarez et al. 2018): `y = Rep + Border + line (fixed) + 2-D P-spline surface(column, row) + random row + random column + e`. Border = plot next to a border (`B`) cell in the field map. Plots noted as no germination, hybrid, wrong line or sick are removed, plus one pass of outlier removal (|residual| > 3.5 robust SD). Heritability (H², Oakey et al. 2006) from the same model with line random.
@@ -797,14 +797,21 @@ BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/R
 - **Plots:** donor pools with a phenotype; low-depth (NOISY) pools are dropped.
 - **Windows:** 21,309 of 21,330 100-kb windows with at least 20 plots carrying donor.
 - **Additive predictor:** dosage 0 / 1 / 2 (B73 / SEG / DONOR). A SEG plot holds ¼ AA, ½ AB, ¼ BB plants, so its average is 1 teosinte copy per plant; the phenotype is a plot mean, so this is the right scale.
-- **Dominance predictor:** SEG = 1 if the plot is SEG. With plot means B73 = 0, DONOR = 2a and SEG = ¼·0 + ½(a + d) + ¼·2a = a + d/2, the SEG coefficient c equals d/2 (c > 0: teosinte allele partly dominant). Tested only where a window has ≥ 5 SEG and ≥ 5 DONOR plots.
+- **Dominance predictor:** SEG = 1 if the plot is SEG, else 0. The additive predictor assumes that a heterozygous plant (AB) is exactly halfway between AA and BB. Dominance means it is not: the teosinte allele can act more strongly (dominant) or more weakly (recessive) when there is only one copy. The SEG plots are the only plots with heterozygous plants, so they carry this information:
+  - On the plot-mean scale, with a = the additive effect per teosinte copy and d = the dominance deviation of an AB plant, a B73 plot averages 0, a DONOR plot 2a, and a SEG plot (¼ AA, ½ AB, ¼ BB plants) ¼·0 + ½(a + d) + ¼·2a = a + d/2.
+  - So adding SEG to the model with coefficient c gives c = d/2: c > 0 means the teosinte allele is partly dominant, c < 0 partly recessive, c = 0 purely additive.
+  - It is tested only where a window has ≥ 5 SEG and ≥ 5 DONOR plots.
+  - **Result:** at none of the 120 QTL of the 11 traits does the dominance term stand out (largest −log10 p = 1.95; Bonferroni over 120 QTL would need 3.38). 15 of the 120 have p < 0.05, where 6 are expected by chance. So the QTL behave additively as far as we can tell.
+  - **Why the power is low:** only about 75 plots per QTL window are SEG, and in a SEG plot only half the plants are AB, so the heterozygote is diluted. A small dominance effect would not be detected. The permutations were run for the additive test only, so there is no genome-wide threshold for dominance, and the dominance scan is not used to find QTL.
 - **Kinship, leave-one-chromosome-out (LOCO):** for the chromosome being tested, K = Z Z′ / p from the centred dosage of all windows on the **other nine** chromosomes, scaled to mean diagonal 1. In BC2S3 lines on a B73 background, relatedness is mostly shared donor tracts, which the dosage captures directly; no SNP calls or imputation are needed.
 
 #### 3.3.2 Why LOCO, and not one K for the whole genome
 
 A kinship matrix that includes the tested region already "contains" the QTL: lines that share the donor tract at the QTL look related, and the random effect absorbs the QTL's effect. This is **proximal contamination** (Listgarten et al. 2012; Yang et al. 2014). LOCO removes it by leaving the tested chromosome out of K (also the default in R/qtl2, Broman et al. 2019).
 
-In a backcross population this matters a lot, because tracts are long and few loci carry most of the donor relatedness. Same data, same model, only K changed (DTS, 1,284 plots, taxon fixed):
+In a backcross population this matters a lot, because tracts are long and few loci carry most of the donor relatedness.
+
+The table compares the two choices of K on the same data (DTS, 1,284 plots, taxon fixed), using **λ_GC** (the genomic inflation factor; Devlin & Roeder 1999). λ_GC is the median test statistic over all windows divided by the median expected if no window had any effect. λ_GC = 1 means the test statistics look as expected under no effect; above 1, they are larger than expected (inflated); below 1, smaller (deflated, the model is too conservative). In most GWAS a λ_GC well above 1 is read as a warning of uncorrected population structure.
 
 | K | λ_GC | Best window chr10 (ZmCCT10 region, 94–98 Mb) | Best window chr5 (~221.7 Mb) |
 |---|---|---|---|
@@ -825,11 +832,11 @@ GridLMM (Runcie & Crawford 2019), maximum likelihood, one chromosome at a time w
 - Dominance: the same model plus c · SEG_w; likelihood-ratio test for c.
 - GridLMM fits the variance proportion on a grid instead of re-optimising it for every window, which makes ~21,000 tests with a 1,284 × 1,284 K fast (~3 min per trait on 4 cores). The code started from `scripts/Analyze_QTL_Founder2.R`.
 
-**Fixed effect: taxon, not F1 family.** Plots from the same F1 plant share many of their tracts (relatives check, Section 2, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
+We used **taxon** (5 levels: Zd, Zh, Zl, Zv, Zx) as the fixed effect, not the **F1 family**. An F1 family is all the plots that descend from one F1 plant (one teosinte plant × B73); the 1,284 plots come from 95 F1 families of 82 accessions. Plots of the same F1 family share many of their tracts (relatives check, Section 2, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
 
 #### 3.3.4 Significance: permutations
 
-For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile of these 1,000 genome-wide maxima is the threshold. It controls the **family-wise error rate (FWER) at 5% across the whole genome**: if the trait had no QTL, a scan would put any window above it in only 5% of cases (Churchill & Doerge 1994). Because each permutation keeps the real correlation between neighbouring windows, the threshold accounts for it; Bonferroni over 21,309 windows (−log10 p = 5.63) would treat them as independent and be too strict. It is not a false discovery rate (FDR), which would instead limit the share of false hits among the significant windows. The thresholds come from **1,000 permutations** per trait (run on the cluster, 100 jobs of 10). With *mexicana* split by race (section 3.6.13), phenotypes are shuffled within race.
+For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile of these 1,000 genome-wide maxima is the threshold. It controls the **family-wise error rate (FWER) at 5% across the whole genome**: if the trait had no QTL, a scan would put any window above it in only 5% of cases (Churchill & Doerge 1994). Because each permutation keeps the real correlation between neighbouring windows, the threshold accounts for it; Bonferroni over 21,309 windows (−log10 p = 5.63) would treat them as independent and be too strict. The thresholds come from **1,000 permutations** per trait. With *mexicana* split by race (section 3.6.13), phenotypes are shuffled within race.
 
 #### 3.3.5 Regions and genes
 
@@ -837,15 +844,37 @@ Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one r
 
 ### 3.4 Analysis 2: joint QTL model with per-taxon effects
 
-The scan tests one window at a time, ignoring the others. Analysis 2 takes **the QTL found by the scan** (top window and support interval of each region, from `peaks_<TRAIT>_ALL.tsv`) and fits them in **R/qtl2** (Broman et al. 2019). Every statistical step is an R/qtl2 function; the script only converts the k-mer calls into R/qtl2's format.
+The scan in Analysis 1 tests each window on its own. A peak can therefore be a real QTL, or a "shadow" of a stronger QTL elsewhere on the chromosome that it shares tracts with. Analysis 2 takes the QTL from the scan and tests them **together**, to answer three questions for each one: is it still significant when the other QTL are in the model, how large is its effect, and is the effect the same in all teosinte taxa? It uses the package R/qtl2 (Broman et al. 2019), with the same plots, phenotypes, taxon and LOCO kinship as Analysis 1 (`final_script/29_joint_qtl.R`).
 
-- **Genotypes:** teosinte allele probability per window = dosage / 2 (B73 0, SEG 0.5, DONOR 1); kinship `calc_kinship(probs, "loco")`.
-- **Joint effect:** each QTL is fitted with taxon and **all other QTL** as covariates (`fit1`). This gives its effect per teosinte copy adjusted for the others, and a conditional test. A QTL whose signal disappears once the others are in the model is a shadow of a linked QTL, not an independent one.
-- **Per-taxon effects:** the same fit within each taxon (taxa with ≥ 5 carrier plots at that QTL).
-- **Do the taxa differ?** LOD of the model with a separate QTL effect per taxon (`scan1` with `intcovar = taxon`) minus LOD of the model with one shared effect; likelihood-ratio test with (taxa − 1) df.
-- **Effect per copy:** `fit1(..., contrasts = cbind(mu = c(1, 1), a = c(-1, 1)))`; the B73 allele mean is mu − a and the teosinte allele mean mu + a, so a is the effect of one teosinte copy.
-- **More than one QTL in a region? Conditional scans.** The scan's regions are runs of windows above the threshold, and with long tracts one region can span tens of Mb and hold more than one QTL. So after fitting the scan's peaks, the genome is scanned again with taxon **and all QTL so far** as covariates (`scan1(..., addcovar = cbind(taxon, QTL genotypes))`). The best window still above the genome-wide threshold is added as a QTL, and this is repeated until none is left (forward selection by conditional scans; Broman & Sen 2009). Only windows that are significant in the ordinary scan and not in LD with a QTL already in the model (r² ≤ 0.5) can be added: this splits a significant region when it holds a second, independent signal, and it cannot create a new region. Close peaks with no independent signal stay one QTL. Added QTL are listed in `qtl2_<TRAIT>_added.tsv` and drawn with an open triangle in the figures.
-- **Significance:** the joint model does not search the genome; it tests the k QTL of a trait, so a Bonferroni correction over k (−log10 p > −log10(0.05/k), e.g. 2.08 for 6 QTL) is used for both the joint test and "taxa differ". This also controls the FWER at 5%, here over the k QTL of the trait.
+**Input QTL.** For each region of the scan, the top window and its support interval (`peaks_<TRAIT>_ALL.tsv`, step 27).
+
+**Genotypes.** At each window, a plot's teosinte allele frequency p = dosage / 2 (B73 0, SEG 0.5, DONOR 1). R/qtl2 takes this as the probability of the teosinte allele (B73 allele: 1 − p). The kinship is LOCO, from the same values (`calc_kinship(probs, "loco")`).
+
+**Step 1: more than one QTL in a region? (conditional scans)** A region of the scan is a run of windows above the threshold. With long tracts, one region can span tens of Mb and could hold two QTL. To check, the whole genome is scanned again with taxon and all QTL found so far as covariates:
+
+`y = taxon + Σ_i γ_i · p_i + β · p_w + u + e` (for every window w; i = the QTL already in the model)
+
+If the best window is still above the genome-wide threshold of Analysis 1, it is a QTL that the others do not explain: it is added to the list, and the scan is repeated, until no window passes. Two rules stop it from adding the wrong things: a window must be significant in the ordinary scan too (so this can split a region, but never create a new one), and it must not be in strong LD with a QTL already in the model (r² ≤ 0.5), since two nearly identical predictors give unstable, opposite effects. This is forward selection by conditional scans (Broman & Sen 2009). Close peaks with no independent signal stay one QTL. Added QTL are listed in `qtl2_<TRAIT>_added.tsv` and drawn as open triangles in the figures.
+
+**Step 2: joint test and effect of each QTL.** Each QTL j is then fitted with taxon and **all the other QTL** as covariates (`fit1`):
+
+`y = taxon + Σ_{i≠j} γ_i · p_i + μ + a_j · (2 p_j − 1) + u + e`,  `u ~ N(0, σ²_g K_LOCO)`,  `e ~ N(0, σ²_e I)`
+
+- a_j is the **effect per teosinte copy**: going from B73 (p = 0) to DONOR (p = 1) changes the fitted value by 2a_j, i.e. a_j per copy (set with `contrasts = cbind(mu = c(1, 1), a = c(-1, 1))`), with its standard error.
+- The **joint test** compares this model with the same model without QTL j: LOD = log10 of the likelihood ratio, converted to −log10 p with 1 df (χ² = 2 ln(10) · LOD).
+- If QTL j's signal disappears once the others are in the model, it was a shadow of another QTL, not a separate one.
+
+**Step 3: effect within each taxon.** The same model as step 2 (without the taxon term), fitted only to the plots of one taxon, gives that taxon's effect per copy. It is estimated only where the taxon has ≥ 5 carrier plots (plots with SEG or DONOR at the QTL).
+
+**Step 4: do the taxa differ?** At the QTL window, the model with a separate effect for each taxon (`scan1(..., intcovar = taxon)`)
+
+`y = taxon + μ + Σ_t a_t · 1[taxon = t] · (2 p − 1) + u + e`
+
+is compared with the model with one shared effect a. The LOD difference is converted to −log10 p with (number of taxa − 1) df. A significant result means the teosinte allele at that QTL has a different effect depending on the taxon it came from.
+
+**Significance.** The joint model does not search the genome: for a trait with k QTL it makes k joint tests and k "taxa differ" tests. Each is significant if −log10 p > −log10(0.05 / k) (Bonferroni over the k QTL of that trait; e.g. 2.08 for 6 QTL). This also controls the family-wise error rate at 5%, here over the k QTL.
+
+Every statistical step is an R/qtl2 function; the script only converts the k-mer calls into R/qtl2's format.
 
 #### 3.4.1 Why the joint model starts from the peaks, and not from all windows at once
 
@@ -866,6 +895,8 @@ bash submit_assoc_all.sh
 # Laptop alternative for Analysis 1: one terminal per trait (scan + first 100 permutations), then up to 1,000
 bash final_script/run_assoc_local.sh DTS
 TOTAL=1000 bash final_script/run_perm_local.sh DTS
+# Check: the same analysis on each year's BLUEs separately (default DTS; folders *_y2023, *_y2025)
+bash submit_year_check.sh
 # genes + GO, and the side-by-side figures (laptop)
 D=data/introgression_spread
 Rscript final_script/30_genes_go.R $D/assoc_gridlmm_spats/genes $D/GO/GO_terms_all_candidates.txt $D/GO
@@ -1315,6 +1346,7 @@ All references cited in this README, in alphabetical order.
 - Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
 - Churchill GA, Doerge RW (1994) Empirical threshold values for quantitative trait mapping. *Genetics* 138:963–971.
 - Danecek P, Bonfield JK, Liddle J, et al. (2021) Twelve years of SAMtools and BCFtools. *GigaScience* 10:giab008.
+- Devlin B, Roeder K (1999) Genomic control for association studies. *Biometrics* 55:997–1004.
 - Haldane JBS (1919) The combination of linkage values and the calculation of distances between the loci of linked factors. *J Genet* 8:299–309.
 - Hrytsenko Y, Daniels NM, Schwartz RS (2025) Determining population structure from k-mer frequencies. *PeerJ* 13:e18939. doi:10.7717/peerj.18939
 - Huang C, Sun H, Xu D, et al. (2018) ZmCCT9 enhances maize adaptation to higher latitudes. *PNAS* 115:E334–E341.

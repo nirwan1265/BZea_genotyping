@@ -30,10 +30,10 @@ T=$(echo $TRAITS | tr ' ' '\n' | sed -n "${SLURM_ARRAY_TASK_ID:-1}p")
 [[ -n "$T" ]] || { echo "no trait for task ${SLURM_ARRAY_TASK_ID:-1}"; exit 0; }
 TAXON_COL=${TAXON_COL:-TAXON}                         # SUBTAXON: mexicana split by race
 SUF=$( [[ "$TAXON_COL" == TAXON ]] && echo "" || echo "_$(echo $TAXON_COL | tr A-Z a-z)" )
-PEAKS_DIR=${PEAKS_DIR:-${D21}/assoc_gridlmm_spats${SUF}/genes}
+PEAKS_DIR=${PEAKS_DIR:-${D21}/assoc_gridlmm_spats${SUF}${TAGSUF}/genes}
 PEAKS=${PEAKS_DIR}/peaks_${T}_ALL.tsv
 [[ -s "$PEAKS" ]] || { echo "$T: no $PEAKS (no significant k-mer peaks, or not copied yet), skipped"; exit 0; }
-OUT=${D29}/noperm${SUF}; mkdir -p "$OUT"
+OUT=${D29}/noperm${SUF}${TAGSUF}; mkdir -p "$OUT"
 GFF1=$(ls $GFF_GLOB 2>/dev/null | head -1 || true)
 if (( $(ls $GFF_GLOB 2>/dev/null | wc -l) > 1 )); then        # several per-chromosome GFFs: join the genes once
   GFF1=${D29}/b73_v5_genes.gff3

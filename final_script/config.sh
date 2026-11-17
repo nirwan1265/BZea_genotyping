@@ -173,10 +173,12 @@ KMER_NOISY_SIGMA=0.15               # pools with sigma above this are flagged NO
 SAMPLE_LISTS=${FINAL_DIR}/sample_lists   # clean controls + exclusions (see QC_NOTES.md)
 
 # ---- Association mapping (steps 25-26) ----
-PHENO=${FINAL_DIR}/../data/phenotypes/BZea_spats_BLUEs_combined.csv   # step 28: plot name, traits, Sequencing_ID (2023+2025)
+PHENO=${PHENO:-${FINAL_DIR}/../data/phenotypes/BZea_spats_BLUEs_combined.csv}   # step 28: plot name, traits, Sequencing_ID (2023+2025)
 # old flowering-time file: ${FINAL_DIR}/../data/phenotypes/BZea_FloweringTime_spats_BLUE_weighted.csv
-TRAITS="DTS DTA ASI PH EH EN BW BL SL SPAD SPAD2 Prolif Kinki NBR LAE StPu StPi"   # trait columns in PHENO (ST left out: ~all 0)
-D25=${D21}/assoc                    # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
+TRAITS=${TRAITS:-"DTS DTA ASI PH EH EN BW BL SL SPAD SPAD2 Prolif Kinki NBR LAE StPu StPi"}   # trait columns in PHENO (ST left out: ~all 0)
+ASSOC_TAG=${ASSOC_TAG:-}             # optional run name, e.g. y2023 (one year's BLUEs): own folders assoc_<tag>, ..._<tag>
+TAGSUF=${ASSOC_TAG:+_$ASSOC_TAG}
+D25=${D21}/assoc${TAGSUF}           # step-25 inputs (dosage, SEG indicator, LOCO K, pheno)
 # D26 is set below, after ASSOC_FIXED_COL (one folder per fixed effect)
 D29=${D21}/joint_qtl                # step-29 joint multi-QTL model with per-taxon effects
 D32=${KMER_DIR}/sourmash           # step-32 k-mer sketches (sourmash) for population structure
@@ -186,7 +188,7 @@ ASSOC_GROUP_COL=none                # extra scans per group: TAXON (Zd/Zl/Zv/Zx)
 ASSOC_FIXED_COL=${ASSOC_FIXED_COL:-TAXON}   # fixed effect in the all-plots scan: TAXON (default), SUBTAXON (mexicana split
                                     # by race), or F1FAMILY (check only; over-corrects). Override: sbatch --export=ALL,ASSOC_FIXED_COL=SUBTAXON
 ASSOC_SUF=$( [[ "$ASSOC_FIXED_COL" == TAXON ]] && echo "" || echo "_${ASSOC_FIXED_COL,,}" )
-D26=${D21}/assoc_gridlmm_spats${ASSOC_SUF}   # step-26 scans, permutations, Manhattan plots (two-year BLUEs; _subtaxon etc.)
+D26=${D21}/assoc_gridlmm_spats${ASSOC_SUF}${TAGSUF}   # step-26 scans, permutations, Manhattan plots (two-year BLUEs; _subtaxon etc.)
 ASSOC_MIN_N=20                      # groups with fewer plots are not scanned
 ASSOC_GROUP_MIN_CARRIERS=10         # per-group scans: at least this many carrier plots in the group
 ASSOC_PERM_PER_TASK=10              # permutations per array task: sbatch --array=1-100 -> 1,000

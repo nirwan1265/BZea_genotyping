@@ -1,0 +1,1199 @@
+QTL	QTL_window	gene	chr	start	end	gwas_mlog10p	gene_name	family	GO_biological_process
+Q1	chr2:9450000	Zm00001eb066840	chr2	2886268	2890822	5.99	Reticulon-like protein	RETICULON-LIKE PROTEIN B11	response to bacterium
+Q1	chr2:9450000	Zm00001eb066850	chr2	2911896	2915015	6.1	Carboxylesterase SOBER1	CARBOXYLESTERASE OS04G0669600-RELATED	
+Q1	chr2:9450000	Zm00001eb066860	chr2	2915350	2918621	6.1	Carboxylesterase SOBER1	LYSOPHOSPHOLIPASE-LIKE PROTEIN 1	
+Q1	chr2:9450000	Zm00001eb066870	chr2	2919662	2922709	6.1	OSJNBa0043A12.20-like protein	F12F1.11-RELATED	
+Q1	chr2:9450000	Zm00001eb066880	chr2	2922762	2927275	6.1	EH domain-containing protein 1	OS04G0669300 PROTEIN	endocytosis;protein homooligomerization
+Q1	chr2:9450000	Zm00001eb066890	chr2	2965929	2966902	6.1	Ethylene-responsive transcription factor 7	OS04G0669200 PROTEIN	regulation of DNA-templated transcription
+Q1	chr2:9450000	Zm00001eb066900	chr2	2967234	2971603	6.1	Alternative oxidase	TRIACYLGLYCEROL LIPASE-LIKE PROTEIN	
+Q1	chr2:9450000	Zm00001eb066910	chr2	2971783	2975610	6.1	Ubiquinol oxidase	UBIQUINOL OXIDASE	alternative respiration
+Q1	chr2:9450000	Zm00001eb066920	chr2	3041700	3045505	6.27	Ubiquinol oxidase	UBIQUINOL OXIDASE 4, CHLOROPLASTIC_CHROMOPLASTIC	alternative respiration
+Q1	chr2:9450000	Zm00001eb066930	chr2	3056014	3057522	6.27	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb066940	chr2	3062476	3065036	6.27	Ubiquitin-conjugating enzyme E2 11	UBIQUITIN-CONJUGATING ENZYME E2 30	protein polyubiquitination;protein ubiquitination
+Q1	chr2:9450000	Zm00001eb066950	chr2	3066447	3071166	6.27	Actin-related protein 8	ACTIN-RELATED PROTEIN 8	cytoskeleton organization
+Q1	chr2:9450000	Zm00001eb066960	chr2	3075300	3076727	6.27	Heavy metal-associated isoprenylated plant protein 39	OS04G0667600 PROTEIN	
+Q1	chr2:9450000	Zm00001eb066970	chr2	3078578	3081708	6.27	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb066980	chr2	3170359	3175414	6.74	SKP1-like protein 4	OS01G0553400 PROTEIN	
+Q1	chr2:9450000	Zm00001eb066990	chr2	3176554	3181867	6.74			
+Q1	chr2:9450000	Zm00001eb067000	chr2	3249953	3261488	6.21	SKP1-like protein 4	OS01G0553400 PROTEIN	
+Q1	chr2:9450000	Zm00001eb067010	chr2	3268089	3273396	6.21			
+Q1	chr2:9450000	Zm00001eb067020	chr2	3278746	3279430	6.21			
+Q1	chr2:9450000	Zm00001eb067030	chr2	3285151	3285660	6.21	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb067040	chr2	3285398	3288154	6.21	Fe2OG dioxygenase domain-containing protein	2-OXOGLUTARATE-DEPENDENT DIOXYGENASE 21, CHLOROPLASTIC	
+Q1	chr2:9450000	Zm00001eb067050	chr2	3285690	3286396	6.21			
+Q1	chr2:9450000	Zm00001eb067060	chr2	3323816	3325638	6.22	Flavonol synthase_flavanone 3-hydroxylase	KAR-UP OXIDOREDUCTASE 1	
+Q1	chr2:9450000	Zm00001eb067070	chr2	3330188	3331198	6.22			
+Q1	chr2:9450000	Zm00001eb067080	chr2	3330434	3341636	6.22	Kinesin-like calmodulin binding protein	KINESIN-LIKE PROTEIN KIN-14E	microtubule-based movement
+Q1	chr2:9450000	Zm00001eb067090	chr2	3342370	3343068	6.22	Dirigent protein	DIRIGENT PROTEIN	phenylpropanoid biosynthetic process
+Q1	chr2:9450000	Zm00001eb067100	chr2	3343699	3344584	6.22			
+Q1	chr2:9450000	Zm00001eb067110	chr2	3343874	3344235	6.22	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb067120	chr2	3344713	3346080	6.22	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb067130	chr2	3348965	3351879	6.22	Trafficking protein particle complex subunit	TRAFFICKING PROTEIN PARTICLE COMPLEX SUBUNIT	
+Q1	chr2:9450000	Zm00001eb067140	chr2	3354853	3355547	6.22	VQ motif family protein	VQ MOTIF-CONTAINING PROTEIN 17-RELATED	
+Q1	chr2:9450000	Zm00001eb067150	chr2	3355668	3359412	6.22	Putative plastid-lipid-associated protein 13 chloroplastic	PLASTID-LIPID-ASSOCIATED PROTEIN 13, CHLOROPLASTIC-RELATED	
+Q1	chr2:9450000	Zm00001eb067160	chr2	3359604	3364278	6.22	Zinc finger C-x8-C-x5-C-x3-H type family protein	ZINC FINGER C-X8-C-X5-C-X3-H TYPE FAMILY PROTEIN	regulation of gene expression;regulation of RNA metabolic process
+Q1	chr2:9450000	Zm00001eb067170	chr2	3364812	3365939	6.22	Uncharacterized protein	OS04G0665666 PROTEIN	
+Q1	chr2:9450000	Zm00001eb067180	chr2	3368183	3374940	6.22	leucine--tRNA ligase	LEUCINE--TRNA LIGASE	translation;tRNA aminoacylation for protein translation;leucyl-tRNA aminoacylation;post-embryonic development;reproductive structure development;aminoacyl-tRNA metabolism involved in translational fidelity
+Q1	chr2:9450000	Zm00001eb067190	chr2	3376438	3379835	6.22	HTH myb-type domain-containing protein	MYB FAMILY TRANSCRIPTION FACTOR PHL5	regulation of DNA-templated transcription
+Q1	chr2:9450000	Zm00001eb067200	chr2	3382447	3386524	6.22	SWIB complex BAF60b domain-containing protein	OS04G0665500 PROTEIN	
+Q1	chr2:9450000	Zm00001eb067210	chr2	3454709	3458432	5.79	Cell division protein FtsZ homolog 1 chloroplastic	CELL DIVISION PROTEIN FTSZ HOMOLOG 1, CHLOROPLASTIC	microtubule-based process;cell division
+Q1	chr2:9450000	Zm00001eb067220	chr2	3460623	3463259	5.79	Cox19 family protein (CHCH motif)	COX19 FAMILY PROTEIN (CHCH MOTIF)	
+Q1	chr2:9450000	Zm00001eb067230	chr2	3463670	3467594	5.79	Beta-fructofuranosidase, insoluble isoenzyme 7	BETA-FRUCTOFURANOSIDASE, INSOLUBLE ISOENZYME 7	carbohydrate metabolic process
+Q1	chr2:9450000	Zm00001eb067240	chr2	3468891	3469346	5.79	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb067250	chr2	3503079	3505630	5.79	Beta-fructofuranosidase, insoluble isoenzyme 7	BETA-FRUCTOFURANOSIDASE, INSOLUBLE ISOENZYME 5	carbohydrate metabolic process
+Q1	chr2:9450000	Zm00001eb067260	chr2	3507285	3510028	5.79	Beta-fructofuranosidase, insoluble isoenzyme 7	BETA-FRUCTOFURANOSIDASE, INSOLUBLE ISOENZYME 6	carbohydrate metabolic process
+Q1	chr2:9450000	Zm00001eb067270	chr2	3630367	3636867	5.29			
+Q1	chr2:9450000	Zm00001eb067280	chr2	3660610	3664418	5.29			
+Q1	chr2:9450000	Zm00001eb067290	chr2	3667477	3671517	5.29			
+Q1	chr2:9450000	Zm00001eb067300	chr2	3667589	3668550	5.29			
+Q1	chr2:9450000	Zm00001eb067310	chr2	3679307	3681157	5.29			
+Q1	chr2:9450000	Zm00001eb067320	chr2	3681300	3684965	5.29			
+Q1	chr2:9450000	Zm00001eb067330	chr2	3684795	3686481	5.29			
+Q1	chr2:9450000	Zm00001eb067340	chr2	3688358	3696793	5.29			
+Q1	chr2:9450000	Zm00001eb067350	chr2	3701279	3706867	5.29			
+Q1	chr2:9450000	Zm00001eb067360	chr2	3727794	3730055	5.29			
+Q1	chr2:9450000	Zm00001eb067370	chr2	3806463	3812678	5.23			
+Q1	chr2:9450000	Zm00001eb067380	chr2	3821277	3823550	5.23			
+Q1	chr2:9450000	Zm00001eb067390	chr2	3829678	3830168	5.23			
+Q1	chr2:9450000	Zm00001eb067400	chr2	3829704	3830752	5.23			
+Q1	chr2:9450000	Zm00001eb067410	chr2	3834824	3867453	5.23			
+Q1	chr2:9450000	Zm00001eb067420	chr2	3852710	3853485	5.23			
+Q1	chr2:9450000	Zm00001eb067430	chr2	3862803	3863760	5.23			
+Q1	chr2:9450000	Zm00001eb067440	chr2	3870858	3874582	5.23			
+Q1	chr2:9450000	Zm00001eb067450	chr2	3874151	3879742	5.23			
+Q1	chr2:9450000	Zm00001eb067460	chr2	3921681	3929603	5.3			
+Q1	chr2:9450000	Zm00001eb067470	chr2	3970351	3971860	5.3			
+Q1	chr2:9450000	Zm00001eb067480	chr2	3981151	3982204	5.3			
+Q1	chr2:9450000	Zm00001eb067490	chr2	3990808	3994851	5.3			
+Q1	chr2:9450000	Zm00001eb067500	chr2	4020809	4025787	5.3			
+Q1	chr2:9450000	Zm00001eb067510	chr2	4034420	4036126	5.3			
+Q1	chr2:9450000	Zm00001eb067520	chr2	4057206	4059253	5.3			
+Q1	chr2:9450000	Zm00001eb067530	chr2	4060869	4086613	5.3			
+Q1	chr2:9450000	Zm00001eb067540	chr2	4069337	4070148	5.3			
+Q1	chr2:9450000	Zm00001eb067550	chr2	4086656	4089357	5.3			
+Q1	chr2:9450000	Zm00001eb067560	chr2	4138711	4143513	5.28			
+Q1	chr2:9450000	Zm00001eb067570	chr2	4154309	4154768	5.28			
+Q1	chr2:9450000	Zm00001eb067580	chr2	4202372	4213234	5.72			
+Q1	chr2:9450000	Zm00001eb067590	chr2	4214599	4217463	5.72			
+Q1	chr2:9450000	Zm00001eb067600	chr2	4221315	4224942	5.72			
+Q1	chr2:9450000	Zm00001eb067610	chr2	4263315	4267702	5.72			
+Q1	chr2:9450000	Zm00001eb067620	chr2	4268093	4269451	5.72			
+Q1	chr2:9450000	Zm00001eb067630	chr2	4323027	4323329	5.72			
+Q1	chr2:9450000	Zm00001eb067640	chr2	4332388	4335549	5.72			
+Q1	chr2:9450000	Zm00001eb067650	chr2	4336217	4338303	5.72			
+Q1	chr2:9450000	Zm00001eb067660	chr2	4382883	4389740	5.72			
+Q1	chr2:9450000	Zm00001eb067670	chr2	4384782	4385454	5.72			
+Q1	chr2:9450000	Zm00001eb067680	chr2	4390448	4393284	5.72			
+Q1	chr2:9450000	Zm00001eb067690	chr2	4392446	4396981	5.72			
+Q1	chr2:9450000	Zm00001eb067700	chr2	4400533	4405426	5.65			
+Q1	chr2:9450000	Zm00001eb067710	chr2	4412855	4417145	5.65			
+Q1	chr2:9450000	Zm00001eb067720	chr2	4429546	4436182	5.65			
+Q1	chr2:9450000	Zm00001eb067730	chr2	4439390	4443025	5.65			
+Q1	chr2:9450000	Zm00001eb067740	chr2	4493424	4497434	5.65			
+Q1	chr2:9450000	Zm00001eb067750	chr2	4540165	4547139	5.7			
+Q1	chr2:9450000	Zm00001eb067760	chr2	4562569	4563108	5.7			
+Q1	chr2:9450000	Zm00001eb067770	chr2	4562597	4564860	5.7			
+Q1	chr2:9450000	Zm00001eb067780	chr2	4563164	4564080	5.7			
+Q1	chr2:9450000	Zm00001eb067790	chr2	4566322	4569070	5.7			
+Q1	chr2:9450000	Zm00001eb067800	chr2	4586958	4588082	5.7			
+Q1	chr2:9450000	Zm00001eb067810	chr2	4588368	4598962	5.7			
+Q1	chr2:9450000	Zm00001eb067820	chr2	4601883	4603635	6.13			
+Q1	chr2:9450000	Zm00001eb067830	chr2	4602296	4603740	6.13			
+Q1	chr2:9450000	Zm00001eb067840	chr2	4645147	4654777	6.13			
+Q1	chr2:9450000	Zm00001eb067850	chr2	4648483	4649204	6.13			
+Q1	chr2:9450000	Zm00001eb067860	chr2	4657587	4660258	6.13			
+Q1	chr2:9450000	Zm00001eb067870	chr2	4663189	4663862	6.13			
+Q1	chr2:9450000	Zm00001eb067880	chr2	4667863	4668305	6.13			
+Q1	chr2:9450000	Zm00001eb067890	chr2	4694033	4696176	6.13			
+Q1	chr2:9450000	Zm00001eb067900	chr2	4742135	4744158	5.93			
+Q1	chr2:9450000	Zm00001eb067910	chr2	4801613	4802460	5.98			
+Q1	chr2:9450000	Zm00001eb067920	chr2	4809816	4815225	5.98			
+Q1	chr2:9450000	Zm00001eb067930	chr2	4850418	4850804	5.98			
+Q1	chr2:9450000	Zm00001eb067940	chr2	4850829	4851137	5.98			
+Q1	chr2:9450000	Zm00001eb067950	chr2	4851359	4853625	5.98			
+Q1	chr2:9450000	Zm00001eb067960	chr2	4855857	4868903	5.98			
+Q1	chr2:9450000	Zm00001eb067970	chr2	4891459	4891896	5.98			
+Q1	chr2:9450000	Zm00001eb067980	chr2	4892377	4897638	5.98			
+Q1	chr2:9450000	Zm00001eb067990	chr2	4898267	4903547	6.65			
+Q1	chr2:9450000	Zm00001eb068000	chr2	4901603	4908717	6.65			
+Q1	chr2:9450000	Zm00001eb068010	chr2	4905091	4905836	6.65			
+Q1	chr2:9450000	Zm00001eb068020	chr2	4919285	4924076	6.65			
+Q1	chr2:9450000	Zm00001eb068030	chr2	4921185	4922006	6.65			
+Q1	chr2:9450000	Zm00001eb068040	chr2	4925777	4928552	6.65			
+Q1	chr2:9450000	Zm00001eb068050	chr2	4928914	4932716	6.65			
+Q1	chr2:9450000	Zm00001eb068060	chr2	5057527	5057903	6.22			
+Q1	chr2:9450000	Zm00001eb068070	chr2	5060644	5062912	6.22			
+Q1	chr2:9450000	Zm00001eb068080	chr2	5064334	5068050	6.22			
+Q1	chr2:9450000	Zm00001eb068090	chr2	5068448	5069866	6.22			
+Q1	chr2:9450000	Zm00001eb068100	chr2	5069992	5072345	6.22			
+Q1	chr2:9450000	Zm00001eb068110	chr2	5072534	5077073	6.22			
+Q1	chr2:9450000	Zm00001eb068120	chr2	5083602	5086546	6.22			
+Q1	chr2:9450000	Zm00001eb068130	chr2	5109992	5114497	6.02			
+Q1	chr2:9450000	Zm00001eb068140	chr2	5114965	5118794	6.02			
+Q1	chr2:9450000	Zm00001eb068150	chr2	5115922	5116220	6.02			
+Q1	chr2:9450000	Zm00001eb068160	chr2	5124123	5128764	6.02			
+Q1	chr2:9450000	Zm00001eb068170	chr2	5128532	5132655	6.02			
+Q1	chr2:9450000	Zm00001eb068180	chr2	5159080	5159529	6.02			
+Q1	chr2:9450000	Zm00001eb068190	chr2	5160032	5160502	6.02			
+Q1	chr2:9450000	Zm00001eb068200	chr2	5160857	5178782	6.02			
+Q1	chr2:9450000	Zm00001eb068210	chr2	5182496	5184068	6.02			
+Q1	chr2:9450000	Zm00001eb068220	chr2	5189516	5191100	6.02			
+Q1	chr2:9450000	Zm00001eb068230	chr2	5193401	5198628	6.02			
+Q1	chr2:9450000	Zm00001eb068240	chr2	5198476	5207987	6.37			
+Q1	chr2:9450000	Zm00001eb068250	chr2	5221852	5222343	6.37			
+Q1	chr2:9450000	Zm00001eb068260	chr2	5222477	5223120	6.37			
+Q1	chr2:9450000	Zm00001eb068270	chr2	5276473	5279529	6.37			
+Q1	chr2:9450000	Zm00001eb068280	chr2	5280848	5283996	6.37			
+Q1	chr2:9450000	Zm00001eb068290	chr2	5294319	5299347	6.37			
+Q1	chr2:9450000	Zm00001eb068300	chr2	5299155	5301965	6.76			
+Q1	chr2:9450000	Zm00001eb068310	chr2	5302769	5303560	6.76			
+Q1	chr2:9450000	Zm00001eb068320	chr2	5305017	5305795	6.76			
+Q1	chr2:9450000	Zm00001eb068330	chr2	5306055	5310282	6.76			
+Q1	chr2:9450000	Zm00001eb068340	chr2	5310926	5319323	6.76			
+Q1	chr2:9450000	Zm00001eb068350	chr2	5320702	5330537	6.76			
+Q1	chr2:9450000	Zm00001eb068360	chr2	5359855	5360814	6.76			
+Q1	chr2:9450000	Zm00001eb068370	chr2	5438902	5443679	6.61			
+Q1	chr2:9450000	Zm00001eb068380	chr2	5438961	5440097	6.61			
+Q1	chr2:9450000	Zm00001eb068390	chr2	5454352	5458511	6.61			
+Q1	chr2:9450000	Zm00001eb068400	chr2	5495785	5499845	6.61			
+Q1	chr2:9450000	Zm00001eb068410	chr2	5529723	5531676	7.07			
+Q1	chr2:9450000	Zm00001eb068420	chr2	5532422	5551926	7.07			
+Q1	chr2:9450000	Zm00001eb068430	chr2	5551332	5551926	7.07			
+Q1	chr2:9450000	Zm00001eb068440	chr2	5576701	5582910	7.07			
+Q1	chr2:9450000	Zm00001eb068450	chr2	5577038	5578956	7.07			
+Q1	chr2:9450000	Zm00001eb068460	chr2	5626938	5627462	7.03			
+Q1	chr2:9450000	Zm00001eb068470	chr2	5668648	5675187	7.03			
+Q1	chr2:9450000	Zm00001eb068480	chr2	5675935	5676738	7.03			
+Q1	chr2:9450000	Zm00001eb068490	chr2	5703380	5706503	7.3			
+Q1	chr2:9450000	Zm00001eb068500	chr2	5707591	5708411	7.3			
+Q1	chr2:9450000	Zm00001eb068510	chr2	5710774	5711624	7.3			
+Q1	chr2:9450000	Zm00001eb068520	chr2	5718909	5722821	7.3			
+Q1	chr2:9450000	Zm00001eb068530	chr2	5767267	5769005	7.3			
+Q1	chr2:9450000	Zm00001eb068540	chr2	5770048	5777741	7.3			
+Q1	chr2:9450000	Zm00001eb068550	chr2	5893895	5900903	8.33	Crossover junction endonuclease EME1B	CROSSOVER JUNCTION ENDONUCLEASE MMS4	resolution of meiotic recombination intermediates;DNA repair;double-strand break repair;response to UV;response to high light intensity;response to gamma radiation;replication fork processing;mitotic intra-S DNA damage checkpoint signaling
+Q1	chr2:9450000	Zm00001eb068560	chr2	5932470	5933450	8.33	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb068570	chr2	5973892	5977963	8.33	Zinc finger (Ubiquitin-hydrolase) domain-containing protein	BRAP2 RING ZNF UBP DOMAIN-CONTAINING PROTEIN 1	Ras protein signal transduction;protein ubiquitination
+Q1	chr2:9450000	Zm00001eb068580	chr2	6027648	6031578	8.53	glycerol kinase	GLYCEROL KINASE	carbohydrate metabolic process;glycerol-3-phosphate metabolic process;triglyceride metabolic process;glycerol catabolic process;glycerol-3-phosphate biosynthetic process
+Q1	chr2:9450000	Zm00001eb068590	chr2	6033910	6038042	8.53	Ubiquitin carboxyl-terminal hydrolase 22	UBIQUITIN CARBOXYL-TERMINAL HYDROLASE	protein deubiquitination
+Q1	chr2:9450000	Zm00001eb068600	chr2	6039859	6044069	8.53	EamA domain-containing protein	OS04G0645600 PROTEIN	
+Q1	chr2:9450000	Zm00001eb068610	chr2	6047087	6047964	8.53	DNA-binding WRKY	VQ MOTIF-CONTAINING PROTEIN 11	
+Q1	chr2:9450000	Zm00001eb068620	chr2	6049798	6063389	8.53	Tetratricopeptide repeat (TPR)-like superfamily protein	PROTEIN REDUCED CHLOROPLAST COVERAGE 3	chloroplast localization
+Q1	chr2:9450000	Zm00001eb068630	chr2	6069618	6077606	8.53	Synaptotagmin-5	SYNAPTOTAGMIN-5	
+Q1	chr2:9450000	Zm00001eb068640	chr2	6108815	6115505	8.59	Chloride channel protein	CHLORIDE CHANNEL-LIKE PROTEIN CLC-G-RELATED	chloride transport;transmembrane transport;chloride transmembrane transport
+Q1	chr2:9450000	Zm00001eb068650	chr2	6132820	6134000	8.59	36.4 kDa proline-rich protein	BIFUNCTIONAL INHIBITOR_LIPID-TRANSFER PROTEIN_SEED STORAGE 2S ALBUMIN SUPERFAMILY PROTEIN	
+Q1	chr2:9450000	Zm00001eb068660	chr2	6134997	6136220	8.59	36.4 kDa proline-rich protein	OS04G0644400 PROTEIN	
+Q1	chr2:9450000	Zm00001eb068670	chr2	6136221	6140916	8.59	Ubiquitin-associated (UBA)_TS-N domain-containing protein	NEDD8 ULTIMATE BUSTER 1	regulation of ubiquitin-dependent protein catabolic process
+Q1	chr2:9450000	Zm00001eb068680	chr2	6209960	6211040	8.83	Sterile alpha motif (SAM) domain-containing protein	OS04G0644100 PROTEIN	
+Q1	chr2:9450000	Zm00001eb068690	chr2	6210209	6210643	8.83			
+Q1	chr2:9450000	Zm00001eb068700	chr2	6216615	6218832	8.83	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb068710	chr2	6224824	6242096	8.83	Cyclic nucleotide-gated ion channel 9	CYCLIC NUCLEOTIDE-GATED ION CHANNEL 5-RELATED	monoatomic ion transport;monoatomic ion transmembrane transport;transmembrane transport
+Q1	chr2:9450000	Zm00001eb068720	chr2	6225755	6228738	8.83	Pentatricopeptide repeat-containing protein mitochondrial	OS04G0643700 PROTEIN	
+Q1	chr2:9450000	Zm00001eb068730	chr2	6231431	6243883	8.83	Fe2OG dioxygenase domain-containing protein	FLAVONOL SYNTHASE_FLAVANONE 3-HYDROXYLASE-LIKE	
+Q1	chr2:9450000	Zm00001eb068740	chr2	6234669	6235126	8.83			
+Q1	chr2:9450000	Zm00001eb068750	chr2	6242835	6243880	8.83	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb068760	chr2	6244333	6252354	8.83	3-oxoacyl-[acyl-carrier-protein] synthase III chloroplastic	BETA-KETOACYL-[ACYL-CARRIER-PROTEIN] SYNTHASE III, CHLOROPLASTIC	fatty acid metabolic process;fatty acid biosynthetic process;fatty acid elongation
+Q1	chr2:9450000	Zm00001eb068770	chr2	6256399	6261275	8.83	Glutamyl-tRNA(Gln) amidotransferase subunit A, chloroplastic_mitochondrial	GLUTAMYL-TRNA(GLN) AMIDOTRANSFERASE SUBUNIT A, MITOCHONDRIAL	translation;mitochondrial translation;glutaminyl-tRNAGln biosynthesis via transamidation
+Q1	chr2:9450000	Zm00001eb068780	chr2	6261538	6266019	8.83	V-type proton ATPase subunit D	V-TYPE PROTON ATPASE SUBUNIT D	vacuolar acidification;proton transmembrane transport
+Q1	chr2:9450000	Zm00001eb068790	chr2	6268936	6269755	8.83	Protein kinase family protein		
+Q1	chr2:9450000	Zm00001eb068800	chr2	6290653	6291172	8.83			
+Q1	chr2:9450000	Zm00001eb068810	chr2	6296916	6297617	8.83	Golgin candidate 6		intracellular protein transport;vesicle-mediated transport;Golgi vesicle transport
+Q1	chr2:9450000	Zm00001eb068820	chr2	6302096	6309079	8.39	TAFII55 protein conserved region domain-containing protein	TATA-BOX BINDING PROTEIN ASSOCIATED FACTOR 7	transcription initiation at RNA polymerase II promoter;RNA polymerase II preinitiation complex assembly
+Q1	chr2:9450000	Zm00001eb068830	chr2	6309520	6314522	8.39	MYND-type domain-containing protein		
+Q1	chr2:9450000	Zm00001eb068840	chr2	6346518	6350814	8.39	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb068850	chr2	6351463	6355035	8.39	RNI-like superfamily protein		
+Q1	chr2:9450000	Zm00001eb068860	chr2	6360537	6364503	8.39	ATEB1A	OS04G0642100 PROTEIN	microtubule bundle formation;thigmotropism;regulation of microtubule polymerization or depolymerization;protein localization to microtubule;spindle assembly
+Q1	chr2:9450000	Zm00001eb068870	chr2	6365005	6370475	8.39	F-box domain-containing protein		
+Q1	chr2:9450000	Zm00001eb068880	chr2	6388344	6395347	8.39	ABC transporter B family member 19	MYCOBACTIN IMPORT ATP-BINDING_PERMEASE PROTEIN IRTB	regulation of cell size;response to blue light;photomorphogenesis;response to auxin;response to brassinosteroid;auxin polar transport;positive gravitropism;auxin export across the plasma membrane;anthocyanin accumulation in tissues in response to UV light;stamen development;flower structural organization;regulation of unidimensional cell growth;transmembrane transport;plant epidermal cell differentiation;positive regulation of brassinosteroid mediated signaling pathway
+Q1	chr2:9450000	Zm00001eb068890	chr2	6401840	6407627	8.1	Copper transport protein	ATP-DEPENDENT RNA HELICASE DDX17-RELATED	copper ion transmembrane transport
+Q1	chr2:9450000	Zm00001eb068900	chr2	6407804	6408763	8.1	Transcription factor PRE3	TRANSCRIPTION FACTOR ILI2	regulation of DNA-templated transcription;regulation of growth
+Q1	chr2:9450000	Zm00001eb068910	chr2	6413586	6418199	8.1	RNA recognition motif containing protein	RNA-BINDING (RRM_RBD_RNP MOTIFS) FAMILY PROTEIN	
+Q1	chr2:9450000	Zm00001eb068920	chr2	6415987	6416455	8.1			
+Q1	chr2:9450000	Zm00001eb068930	chr2	6418268	6420034	8.1	Glutaredoxin family protein	OS04G0641300 PROTEIN	
+Q1	chr2:9450000	Zm00001eb068940	chr2	6445171	6446198	8.1	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb068950	chr2	6532116	6534502	8.28	Pectinesterase	OS04G0641200 PROTEIN	cell wall modification;pectin catabolic process
+Q1	chr2:9450000	Zm00001eb068960	chr2	6553257	6565633	8.28	DNA-directed RNA polymerase subunit beta	DNA-DIRECTED RNA POLYMERASE D SUBUNIT 2B-RELATED	DNA-templated transcription;DNA-templated transcription elongation;transcription initiation at RNA polymerase II promoter
+Q1	chr2:9450000	Zm00001eb068970	chr2	6553988	6554566	8.28	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb068980	chr2	6571690	6577708	8.28	Loricrin-related	EMB|CAB89363.1	
+Q1	chr2:9450000	Zm00001eb068990	chr2	6580195	6581145	8.28	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069000	chr2	6672361	6675839	8.4	shikimate kinase	SHIKIMATE KINASE 3, CHLOROPLASTIC	aromatic amino acid family biosynthetic process;chorismate biosynthetic process;shikimate metabolic process
+Q1	chr2:9450000	Zm00001eb069010	chr2	6674765	6684979	8.4	ABC1 atypical kinase-like domain-containing protein	OS04G0640500 PROTEIN	
+Q1	chr2:9450000	Zm00001eb069020	chr2	6685185	6688048	8.4	Uncharacterized protein	ATP-DEPENDENT ZINC METALLOPROTEASE-RELATED	proteolysis
+Q1	chr2:9450000	Zm00001eb069030	chr2	6686266	6688000	8.4	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069040	chr2	6699887	6700205	8.4	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069050	chr2	6705825	6706130	8.25	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069060	chr2	6710493	6710948	8.25	Uncharacterized protein		protein ubiquitination
+Q1	chr2:9450000	Zm00001eb069070	chr2	6711963	6717890	8.25	FGGY carbohydrate kinase domain-containing protein	FGGY CARBOHYDRATE KINASE DOMAIN-CONTAINING PROTEIN	carbohydrate metabolic process;pentose metabolic process
+Q1	chr2:9450000	Zm00001eb069080	chr2	6759772	6761340	8.25	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069090	chr2	6771378	6772485	8.25	Precursor elicitor peptide1		
+Q1	chr2:9450000	Zm00001eb069100	chr2	6812956	6814899	8.92	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069110	chr2	6813049	6814994	8.92	Transferase	OS04G0638100 PROTEIN	
+Q1	chr2:9450000	Zm00001eb069120	chr2	6818797	6822708	8.92	CID domain-containing protein	ENTH_VHS FAMILY PROTEIN	mRNA 3'-end processing
+Q1	chr2:9450000	Zm00001eb069130	chr2	6826979	6837305	8.92	UBP1-associated protein 2A	UBP1-ASSOCIATED PROTEINS 1A-RELATED	
+Q1	chr2:9450000	Zm00001eb069140	chr2	6899841	6905677	9.12	DOG1 domain-containing protein	TRANSCRIPTION FACTOR TGA4	
+Q1	chr2:9450000	Zm00001eb069150	chr2	6918600	6919810	9.12	Epidermal patterning factor-like protein	PROTEIN EPIDERMAL PATTERNING FACTOR 1	post-embryonic development;guard cell differentiation;stomatal complex development
+Q1	chr2:9450000	Zm00001eb069160	chr2	7004561	7010509	9.12	Formation of crista junctions protein 1	MICOS COMPLEX SUBUNIT MIC60	cristae formation
+Q1	chr2:9450000	Zm00001eb069170	chr2	7034712	7035152	9.12			
+Q1	chr2:9450000	Zm00001eb069180	chr2	7036555	7039765	9.12	BTB_POZ domain-containing protein	OS04G0636500 PROTEIN	protein ubiquitination
+Q1	chr2:9450000	Zm00001eb069190	chr2	7040782	7044366	9.12	Uncharacterized protein	CYS OR MET METABOLISM PYRIDOXAL-PHOSPHATE-DEPENDENT ENZYME	
+Q1	chr2:9450000	Zm00001eb069200	chr2	7077409	7081984	9.12	Syntaxin-51	SYNTAXIN-51-RELATED	vesicle docking
+Q1	chr2:9450000	Zm00001eb069210	chr2	7081458	7086629	9.12	Micronuclear linker histone polyprotein-like protein	OS04G0636200 PROTEIN	
+Q1	chr2:9450000	Zm00001eb069220	chr2	7088037	7090619	9.12	Hexosyltransferase	GALACTURONOSYLTRANSFERASE 10-RELATED	pectin biosynthetic process
+Q1	chr2:9450000	Zm00001eb069230	chr2	7119917	7120370	9.23	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069240	chr2	7121658	7122690	9.23	RNA-binding (RRM_RBD_RNP motifs) family protein		
+Q1	chr2:9450000	Zm00001eb069250	chr2	7122760	7127630	9.23	Protein kinase domain-containing protein		
+Q1	chr2:9450000	Zm00001eb069260	chr2	7128514	7132111	9.23	Heterogeneous nuclear ribonucleoprotein U-like protein 1	B30.2_SPRY DOMAIN-CONTAINING PROTEIN-RELATED	alternative mRNA splicing, via spliceosome
+Q1	chr2:9450000	Zm00001eb069270	chr2	7132297	7137455	9.23	Double-strand break repair protein	DOUBLE-STRAND BREAK REPAIR PROTEIN MRE11	telomere maintenance;double-strand break repair via homologous recombination;double-strand break repair;double-strand break repair via nonhomologous end joining;mitotic G2 DNA damage checkpoint signaling;meiotic DNA double-strand break formation;mitochondrial double-strand break repair via homologous recombination
+Q1	chr2:9450000	Zm00001eb069280	chr2	7137885	7140459	9.23	LSM7-like	U6 SNRNA-ASSOCIATED SM-LIKE PROTEIN LSM7	mRNA splicing, via spliceosome;nuclear-transcribed mRNA catabolic process
+Q1	chr2:9450000	Zm00001eb069290	chr2	7141311	7144214	9.23	GNAT transcription factor	N-TERMINAL AMINO-ACID N(ALPHA)-ACETYLTRANSFERASE NATA	
+Q1	chr2:9450000	Zm00001eb069300	chr2	7145824	7148868	9.23	Pentatricopeptide repeat-containing protein mitochondrial	MITOCHONDRIAL GROUP I INTRON SPLICING FACTOR CCM1-RELATED	RNA processing;mitochondrion organization
+Q1	chr2:9450000	Zm00001eb069310	chr2	7149737	7150323	9.23	Wound induced protein	WOUND INDUCED PROTEIN	
+Q1	chr2:9450000	Zm00001eb069320	chr2	7152074	7152775	9.23	Wound induced protein	WOUND INDUCED PROTEIN	
+Q1	chr2:9450000	Zm00001eb069330	chr2	7156800	7157042	9.23	Wound induced protein	WOUND INDUCED PROTEIN	
+Q1	chr2:9450000	Zm00001eb069340	chr2	7158797	7159438	9.23			
+Q1	chr2:9450000	Zm00001eb069350	chr2	7221940	7228281	8.82	Diacylglycerol kinase	DIACYLGLYCEROL KINASE 5	
+Q1	chr2:9450000	Zm00001eb069360	chr2	7265351	7267011	8.82	4Fe-4S ferredoxin-type domain-containing protein	SUCCINATE DEHYDROGENASE [UBIQUINONE] IRON-SULFUR SUBUNIT, MITOCHONDRIAL	aerobic respiration;respiratory electron transport chain
+Q1	chr2:9450000	Zm00001eb069370	chr2	7267370	7268555	8.82	Histidine kinase_HSP90-like ATPase domain-containing protein		
+Q1	chr2:9450000	Zm00001eb069380	chr2	7275256	7276068	8.82	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069390	chr2	7321183	7329390	8.99	Eukaryotic translation initiation factor 3 subunit C	EUKARYOTIC TRANSLATION INITIATION FACTOR 3 SUBUNIT C-RELATED	formation of cytoplasmic translation initiation complex;cytoplasmic translational initiation;translational initiation
+Q1	chr2:9450000	Zm00001eb069400	chr2	7346959	7349538	8.99	Protein kinase superfamily protein	PROTEIN KINASE SUPERFAMILY PROTEIN	
+Q1	chr2:9450000	Zm00001eb069410	chr2	7351565	7355742	8.99	Receptor-like serine_threonine-protein kinase	RECEPTOR-LIKE SERINE_THREONINE-PROTEIN KINASE	
+Q1	chr2:9450000	Zm00001eb069420	chr2	7356896	7363498	8.99	Eukaryotic translation initiation factor 3 subunit C	EUKARYOTIC TRANSLATION INITIATION FACTOR 3 SUBUNIT C-RELATED	
+Q1	chr2:9450000	Zm00001eb069430	chr2	7367578	7368351	8.99			
+Q1	chr2:9450000	Zm00001eb069440	chr2	7371014	7375990	8.99	Receptor-like serine_threonine-protein kinase SD1-8	PROTEIN KINASE DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb069450	chr2	7378262	7382880	8.99	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069460	chr2	7378281	7382025	8.99	Receptor-like serine_threonine-protein kinase	CYSTEINE-RICH RECEPTOR-LIKE PROTEIN KINASE 15	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069470	chr2	7421431	7422054	9.22	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069480	chr2	7453132	7458023	9.22	Receptor-like serine_threonine-protein kinase	PROTEIN KINASE DOMAIN-CONTAINING PROTEIN	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069490	chr2	7502924	7512297	9.35	Receptor-like serine_threonine-protein kinase	PROTEIN KINASE DOMAIN-CONTAINING PROTEIN	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069500	chr2	7527615	7531876	9.35	Receptor-like protein kinase FERONIA	OS05G0318700 PROTEIN	
+Q1	chr2:9450000	Zm00001eb069510	chr2	7546615	7549060	9.35	AATL2	AND HISTIDINE SPECIFIC TRANSPORTER, PUTATIVE, EXPRESSED-RELATED	amino acid transmembrane transport
+Q1	chr2:9450000	Zm00001eb069520	chr2	7552259	7555502	9.35	Protein kinase domain-containing protein	CYSTEINE-RICH RECEPTOR-LIKE PROTEIN KINASE 15	
+Q1	chr2:9450000	Zm00001eb069530	chr2	7563630	7567612	9.35	Receptor-like serine_threonine-protein kinase	CYSTEINE-RICH RECEPTOR-LIKE PROTEIN KINASE 15	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069540	chr2	7641712	7643146	9.35	F-box only protein 7	F-BOX DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb069550	chr2	7662383	7666944	9.35	Receptor-like serine_threonine-protein kinase	CYSTEINE-RICH RECEPTOR-LIKE PROTEIN KINASE 15	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069560	chr2	7668274	7668744	9.35	F-box domain-containing protein		
+Q1	chr2:9450000	Zm00001eb069570	chr2	7801245	7809642	9.56	Peroxisome biogenesis protein 22	OS04G0629000 PROTEIN	peroxisome organization
+Q1	chr2:9450000	Zm00001eb069580	chr2	7808909	7813658	9.56	Histone-lysine N-methyltransferase ATXR2	SET DOMAIN-CONTAINING PROTEIN	chromatin remodeling
+Q1	chr2:9450000	Zm00001eb069590	chr2	7867732	7868193	9.56	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069600	chr2	7872651	7878101	9.56	Kinesin-like protein	KINESIN-LIKE PROTEIN KIN-14H	microtubule-based movement
+Q1	chr2:9450000	Zm00001eb069610	chr2	7882325	7885992	9.56	Peptidase A1 domain-containing protein		proteolysis
+Q1	chr2:9450000	Zm00001eb069620	chr2	7912743	7917905	9.5	Protein SDA1	PROTEIN SDA1 HOMOLOG	ribosomal large subunit export from nucleus;ribosomal large subunit biogenesis
+Q1	chr2:9450000	Zm00001eb069630	chr2	7919187	7922105	9.5	Organic cation_carnitine transporter 4	ORGANIC CATION_CARNITINE TRANSPORTER 4	transmembrane transport
+Q1	chr2:9450000	Zm00001eb069640	chr2	7996379	7998404	9.5	GH16 domain-containing protein	XYLOGLUCAN ENDOTRANSGLUCOSYLASE_HYDROLASE PROTEIN 9	carbohydrate metabolic process
+Q1	chr2:9450000	Zm00001eb069650	chr2	8017520	8018027	9.21			
+Q1	chr2:9450000	Zm00001eb069660	chr2	8019107	8022464	9.21			
+Q1	chr2:9450000	Zm00001eb069670	chr2	8096469	8101524	9.21	Receptor-like serine_threonine-protein kinase	D-MANNOSE BINDING LECTIN FAMILY PROTEIN, EXPRESSED	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069680	chr2	8293121	8298189	9.21	Receptor-like serine_threonine-protein kinase	RECEPTOR-LIKE SERINE_THREONINE-PROTEIN KINASE	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069690	chr2	8389816	8394063	9.27	Receptor-like serine_threonine-protein kinase	RECEPTOR-LIKE SERINE_THREONINE-PROTEIN KINASE	recognition of pollen;response to other organism
+Q1	chr2:9450000	Zm00001eb069700	chr2	8407382	8410729	9.22	Transcription factor bHLH112	OS04G0631600 PROTEIN	regulation of DNA-templated transcription;regulation of transcription by RNA polymerase II
+Q1	chr2:9450000	Zm00001eb069710	chr2	8495211	8496717	9.22			
+Q1	chr2:9450000	Zm00001eb069720	chr2	8500009	8501054	9.42	Uncharacterized protein	OS04G0627300 PROTEIN	xylem development
+Q1	chr2:9450000	Zm00001eb069730	chr2	8503734	8504609	9.42			
+Q1	chr2:9450000	Zm00001eb069740	chr2	8505955	8506518	9.42	Glycoside hydrolase family 13 N-terminal domain-containing protein		
+Q1	chr2:9450000	Zm00001eb069750	chr2	8507703	8509200	9.42			
+Q1	chr2:9450000	Zm00001eb069760	chr2	8512098	8512403	9.42			
+Q1	chr2:9450000	Zm00001eb069770	chr2	8517482	8517916	9.42	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069780	chr2	8518034	8519783	9.42			
+Q1	chr2:9450000	Zm00001eb069790	chr2	8544348	8545086	9.42	Uncharacterized protein	OS04G0627300 PROTEIN	xylem development
+Q1	chr2:9450000	Zm00001eb069800	chr2	8557781	8558443	9.42	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069810	chr2	8558144	8558446	9.42	ABC transporter domain-containing protein	ABC TRANSPORTER I FAMILY MEMBER 1	cytochrome complex assembly;transmembrane transport;cytochrome c biosynthetic process
+Q1	chr2:9450000	Zm00001eb069820	chr2	8559566	8562993	9.42	F-box domain-containing protein	F-BOX DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb069830	chr2	8565928	8566233	9.42			
+Q1	chr2:9450000	Zm00001eb069840	chr2	8571080	8572143	9.42	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069850	chr2	8574530	8576278	9.42	CRIB domain-containing protein	CRIB DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb069860	chr2	8578785	8585758	9.42	Uncharacterized protein		xylem development
+Q1	chr2:9450000	Zm00001eb069870	chr2	8582647	8583522	9.42	ABC transporter domain-containing protein	ABC TRANSPORTER I FAMILY MEMBER 1	cytochrome complex assembly;transmembrane transport;cytochrome c biosynthetic process
+Q1	chr2:9450000	Zm00001eb069880	chr2	8585821	8595898	9.42	F-box domain-containing protein	F-BOX DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb069890	chr2	8588643	8589500	9.42	ABC transporter domain-containing protein	ABC TRANSPORTER I FAMILY MEMBER 1	cytochrome complex assembly;transmembrane transport;cytochrome c biosynthetic process
+Q1	chr2:9450000	Zm00001eb069900	chr2	8634724	8635572	8.2	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069910	chr2	8635914	8636312	8.2	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069920	chr2	8636430	8638179	8.2	CRIB domain-containing protein	CRIB DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb069930	chr2	8650157	8650895	8.2	Uncharacterized protein	OS04G0627300 PROTEIN	xylem development
+Q1	chr2:9450000	Zm00001eb069940	chr2	8653864	8654739	8.2			
+Q1	chr2:9450000	Zm00001eb069950	chr2	8656084	8656647	8.2			
+Q1	chr2:9450000	Zm00001eb069960	chr2	8657832	8659202	8.2			
+Q1	chr2:9450000	Zm00001eb069970	chr2	8666429	8667277	8.2	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb069980	chr2	8667619	8668017	8.2			
+Q1	chr2:9450000	Zm00001eb069990	chr2	8668135	8669883	8.2	CRIB domain-containing protein	CRIB DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb070000	chr2	8672426	8673164	8.2	Uncharacterized protein	OS04G0627300 PROTEIN	xylem development
+Q1	chr2:9450000	Zm00001eb070010	chr2	8693642	8694076	8.2	ABC transporter I family member 1	ABC TRANSPORTER I FAMILY MEMBER 1	cytochrome complex assembly;transmembrane transport;cytochrome c biosynthetic process
+Q1	chr2:9450000	Zm00001eb070020	chr2	8705069	8705632	8.75	Glycoside hydrolase family 13 N-terminal domain-containing protein		
+Q1	chr2:9450000	Zm00001eb070030	chr2	8706848	8707765	8.75	F-box domain-containing protein	F-BOX DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb070040	chr2	8708665	8721432	8.75	F-box only protein 7	F-BOX DOMAIN-CONTAINING PROTEIN	
+Q1	chr2:9450000	Zm00001eb070050	chr2	8726215	8732576	8.75	Homeodomain leucine zipper family IV protein	HOMEOBOX-LEUCINE ZIPPER PROTEIN MERISTEM L1	regulation of DNA-templated transcription;regulation of transcription by RNA polymerase II;cell differentiation
+Q1	chr2:9450000	Zm00001eb070060	chr2	8732670	8739468	8.75	ARM repeat superfamily protein	AP-5 COMPLEX SUBUNIT ZETA-1	
+Q1	chr2:9450000	Zm00001eb070070	chr2	8869804	8870761	8.62	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb070080	chr2	8871304	8875910	8.62	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb070090	chr2	8876417	8877054	8.62			
+Q1	chr2:9450000	Zm00001eb070100	chr2	8941776	8944427	8.09	CHL-Zea mays Chloroplastic lipocalin	CHLOROPLASTIC LIPOCALIN	
+Q1	chr2:9450000	Zm00001eb070110	chr2	8945002	8948446	8.09	AT hook motif family protein	PROTEIN METABOLIC NETWORK MODULATOR 1	
+Q1	chr2:9450000	Zm00001eb070120	chr2	8988064	8993282	8.09	Polyadenylate-binding protein-interacting protein 3	POLYADENYLATE-BINDING PROTEIN INTERACTING PROTEIN	stress granule assembly
+Q1	chr2:9450000	Zm00001eb070130	chr2	9018164	9022465	8.09	Polyadenylate-binding protein RBP45C	RNA-BINDING PROTEIN L	
+Q1	chr2:9450000	Zm00001eb070140	chr2	9074731	9075492	8.09	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb070150	chr2	9165604	9173285	8.09	Oxidoreductase_ zinc ion binding protein	QUINONE OXIDOREDUCTASE-LIKE PROTEIN 2	
+Q1	chr2:9450000	Zm00001eb070160	chr2	9173968	9174510	8.09	Speckle-type POZ protein-like protein		protein ubiquitination
+Q1	chr2:9450000	Zm00001eb070170	chr2	9225725	9228152	9.32	cinnamyl-alcohol dehydrogenase	CINNAMYL ALCOHOL DEHYDROGENASE 1-RELATED	
+Q1	chr2:9450000	Zm00001eb070180	chr2	9228502	9241764	9.32	Putative cinnamyl alcohol dehydrogenase 1	NUCLEOLAR PRE-RIBOSOMAL-ASSOCIATED PROTEIN 1	maturation of LSU-rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA);maturation of 5.8S rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)
+Q1	chr2:9450000	Zm00001eb070190	chr2	9244793	9249447	9.32	Myosin heavy chain-related	OS04G0625000 PROTEIN	
+Q1	chr2:9450000	Zm00001eb070200	chr2	9250862	9251772	9.32	60S ribosomal protein L27	60S RIBOSOMAL PROTEIN L27	translation
+Q1	chr2:9450000	Zm00001eb070210	chr2	9251161	9251652	9.32			
+Q1	chr2:9450000	Zm00001eb070220	chr2	9309119	9310141	9.59	Uncharacterized protein	OS04G0624701 PROTEIN	
+Q1	chr2:9450000	Zm00001eb070230	chr2	9317725	9328657	9.59	Starch synthase 3 chloroplastic_amyloplastic	OS04G0624600 PROTEIN	amylopectin biosynthetic process;starch biosynthetic process
+Q1	chr2:9450000	Zm00001eb070240	chr2	9335340	9338253	9.59	Autophagy-related protein	AUTOPHAGY-RELATED PROTEIN	autophagosome assembly;mitophagy;cellular response to nitrogen starvation;autophagosome maturation
+Q1	chr2:9450000	Zm00001eb070250	chr2	9343742	9346810	9.59	Aminomethyltransferase	AMINOMETHYLTRANSFERASE, MITOCHONDRIAL	glycine catabolic process;glycine decarboxylation via glycine cleavage system
+Q1	chr2:9450000	Zm00001eb070260	chr2	9347873	9351267	9.59	Signal recognition particle 14 kDa protein	SIGNAL RECOGNITION PARTICLE 14 KDA PROTEIN	SRP-dependent cotranslational protein targeting to membrane;SRP-dependent cotranslational protein targeting to membrane, translocation
+Q1	chr2:9450000	Zm00001eb070270	chr2	9352213	9355778	9.59	(S)-2-hydroxy-acid oxidase	GLYCOLATE OXIDASE 2	defense response to bacterium;hydrogen peroxide biosynthetic process
+Q1	chr2:9450000	Zm00001eb070280	chr2	9356706	9360966	9.59	(S)-2-hydroxy-acid oxidase	GLYCOLATE OXIDASE 3	
+Q1	chr2:9450000	Zm00001eb070290	chr2	9390521	9395302	9.59	SPARK domain-containing protein	OS07G0557700 PROTEIN	
+Q1	chr2:9450000	Zm00001eb070300	chr2	9392160	9393080	9.59	Peptidase M1 alanyl aminopeptidase C-terminal domain-containing protein		
+Q1	chr2:9450000	Zm00001eb070310	chr2	9429781	9435001	9.87	Lysine-specific histone demethylase 1	LYSINE-SPECIFIC HISTONE DEMETHYLASE 1A	polyamine catabolic process;spermine catabolic process;thermospermine catabolic process
+Q1	chr2:9450000	Zm00001eb070320	chr2	9436920	9439187	9.87	Transcription factor GTE7	OS04G0622000 PROTEIN	regulation of transcription by RNA polymerase II
+Q1	chr2:9450000	Zm00001eb070330	chr2	9441863	9445882	9.87	Potassium transporter	POTASSIUM TRANSPORTER 26	potassium ion transmembrane transport
+Q1	chr2:9450000	Zm00001eb070340	chr2	9446150	9447205	9.87	Uncharacterized protein		
+Q1	chr2:9450000	Zm00001eb070350	chr2	9450544	9451112	9.87	Nitrate-induced NOI protein		
+Q1	chr2:9450000	Zm00001eb070360	chr2	9451510	9460941	9.87	SIT4 phosphatase-associated family protein	SIT4 PHOSPHATASE-ASSOCIATED FAMILY PROTEIN	regulation of signal transduction
+Q1	chr2:9450000	Zm00001eb070370	chr2	9454144	9454728	9.87			
+Q1	chr2:9450000	Zm00001eb070380	chr2	9459707	9460269	9.87			
+Q1	chr2:9450000	Zm00001eb070390	chr2	9537038	9540702	9.81			
+Q1	chr2:9450000	Zm00001eb070400	chr2	9565132	9579223	9.81			
+Q1	chr2:9450000	Zm00001eb070410	chr2	9580444	9585378	9.81			
+Q1	chr2:9450000	Zm00001eb070420	chr2	9583582	9584688	9.81			
+Q1	chr2:9450000	Zm00001eb070430	chr2	9692256	9693734	9.85			
+Q1	chr2:9450000	Zm00001eb070440	chr2	9726744	9727292	9.65			
+Q1	chr2:9450000	Zm00001eb070450	chr2	9759532	9763627	9.65			
+Q1	chr2:9450000	Zm00001eb070460	chr2	9805826	9809758	9.16			
+Q1	chr2:9450000	Zm00001eb070470	chr2	9809189	9809552	9.16			
+Q1	chr2:9450000	Zm00001eb070480	chr2	9810244	9814460	9.16			
+Q1	chr2:9450000	Zm00001eb070490	chr2	9851711	9854373	9.16			
+Q1	chr2:9450000	Zm00001eb070500	chr2	9871059	9872524	9.16			
+Q1	chr2:9450000	Zm00001eb070510	chr2	9877378	9881780	9.16			
+Q1	chr2:9450000	Zm00001eb070520	chr2	9881902	9883765	9.16			
+Q1	chr2:9450000	Zm00001eb070530	chr2	9927372	9928096	9.16			
+Q1	chr2:9450000	Zm00001eb070540	chr2	9932664	9933735	9.16			
+Q1	chr2:9450000	Zm00001eb070550	chr2	9934642	9938829	9.16			
+Q1	chr2:9450000	Zm00001eb070560	chr2	9987244	9988576	9.16			
+Q1	chr2:9450000	Zm00001eb070570	chr2	9988564	9992916	9.16			
+Q1	chr2:9450000	Zm00001eb070580	chr2	10008051	10032711	8.83			
+Q1	chr2:9450000	Zm00001eb070590	chr2	10014580	10015174	8.83			
+Q1	chr2:9450000	Zm00001eb070600	chr2	10034629	10035918	8.83			
+Q1	chr2:9450000	Zm00001eb070610	chr2	10053684	10054325	8.83			
+Q1	chr2:9450000	Zm00001eb070620	chr2	10053907	10054209	8.83			
+Q1	chr2:9450000	Zm00001eb070630	chr2	10060289	10061638	8.83			
+Q1	chr2:9450000	Zm00001eb070640	chr2	10062153	10063191	8.83			
+Q1	chr2:9450000	Zm00001eb070650	chr2	10062758	10063188	8.83			
+Q1	chr2:9450000	Zm00001eb070660	chr2	10064311	10065275	8.83			
+Q1	chr2:9450000	Zm00001eb070670	chr2	10066495	10068423	8.83			
+Q1	chr2:9450000	Zm00001eb070680	chr2	10262810	10263715	9.2			
+Q1	chr2:9450000	Zm00001eb070690	chr2	10270001	10271592	9.2			
+Q1	chr2:9450000	Zm00001eb070700	chr2	10277610	10282470	9.2			
+Q1	chr2:9450000	Zm00001eb070710	chr2	10293377	10293835	9.2			
+Q1	chr2:9450000	Zm00001eb070720	chr2	10368460	10371705	9.2			
+Q1	chr2:9450000	Zm00001eb070730	chr2	10373674	10394680	9.2			
+Q1	chr2:9450000	Zm00001eb070740	chr2	10410646	10413453	9.34			
+Q1	chr2:9450000	Zm00001eb070750	chr2	10415518	10420008	9.34			
+Q1	chr2:9450000	Zm00001eb070760	chr2	10419739	10427346	9.34			
+Q1	chr2:9450000	Zm00001eb070770	chr2	10434418	10441107	9.34			
+Q1	chr2:9450000	Zm00001eb070780	chr2	10446170	10446995	9.34			
+Q1	chr2:9450000	Zm00001eb070790	chr2	10447449	10456396	9.34			
+Q1	chr2:9450000	Zm00001eb070800	chr2	10451322	10452524	9.34			
+Q1	chr2:9450000	Zm00001eb070810	chr2	10452857	10454442	9.34			
+Q1	chr2:9450000	Zm00001eb070820	chr2	10486991	10493173	9.34			
+Q1	chr2:9450000	Zm00001eb070830	chr2	10590867	10591632	8.44			
+Q1	chr2:9450000	Zm00001eb070840	chr2	10591682	10600792	8.46			
+Q1	chr2:9450000	Zm00001eb070850	chr2	10599350	10600760	8.46			
+Q1	chr2:9450000	Zm00001eb070860	chr2	10606155	10611276	8.46			
+Q1	chr2:9450000	Zm00001eb070870	chr2	10608935	10609448	8.46			
+Q1	chr2:9450000	Zm00001eb070880	chr2	10725320	10725748	8.58			
+Q1	chr2:9450000	Zm00001eb070890	chr2	10764746	10767489	8.58			
+Q1	chr2:9450000	Zm00001eb070900	chr2	10768354	10772071	8.58			
+Q1	chr2:9450000	Zm00001eb070910	chr2	10777189	10782330	8.58			
+Q1	chr2:9450000	Zm00001eb070920	chr2	10784082	10787914	8.58			
+Q1	chr2:9450000	Zm00001eb070930	chr2	10789138	10829069	8.83			
+Q1	chr2:9450000	Zm00001eb070940	chr2	10865664	10870719	8.83			
+Q1	chr2:9450000	Zm00001eb070950	chr2	10871290	10873920	8.83			
+Q1	chr2:9450000	Zm00001eb070960	chr2	10874164	10879379	8.83			
+Q1	chr2:9450000	Zm00001eb070970	chr2	10882589	10885183	8.83			
+Q1	chr2:9450000	Zm00001eb070980	chr2	10888929	10891978	8.83			
+Q1	chr2:9450000	Zm00001eb070990	chr2	10891244	10891910	8.83			
+Q1	chr2:9450000	Zm00001eb071000	chr2	10905155	10905500	9.89			
+Q1	chr2:9450000	Zm00001eb071010	chr2	10906854	10909344	9.89			
+Q1	chr2:9450000	Zm00001eb071020	chr2	10910219	10911631	9.89			
+Q1	chr2:9450000	Zm00001eb071030	chr2	10911780	10914338	9.89			
+Q1	chr2:9450000	Zm00001eb071040	chr2	10925155	10929339	9.89			
+Q1	chr2:9450000	Zm00001eb071050	chr2	10932899	10934336	9.89			
+Q1	chr2:9450000	Zm00001eb071060	chr2	10947358	10949952	9.89			
+Q1	chr2:9450000	Zm00001eb071070	chr2	10950151	10955332	9.89			
+Q1	chr2:9450000	Zm00001eb071080	chr2	10962182	10966238	9.89			
+Q1	chr2:9450000	Zm00001eb071090	chr2	10991728	11000682	10.23			
+Q1	chr2:9450000	Zm00001eb071100	chr2	11002411	11004079	10.23			
+Q1	chr2:9450000	Zm00001eb071110	chr2	11019291	11022327	10.23			
+Q1	chr2:9450000	Zm00001eb071120	chr2	11041429	11043734	10.23			
+Q1	chr2:9450000	Zm00001eb071130	chr2	11044019	11049101	10.23			
+Q1	chr2:9450000	Zm00001eb071140	chr2	11057294	11061519	10.23			
+Q1	chr2:9450000	Zm00001eb071150	chr2	11064248	11069500	10.23			
+Q1	chr2:9450000	Zm00001eb071160	chr2	11114272	11115597	9.92			
+Q1	chr2:9450000	Zm00001eb071170	chr2	11172889	11179487	9.92			
+Q1	chr2:9450000	Zm00001eb071180	chr2	11180903	11181537	9.92			
+Q1	chr2:9450000	Zm00001eb071190	chr2	11182201	11183511	9.92			
+Q1	chr2:9450000	Zm00001eb071200	chr2	11221799	11223486	9.22			
+Q1	chr2:9450000	Zm00001eb071210	chr2	11238776	11248239	9.22			
+Q2	chr2:39750000	Zm00001eb079150	chr2	37637166	37657516	10.58	Galactose oxidase_kelch repeat superfamily protein	OS04G0487100 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079160	chr2	37658326	37661497	10.58	protein-serine_threonine phosphatase		
+Q2	chr2:39750000	Zm00001eb079170	chr2	37826807	37829331	10.69	Malate synthase	MALATE SYNTHASE 1-RELATED	glyoxylate cycle
+Q2	chr2:39750000	Zm00001eb079180	chr2	37829738	37839826	10.69	Acid phosphatase_vanadium-dependent haloperoxidase related	OS04G0486900 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079190	chr2	37868022	37869937	10.69	HORMA domain-containing protein	MITOTIC SPINDLE ASSEMBLY CHECKPOINT PROTEIN MAD2A	
+Q2	chr2:39750000	Zm00001eb079200	chr2	37957050	37960534	10.89	F-box protein SKIP14	F-BOX PROTEIN SKIP14	
+Q2	chr2:39750000	Zm00001eb079210	chr2	37961935	37964724	10.89	Restriction endonuclease type II-like superfamily protein	EXONUCLEASE, PHAGE-TYPE_RECB, C-TERMINAL DOMAIN-CONTAINING PROTEIN-RELATED	DNA repair
+Q2	chr2:39750000	Zm00001eb079220	chr2	37967776	37976021	10.89	Glucose-6-phosphate 1-dehydrogenase	GLUCOSE-6-PHOSPHATE 1-DEHYDROGENASE	glucose metabolic process;pentose-phosphate shunt;pentose-phosphate shunt, oxidative branch
+Q2	chr2:39750000	Zm00001eb079230	chr2	38074758	38079923	10.85	Plant UBX domain-containing protein 1	PLANT UBX DOMAIN-CONTAINING PROTEIN 1	protein-containing complex disassembly
+Q2	chr2:39750000	Zm00001eb079240	chr2	38079047	38079713	10.85			
+Q2	chr2:39750000	Zm00001eb079250	chr2	38093014	38096373	10.85			
+Q2	chr2:39750000	Zm00001eb079260	chr2	38097415	38102247	10.92	Serine_threonine protein phosphatase 2A regulatory subunit	SERINE_THREONINE PROTEIN PHOSPHATASE 2A REGULATORY SUBUNIT	signal transduction
+Q2	chr2:39750000	Zm00001eb079270	chr2	38102351	38105335	10.92	PCI domain-containing protein	26S PROTEASOME NON-ATPASE REGULATORY SUBUNIT 6	proteasome-mediated ubiquitin-dependent protein catabolic process
+Q2	chr2:39750000	Zm00001eb079280	chr2	38108833	38113942	10.92	Elongator complex protein 3	ELONGATOR COMPLEX PROTEIN 3	tRNA wobble base 5-methoxycarbonylmethyl-2-thiouridinylation
+Q2	chr2:39750000	Zm00001eb079290	chr2	38116290	38130025	10.92	Galactose oxidase_kelch repeat superfamily protein	KELCH DOMAIN-CONTAINING PROTEIN 4	
+Q2	chr2:39750000	Zm00001eb079300	chr2	38268924	38280593	11.04	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079310	chr2	38279418	38284289	11.04	Steroid nuclear receptor ligand-binding	OS04G0483200 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079320	chr2	38344785	38346417	10.8	BCL-2 binding anthanogene-1	BCL-2 BINDING ANTHANOGENE-1	
+Q2	chr2:39750000	Zm00001eb079330	chr2	38353850	38358621	10.8	Topoisomerase-like protein	OS04G0482800 PROTEIN	negative regulation of DNA-templated transcription
+Q2	chr2:39750000	Zm00001eb079340	chr2	38359449	38365550	10.8	AAA+ ATPase domain-containing protein	PROTEIN STICHEL-LIKE 2	DNA replication;DNA-templated DNA replication;DNA repair;DNA biosynthetic process
+Q2	chr2:39750000	Zm00001eb079350	chr2	38407789	38413554	11.64			
+Q2	chr2:39750000	Zm00001eb079360	chr2	38426881	38429918	11.64	Mitochondrial inner membrane protease ATP23	MITOCHONDRIAL INNER MEMBRANE PROTEASE ATP23 HOMOLOG	mitochondrial proton-transporting ATP synthase complex assembly;mitochondrial protein processing
+Q2	chr2:39750000	Zm00001eb079370	chr2	38432390	38432802	11.64	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079380	chr2	38447976	38450675	11.64	peptide-methionine (S)-S-oxide reductase	PEPTIDE METHIONINE SULFOXIDE REDUCTASE A2-2	
+Q2	chr2:39750000	Zm00001eb079390	chr2	38457302	38458960	11.64	Protein JINGUBANG	F21J9.19	
+Q2	chr2:39750000	Zm00001eb079400	chr2	38457535	38457867	11.64			
+Q2	chr2:39750000	Zm00001eb079410	chr2	38568943	38574938	11.59	Protein-L-isoaspartate O-methyltransferase	PROTEIN-L-ISOASPARTATE O-METHYLTRANSFERASE	protein repair
+Q2	chr2:39750000	Zm00001eb079420	chr2	38574226	38576413	11.59	S-adenosyl-L-methionine-dependent methyltransferase superfamily protein	OS04G0481300 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079430	chr2	38583656	38599214	11.59	galactinol--sucrose galactosyltransferase	GALACTINOL--SUCROSE GALACTOSYLTRANSFERASE	
+Q2	chr2:39750000	Zm00001eb079440	chr2	38620176	38621635	11.34			
+Q2	chr2:39750000	Zm00001eb079450	chr2	38623787	38624832	11.34	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079460	chr2	38649231	38650925	11.34			
+Q2	chr2:39750000	Zm00001eb079470	chr2	38678494	38681805	11.34	Glycoside hydrolase family 5 domain-containing protein	OS04G0481200 PROTEIN	polysaccharide catabolic process
+Q2	chr2:39750000	Zm00001eb079480	chr2	38694416	38694868	11.34	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079490	chr2	38756551	38758611	11.36	Cytochrome P450 71B10	CYTOCHROME P450 71B10	
+Q2	chr2:39750000	Zm00001eb079500	chr2	38759214	38762319	11.36	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079510	chr2	38762484	38767197	11.36	SWI_SNF complex subunit SWI3A	SWI_SNF COMPLEX SUBUNIT SWI3A	
+Q2	chr2:39750000	Zm00001eb079520	chr2	38821759	38822360	11.54	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079530	chr2	38821902	38823460	11.54	High-affinity nitrate transporter	HIGH-AFFINITY NITRATE TRANSPORTER-ACTIVATING PROTEIN 2.2-RELATED	response to nitrate;nitrate transmembrane transport;nitrate assimilation
+Q2	chr2:39750000	Zm00001eb079540	chr2	38823738	38828174	11.54	Eukaryotic translation initiation factor 4B2	EUKARYOTIC TRANSLATION INITIATION FACTOR 4B1	translational initiation
+Q2	chr2:39750000	Zm00001eb079550	chr2	38829361	38829956	11.54	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079560	chr2	38844217	38844805	11.54	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079570	chr2	38844939	38845394	11.54	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079580	chr2	38848414	38848773	11.54	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079590	chr2	38965835	38969719	11.54	Transglutaminase21	PROTEIN FLX-LIKE 4	
+Q2	chr2:39750000	Zm00001eb079600	chr2	38965879	38969431	11.54			
+Q2	chr2:39750000	Zm00001eb079610	chr2	38996676	39000144	11.63	Beta-14-N-acetylglucosaminyltransferase family protein	BETA-1,4-MANNOSYL-GLYCOPROTEIN 4-BETA-N-ACETYLGLUCOSAMINYLTRANSFERASE	N-acetylglucosamine metabolic process
+Q2	chr2:39750000	Zm00001eb079620	chr2	39079521	39081473	11.63	DUF4283 domain-containing protein	DUF4283 DOMAIN-CONTAINING PROTEIN	
+Q2	chr2:39750000	Zm00001eb079630	chr2	39109123	39111336	11.63	NAC domain-containing protein		regulation of DNA-templated transcription
+Q2	chr2:39750000	Zm00001eb079640	chr2	39118514	39123657	11.63	Pentatricopeptide repeat-containing protein	OS04G0477200 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079650	chr2	39122592	39123657	11.63	OSJNBa0044K18.5-like protein		
+Q2	chr2:39750000	Zm00001eb079660	chr2	39124011	39126954	11.63	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079670	chr2	39124166	39126596	11.63	BTB_POZ domain-containing protein	OS04G0477000 PROTEIN	protein ubiquitination
+Q2	chr2:39750000	Zm00001eb079680	chr2	39224774	39227936	11.67	Actin-7		
+Q2	chr2:39750000	Zm00001eb079690	chr2	39230272	39239954	11.67	Protein kinase domain-containing protein		
+Q2	chr2:39750000	Zm00001eb079700	chr2	39382488	39394996	11.67	PB1 domain-containing protein	OS04G0476800 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079710	chr2	39398351	39398991	11.67	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079720	chr2	39399800	39404156	11.67	C2 and GRAM domain-containing protein	C2 DOMAIN-CONTAINING PROTEIN	
+Q2	chr2:39750000	Zm00001eb079730	chr2	39508057	39508611	11.67	Bowman-Birk serine protease inhibitors family domain-containing protein	BOWMAN-BIRK SERINE PROTEASE INHIBITORS FAMILY DOMAIN-CONTAINING PROTEIN	
+Q2	chr2:39750000	Zm00001eb079740	chr2	39654691	39655765	11.67	Bowman-Birk serine protease inhibitors family domain-containing protein	BOWMAN-BIRK SERINE PROTEASE INHIBITORS FAMILY DOMAIN-CONTAINING PROTEIN	
+Q2	chr2:39750000	Zm00001eb079750	chr2	39670685	39674751	11.67	Ribonuclease H2 subunit B	RIBONUCLEASE H2 SUBUNIT B	RNA catabolic process
+Q2	chr2:39750000	Zm00001eb079760	chr2	39703951	39712304	12.0	Amine oxidase	AMINE OXIDASE	amine metabolic process
+Q2	chr2:39750000	Zm00001eb079770	chr2	39710853	39712304	12.0	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079780	chr2	39712416	39713806	12.0	X8 domain-containing protein	X8 DOMAIN-CONTAINING PROTEIN	
+Q2	chr2:39750000	Zm00001eb079790	chr2	39762949	39764551	12.0	Putative 2-oxoglutarate-dependent dioxygenase AOP1	2-OXOGLUTARATE (2OG) AND FE(II)-DEPENDENT OXYGENASE SUPERFAMILY PROTEIN	
+Q2	chr2:39750000	Zm00001eb079800	chr2	39866129	39868956	12.0	Pentatricopeptide repeat-containing protein	OS04G0475500 PROTEIN	Group II intron splicing;chloroplast organization
+Q2	chr2:39750000	Zm00001eb079810	chr2	39897361	39898375	12.0			
+Q2	chr2:39750000	Zm00001eb079820	chr2	39897422	39898188	12.0	Uncharacterized protein	OS04G0475300 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079830	chr2	39899241	39901486	12.0	BRX domain-containing protein	OS04G0475250 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079840	chr2	39899241	39901626	12.0	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079850	chr2	39904048	39915031	11.71	Beta-glucosidase 12	BETA-GLUCOSIDASE 12	carbohydrate metabolic process
+Q2	chr2:39750000	Zm00001eb079860	chr2	39916618	39918106	11.71	Leucine-rich repeat-containing N-terminal plant-type domain-containing protein	LEUCINE-RICH REPEAT-CONTAINING N-TERMINAL PLANT-TYPE DOMAIN-CONTAINING PROTEIN	
+Q2	chr2:39750000	Zm00001eb079870	chr2	40120412	40131111	11.71	4-coumarate--CoA ligase	DISCO-INTERACTING PROTEIN 2	response to oxidative stress;lipid biosynthetic process;phenylpropanoid metabolic process;cellular oxidant detoxification
+Q2	chr2:39750000	Zm00001eb079880	chr2	40131590	40132303	11.71			
+Q2	chr2:39750000	Zm00001eb079890	chr2	40136770	40137925	11.71	Fon2-like cle protein1	CLE FAMILY OSCLE402 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079900	chr2	40139899	40142799	11.71	FT-interacting protein 1	OS04G0472900 PROTEIN	positive regulation of flower development;regulation of signal transduction;vegetative to reproductive phase transition of meristem
+Q2	chr2:39750000	Zm00001eb079910	chr2	40145375	40152714	11.71	OSJNBb0022F23.8-like protein	OS04G0472700 PROTEIN	regulation of nuclear division
+Q2	chr2:39750000	Zm00001eb079920	chr2	40173369	40183588	11.71	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079930	chr2	40270283	40272278	11.71	DUF295 domain-containing protein	OS08G0126400 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079940	chr2	40273701	40285111	11.71	RNA binding (RRM_RBD_RNP motifs) family protein	RNA BINDING (RRM_RBD_RNP MOTIFS) FAMILY PROTEIN	
+Q2	chr2:39750000	Zm00001eb079950	chr2	40372800	40378260	11.71	Putative WRKY transcription factor 34	OS04G0471700 PROTEIN	regulation of DNA-templated transcription;response to abscisic acid
+Q2	chr2:39750000	Zm00001eb079960	chr2	40427887	40428311	11.71	Uncharacterized protein		
+Q2	chr2:39750000	Zm00001eb079970	chr2	40565934	40572874	10.89	Hapless 8	HAPLESS PROTEIN	
+Q2	chr2:39750000	Zm00001eb079980	chr2	40575843	40579362	10.89	WPP domain-interacting protein 2	OS04G0471300 PROTEIN	
+Q2	chr2:39750000	Zm00001eb079990	chr2	40617254	40618708	10.89	OSJNBa0089K21.8-like protein	OSJNBA0089K21.8-LIKE PROTEIN	
+Q2	chr2:39750000	Zm00001eb080000	chr2	40636811	40637131	10.89			
+Q2	chr2:39750000	Zm00001eb080010	chr2	40882867	40883245	10.89	SNF2 N-terminal domain-containing protein		
+Q2	chr2:39750000	Zm00001eb080020	chr2	40898076	40899494	10.89	OSJNBa0089K21.8-like protein	OSJNBA0089K21.8-LIKE PROTEIN	
+Q2	chr2:39750000	Zm00001eb080030	chr2	40920893	40924723	10.51	OSJNBa0089K21.8-like protein	OSJNBA0089K21.8-LIKE PROTEIN	regulation of DNA-templated transcription
+Q2	chr2:39750000	Zm00001eb080040	chr2	40927703	40928055	10.51			
+Q2	chr2:39750000	Zm00001eb080050	chr2	40933974	40936891	10.51	Amino acid transporter transmembrane domain-containing protein	OS04G0470700 PROTEIN	
+Q3	chr3:184450000	Zm00001eb146930	chr3	181116214	181117091	3.41	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb146940	chr3	181125624	181127248	3.41	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb146950	chr3	181125775	181126646	3.41	Transcription repressor (Fragment)	TRANSCRIPTION REPRESSOR OFP8	negative regulation of DNA-templated transcription;regulation of brassinosteroid mediated signaling pathway
+Q3	chr3:184450000	Zm00001eb146960	chr3	181147966	181149907	3.41	Transcription repressor	TRANSCRIPTION REPRESSOR	negative regulation of DNA-templated transcription
+Q3	chr3:184450000	Zm00001eb146970	chr3	181159495	181167668	3.41	Uncharacterized protein	OS01G0863500 PROTEIN	
+Q3	chr3:184450000	Zm00001eb146980	chr3	181167755	181168131	3.41	Ataxin-2 C-terminal domain-containing protein		
+Q3	chr3:184450000	Zm00001eb146990	chr3	181215611	181225995	3.73	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147000	chr3	181224798	181225741	3.73	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147010	chr3	181227276	181228749	3.73	Duplicated homeodomain-like superfamily protein	OS01G0863300 PROTEIN	regulation of DNA-templated transcription;response to gibberellin;response to sucrose
+Q3	chr3:184450000	Zm00001eb147020	chr3	181242221	181244205	3.73	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147030	chr3	181249576	181251543	3.73	NAC domain-containing protein 90	OS01G0862800 PROTEIN	regulation of DNA-templated transcription
+Q3	chr3:184450000	Zm00001eb147040	chr3	181308683	181309890	4.2	Senescence regulator	OS01G0862600 PROTEIN	leaf senescence
+Q3	chr3:184450000	Zm00001eb147050	chr3	181309993	181314212	4.2	Sorting nexin 1	FI18122P1	retrograde transport, endosome to Golgi
+Q3	chr3:184450000	Zm00001eb147060	chr3	181326084	181328999	4.2	AB hydrolase-1 domain-containing protein	AB HYDROLASE-1 DOMAIN-CONTAINING PROTEIN	
+Q3	chr3:184450000	Zm00001eb147070	chr3	181327369	181328064	4.2	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147080	chr3	181332540	181336582	4.2	Hemerythrin HHE cation-binding domain protein	OS01G0861700 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147090	chr3	181356546	181361909	4.2	Uncharacterized protein	OS01G0860900 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147100	chr3	181360693	181361694	4.2			
+Q3	chr3:184450000	Zm00001eb147110	chr3	181366167	181368841	4.2	Glucan endo-1,3-beta-glucosidase 14	OS01G0860800 PROTEIN	carbohydrate metabolic process
+Q3	chr3:184450000	Zm00001eb147120	chr3	181373589	181374970	4.2	chitinase	CHITINASE	carbohydrate metabolic process;defense response to fungus
+Q3	chr3:184450000	Zm00001eb147130	chr3	181373610	181374922	4.2			
+Q3	chr3:184450000	Zm00001eb147140	chr3	181400773	181402109	4.27	chitinase	CHITINASE	carbohydrate metabolic process;defense response to fungus
+Q3	chr3:184450000	Zm00001eb147150	chr3	181403132	181404390	4.27	chitinase	CHITINASE	carbohydrate metabolic process;defense response to fungus
+Q3	chr3:184450000	Zm00001eb147160	chr3	181489354	181490403	4.27	chitinase	CHITINASE	carbohydrate metabolic process;defense response to fungus
+Q3	chr3:184450000	Zm00001eb147170	chr3	181490831	181493934	4.27	Ribosomal protein	RIBOSOMAL PROTEIN	translation
+Q3	chr3:184450000	Zm00001eb147180	chr3	181590230	181592010	4.0	Uncharacterized protein	ALPHA-1,6-MANNOSYL-GLYCOPROTEIN 2-BETA-N-ACETYLGLUCOSAMINYLTRANSFERASE	
+Q3	chr3:184450000	Zm00001eb147190	chr3	181593214	181594928	4.0	Ras-related protein Rab7	OS05G0536900 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147200	chr3	181595901	181603745	4.0	F-box_LRR-repeat protein	OS07G0242900 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147210	chr3	181605336	181606298	3.74	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147220	chr3	181612919	181621560	3.74	Transcription factor LG2	TRANSCRIPTION FACTOR TGA9	DNA-templated transcription;regulation of DNA-templated transcription;positive regulation of leaf development
+Q3	chr3:184450000	Zm00001eb147230	chr3	181622836	181629767	3.74	Dual specificity protein phosphatase Diacylglycerol kinase catalytic region	OS01G0859400 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147240	chr3	181671908	181674078	3.74	Protein ABSCISIC ACID-INSENSITIVE 5	PROTEIN ABSCISIC ACID-INSENSITIVE 5	regulation of DNA-templated transcription;signal transduction;response to water deprivation;response to salt stress;response to abscisic acid;seed germination;positive regulation of DNA-templated transcription;cellular response to oxygen-containing compound
+Q3	chr3:184450000	Zm00001eb147250	chr3	181675634	181677788	3.74	Alpha_beta-Hydrolases superfamily protein	OS01G0859200 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147260	chr3	181680746	181683144	3.74	Zinc finger protein WIP6	ZINC FINGER PROTEIN WIP6	regulation of DNA-templated transcription;regulation of gene expression
+Q3	chr3:184450000	Zm00001eb147270	chr3	181685831	181688745	3.74	Tubulin_FtsZ GTPase domain-containing protein		microtubule-based process
+Q3	chr3:184450000	Zm00001eb147280	chr3	181689183	181689827	3.74	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147290	chr3	181756532	181758381	3.69	Beta-16-galactosyltransferase GALT29A	BETA-1,6-GALACTOSYLTRANSFERASE GALT29A	glycoprotein biosynthetic process
+Q3	chr3:184450000	Zm00001eb147300	chr3	181756681	181758779	3.69			
+Q3	chr3:184450000	Zm00001eb147310	chr3	181761316	181765639	3.69	S-adenosyl-L-methionine-dependent methyltransferase superfamily protein	EXPRESSED PROTEIN	
+Q3	chr3:184450000	Zm00001eb147320	chr3	181989539	181995048	3.69	Transcription initiation factor TFIID subunit 12	TRANSCRIPTION INITIATION FACTOR TFIID SUBUNIT 12	DNA-templated transcription initiation;RNA polymerase II preinitiation complex assembly
+Q3	chr3:184450000	Zm00001eb147330	chr3	182094178	182118566	3.69	Transducin_WD40 repeat-like superfamily protein	GENERAL TRANSCRIPTION FACTOR 3C POLYPEPTIDE 2	regulation of DNA-templated transcription;transcription initiation at RNA polymerase III promoter;5S class rRNA transcription by RNA polymerase III
+Q3	chr3:184450000	Zm00001eb147340	chr3	182120249	182126065	3.69	Transducin_WD40 repeat-like superfamily protein	DNA EXCISION REPAIR PROTEIN ERCC-8	protein polyubiquitination;transcription-coupled nucleotide-excision repair;proteasome-mediated ubiquitin-dependent protein catabolic process
+Q3	chr3:184450000	Zm00001eb147350	chr3	182229489	182230830	3.41	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147360	chr3	182231298	182232422	3.41			
+Q3	chr3:184450000	Zm00001eb147370	chr3	182305498	182311752	3.41			
+Q3	chr3:184450000	Zm00001eb147380	chr3	182426494	182431031	3.44			
+Q3	chr3:184450000	Zm00001eb147390	chr3	182432719	182435891	3.44	Protein BUD31-like protein 1	TRANSCRIPTIONAL REGULATOR ATRX	
+Q3	chr3:184450000	Zm00001eb147400	chr3	182485165	182490393	3.44	GABA transporter 1	GABA TRANSPORTER 1	
+Q3	chr3:184450000	Zm00001eb147410	chr3	182527867	182538062	3.38	3-deoxy-D-manno-octulosonic-acid transferase N-terminal domain-containing protein	3-DEOXY-D-MANNO-OCTULOSONIC ACID TRANSFERASE, MITOCHONDRIAL-RELATED	lipid A biosynthetic process
+Q3	chr3:184450000	Zm00001eb147420	chr3	182667191	182681277	3.38	protein-serine_threonine phosphatase	RNA POLYMERASE II C-TERMINAL DOMAIN PHOSPHATASE-LIKE 2	regulation of transcription by RNA polymerase II;response to osmotic stress;hormone-mediated signaling pathway;negative regulation of DNA-templated transcription
+Q3	chr3:184450000	Zm00001eb147430	chr3	182785043	182790288	3.38	RNA-binding protein-related	RNA-BINDING PROTEIN-LIKE PROTEIN	
+Q3	chr3:184450000	Zm00001eb147440	chr3	182979051	182979866	3.41			
+Q3	chr3:184450000	Zm00001eb147450	chr3	183010220	183010787	4.25			
+Q3	chr3:184450000	Zm00001eb147460	chr3	183010240	183011324	4.25	Pleckstrin homology domain-containing protein 1	PROTEIN OPY1	
+Q3	chr3:184450000	Zm00001eb147470	chr3	183013243	183015845	4.25	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147480	chr3	183018093	183024610	4.25	Auxin transporter-like protein 1	AUXIN TRANSPORTER-LIKE PROTEIN 1	
+Q3	chr3:184450000	Zm00001eb147490	chr3	183063306	183069604	4.25	Cell division control protein	CELL DIVISION CONTROL PROTEIN 6 HOMOLOG	DNA replication initiation;mitotic DNA replication checkpoint signaling;cell division
+Q3	chr3:184450000	Zm00001eb147500	chr3	183069517	183070200	4.25	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147510	chr3	183111513	183113625	4.26	Nematode resistance protein-like HSPRO2	NEMATODE RESISTANCE PROTEIN-LIKE HSPRO1	defense response
+Q3	chr3:184450000	Zm00001eb147520	chr3	183111566	183113411	4.26	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147530	chr3	183162579	183165091	4.26	Tetratricopeptide repeat (TPR)-like superfamily protein	OS01G0855200 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147540	chr3	183179597	183181708	4.26	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147550	chr3	183207241	183210354	4.26	Phospholipid_glycerol acyltransferase domain-containing protein	GLYCEROL-3-PHOSPHATE 2-O-ACYLTRANSFERASE 6	cutin biosynthetic process
+Q3	chr3:184450000	Zm00001eb147560	chr3	183241225	183243340	4.26	Cytochrome P450 86A1	CYTOCHROME P450 86A1	lipid metabolic process
+Q3	chr3:184450000	Zm00001eb147570	chr3	183251461	183252249	4.26	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147580	chr3	183267607	183270553	4.26			
+Q3	chr3:184450000	Zm00001eb147590	chr3	183294845	183296722	4.26	Hexosyltransferase	HEXOSYLTRANSFERASE	
+Q3	chr3:184450000	Zm00001eb147600	chr3	183311991	183312461	4.17	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147610	chr3	183336559	183342637	4.17	Exostosin family protein	EXOSTOSIN-LIKE 2	glycoprotein biosynthetic process
+Q3	chr3:184450000	Zm00001eb147620	chr3	183346031	183346936	4.17	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147630	chr3	183348157	183349724	4.17	Putative wuschel homeobox protein	WUSCHEL-RELATED HOMEOBOX 7	regulation of DNA-templated transcription;system development;plant organ development
+Q3	chr3:184450000	Zm00001eb147640	chr3	183353731	183354141	4.17	Josephin-like protein	JOSEPHIN-LIKE PROTEIN	
+Q3	chr3:184450000	Zm00001eb147650	chr3	183437310	183439190	4.24	Acetyltransferase	TRICHOTHECENE 3-O-ACETYLTRANSFERASE	
+Q3	chr3:184450000	Zm00001eb147660	chr3	183471640	183472161	4.24	DNA-directed RNA polymerase		DNA-templated transcription
+Q3	chr3:184450000	Zm00001eb147670	chr3	183474721	183476820	4.24			
+Q3	chr3:184450000	Zm00001eb147680	chr3	183480684	183481062	4.24			
+Q3	chr3:184450000	Zm00001eb147690	chr3	183561714	183562016	4.24			
+Q3	chr3:184450000	Zm00001eb147700	chr3	183568213	183573660	4.24			
+Q3	chr3:184450000	Zm00001eb147710	chr3	183584882	183586824	4.24	Duplicated homeodomain-like superfamily protein	MYB TRANSCRIPTION FACTOR	regulation of DNA-templated transcription;response to gibberellin;response to sucrose
+Q3	chr3:184450000	Zm00001eb147720	chr3	183633905	183637892	4.33	Coronatine-insensitive protein 1	CORONATINE-INSENSITIVE PROTEIN 1	
+Q3	chr3:184450000	Zm00001eb147730	chr3	183750410	183752772	4.33	Serine-threonine_tyrosine-protein kinase catalytic domain-containing protein		
+Q3	chr3:184450000	Zm00001eb147740	chr3	183835324	183837778	4.33	UPF0503 protein chloroplastic	OS01G0852400 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147750	chr3	183845653	183850280	4.33	Sedoheptulose-1,7-bisphosphatase	SEDOHEPTULOSE-1,7-BISPHOSPHATASE, CHLOROPLASTIC	carbohydrate metabolic process;gluconeogenesis
+Q3	chr3:184450000	Zm00001eb147760	chr3	183901418	183904860	4.33	Putative anion transporter 4 chloroplastic	ANION TRANSPORTER 4, CHLOROPLASTIC-RELATED	transmembrane transport
+Q3	chr3:184450000	Zm00001eb147770	chr3	183905170	183909007	4.33	Protein kinase domain-containing protein	OS02G0821400 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147780	chr3	184015422	184027538	4.33	Alpha-1,4 glucan phosphorylase	ALPHA-GLUCAN PHOSPHORYLASE 2, CYTOSOLIC	carbohydrate metabolic process;glycogen catabolic process
+Q3	chr3:184450000	Zm00001eb147790	chr3	184016095	184017022	4.33	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147800	chr3	184028326	184029975	4.33			
+Q3	chr3:184450000	Zm00001eb147810	chr3	184095701	184100409	4.33	ubiquitinyl hydrolase 1	ATAXIN-3-RELATED	protein quality control for misfolded or incompletely synthesized proteins;protein deubiquitination;proteasome-mediated ubiquitin-dependent protein catabolic process;negative regulation of TORC1 signaling;positive regulation of ERAD pathway
+Q3	chr3:184450000	Zm00001eb147820	chr3	184099434	184099815	4.33			
+Q3	chr3:184450000	Zm00001eb147830	chr3	184100819	184105104	4.33	Reticulon-like protein	RETICULON-LIKE PROTEIN B12	response to bacterium
+Q3	chr3:184450000	Zm00001eb147840	chr3	184107423	184112623	4.33	Protein kinase	FRUCTOKINASE-LIKE 1, CHLOROPLASTIC	chloroplast organization;plastid transcription
+Q3	chr3:184450000	Zm00001eb147850	chr3	184155685	184159608	4.33	Laccase	LACCASE-7	lignin catabolic process
+Q3	chr3:184450000	Zm00001eb147860	chr3	184162395	184165544	4.33	Laccase	LACCASE-6	lignin catabolic process
+Q3	chr3:184450000	Zm00001eb147870	chr3	184163403	184163702	4.33			
+Q3	chr3:184450000	Zm00001eb147880	chr3	184258714	184259801	4.09	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147890	chr3	184264432	184268263	4.09	RING-CH-type domain-containing protein	OS01G0850200 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147900	chr3	184270723	184276783	4.09	Sphingomyelin synthase-like domain-containing protein	PHOSPHATIDYLINOSITOL:CERAMIDE INOSITOLPHOSPHOTRANSFERASE	
+Q3	chr3:184450000	Zm00001eb147910	chr3	184333059	184336040	4.66	Uncharacterized protein	TIP41-LIKE PROTEIN	
+Q3	chr3:184450000	Zm00001eb147920	chr3	184419687	184421272	4.67	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb147930	chr3	184421626	184421916	4.67	Transmembrane protein	OS01G0849500 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147940	chr3	184479653	184483747	4.67	Rop guanine nucleotide exchange factor 7	ROP GUANINE NUCLEOTIDE EXCHANGE FACTOR 7	
+Q3	chr3:184450000	Zm00001eb147950	chr3	184484958	184485754	4.67	Lipid binding protein	OS01G0849000 PROTEIN	systemic acquired resistance
+Q3	chr3:184450000	Zm00001eb147960	chr3	184485726	184489521	4.67	Uncharacterized protein	OS01G0848900 PROTEIN	
+Q3	chr3:184450000	Zm00001eb147970	chr3	184577973	184582759	4.39	BEL1-like homeodomain protein 9 (Fragment)	BEL1-LIKE HOMEODOMAIN PROTEIN 9	regulation of DNA-templated transcription;regulation of transcription by RNA polymerase II
+Q3	chr3:184450000	Zm00001eb147980	chr3	184695979	184696718	4.43	Bowman-birk inhibitor1	BOWMAN-BIRK TYPE TRYPSIN INHIBITOR	
+Q3	chr3:184450000	Zm00001eb147990	chr3	184696814	184702159	4.43	NADP-dependent oxidoreductase domain-containing protein	OS05G0474600 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148000	chr3	184703146	184708420	4.43	Aldose reductase	ALDOSE REDUCTASE	
+Q3	chr3:184450000	Zm00001eb148010	chr3	184753129	184756242	4.43	Phospholipid:diacylglycerol acyltransferase 1	PHOSPHOLIPID:DIACYLGLYCEROL ACYLTRANSFERASE	lipid metabolic process
+Q3	chr3:184450000	Zm00001eb148020	chr3	184783501	184785570	4.43	CASP-like protein 5B1	CASP-LIKE PROTEIN 5B2	
+Q3	chr3:184450000	Zm00001eb148030	chr3	184787055	184789671	4.43	mannose-1-phosphate guanylyltransferase	MANNOSE-1-PHOSPHATE GUANYLYLTRANSFERASE 2-RELATED	glycoprotein biosynthetic process;GDP-mannose biosynthetic process
+Q3	chr3:184450000	Zm00001eb148040	chr3	184794115	184794761	4.43	Uncharacterized protein	OS01G0847100 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148050	chr3	184799092	184800693	4.53	Tafazzin family protein	TAFAZZIN	phospholipid metabolic process
+Q3	chr3:184450000	Zm00001eb148060	chr3	184843908	184848529	4.53	Transcription initiation factor TFIID subunit 12 domain-containing protein	TRANSCRIPTION INITIATION FACTOR TFIID SUBUNIT 12B	DNA-templated transcription initiation;RNA polymerase II preinitiation complex assembly
+Q3	chr3:184450000	Zm00001eb148070	chr3	184849049	184857048	4.53	Regulator of chromosome condensation1	ULTRAVIOLET-B RECEPTOR UVR8	
+Q3	chr3:184450000	Zm00001eb148080	chr3	184856577	184857010	4.53	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148090	chr3	184869710	184870793	4.53	Uncharacterized protein	UDP-ARABINOPYRANOSE MUTASE 3	
+Q3	chr3:184450000	Zm00001eb148100	chr3	185008171	185023058	4.53	Methyltransferase	METHYLTRANSFERASE PMT10-RELATED	
+Q3	chr3:184450000	Zm00001eb148110	chr3	185041065	185046124	4.53	Acyl-coenzyme A oxidase	ACYL-COENZYME A OXIDASE-LIKE PROTEIN	fatty acid metabolic process;fatty acid beta-oxidation;fatty acid beta-oxidation using acyl-CoA oxidase
+Q3	chr3:184450000	Zm00001eb148120	chr3	185047059	185053092	4.53	Protein HESO1	PROTEIN HESO1	polyuridylation-dependent mRNA catabolic process
+Q3	chr3:184450000	Zm00001eb148130	chr3	185093948	185095922	4.53	protein-serine_threonine phosphatase	PROTEIN PHOSPHATASE 2C 9-RELATED	regulation of intracellular signal transduction
+Q3	chr3:184450000	Zm00001eb148140	chr3	185096251	185096784	4.53	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148150	chr3	185248896	185250301	4.53			
+Q3	chr3:184450000	Zm00001eb148160	chr3	185254407	185255266	4.53	K Homology domain-containing protein		
+Q3	chr3:184450000	Zm00001eb148170	chr3	185269855	185278240	4.53	Peptidase M1 membrane alanine aminopeptidase domain-containing protein	ALPHA-1,6-MANNOSYL-GLYCOPROTEIN 2-BETA-N-ACETYLGLUCOSAMINYLTRANSFERASE	
+Q3	chr3:184450000	Zm00001eb148180	chr3	185278963	185280163	4.53	Translation elongation factor IF5A C-terminal domain-containing protein		
+Q3	chr3:184450000	Zm00001eb148190	chr3	185310483	185313706	4.33	HTH myb-type domain-containing protein	OS01G0844900 PROTEIN	regulation of DNA-templated transcription
+Q3	chr3:184450000	Zm00001eb148200	chr3	185384851	185398147	4.33	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148210	chr3	185426584	185428333	4.28	Aspartic proteinase PCS1	OS01G0844500 PROTEIN	proteolysis
+Q3	chr3:184450000	Zm00001eb148220	chr3	185577281	185584847	4.23	S-acyltransferase	S-ACYLTRANSFERASE	
+Q3	chr3:184450000	Zm00001eb148230	chr3	185587466	185588440	4.23			
+Q3	chr3:184450000	Zm00001eb148240	chr3	185593142	185595800	4.23	Laccase	LACCASE-17	lignin catabolic process
+Q3	chr3:184450000	Zm00001eb148250	chr3	185642759	185643563	4.08	Cyclin-dependent protein kinase inhibitor SMR4		regulation of DNA endoreduplication
+Q3	chr3:184450000	Zm00001eb148260	chr3	185689387	185707335	4.08	WRKY domain-containing protein	WRKY DOMAIN-CONTAINING PROTEIN	regulation of DNA-templated transcription
+Q3	chr3:184450000	Zm00001eb148270	chr3	185762490	185765340	3.89	Laccase	LACCASE	lignin catabolic process
+Q3	chr3:184450000	Zm00001eb148280	chr3	185772513	185775910	3.89	Laccase	LACCASE-4	lignin catabolic process
+Q3	chr3:184450000	Zm00001eb148290	chr3	185836554	185839728	3.38	Uncharacterized protein	OS01G0842200 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148300	chr3	185861853	185868788	3.38	Ribonuclease II_R domain-containing protein	RIBONUCLEASE II, CHLOROPLASTIC_MITOCHONDRIAL	mRNA catabolic process
+Q3	chr3:184450000	Zm00001eb148310	chr3	185869509	185870944	3.38	Elicitor-responsive protein 1	16 KDA PHLOEM PROTEIN 1	
+Q3	chr3:184450000	Zm00001eb148320	chr3	185906104	185917627	3.38	Myb domain protein 3r-3	TRANSCRIPTION FACTOR MYB3R-3-RELATED	regulation of DNA-templated transcription
+Q3	chr3:184450000	Zm00001eb148330	chr3	185999367	186002739	3.38	EMB2745	OS05G0583950 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148340	chr3	186003061	186017572	3.38	X8 domain-containing protein	CARBOHYDRATE-BINDING X8 DOMAIN SUPERFAMILY PROTEIN	
+Q3	chr3:184450000	Zm00001eb148350	chr3	186055720	186065598	3.38	O-fucosyltransferase family protein	PROTEIN ESMERALDA 1	
+Q3	chr3:184450000	Zm00001eb148360	chr3	186066611	186067930	3.38	FAS1 domain-containing protein	FASCICLIN-LIKE ARABINOGALACTAN PROTEIN 4	
+Q3	chr3:184450000	Zm00001eb148370	chr3	186067986	186069034	3.38	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148380	chr3	186112357	186114096	3.71	ENTH_VHS family protein	ENTH_VHS FAMILY PROTEIN	endocytosis
+Q3	chr3:184450000	Zm00001eb148390	chr3	186157566	186160956	3.71	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148400	chr3	186189169	186190727	3.71	Uncharacterized protein	OS01G0840200 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148410	chr3	186193549	186193869	3.71			
+Q3	chr3:184450000	Zm00001eb148420	chr3	186198894	186202456	3.71	Putative mediator of RNA polymerase II transcription subunit 37c	HEAT SHOCK 70 KDA PROTEIN 1-RELATED	protein folding;protein refolding
+Q3	chr3:184450000	Zm00001eb148430	chr3	186207161	186215606	3.71	HVA22-like protein	HVA22-LIKE PROTEIN	
+Q3	chr3:184450000	Zm00001eb148440	chr3	186289075	186290248	3.71	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148450	chr3	186365672	186366780	3.71			
+Q3	chr3:184450000	Zm00001eb148460	chr3	186422698	186424213	3.71	Magnesium transporter		magnesium ion transport;magnesium ion transmembrane transport
+Q3	chr3:184450000	Zm00001eb148470	chr3	186422949	186423526	3.71	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148480	chr3	186424439	186425089	3.71	Probable magnesium transporter		magnesium ion transport;magnesium ion transmembrane transport
+Q3	chr3:184450000	Zm00001eb148490	chr3	186428272	186428656	3.71			
+Q3	chr3:184450000	Zm00001eb148500	chr3	186429370	186429777	3.71			
+Q3	chr3:184450000	Zm00001eb148510	chr3	186487532	186487864	3.71			
+Q3	chr3:184450000	Zm00001eb148520	chr3	186544539	186549412	3.71	UBC core domain-containing protein	UBIQUITIN-CONJUGATING ENZYME E2 G1	
+Q3	chr3:184450000	Zm00001eb148530	chr3	186612921	186615763	3.79	Pentatricopeptide repeat-containing protein mitochondrial	OS01G0839400 PROTEIN	RNA modification
+Q3	chr3:184450000	Zm00001eb148540	chr3	186612924	186613738	3.79	Histone H2B.4	HISTONE H2B.4	chromatin organization
+Q3	chr3:184450000	Zm00001eb148550	chr3	186663221	186666002	3.79	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148560	chr3	186664247	186664616	3.79			
+Q3	chr3:184450000	Zm00001eb148570	chr3	186668293	186669230	3.79	C2H2-type domain-containing protein	OS01G0839100 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148580	chr3	186675599	186677120	3.79	Zinc finger, C2H2 type family protein	OS04G0471000 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148590	chr3	186681222	186682344	3.79	Uncharacterized protein		
+Q3	chr3:184450000	Zm00001eb148600	chr3	186720912	186721543	3.79	Uncharacterized protein	OS01G0838200 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148610	chr3	186754626	186760243	3.79	Serine_threonine-protein kinase AFC1	SERINE_THREONINE-PROTEIN KINASE AFC1	regulation of RNA splicing
+Q3	chr3:184450000	Zm00001eb148620	chr3	186784092	186793036	3.79	Metal tolerance protein 11	METAL TOLERANCE PROTEIN 11	monoatomic cation transport;transmembrane transport;monoatomic cation transmembrane transport
+Q3	chr3:184450000	Zm00001eb148630	chr3	186795786	186797293	3.79	Uncharacterized protein	OS01G0837600 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148640	chr3	186805669	186809152	3.85	UDP-glucuronate decarboxylase	UDP-GLUCURONATE DECARBOXYLASE	UDP-D-xylose biosynthetic process;D-xylose metabolic process
+Q3	chr3:184450000	Zm00001eb148650	chr3	186857874	186860059	3.85	Alpha_beta-Hydrolases superfamily protein	ALPHA_BETA-HYDROLASES SUPERFAMILY PROTEIN	
+Q3	chr3:184450000	Zm00001eb148660	chr3	186860720	186862097	3.85	Pectate lyase	PECTATE LYASE	pectin catabolic process
+Q3	chr3:184450000	Zm00001eb148670	chr3	186877432	186881409	3.85	Protein binding protein	ANKYRIN REPEAT-CONTAINING PROTEIN NPR4	
+Q3	chr3:184450000	Zm00001eb148680	chr3	186885960	186887414	3.85	Putative membrane-associated kinase regulator 4	OS01G0836900 PROTEIN	
+Q3	chr3:184450000	Zm00001eb148690	chr3	186907665	186909424	3.85	Lung seven transmembrane receptor family protein	RE59932P	
+Q3	chr3:184450000	Zm00001eb148700	chr3	186907703	186908751	3.85			
+Q3	chr3:184450000	Zm00001eb148710	chr3	186925219	186925837	3.85			
+Q3	chr3:184450000	Zm00001eb148720	chr3	186933925	186936809	3.85	ABC transporter G family member 6	OS01G0836600 PROTEIN	transmembrane transport
+Q3	chr3:184450000	Zm00001eb148730	chr3	186944167	186944858	3.85			
+Q3	chr3:184450000	Zm00001eb148740	chr3	186949185	186953213	3.85	Protein NETWORKED 2D	OS01G0835800 PROTEIN	
+Q4	chr3:203150000	Zm00001eb151420	chr3	195869492	195907753	3.2	Pentatricopeptide repeat-containing protein		
+Q4	chr3:203150000	Zm00001eb151430	chr3	195954293	195960534	3.2	NADH:ubiquinone reductase (non-electrogenic)	NADH:UBIQUINONE REDUCTASE (NON-ELECTROGENIC)	
+Q4	chr3:203150000	Zm00001eb151440	chr3	195990879	195995184	3.2	1-acylglycerol-3-phosphate O-acyltransferase	LYSOCARDIOLIPIN ACYLTRANSFERASE 1	CDP-diacylglycerol biosynthetic process
+Q4	chr3:203150000	Zm00001eb151450	chr3	196007016	196012717	3.2	Vacuolar protein sorting-associated protein 28 homolog	VACUOLAR PROTEIN SORTING-ASSOCIATED PROTEIN 28 HOMOLOG	protein transport;endosome transport via multivesicular body sorting pathway;protein transport to vacuole involved in ubiquitin-dependent protein catabolic process via the multivesicular body sorting pathway
+Q4	chr3:203150000	Zm00001eb151460	chr3	196069490	196073494	3.2	Protein ULTRAPETALA 1	PROTEIN ULTRAPETALA 1	
+Q4	chr3:203150000	Zm00001eb151470	chr3	196110566	196113669	3.2	BTB_POZ domain-containing protein	OS01G0780600 PROTEIN	protein ubiquitination
+Q4	chr3:203150000	Zm00001eb151480	chr3	196112967	196120095	3.2	Secretory carrier-associated membrane protein	SECRETORY CARRIER-ASSOCIATED MEMBRANE PROTEIN 5	protein transport
+Q4	chr3:203150000	Zm00001eb151490	chr3	196138397	196139901	3.2	SR protein related family member	OS01G0779800 PROTEIN	
+Q4	chr3:203150000	Zm00001eb151500	chr3	196183907	196184188	3.2	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb151510	chr3	196184239	196244790	3.2	Insulin-degrading enzyme-like 1 peroxisomal	OS01G0779100 PROTEIN	proteolysis;peptide catabolic process
+Q4	chr3:203150000	Zm00001eb151520	chr3	196230978	196231458	3.2			
+Q4	chr3:203150000	Zm00001eb151530	chr3	196247182	196254245	3.2	Vacuole membrane protein KMS1	VACUOLE MEMBRANE PROTEIN 1	
+Q4	chr3:203150000	Zm00001eb151540	chr3	196339865	196340745	3.2	Uncharacterized protein	OS01G0778500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb151550	chr3	196354476	196366891	3.2	Protein STICHEL	PROTEIN STICHEL	DNA replication;DNA-templated DNA replication;DNA repair;DNA biosynthetic process
+Q4	chr3:203150000	Zm00001eb151560	chr3	196374619	196375516	3.2	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb151570	chr3	196389885	196394137	3.2	Protein UPSTREAM OF FLC	PROTEIN SOSEKI 1	protein polymerization
+Q4	chr3:203150000	Zm00001eb151580	chr3	196433251	196433606	3.24	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb151590	chr3	196438934	196448561	3.24	Regulator of chromosome condensation (RCC1) family protein	ANKYRIN REPEAT-CONTAINING PROTEIN	
+Q4	chr3:203150000	Zm00001eb151600	chr3	196478068	196485594	3.24	C3H1-type domain-containing protein	OS08G0497300 PROTEIN	protein folding;post-Golgi vesicle-mediated transport;response to cold;intermembrane lipid transfer
+Q4	chr3:203150000	Zm00001eb151610	chr3	196535489	196575893	3.24	Inositol hexakisphosphate and diphosphoinositol-pentakisphosphate kinase		
+Q4	chr3:203150000	Zm00001eb151620	chr3	196592651	196601719	3.24	Exonuclease 1	DNA DAMAGE-INDUCIBLE PROTEIN DIN7-RELATED	
+Q4	chr3:203150000	Zm00001eb151630	chr3	196692681	196699512	3.24	Conserved oligomeric Golgi complex subunit 1	CONSERVED OLIGOMERIC GOLGI COMPLEX SUBUNIT 1	intra-Golgi vesicle-mediated transport
+Q4	chr3:203150000	Zm00001eb151640	chr3	196785015	196788185	3.24	Uncharacterized protein	EXPRESSED PROTEIN	
+Q4	chr3:203150000	Zm00001eb151650	chr3	196845849	196850079	3.24	Purple acid phosphatase	PURPLE ACID PHOSPHATASE 10	
+Q4	chr3:203150000	Zm00001eb151660	chr3	196852334	196857230	3.24	WD repeat-containing protein 13	WD REPEAT-CONTAINING PROTEIN 13	
+Q4	chr3:203150000	Zm00001eb151670	chr3	196933209	196937350	3.5	cytokinin dehydrogenase	CYTOKININ DEHYDROGENASE 5	
+Q4	chr3:203150000	Zm00001eb151680	chr3	196933312	196933780	3.5			
+Q4	chr3:203150000	Zm00001eb151690	chr3	197008641	197026344	3.5	TRAF-like superfamily protein	OS01G0775300 PROTEIN	
+Q4	chr3:203150000	Zm00001eb151700	chr3	197023560	197024318	3.5	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb151710	chr3	197027111	197031892	3.5	Myosin-binding protein 1	MYOSIN-BINDING PROTEIN 1	
+Q4	chr3:203150000	Zm00001eb151720	chr3	197092276	197104452	3.5	Plus3 domain-containing protein	OS01G0775100 PROTEIN	
+Q4	chr3:203150000	Zm00001eb151730	chr3	197095622	197100513	3.5			
+Q4	chr3:203150000	Zm00001eb151740	chr3	197104859	197107966	3.5	Zeta toxin domain-containing protein	OS01G0774500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb151750	chr3	197117870	197118856	3.5	PSII 6.1 kDa protein	PHOTOSYSTEM II REACTION CENTER W PROTEIN, CHLOROPLASTIC	
+Q4	chr3:203150000	Zm00001eb151760	chr3	197123946	197127371	3.5	FK506-binding protein 2-1		
+Q4	chr3:203150000	Zm00001eb151770	chr3	197205724	197216363	3.4	Dymeclin	DYMECLIN	Golgi organization
+Q4	chr3:203150000	Zm00001eb151780	chr3	197316065	197318128	3.4	Homocysteine S-methyltransferase4	HOMOCYSTEINE S-METHYLTRANSFERASE 1-RELATED	
+Q4	chr3:203150000	Zm00001eb151790	chr3	197317599	197330106	3.4	Signal recognition particle 54 kDa protein	SIGNAL RECOGNITION PARTICLE SUBUNIT SRP54	protein targeting to membrane;SRP-dependent cotranslational protein targeting to membrane;SRP-dependent cotranslational protein targeting to membrane, translocation;protein targeting to ER
+Q4	chr3:203150000	Zm00001eb151800	chr3	197483601	197489489	3.37	ARM repeat superfamily protein		
+Q4	chr3:203150000	Zm00001eb151810	chr3	197486137	197489057	3.37	PH domain-containing protein		
+Q4	chr3:203150000	Zm00001eb151820	chr3	197499485	197507996	3.37	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb151830	chr3	197500252	197500565	3.37			
+Q4	chr3:203150000	Zm00001eb151840	chr3	197507674	197507972	3.37			
+Q4	chr3:203150000	Zm00001eb151850	chr3	197509090	197510920	3.37	Mon2 C-terminal domain-containing protein		
+Q4	chr3:203150000	Zm00001eb151860	chr3	197564069	197573180	3.37	Mon2_Sec7_BIG1-like dimerisation and cyclophilin-binding domain-containing protein		
+Q4	chr3:203150000	Zm00001eb151870	chr3	197805716	197808691	3.37	Coenzyme Q-binding protein COQ10 START domain-containing protein	COENZYME Q-BINDING PROTEIN COQ10, MITOCHONDRIAL	cellular respiration
+Q4	chr3:203150000	Zm00001eb151880	chr3	197808200	197808554	3.37			
+Q4	chr3:203150000	Zm00001eb151890	chr3	197862869	197869725	3.37	Glycosyl hydrolase family protein	LYSOSOMAL BETA GLUCOSIDASE	carbohydrate metabolic process;glucan catabolic process
+Q4	chr3:203150000	Zm00001eb151900	chr3	197869983	197876696	3.37			
+Q4	chr3:203150000	Zm00001eb151910	chr3	197981259	197982561	3.47	LOB domain-containing protein 20	LATERAL ORGAN BOUNDARIES DOMAIN PROTEIN 18-LIKE	
+Q4	chr3:203150000	Zm00001eb151920	chr3	198172826	198204392	3.47	ubiquitinyl hydrolase 1	UBIQUITINYL HYDROLASE 1	protein deubiquitination
+Q4	chr3:203150000	Zm00001eb151930	chr3	198234879	198236769	3.47	Mal d 1-associated protein	MAL D 1-ASSOCIATED PROTEIN	
+Q4	chr3:203150000	Zm00001eb151940	chr3	198368740	198369378	3.47	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb151950	chr3	198449962	198451010	3.47	Protein LURP-one-related 5	PROTEIN LURP-ONE-RELATED 5	
+Q4	chr3:203150000	Zm00001eb151960	chr3	198540680	198541150	3.47	ALOG domain-containing protein		
+Q4	chr3:203150000	Zm00001eb151970	chr3	198565571	198573455	3.47	Tetratricopeptide repeat (TPR)-like superfamily protein	OS08G0290000 PROTEIN	
+Q4	chr3:203150000	Zm00001eb151980	chr3	198665590	198666354	3.56	Copper transport protein	COPPER TRANSPORTER 3	copper ion transmembrane transport
+Q4	chr3:203150000	Zm00001eb151990	chr3	198669679	198670473	3.56	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152000	chr3	198681498	198687510	3.56	F-box domain containing protein	OS01G0770400 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152010	chr3	198686580	198693202	3.56	Protein PLASTID TRANSCRIPTIONALLY ACTIVE 12, chloroplastic	PROTEIN PLASTID TRANSCRIPTIONALLY ACTIVE 12, CHLOROPLASTIC	regulation of DNA-templated transcription;response to light stimulus;regulation of gene expression;positive regulation of red or far-red light signaling pathway
+Q4	chr3:203150000	Zm00001eb152020	chr3	198716192	198733538	3.56	Subtilisin-like protease SBT2.1	SUBTILISIN-LIKE PROTEASE SBT2.2	proteolysis
+Q4	chr3:203150000	Zm00001eb152030	chr3	198806298	198806699	3.56	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152040	chr3	198820056	198828321	3.56	Lipoyl synthase, chloroplastic	LIPOYL SYNTHASE 1, CHLOROPLASTIC	lipoate biosynthetic process;protein lipoylation
+Q4	chr3:203150000	Zm00001eb152050	chr3	198828953	198835058	3.56	Topoisomerase II-associated protein PAT1	OS01G0769000 PROTEIN	deadenylation-dependent decapping of nuclear-transcribed mRNA;P-body assembly
+Q4	chr3:203150000	Zm00001eb152060	chr3	198954474	198965938	3.56	Maternal effect embryo arrest 22	MATERNAL EFFECT EMBRYO ARREST 22	
+Q4	chr3:203150000	Zm00001eb152070	chr3	198970929	198973330	3.56	Uncharacterized protein	OS01G0768300 PROTEIN	ER body organization
+Q4	chr3:203150000	Zm00001eb152080	chr3	199104274	199110548	3.56	Branched-chain-amino-acid aminotransferase 5 chloroplastic	PROTEIN CROWDED NUCLEI 4	nucleus organization;positive regulation of response to water deprivation;regulation of root development
+Q4	chr3:203150000	Zm00001eb152090	chr3	199128301	199132600	3.56	Putative xyloglucan glycosyltransferase 12	XYLOGLUCAN GLYCOSYLTRANSFERASE 12-RELATED	pollen tube development;cell wall organization;plant organ development
+Q4	chr3:203150000	Zm00001eb152100	chr3	199133188	199134982	3.56	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152110	chr3	199138091	199138925	3.56	Uncharacterized protein	OS01G0766300 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152120	chr3	199143897	199145473	3.56	E3 ubiquitin-protein ligase RMA	E3 UBIQUITIN-PROTEIN LIGASE RMA	
+Q4	chr3:203150000	Zm00001eb152130	chr3	199148511	199149323	3.56	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152140	chr3	199151992	199154189	3.56	Uncharacterized protein	EXPRESSED PROTEIN	
+Q4	chr3:203150000	Zm00001eb152150	chr3	199156536	199158335	3.56	Uncharacterized protein	OS01G0523800 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152160	chr3	199271717	199273494	3.56	Glutathione S-transferase IV	GLUTATHIONE TRANSFERASE	glutathione metabolic process;response to herbicide
+Q4	chr3:203150000	Zm00001eb152170	chr3	199358047	199359042	3.56	Putative calcium-binding protein CML41	CALCIUM-BINDING PROTEIN CML41-RELATED	
+Q4	chr3:203150000	Zm00001eb152180	chr3	199433428	199442478	3.56	Nucleic acid binding	NUCLEIC ACID BINDING PROTEIN	
+Q4	chr3:203150000	Zm00001eb152190	chr3	199451001	199458291	3.56	Acetamidase_Formamidase family protein	ACETAMIDASE_FORMAMIDASE FAMILY PROTEIN	
+Q4	chr3:203150000	Zm00001eb152200	chr3	199529262	199532894	3.56	Putative indole-3-acetic acid-amido synthetase GH3.1	INDOLE-3-ACETIC ACID-AMIDO SYNTHETASE GH3.2-RELATED	
+Q4	chr3:203150000	Zm00001eb152210	chr3	199564804	199575069	3.56	YqgF_RNase H-like domain-containing protein	POLYNUCLEOTIDYL TRANSFERASE, RIBONUCLEASE H-LIKE SUPERFAMILY PROTEIN	
+Q4	chr3:203150000	Zm00001eb152220	chr3	199586176	199586547	3.56			
+Q4	chr3:203150000	Zm00001eb152230	chr3	199633981	199640797	3.86			
+Q4	chr3:203150000	Zm00001eb152240	chr3	199641998	199642869	3.86			
+Q4	chr3:203150000	Zm00001eb152250	chr3	199643290	199646979	3.86	Chorismate mutase 1, chloroplastic	CHORISMATE MUTASE 1, CHLOROPLASTIC	aromatic amino acid family biosynthetic process;chorismate metabolic process
+Q4	chr3:203150000	Zm00001eb152260	chr3	199725958	199726847	3.86	Blue copper protein	BLUE COPPER PROTEIN	
+Q4	chr3:203150000	Zm00001eb152270	chr3	199731895	199735292	3.86	DUF155 family protein	OS01G0764300 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152280	chr3	199775073	199775525	3.86	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152290	chr3	199789965	199813202	3.87	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152300	chr3	199826167	199827938	3.87	X8 domain-containing protein	PLASMODESMATA CALLOSE-BINDING PROTEIN 3	
+Q4	chr3:203150000	Zm00001eb152310	chr3	199843274	199844684	3.87	Uncharacterized protein	SPINDLE ASSEMBLY ABNORMAL PROTEIN (DUF620)	
+Q4	chr3:203150000	Zm00001eb152320	chr3	199877729	199908963	3.88	Exocyst subunit Exo70 family protein	EXOCYST SUBUNIT EXO70 FAMILY PROTEIN	exocytosis
+Q4	chr3:203150000	Zm00001eb152330	chr3	199899634	199900403	3.88			
+Q4	chr3:203150000	Zm00001eb152340	chr3	199902348	199906586	3.88	Uncharacterized protein	FURRY	
+Q4	chr3:203150000	Zm00001eb152350	chr3	199974592	199977317	3.88	TCP family transcription factor containing protein	TRANSCRIPTION FACTOR TCP13	regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb152360	chr3	200022121	200027186	3.88	DUF2039 family protein	CHROMOSOME 9 OPEN READING FRAME 85	
+Q4	chr3:203150000	Zm00001eb152370	chr3	200068622	200069445	3.88	Uncharacterized protein	TRANSMEMBRANE PROTEIN	
+Q4	chr3:203150000	Zm00001eb152380	chr3	200148850	200149467	3.51	Zinc finger MYM-type protein 5		
+Q4	chr3:203150000	Zm00001eb152390	chr3	200150005	200152711	3.51	Peptide transporter PTR2	PROTEIN NRT1_ PTR FAMILY 1.2	transmembrane transport
+Q4	chr3:203150000	Zm00001eb152400	chr3	200192444	200195756	3.51	Protein NRT1_ PTR FAMILY 1.2	OS01G0761400 PROTEIN	transmembrane transport
+Q4	chr3:203150000	Zm00001eb152410	chr3	200193915	200214915	3.51	4-coumarate--CoA ligase	ACYL-COA SYNTHETASE FAMILY MEMBER 3	phenylpropanoid metabolic process
+Q4	chr3:203150000	Zm00001eb152420	chr3	200325636	200348798	3.51	CRC domain-containing protein	PROTEIN LIN-54 HOMOLOG	regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb152430	chr3	200356082	200357387	3.51	Secreted protein		
+Q4	chr3:203150000	Zm00001eb152440	chr3	200382731	200401624	3.51	Uncharacterized protein		translation
+Q4	chr3:203150000	Zm00001eb152450	chr3	200402538	200408213	3.51	Aspartate aminotransferase	ASPARTATE AMINOTRANSFERASE, MITOCHONDRIAL	amino acid metabolic process
+Q4	chr3:203150000	Zm00001eb152460	chr3	200467395	200470469	3.51	Rop guanine nucleotide exchange factor 9	OS01G0760300 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152470	chr3	200484403	200485906	3.51	Pentatricopeptide repeat-containing protein		RNA modification
+Q4	chr3:203150000	Zm00001eb152480	chr3	200489673	200490024	3.51	Dynein light chain	OS01G0760000 PROTEIN	microtubule-based process
+Q4	chr3:203150000	Zm00001eb152490	chr3	200508627	200515230	3.41	SAP30-binding protein	SAP30-BINDING PROTEIN	regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb152500	chr3	200611472	200615251	3.41	non-specific serine_threonine protein kinase	CBL-INTERACTING SERINE_THREONINE-PROTEIN KINASE 12	signal transduction
+Q4	chr3:203150000	Zm00001eb152510	chr3	200706762	200708854	3.38	Delay of germination 1	PROTEIN DOG1-LIKE 1	DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb152520	chr3	200711378	200712939	3.38	Uncharacterized protein	OS01G0759000 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152530	chr3	200742807	200752635	3.38	cysteine dioxygenase	CYSTEINE DIOXYGENASE	detection of hypoxia
+Q4	chr3:203150000	Zm00001eb152540	chr3	200752705	200756930	3.38	Beta-galactosidase	BETA-GALACTOSIDASE 7	carbohydrate metabolic process;galactose catabolic process
+Q4	chr3:203150000	Zm00001eb152550	chr3	200769195	200771664	3.38	Peptidase S26 domain-containing protein	MITOCHONDRIAL INNER MEMBRANE PROTEASE SUBUNIT 1	
+Q4	chr3:203150000	Zm00001eb152560	chr3	200795705	200799622	3.38	Uncharacterized protein	N-METHYLTRANSFERASE, PUTATIVE (DUF688)-RELATED	
+Q4	chr3:203150000	Zm00001eb152570	chr3	200848705	200849833	3.55	DUF4228 domain protein	OS01G0758500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152580	chr3	200883382	200886397	3.55	FBD domain-containing protein	FBD DOMAIN-CONTAINING PROTEIN	
+Q4	chr3:203150000	Zm00001eb152590	chr3	200982215	200983570	3.55			
+Q4	chr3:203150000	Zm00001eb152600	chr3	200983621	200996996	3.55	Phosphatidate cytidylyltransferase	PHOSPHATIDATE CYTIDYLYLTRANSFERASE, PHOTORECEPTOR-SPECIFIC	CDP-diacylglycerol biosynthetic process;lipid droplet formation
+Q4	chr3:203150000	Zm00001eb152610	chr3	201018418	201019333	3.55	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152620	chr3	201025991	201028081	3.55	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152630	chr3	201026044	201027307	3.55	Dof-type domain-containing protein	CYCLIC DOF FACTOR 4	regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb152640	chr3	201031178	201032140	3.55	Heavy metal transport_detoxification superfamily protein	HEAVY METAL-ASSOCIATED ISOPRENYLATED PLANT PROTEIN 28	
+Q4	chr3:203150000	Zm00001eb152650	chr3	201033737	201041016	3.55	DNA polymerase eta	DNA POLYMERASE ETA	DNA repair;DNA damage tolerance;DNA biosynthetic process
+Q4	chr3:203150000	Zm00001eb152660	chr3	201040793	201043292	3.55	Pentatricopeptide repeat-containing protein	OS01G0757700 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152670	chr3	201063268	201066105	3.55	Interactor of constitutive active ROPs 1	INTERACTOR OF CONSTITUTIVE ACTIVE ROPS 4	
+Q4	chr3:203150000	Zm00001eb152680	chr3	201095338	201100754	3.84	Calcyclin-binding protein	CALCYCLIN-BINDING PROTEIN	
+Q4	chr3:203150000	Zm00001eb152690	chr3	201107668	201122738	3.84	AP2_ERF domain-containing protein	NUCLEOLAR COMPLEX PROTEIN 4 HOMOLOG	regulation of DNA-templated transcription;ribosome biogenesis
+Q4	chr3:203150000	Zm00001eb152700	chr3	201123347	201128440	3.84	p-loop containing nucleoside triphosphate hydrolase superfamily protein	KATANIN	meiotic spindle organization;microtubule severing
+Q4	chr3:203150000	Zm00001eb152710	chr3	201138764	201140825	3.84	Gibberellin 2-oxidase3	GIBBERELLIN 2-BETA-DIOXYGENASE 1	gibberellin metabolic process
+Q4	chr3:203150000	Zm00001eb152720	chr3	201144572	201144931	3.84	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152730	chr3	201145350	201155128	3.84	Serine-type endopeptidase inhibitor	SERINE PROTEASE INHIBITOR, KAZAL-TYPE FAMILY PROTEIN	
+Q4	chr3:203150000	Zm00001eb152740	chr3	201166914	201167403	3.84			
+Q4	chr3:203150000	Zm00001eb152750	chr3	201170518	201174481	3.84	DUF642 domain-containing protein	OS01G0756600 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152760	chr3	201214178	201215997	3.84	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152770	chr3	201216067	201217351	3.84	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152780	chr3	201217389	201219198	3.84	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152790	chr3	201219367	201224710	3.84	La-related protein 6A	LA-RELATED PROTEIN 1B-RELATED	RNA processing
+Q4	chr3:203150000	Zm00001eb152800	chr3	201226510	201228391	3.84	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152810	chr3	201230088	201233299	3.84	BZIP transcription factor	BASIC LEUCINE ZIPPER 6	regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb152820	chr3	201275364	201279055	3.84	Uncharacterized protein	OS01G0756000 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152830	chr3	201282774	201283922	3.84	RING-H2 finger protein ATL2K	OS12G0620100 PROTEIN	ubiquitin-dependent protein catabolic process
+Q4	chr3:203150000	Zm00001eb152840	chr3	201403339	201405314	3.84	Transcription factor TCP4		
+Q4	chr3:203150000	Zm00001eb152850	chr3	201493280	201495724	3.84	Myb_SANT-like domain-containing protein	MYB_SANT-LIKE DOMAIN-CONTAINING PROTEIN	
+Q4	chr3:203150000	Zm00001eb152860	chr3	201505954	201515425	3.84	Uncharacterized protein	OS01G0755100 PROTEIN	
+Q4	chr3:203150000	Zm00001eb152870	chr3	201526949	201527662	3.84	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb152880	chr3	201598593	201603654	3.97	Pentatricopeptide repeat-containing protein	OS01G0754700 PROTEIN	RNA modification
+Q4	chr3:203150000	Zm00001eb152890	chr3	201605169	201605976	3.97	Uncharacterized protein	SUBFAMILY NOT NAMED	
+Q4	chr3:203150000	Zm00001eb152900	chr3	201645048	201652011	3.97	1,3-beta-glucan synthase	CALLOSE SYNTHASE 12	(1->3)-beta-D-glucan biosynthetic process
+Q4	chr3:203150000	Zm00001eb152910	chr3	201690890	201693687	3.97			
+Q4	chr3:203150000	Zm00001eb152920	chr3	201723581	201724800	3.97	Uncharacterized protein	E6-LIKE PROTEIN	
+Q4	chr3:203150000	Zm00001eb152930	chr3	201723588	201724760	3.97	Secreted protein		
+Q4	chr3:203150000	Zm00001eb152940	chr3	201730981	201737277	3.97	Auxin response factor	AUXIN RESPONSE FACTOR 3	regulation of DNA-templated transcription;response to hormone
+Q4	chr3:203150000	Zm00001eb152950	chr3	201755831	201761633	3.97	Enoyl reductase (ER) domain-containing protein	PROTEIN AST1-RELATED	
+Q4	chr3:203150000	Zm00001eb152960	chr3	201850420	201851430	3.97			
+Q4	chr3:203150000	Zm00001eb152970	chr3	201853387	201878392	3.97	Zinc finger CCCH domain-containing protein 19	ZINC FINGER CCCH DOMAIN-CONTAINING PROTEIN 19	
+Q4	chr3:203150000	Zm00001eb152980	chr3	202028050	202039471	3.97	Nuclear pore complex protein Nup85	NUCLEAR PORE COMPLEX PROTEIN NUP85	protein import into nucleus;positive regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb152990	chr3	202098610	202107261	3.97	dolichyl-diphosphooligosaccharide--protein glycotransferase	DOLICHYL-DIPHOSPHOOLIGOSACCHARIDE--PROTEIN GLYCOTRANSFERASE	glycoprotein biosynthetic process
+Q4	chr3:203150000	Zm00001eb153000	chr3	202178668	202182189	3.97	Carotenoid cleavage dioxygenase	CAROTENOID ISOMEROOXYGENASE	secondary shoot formation;carotene catabolic process;strigolactone biosynthetic process
+Q4	chr3:203150000	Zm00001eb153010	chr3	202419712	202422340	4.03	mannan endo-1,4-beta-mannosidase	MANNAN ENDO-1,4-BETA-MANNOSIDASE 2	polysaccharide catabolic process;carbohydrate metabolic process
+Q4	chr3:203150000	Zm00001eb153020	chr3	202472481	202474434	4.03	Plant-specific domain TIGR01615 family protein	PLANT-SPECIFIC DOMAIN TIGR01615 FAMILY PROTEIN	
+Q4	chr3:203150000	Zm00001eb153030	chr3	202497670	202503142	4.16	dihydroorotase	DIHYDROOROTASE	'de novo' pyrimidine nucleobase biosynthetic process;pyrimidine nucleotide biosynthetic process;pyrimidine nucleobase biosynthetic process;'de novo' UMP biosynthetic process
+Q4	chr3:203150000	Zm00001eb153040	chr3	202503027	202505806	4.16	Pentatricopeptide repeat-containing protein	OS01G0747600 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153050	chr3	202505484	202506952	4.16	Serine_threonine protein phosphatase 2A regulatory subunit	SERINE_THREONINE PROTEIN PHOSPHATASE 2A 55 KDA REGULATORY SUBUNIT B' DELTA ISOFORM	signal transduction
+Q4	chr3:203150000	Zm00001eb153060	chr3	202532164	202554308	4.16	RNA-binding S4 domain-containing protein	OS01G0747700 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153070	chr3	202560801	202562079	4.16	DNA-binding WRKY	VQ MOTIF-CONTAINING PROTEIN 13-RELATED	
+Q4	chr3:203150000	Zm00001eb153080	chr3	202560851	202562193	4.16	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153090	chr3	202564904	202570562	4.16	Dynamin-related protein 5A	DYNAMIN-LIKE PROTEIN C	
+Q4	chr3:203150000	Zm00001eb153100	chr3	202570657	202583981	4.16	Homeobox3	HOMEOBOX PROTEIN HAT3.1	negative regulation of gene expression, epigenetic
+Q4	chr3:203150000	Zm00001eb153110	chr3	202583513	202583890	4.16			
+Q4	chr3:203150000	Zm00001eb153120	chr3	202584798	202586031	4.16	Early nodulin-like protein 3	EARLY NODULIN-LIKE PROTEIN 1	
+Q4	chr3:203150000	Zm00001eb153130	chr3	202592842	202595957	4.16	Alpha_beta-Hydrolases superfamily protein	SECRETION-REGULATING GUANINE NUCLEOTIDE EXCHANGE FACTOR	
+Q4	chr3:203150000	Zm00001eb153140	chr3	202598342	202599154	4.16	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153150	chr3	202608162	202608869	4.31	Uncharacterized protein	OS05G0531100 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153160	chr3	202610008	202620083	4.31	DM2 domain-containing protein		microtubule-based movement
+Q4	chr3:203150000	Zm00001eb153170	chr3	202684983	202687233	4.31	Anther-specific proline-rich protein APG	OS01G0748500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153180	chr3	202695479	202699804	4.31	Protein kinase domain-containing protein	INACTIVE PROTEIN TYROSINE KINASE PTKL	
+Q4	chr3:203150000	Zm00001eb153190	chr3	202794887	202796773	4.31	ZCN12	OS05G0518000 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153200	chr3	202848154	202853854	4.44	MACPF domain-containing protein CAD1	MACPF DOMAIN-CONTAINING PROTEIN CAD1	defense response;programmed cell death;regulation of salicylic acid mediated signaling pathway
+Q4	chr3:203150000	Zm00001eb153210	chr3	202892428	202893297	4.44	Uncharacterized protein		transmembrane transport
+Q4	chr3:203150000	Zm00001eb153220	chr3	202892965	202893297	4.44			
+Q4	chr3:203150000	Zm00001eb153230	chr3	202893395	202895588	4.44	Oil body-associated protein 2A	OIL BODY-ASSOCIATED PROTEIN 2A	
+Q4	chr3:203150000	Zm00001eb153240	chr3	202895117	202902061	4.44	50S ribosomal protein L13 chloroplastic	OS01G0749100 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153250	chr3	203035709	203064326	4.44	Late embryogenesis abundant protein		defense response to other organism
+Q4	chr3:203150000	Zm00001eb153260	chr3	203064241	203065389	4.44	LysM domain-containing GPI-anchored protein 1	OS02G0769200 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153270	chr3	203067011	203078337	4.44	Trehalose-6-phosphate synthase6	TREHALOSE 6-PHOSPHATE PHOSPHATASE	trehalose metabolic process;trehalose biosynthetic process
+Q4	chr3:203150000	Zm00001eb153280	chr3	203164597	203169521	4.52	Trehalose-6-phosphate synthase7	TREHALOSE 6-PHOSPHATE PHOSPHATASE	trehalose metabolic process;trehalose biosynthetic process
+Q4	chr3:203150000	Zm00001eb153290	chr3	203215157	203215807	4.31			
+Q4	chr3:203150000	Zm00001eb153300	chr3	203215159	203216977	4.31	Transcription repressor	TRANSCRIPTION REPRESSOR OFP5	negative regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb153310	chr3	203221331	203224922	4.31	Uncharacterized protein	TRANSDUCIN BETA-LIKE PROTEIN 3	endonucleolytic cleavage to generate mature 5'-end of SSU-rRNA from (SSU-rRNA, 5.8S rRNA, LSU-rRNA);endonucleolytic cleavage in 5'-ETS of tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)
+Q4	chr3:203150000	Zm00001eb153320	chr3	203321270	203329401	4.51	Putative sugar phosphate_phosphate translocator	SOLUTE CARRIER FAMILY 35 MEMBER C2	UDP-glucose transmembrane transport
+Q4	chr3:203150000	Zm00001eb153330	chr3	203396807	203399102	4.51	WRKY domain-containing protein	OS01G0750100 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153340	chr3	203529845	203535563	4.35	Cellulose synthase (UDP-forming)	CELLULOSE SYNTHASE A CATALYTIC SUBUNIT 8 [UDP-FORMING]	plant-type secondary cell wall biogenesis;cellulose biosynthetic process
+Q4	chr3:203150000	Zm00001eb153350	chr3	203538248	203539898	4.35	Receptor-like protein 51	RECEPTOR-LIKE PROTEIN 51-RELATED	
+Q4	chr3:203150000	Zm00001eb153360	chr3	203546604	203551070	4.35	Coiled-coil domain-containing protein 25	OS01G0750500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153370	chr3	203553738	203557771	4.35	non-specific serine_threonine protein kinase	NON-SPECIFIC SERINE_THREONINE PROTEIN KINASE	
+Q4	chr3:203150000	Zm00001eb153380	chr3	203685065	203702300	4.35	THH1_TOM1_TOM3 domain-containing protein	OS01G0751300 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153390	chr3	203706116	203707342	4.35	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153400	chr3	203707406	203709444	4.35	AMP-dependent synthetase_ligase domain-containing protein		
+Q4	chr3:203150000	Zm00001eb153410	chr3	203710110	203711080	4.35	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153420	chr3	203733477	203736070	4.35	Transposon protein Pong sub-class	OS02G0311800 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153430	chr3	203736995	203737898	4.35	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153440	chr3	203737078	203737898	4.35	Uncharacterized protein	OS01G0751400 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153450	chr3	203744587	203748409	4.35	Alpha_beta-Hydrolases superfamily protein	OS01G0751600 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153460	chr3	203755858	203760675	4.35	3-hydroxyisobutyryl-CoA hydrolase	3-HYDROXYISOBUTYRYL-COA HYDROLASE-LIKE PROTEIN 5	L-valine catabolic process
+Q4	chr3:203150000	Zm00001eb153470	chr3	203762504	203763655	4.35	AP2-EREBP transcription factor (Fragment)	PATHOGENESIS-RELATED GENES TRANSCRIPTIONAL ACTIVATOR PTI5	regulation of DNA-templated transcription;ethylene-activated signaling pathway
+Q4	chr3:203150000	Zm00001eb153480	chr3	203764066	203772913	4.35	lipid-A-disaccharide synthase	LIPID-A-DISACCHARIDE SYNTHASE, MITOCHONDRIAL-RELATED	lipid A biosynthetic process
+Q4	chr3:203150000	Zm00001eb153490	chr3	203832497	203849495	4.35	Elongation factor family protein	TR-TYPE G DOMAIN-CONTAINING PROTEIN	
+Q4	chr3:203150000	Zm00001eb153500	chr3	203931338	203944340	4.35	Heat-and acid-stable phosphoprotein	28 KDA HEAT- AND ACID-STABLE PHOSPHOPROTEIN	
+Q4	chr3:203150000	Zm00001eb153510	chr3	203969930	203972076	4.35	Regulator of chromosome condensation (RCC1) family protein		
+Q4	chr3:203150000	Zm00001eb153520	chr3	204065538	204072197	4.35	Transcription factor VOZ1	TRANSCRIPTION FACTOR VOZ2	regulation of DNA-templated transcription;positive regulation of long-day photoperiodism, flowering
+Q4	chr3:203150000	Zm00001eb153530	chr3	204151300	204182534	4.1	Golgin candidate 1	GOLGIN SUBFAMILY A MEMBER 5	retrograde transport, vesicle recycling within Golgi;Golgi organization
+Q4	chr3:203150000	Zm00001eb153540	chr3	204179454	204179760	4.1			
+Q4	chr3:203150000	Zm00001eb153550	chr3	204189061	204191048	4.1	Downstream target of AGL15-4	DOWNSTREAM TARGET OF AGL15-4	
+Q4	chr3:203150000	Zm00001eb153560	chr3	204191638	204203137	4.1	P-loop nucleoside triphosphate hydrolase superfamily protein with CH (Calponin Homology) domain	KINESIN-LIKE PROTEIN KIN-14C	microtubule-based process;microtubule-based movement
+Q4	chr3:203150000	Zm00001eb153570	chr3	204267608	204269447	4.1	Histidine-containing phosphotransfer protein	PSEUDO HISTIDINE-CONTAINING PHOSPHOTRANSFER PROTEIN 1	phosphorelay signal transduction system
+Q4	chr3:203150000	Zm00001eb153580	chr3	204398775	204406438	4.1	Protein cereblon	OS01G0743600 PROTEIN	protein ubiquitination;positive regulation of Wnt signaling pathway;proteasome-mediated ubiquitin-dependent protein catabolic process
+Q4	chr3:203150000	Zm00001eb153590	chr3	204406947	204412217	3.45	tryptophan--tRNA ligase	TRYPTOPHAN--TRNA LIGASE, MITOCHONDRIAL	tRNA aminoacylation for protein translation;tryptophanyl-tRNA aminoacylation;post-embryonic development;reproductive structure development
+Q4	chr3:203150000	Zm00001eb153600	chr3	204414708	204417631	3.45	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153610	chr3	204418390	204422382	3.45	DUF4005 domain-containing protein	OS01G0743100 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153620	chr3	204436056	204442770	3.45	Phosphotransferase	HEXOKINASE-6	intracellular glucose homeostasis;carbohydrate metabolic process;glucose metabolic process;glycolytic process;response to glucose;hexose metabolic process;glucose 6-phosphate metabolic process
+Q4	chr3:203150000	Zm00001eb153630	chr3	204443250	204447228	3.45	Protein kinase family protein with leucine-rich repeat domain	OS01G0742400 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153640	chr3	204448926	204469661	3.45	Myb_SANT-like domain-containing protein	OS01G0523800 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153650	chr3	204472300	204473466	3.45	3-hydroxyisobutyrate dehydrogenase-like 1, mitochondrial	3-HYDROXYISOBUTYRATE DEHYDROGENASE-LIKE 1, MITOCHONDRIAL-RELATED	
+Q4	chr3:203150000	Zm00001eb153660	chr3	204472374	204480433	3.45	Auxin-responsive protein	AUXIN-RESPONSIVE PROTEIN IAA26	regulation of DNA-templated transcription;response to auxin;auxin-activated signaling pathway
+Q4	chr3:203150000	Zm00001eb153670	chr3	204504149	204505198	3.45	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153680	chr3	204505245	204506715	3.45	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153690	chr3	204506943	204511742	3.45	protein-serine_threonine phosphatase		
+Q4	chr3:203150000	Zm00001eb153700	chr3	204574781	204582818	3.45	LysM domain receptor-like kinase 3	LYSM DOMAIN RECEPTOR-LIKE KINASE 3	innate immune response
+Q4	chr3:203150000	Zm00001eb153710	chr3	204585430	204589494	3.45	Glutamate carboxypeptidase 2	GLUTAMATE CARBOXYPEPTIDASE 2	meristem maintenance;regulation of developmental process
+Q4	chr3:203150000	Zm00001eb153720	chr3	204614991	204615614	3.45	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153730	chr3	204731462	204738694	3.31	Peptidase M28 family protein	OS01G0740500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153740	chr3	204734339	204735507	3.31	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153750	chr3	204742063	204745017	3.31	DUF1005 family protein	DUF1005 FAMILY PROTEIN (DUF1005)	
+Q4	chr3:203150000	Zm00001eb153760	chr3	204799462	204800511	3.31	Profilin	PROFILIN-A	nuclear migration;regulation of actin cytoskeleton organization
+Q4	chr3:203150000	Zm00001eb153770	chr3	204801187	204804611	3.31	Glucan endo-13-beta-glucosidase 13	GLUCAN ENDO-1,3-BETA-GLUCOSIDASE 13	carbohydrate metabolic process
+Q4	chr3:203150000	Zm00001eb153780	chr3	204828985	204830307	3.31	Oxidative stress 3	COLD INDUCED PROTEIN-LIKE	response to stress
+Q4	chr3:203150000	Zm00001eb153790	chr3	204830038	204839267	3.31	Haloacid dehalogenase-like hydrolase family protein	ENDORIBONUCLEASE YBEY, CHLOROPLASTIC	rRNA processing
+Q4	chr3:203150000	Zm00001eb153800	chr3	204840221	204843888	3.31	Putative dual specificity protein phosphatase DSP8	TYR_PHOSPHATASE_2 DOMAIN-CONTAINING PROTEIN	root development
+Q4	chr3:203150000	Zm00001eb153810	chr3	204958275	204958607	3.31			
+Q4	chr3:203150000	Zm00001eb153820	chr3	204958638	204962017	3.31	Pyrophosphate--fructose 6-phosphate 1-phosphotransferase subunit alpha 2		glycolytic process;glycolytic process through fructose-6-phosphate
+Q4	chr3:203150000	Zm00001eb153830	chr3	205006668	205015713	3.27	ATP-dependent 6-phosphofructokinase	ATP-DEPENDENT 6-PHOSPHOFRUCTOKINASE	fructose 6-phosphate metabolic process;glycolytic process;glycolytic process through fructose-6-phosphate
+Q4	chr3:203150000	Zm00001eb153840	chr3	205031767	205037974	3.27	non-specific serine_threonine protein kinase	NON-SPECIFIC SERINE_THREONINE PROTEIN KINASE	
+Q4	chr3:203150000	Zm00001eb153850	chr3	205132989	205146002	3.61	Ubiquitin-like-specific protease 1D	UBIQUITIN-LIKE-SPECIFIC PROTEASE 1D	proteolysis;protein desumoylation
+Q4	chr3:203150000	Zm00001eb153860	chr3	205133453	205134006	3.61			
+Q4	chr3:203150000	Zm00001eb153870	chr3	205165049	205165408	3.61			
+Q4	chr3:203150000	Zm00001eb153880	chr3	205165698	205167376	3.61	Protein NUCLEAR FUSION DEFECTIVE 6 chloroplastic_mitochondrial	OS01G0738000 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153890	chr3	205214378	205218519	3.61	Pentatricopeptide repeat-containing protein	OS01G0737900 PROTEIN	RNA modification
+Q4	chr3:203150000	Zm00001eb153900	chr3	205217733	205221930	3.61	Protein farnesyltransferase subunit beta	PROTEIN FARNESYLTRANSFERASE SUBUNIT BETA	prenylation
+Q4	chr3:203150000	Zm00001eb153910	chr3	205271234	205272141	3.61	Werner syndrome ATP-dependent helicase	WERNER SYNDROME ATP-DEPENDENT HELICASE	
+Q4	chr3:203150000	Zm00001eb153920	chr3	205273735	205278355	3.61	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb153930	chr3	205296087	205304472	3.61	Diphosphonucleotide phosphatase2	BIFUNCTIONAL POLYNUCLEOTIDE PHOSPHATASE_KINASE	single strand break repair;base-excision repair;double-strand break repair via nonhomologous end joining;DNA damage response
+Q4	chr3:203150000	Zm00001eb153940	chr3	205353689	205358204	3.61	Reticulon-like protein	RETICULON-LIKE PROTEIN	response to bacterium
+Q4	chr3:203150000	Zm00001eb153950	chr3	205366969	205368195	3.61	RING-H2 finger protein ATL67	OS01G0736600 PROTEIN	protein ubiquitination
+Q4	chr3:203150000	Zm00001eb153960	chr3	205367531	205368176	3.61			
+Q4	chr3:203150000	Zm00001eb153970	chr3	205414582	205415768	3.61	Harpin-induced protein	OS01G0736500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb153980	chr3	205416470	205420640	3.61	phenylalanine--tRNA ligase	PHENYLALANINE--TRNA LIGASE, MITOCHONDRIAL	phenylalanyl-tRNA aminoacylation;tRNA aminoacylation
+Q4	chr3:203150000	Zm00001eb153990	chr3	205421575	205423303	3.61	UDP-glycosyltransferase 88A1	UDP-GLYCOSYLTRANSFERASE 88A1	
+Q4	chr3:203150000	Zm00001eb154000	chr3	205428339	205450268	3.61	Glycosyltransferase	GLYCOSYLTRANSFERASE	
+Q4	chr3:203150000	Zm00001eb154010	chr3	205522208	205541787	3.58	Respiratory burst oxidase2	SUPEROXIDE-GENERATING NADPH OXIDASE HEAVY CHAIN SUBUNIT A	cellular oxidant detoxification
+Q4	chr3:203150000	Zm00001eb154020	chr3	205540470	205541787	3.58	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb154030	chr3	205628484	205628941	3.58	Ribosomal protein L20		translation
+Q4	chr3:203150000	Zm00001eb154040	chr3	205636872	205647130	3.58	Uncharacterized protein	RETROTRANSPOSON-LIKE PROTEIN	
+Q4	chr3:203150000	Zm00001eb154050	chr3	205651820	205661117	3.58	NADPH-dependent diflavin oxidoreductase 1	NADPH-DEPENDENT DIFLAVIN OXIDOREDUCTASE 1	embryo development ending in seed dormancy;iron-sulfur cluster assembly
+Q4	chr3:203150000	Zm00001eb154060	chr3	205662001	205664413	3.58	BURP domain protein RD22	BURP DOMAIN PROTEIN RD22	
+Q4	chr3:203150000	Zm00001eb154070	chr3	205840017	205841430	3.58	Heat shock factor protein HSF30	HEAT STRESS TRANSCRIPTION FACTOR C-1B	regulation of DNA-templated transcription;regulation of transcription by RNA polymerase II;response to osmotic stress;response to abscisic acid
+Q4	chr3:203150000	Zm00001eb154080	chr3	205845566	205846818	3.58	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb154090	chr3	205888093	205889643	3.58	Transcription repressor	TRANSCRIPTION REPRESSOR	negative regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb154100	chr3	205890924	205896817	3.58	p-loop containing nucleoside triphosphate hydrolase superfamily protein	ENGB-TYPE G DOMAIN-CONTAINING PROTEIN	
+Q4	chr3:203150000	Zm00001eb154110	chr3	206004929	206010210	3.37	Pentatricopeptide repeat-containing protein chloroplastic	OS05G0294600 PROTEIN	
+Q4	chr3:203150000	Zm00001eb154120	chr3	206120580	206122244	3.21	Pathogen-related protein	PATHOGENESIS-RELATED FAMILY PROTEIN	
+Q4	chr3:203150000	Zm00001eb154130	chr3	206236442	206239617	3.35	Ubiquitin domain containing 1	OS05G0529400 PROTEIN	
+Q4	chr3:203150000	Zm00001eb154140	chr3	206242594	206251072	3.35	Protein STICHEL-like 3	PROTEIN STICHEL-LIKE 3	DNA replication;DNA-templated DNA replication;DNA repair;DNA biosynthetic process
+Q4	chr3:203150000	Zm00001eb154150	chr3	206255974	206256619	3.35	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb154160	chr3	206256483	206257043	3.35			
+Q4	chr3:203150000	Zm00001eb154170	chr3	206259224	206260931	3.35	Putative WRKY transcription factor 69	WRKY TRANSCRIPTION FACTOR 69-RELATED	regulation of DNA-templated transcription
+Q4	chr3:203150000	Zm00001eb154180	chr3	206291985	206292989	3.35	Uncharacterized protein	BZIP DOMAIN-CONTAINING PROTEIN	
+Q4	chr3:203150000	Zm00001eb154190	chr3	206294036	206302925	3.4	J domain-containing protein	OS01G0730500 PROTEIN	
+Q4	chr3:203150000	Zm00001eb154200	chr3	206304483	206304854	3.4			
+Q4	chr3:203150000	Zm00001eb154210	chr3	206307526	206307870	3.4	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb154220	chr3	206310484	206315647	3.4	Epstein-Barr nuclear antigen 2	OS01G0729900 PROTEIN	
+Q4	chr3:203150000	Zm00001eb154230	chr3	206338600	206341682	3.4	Aminotransferase class V domain-containing protein	OS01G0729600 PROTEIN	
+Q4	chr3:203150000	Zm00001eb154240	chr3	206341068	206341368	3.4			
+Q4	chr3:203150000	Zm00001eb154250	chr3	206342487	206342914	3.4	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb154260	chr3	206424693	206429143	3.44	HVA22-like protein f	HVA22-LIKE PROTEIN F	
+Q4	chr3:203150000	Zm00001eb154270	chr3	206429678	206430826	3.44	HVA22-like protein	HVA22-LIKE PROTEIN F	
+Q4	chr3:203150000	Zm00001eb154280	chr3	206430980	206434030	3.44	GDSL esterase_lipase	GDSL ESTERASE_LIPASE	
+Q4	chr3:203150000	Zm00001eb154290	chr3	206437984	206440445	3.44	Uncharacterized protein	ADENINE PHOSPHORIBOSYLTRANSFERASE	
+Q4	chr3:203150000	Zm00001eb154300	chr3	206475036	206479971	3.44	Subtilisin-like protease SBT5.6	SUBTILISIN-LIKE PROTEASE SBT5.5-RELATED	
+Q4	chr3:203150000	Zm00001eb154310	chr3	206477687	206478690	3.44	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb154320	chr3	206489701	206490598	3.44	Clathrin heavy chain 2		intracellular protein transport;vesicle-mediated transport
+Q4	chr3:203150000	Zm00001eb154330	chr3	206494109	206495051	3.44	Uncharacterized protein		
+Q4	chr3:203150000	Zm00001eb154340	chr3	206495066	206495596	3.44	Protein kinase domain-containing protein		
+Q4	chr3:203150000	Zm00001eb154350	chr3	206497889	206498542	3.44	Uncharacterized protein	OS01G0727700 PROTEIN	leaf senescence
+Q5	chr4:197050000	Zm00001eb196890	chr4	193891889	193900863	6.47			
+Q5	chr4:197050000	Zm00001eb196900	chr4	193902609	193904455	6.47	DUF868 family protein	OS12G0149000 PROTEIN	
+Q5	chr4:197050000	Zm00001eb196910	chr4	193989923	193994172	6.47			
+Q5	chr4:197050000	Zm00001eb196920	chr4	193992024	193994180	6.47	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb196930	chr4	193999080	194003253	6.81	Calmodulin binding protein	IQ DOMAIN-CONTAINING PROTEIN IQM3	
+Q5	chr4:197050000	Zm00001eb196940	chr4	194137456	194139055	6.83	Uncharacterized protein	RIGHT HANDED BETA HELIX DOMAIN-CONTAINING PROTEIN	
+Q5	chr4:197050000	Zm00001eb196950	chr4	194198201	194208731	6.98	Protein kinase domain-containing protein	OS02G0615800 PROTEIN	
+Q5	chr4:197050000	Zm00001eb196960	chr4	194240484	194242288	6.98	Cytochrome P450 CYP94C20	CYTOCHROME P450 CYP94C20	
+Q5	chr4:197050000	Zm00001eb196970	chr4	194311401	194315220	6.96	Major facilitator superfamily (MFS) profile domain-containing protein	OS11G0151500 PROTEIN	transmembrane transport
+Q5	chr4:197050000	Zm00001eb196980	chr4	194374842	194376571	6.96	Beta-16-galactosyltransferase GALT29A	SIALYLTRANSFERASE-LIKE PROTEIN 2	glycoprotein biosynthetic process
+Q5	chr4:197050000	Zm00001eb196990	chr4	194419557	194420420	6.96	Protein LITTLE ZIPPER 4	PROTEIN LITTLE ZIPPER 4	
+Q5	chr4:197050000	Zm00001eb197000	chr4	194472190	194473399	6.96	RCN1-Corn Centroradialis_TFL1-like protein	RCN1-CORN CENTRORADIALIS_TFL1-LIKE PROTEIN	
+Q5	chr4:197050000	Zm00001eb197010	chr4	194490454	194492383	6.96	Myb_SANT-like domain-containing protein	OS01G0523800 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197020	chr4	194494556	194499855	6.96	Pentatricopeptide repeat-containing protein mitochondrial	PENTATRICOPEPTIDE REPEAT-CONTAINING PROTEIN MITOCHONDRIAL	
+Q5	chr4:197050000	Zm00001eb197030	chr4	194573943	194579299	6.96	Uncharacterized protein	DUAL SPECIFICITY PHOSPHATASE, CATALYTIC DOMAIN CONTAINING PROTEIN, EXPRESSED	
+Q5	chr4:197050000	Zm00001eb197040	chr4	194575791	194583221	6.96	BZIP transcription factor family protein	TRANSCRIPTION FACTOR TGAL4	DNA-templated transcription;regulation of DNA-templated transcription
+Q5	chr4:197050000	Zm00001eb197050	chr4	194606456	194609230	7.12	non-specific serine_threonine protein kinase	NON-SPECIFIC SERINE_THREONINE PROTEIN KINASE	signal transduction
+Q5	chr4:197050000	Zm00001eb197060	chr4	194758593	194759710	7.12	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197070	chr4	194758699	194759509	7.12	Uncharacterized protein	EMB|CAB85509.1	
+Q5	chr4:197050000	Zm00001eb197080	chr4	194768241	194774483	7.12			
+Q5	chr4:197050000	Zm00001eb197090	chr4	194787332	194789080	7.12	Alpha-carbonic anhydrase domain-containing protein	CARBONIC ANHYDRASE	
+Q5	chr4:197050000	Zm00001eb197100	chr4	194798191	194801933	7.12	40S ribosomal protein S14	SMALL RIBOSOMAL SUBUNIT PROTEIN US11Y	ribosomal small subunit assembly;translation
+Q5	chr4:197050000	Zm00001eb197110	chr4	194806974	194810116	7.12	Sm domain-containing protein	SMALL NUCLEAR RIBONUCLEOPROTEIN G	mRNA splicing, via spliceosome
+Q5	chr4:197050000	Zm00001eb197120	chr4	194826433	194836463	7.12	Signal recognition particle 54 kDa protein chloroplastic	SIGNAL RECOGNITION PARTICLE SUBUNIT SRP54	SRP-dependent cotranslational protein targeting to membrane
+Q5	chr4:197050000	Zm00001eb197130	chr4	194929437	194932556	7.12	Uncharacterized protein	OS08G0443700 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197140	chr4	194958199	194959269	7.12	Dirigent protein		
+Q5	chr4:197050000	Zm00001eb197150	chr4	195120769	195124726	7.12	mRNA-decapping enzyme-like protein	DECAPPING PROTEIN 1, ISOFORM A	deadenylation-dependent decapping of nuclear-transcribed mRNA
+Q5	chr4:197050000	Zm00001eb197160	chr4	195126690	195129555	7.12	BZIP domain-containing protein	OS11G0154900 PROTEIN	regulation of DNA-templated transcription
+Q5	chr4:197050000	Zm00001eb197170	chr4	195193062	195194560	7.12	NAC domain-containing protein	LOW QUALITY PROTEIN: NAC DOMAIN-CONTAINING PROTEIN 90-LIKE	regulation of DNA-templated transcription
+Q5	chr4:197050000	Zm00001eb197180	chr4	195246326	195253747	6.98	RING-type domain-containing protein	RING-TYPE DOMAIN-CONTAINING PROTEIN	ERAD pathway;proteasome-mediated ubiquitin-dependent protein catabolic process
+Q5	chr4:197050000	Zm00001eb197190	chr4	195254467	195266397	6.98	Kinesin motor domain-containing protein	F-BOX PROTEIN RMF	microtubule-based movement
+Q5	chr4:197050000	Zm00001eb197200	chr4	195273670	195294334	6.98	Cation-chloride cotransporter 1	CATION-CHLORIDE COTRANSPORTER 2	monoatomic ion transport;transmembrane transport;potassium ion transmembrane transport;chloride transmembrane transport
+Q5	chr4:197050000	Zm00001eb197210	chr4	195324911	195326019	6.96	Uncharacterized protein	OS08G0443700 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197220	chr4	195329275	195330189	6.96	F-box protein	OS11G0155100 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197230	chr4	195333148	195334068	6.96	Uncharacterized protein	OS08G0443700 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197240	chr4	195340147	195340668	6.96	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197250	chr4	195340766	195341008	6.96	Uncharacterized protein	OS08G0443700 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197260	chr4	195342820	195343846	6.96	F-box domain-containing protein	OS11G0155100 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197270	chr4	195344886	195352250	6.96	K Homology domain-containing protein	K HOMOLOGY DOMAIN-CONTAINING PROTEIN	
+Q5	chr4:197050000	Zm00001eb197280	chr4	195376480	195377517	6.96	Uncharacterized protein	OS08G0443700 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197290	chr4	195390851	195393586	6.96	Disease resistance protein RPM1	OS11G0226933 PROTEIN	innate immune response-activating signaling pathway;defense response;plant-type hypersensitive response;defense response to bacterium
+Q5	chr4:197050000	Zm00001eb197300	chr4	195464513	195506491	7.35	Protein kinase domain containing protein expressed	PROTEIN KINASE DOMAIN CONTAINING PROTEIN EXPRESSED	
+Q5	chr4:197050000	Zm00001eb197310	chr4	195529739	195531239	7.35	Dirigent protein		
+Q5	chr4:197050000	Zm00001eb197320	chr4	195682556	195687207	7.35	Cationic amino acid transporter C-terminal domain-containing protein	CATIONIC AMINO ACID TRANSPORTER C-TERMINAL DOMAIN-CONTAINING PROTEIN	amino acid transport;transmembrane transport
+Q5	chr4:197050000	Zm00001eb197330	chr4	195729558	195733412	7.35	Histone H2A	HISTONE H2A.V	heterochromatin formation
+Q5	chr4:197050000	Zm00001eb197340	chr4	195823768	195826396	7.34	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197350	chr4	195826837	195827133	7.34	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197360	chr4	195837388	195838085	7.34	4-alpha-glucanotransferase		carbohydrate metabolic process
+Q5	chr4:197050000	Zm00001eb197370	chr4	195899034	195901074	7.34	B3 domain-containing protein	B3 DOMAIN-CONTAINING PROTEIN OS11G0156000	regulation of DNA-templated transcription
+Q5	chr4:197050000	Zm00001eb197380	chr4	195988409	195990849	7.34	Lysosomal Pro-X carboxypeptidase	OS11G0156200 PROTEIN	proteolysis
+Q5	chr4:197050000	Zm00001eb197390	chr4	196059413	196059841	7.49	RING-type domain-containing protein	OS08G0330301 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197400	chr4	196132896	196133855	7.4	Uncharacterized protein	SUBFAMILY NOT NAMED	
+Q5	chr4:197050000	Zm00001eb197410	chr4	196177320	196178190	7.4	Ribulose bisphosphate carboxylase small subunit, chloroplastic	RIBULOSE BISPHOSPHATE CARBOXYLASE SMALL SUBUNIT 1A, CHLOROPLASTIC-RELATED	carbon fixation;reductive pentose-phosphate cycle
+Q5	chr4:197050000	Zm00001eb197420	chr4	196178156	196178547	7.4	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197430	chr4	196233587	196234314	7.4	Homeobox domain-containing protein	WUSCHEL-RELATED HOMEOBOX 3	regulation of DNA-templated transcription;system development;plant organ development
+Q5	chr4:197050000	Zm00001eb197440	chr4	196234454	196235021	7.4			
+Q5	chr4:197050000	Zm00001eb197450	chr4	196319574	196320442	7.4	Uncharacterized protein	RRM DOMAIN-CONTAINING PROTEIN	
+Q5	chr4:197050000	Zm00001eb197460	chr4	196323634	196326690	7.4	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197470	chr4	196394848	196395757	7.4	RRM domain-containing protein	RRM DOMAIN-CONTAINING PROTEIN	
+Q5	chr4:197050000	Zm00001eb197480	chr4	196423728	196425766	7.4	Transcription repressor	TRANSCRIPTION REPRESSOR	negative regulation of DNA-templated transcription
+Q5	chr4:197050000	Zm00001eb197490	chr4	196424033	196425736	7.4	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197500	chr4	196462949	196464400	7.4	Transcription repressor	TRANSCRIPTION REPRESSOR	negative regulation of DNA-templated transcription
+Q5	chr4:197050000	Zm00001eb197510	chr4	196467601	196468286	7.4	HTH myb-type domain-containing protein	TRANSCRIPTION FACTOR MYB16	
+Q5	chr4:197050000	Zm00001eb197520	chr4	196493758	196494666	7.4	Uncharacterized protein	EXPRESSED PROTEIN	
+Q5	chr4:197050000	Zm00001eb197530	chr4	196531671	196535092	6.91	Protein SMAX1-LIKE 3	PROTEIN SMAX1-LIKE 3	protein folding
+Q5	chr4:197050000	Zm00001eb197540	chr4	196629652	196633030	6.91	protein-serine_threonine phosphatase		
+Q5	chr4:197050000	Zm00001eb197550	chr4	196691496	196697942	6.91	5'-3' exoribonuclease	5'-3' EXORIBONUCLEASE 3-LIKE	mRNA processing
+Q5	chr4:197050000	Zm00001eb197560	chr4	196703874	196704452	7.03	F-box domain-containing protein		
+Q5	chr4:197050000	Zm00001eb197570	chr4	196756297	196757512	7.03	Phospholipase A2	OS11G0546600 PROTEIN	phospholipid metabolic process;arachidonate secretion
+Q5	chr4:197050000	Zm00001eb197580	chr4	196756607	196768410	7.03	Kinesin-like protein	KINESIN HEAVY CHAIN ISOFORM X1	microtubule-based movement
+Q5	chr4:197050000	Zm00001eb197590	chr4	196933862	196936719	7.03	Protein AUXIN RESPONSE 4	SERINE HYDROLASE-LIKE PROTEIN-RELATED	
+Q5	chr4:197050000	Zm00001eb197600	chr4	196937332	196942182	7.03	60S ribosomal protein L23		mRNA processing;translation
+Q5	chr4:197050000	Zm00001eb197610	chr4	196971905	196976413	7.03	Uncharacterized protein	OS11G0544200 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197620	chr4	196981583	196987355	7.03	CCAAT-HAP5-transcription factor 59	DR1-ASSOCIATED COREPRESSOR	transcription by RNA polymerase II
+Q5	chr4:197050000	Zm00001eb197630	chr4	196987864	196992231	7.03	Glutamyl-tRNA(Gln) amidotransferase subunit B, chloroplastic_mitochondrial	GLUTAMYL-TRNA(GLN) AMIDOTRANSFERASE SUBUNIT B, MITOCHONDRIAL	mitochondrial translation;glutaminyl-tRNAGln biosynthesis via transamidation
+Q5	chr4:197050000	Zm00001eb197640	chr4	197076802	197083510	7.55	Ultraviolet-B receptor UVR8	UVB-RESISTANCE PROTEIN UVR8-RELATED	
+Q5	chr4:197050000	Zm00001eb197650	chr4	197087225	197089031	7.55	Glycosyltransferase 6	GLYCOSYLTRANSFERASE 6	
+Q5	chr4:197050000	Zm00001eb197660	chr4	197087463	197088701	7.55			
+Q5	chr4:197050000	Zm00001eb197670	chr4	197146761	197147591	7.55	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197680	chr4	197161230	197163032	7.55			
+Q5	chr4:197050000	Zm00001eb197690	chr4	197161406	197163125	7.55	Glycosyltransferase 6	GLYCOSYLTRANSFERASE 6	
+Q5	chr4:197050000	Zm00001eb197700	chr4	197166491	197168877	7.55			
+Q5	chr4:197050000	Zm00001eb197710	chr4	197235382	197238420	7.55	Pentatricopeptide repeat (PPR) superfamily protein	PENTATRICOPEPTIDE REPEAT (PPR) SUPERFAMILY PROTEIN	
+Q5	chr4:197050000	Zm00001eb197720	chr4	197271317	197271942	7.55	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197730	chr4	197341355	197342415	7.55			
+Q5	chr4:197050000	Zm00001eb197740	chr4	197341459	197373630	7.55	Exportin-1_Importin-beta-like domain-containing protein	ARM REPEAT SUPERFAMILY PROTEIN	
+Q5	chr4:197050000	Zm00001eb197750	chr4	197389503	197391450	7.55	UPF0481 protein	OS12G0480800 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197760	chr4	197389537	197391618	7.55			
+Q5	chr4:197050000	Zm00001eb197770	chr4	197418444	197419028	7.08	DUF538 family protein		
+Q5	chr4:197050000	Zm00001eb197780	chr4	197419786	197420798	7.08	RING-type domain-containing protein	RING-TYPE DOMAIN-CONTAINING PROTEIN	
+Q5	chr4:197050000	Zm00001eb197790	chr4	197436854	197437644	7.08	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197800	chr4	197439318	197444192	7.08	Myb_SANT-like domain-containing protein	MYB_SANT-LIKE DOMAIN-CONTAINING PROTEIN	
+Q5	chr4:197050000	Zm00001eb197810	chr4	197481732	197483061	7.08	Putative RING zinc finger domain superfamily protein	OS11G0542100 PROTEIN	
+Q5	chr4:197050000	Zm00001eb197820	chr4	197527098	197540158	7.08	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197830	chr4	197549655	197550426	7.08	Uncharacterized protein		response to wounding
+Q5	chr4:197050000	Zm00001eb197840	chr4	197570401	197570830	7.08	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197850	chr4	197618278	197620842	7.08	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197860	chr4	197678270	197679037	7.08	Rpn11_EIF3F C-terminal domain-containing protein		
+Q5	chr4:197050000	Zm00001eb197870	chr4	197697173	197699172	7.08	Xyloglucan endotransglucosylase_hydrolase	XYLOGLUCAN ENDOTRANSGLUCOSYLASE_HYDROLASE PROTEIN 4	carbohydrate metabolic process;xyloglucan metabolic process;cell wall biogenesis;glucan metabolic process
+Q5	chr4:197050000	Zm00001eb197880	chr4	197759351	197766730	6.97	Uncharacterized protein		gene silencing by siRNA-directed DNA methylation
+Q5	chr4:197050000	Zm00001eb197890	chr4	197889338	197894534	6.97	Respiratory burst oxidase4	RESPIRATORY BURST OXIDASE HOMOLOG PROTEIN D	cellular oxidant detoxification
+Q5	chr4:197050000	Zm00001eb197900	chr4	197902368	197903752	6.97	Germin-like protein	GERMIN-LIKE PROTEIN SUBFAMILY 3 MEMBER 4	plasmodesmata-mediated intercellular transport;regulation of root development
+Q5	chr4:197050000	Zm00001eb197910	chr4	197905587	197909322	6.97	DedA	SNARE ASSOCIATED GOLGI PROTEIN FAMILY	
+Q5	chr4:197050000	Zm00001eb197920	chr4	197910342	197913646	6.97	Uncharacterized protein		
+Q5	chr4:197050000	Zm00001eb197930	chr4	198006454	198010970	7.01			
+Q5	chr4:197050000	Zm00001eb197940	chr4	198088789	198093754	7.01	Amidase domain-containing protein	AMIDASE FAMILY PROTEIN	
+Q5	chr4:197050000	Zm00001eb197950	chr4	198136193	198137578	7.01			
+Q5	chr4:197050000	Zm00001eb197960	chr4	198175445	198177190	7.01	C2 domain protein	PROTEIN SRC2-LIKE	defense response
+Q5	chr4:197050000	Zm00001eb197970	chr4	198257057	198259542	7.01	S-acyltransferase	S-ACYLTRANSFERASE	protein targeting to membrane
+Q5	chr4:197050000	Zm00001eb197980	chr4	198285380	198286818	7.01	CRAL-TRIO domain-containing protein	PATELLIN-6	
+Q5	chr4:197050000	Zm00001eb197990	chr4	198354320	198361618	7.01	Retinoblastoma-related protein 2	RETINOBLASTOMA-RELATED PROTEIN 2	regulation of transcription by RNA polymerase II;regulation of DNA endoreduplication;regulation of cell cycle;negative regulation of G1/S transition of mitotic cell cycle
+Q5	chr4:197050000	Zm00001eb198000	chr4	198372367	198375760	7.01	Nudix hydrolase 13 mitochondrial	HYDROLASE 13, MITOCHONDRIAL, PUTATIVE, EXPRESSED-RELATED	
+Q5	chr4:197050000	Zm00001eb198010	chr4	198413781	198418960	6.28	Zinc knuckle family protein	ZINC KNUCKLE FAMILY PROTEIN	positive regulation of cytoplasmic translation
+Q6	chr7:185150000	Zm00001eb331350	chr7	183492045	183501750	4.41	Lon protease homolog, mitochondrial	LON PROTEASE HOMOLOG, MITOCHONDRIAL	proteolysis;protein quality control for misfolded or incompletely synthesized proteins;mitochondrion organization;protein catabolic process;cellular response to oxidative stress;chaperone-mediated protein complex assembly;oxidation-dependent protein catabolic process
+Q6	chr7:185150000	Zm00001eb331360	chr7	183502809	183505183	4.41	Negatively light-regulated protein	NEGATIVELY LIGHT-REGULATED PROTEIN	
+Q6	chr7:185150000	Zm00001eb331370	chr7	183507860	183510761	4.41	Zinc finger (C3HC4-type RING finger) family protein	RING-TYPE DOMAIN-CONTAINING PROTEIN	double-strand break repair
+Q6	chr7:185150000	Zm00001eb331380	chr7	183511542	183513913	4.41			
+Q6	chr7:185150000	Zm00001eb331390	chr7	183511730	183514157	4.41	Tetratricopeptide repeat (TPR)-like superfamily protein	TETRATRICOPEPTIDE REPEAT (TPR)-LIKE SUPERFAMILY PROTEIN	
+Q6	chr7:185150000	Zm00001eb331400	chr7	183515476	183522123	4.41	BRCT domain-containing protein	BRCT DOMAIN-CONTAINING PROTEIN	
+Q6	chr7:185150000	Zm00001eb331410	chr7	183528521	183532791	4.41	protein-serine_threonine phosphatase	PROTEIN-SERINE_THREONINE PHOSPHATASE	regulation of intracellular signal transduction
+Q6	chr7:185150000	Zm00001eb331420	chr7	183533019	183534020	4.41	Uncharacterized protein		
+Q6	chr7:185150000	Zm00001eb331430	chr7	183534768	183538550	4.41	Pectinesterase	PECTINESTERASE	
+Q6	chr7:185150000	Zm00001eb331440	chr7	183563677	183564280	4.41	Uncharacterized protein		
+Q6	chr7:185150000	Zm00001eb331450	chr7	183567469	183568331	4.41	Wound-induced protein 1		
+Q6	chr7:185150000	Zm00001eb331460	chr7	183571711	183576273	4.41	Protein SCAR	PROTEIN SCAR	actin cytoskeleton organization;positive regulation of Arp2/3 complex-mediated actin nucleation
+Q6	chr7:185150000	Zm00001eb331470	chr7	183580360	183583351	4.41	26S proteasome regulatory subunit 4 homolog A	26S PROTEASOME REGULATORY SUBUNIT 4	female gamete generation;maintenance of root meristem identity;proteasomal protein catabolic process;male gamete generation
+Q6	chr7:185150000	Zm00001eb331480	chr7	183583560	183584529	4.41	CASP-like protein	CASP-LIKE PROTEIN 4B1	
+Q6	chr7:185150000	Zm00001eb331490	chr7	183583682	183584529	4.41			
+Q6	chr7:185150000	Zm00001eb331500	chr7	183672151	183674473	4.18	Methyltransferase	METHYLTRANSFERASE TYPE 11 DOMAIN-CONTAINING PROTEIN	
+Q6	chr7:185150000	Zm00001eb331510	chr7	183712663	183717268	4.25	SNF2 domain-containing protein CLASSY 1	HELICASE ARIP4	chromatin organization;gene silencing by siRNA-directed DNA methylation
+Q6	chr7:185150000	Zm00001eb331520	chr7	183739273	183745334	4.25	E1 ubiquitin-activating enzyme	UBIQUITIN-ACTIVATING ENZYME E1 3	ubiquitin-dependent protein catabolic process;DNA damage response;protein ubiquitination
+Q6	chr7:185150000	Zm00001eb331530	chr7	183746134	183748425	4.25	pyruvate decarboxylase	PYRUVATE DECARBOXYLASE 3	response to hypoxia
+Q6	chr7:185150000	Zm00001eb331540	chr7	183751569	183759747	4.25	AMP deaminase	AMP DEAMINASE-RELATED	IMP biosynthetic process;lipid metabolic process;signal transduction;purine ribonucleoside monophosphate biosynthetic process;IMP salvage;intracellular signal transduction;AMP metabolic process
+Q6	chr7:185150000	Zm00001eb331550	chr7	183759760	183762467	4.25	Protein ESKIMO 1	XYLAN O-ACETYLTRANSFERASE 7	xylan biosynthetic process
+Q6	chr7:185150000	Zm00001eb331560	chr7	183773329	183774359	4.25			
+Q6	chr7:185150000	Zm00001eb331570	chr7	183773565	183785894	4.25	Transducin family protein _ WD-40 repeat family protein	TOMOSYN, ISOFORM C	exocytosis;Golgi to plasma membrane transport
+Q6	chr7:185150000	Zm00001eb331580	chr7	183786300	183789051	4.25	DNA replication complex GINS protein PSF2	DNA REPLICATION COMPLEX GINS PROTEIN PSF2	double-strand break repair via break-induced replication;DNA replication
+Q6	chr7:185150000	Zm00001eb331590	chr7	183788655	183809289	4.25	HEAT repeat-containing protein	SYMPLEKIN	
+Q6	chr7:185150000	Zm00001eb331600	chr7	183835667	183837914	4.23	PWWP domain-containing protein	OS07G0694500 PROTEIN	regulation of DNA-templated transcription
+Q6	chr7:185150000	Zm00001eb331610	chr7	183870008	183875596	4.23	Ketol-acid reductoisomerase chloroplastic	PROTEIN RETARDED ROOT GROWTH-LIKE	
+Q6	chr7:185150000	Zm00001eb331620	chr7	183875836	183879878	4.23	Uncharacterized protein	TRANSMEMBRANE PROTEIN	
+Q6	chr7:185150000	Zm00001eb331630	chr7	183947136	183980571	4.36	Two-component response regulator-like APRR3	TWO-COMPONENT RESPONSE REGULATOR-LIKE PRR37	phosphorelay signal transduction system;cytokinin-activated signaling pathway
+Q6	chr7:185150000	Zm00001eb331640	chr7	183959547	183961421	4.36			
+Q6	chr7:185150000	Zm00001eb331650	chr7	183961740	183962176	4.36			
+Q6	chr7:185150000	Zm00001eb331660	chr7	183962183	183962552	4.36			
+Q6	chr7:185150000	Zm00001eb331670	chr7	183986275	183988463	4.36	Phospholipid:diacylglycerol acyltransferase 1	PHOSPHOLIPID:DIACYLGLYCEROL ACYLTRANSFERASE	lipid metabolic process
+Q6	chr7:185150000	Zm00001eb331680	chr7	183990387	183991977	4.36	Spermidine hydroxycinnamoyl transferase	PUTRESCINE HYDROXYCINNAMOYLTRANSFERASE 3	
+Q6	chr7:185150000	Zm00001eb331690	chr7	184153521	184155288	4.49	ornithine decarboxylase	ORNITHINE DECARBOXYLASE	polyamine biosynthetic process
+Q6	chr7:185150000	Zm00001eb331700	chr7	184160125	184167873	4.49	Phospholipase D	PHOSPHOLIPASE D	phosphatidylcholine metabolic process
+Q6	chr7:185150000	Zm00001eb331710	chr7	184180969	184181850	4.49	Uncharacterized protein		
+Q6	chr7:185150000	Zm00001eb331720	chr7	184180993	184181731	4.49	Syringolide-induced protein 14-1-1	OS09G0542900 PROTEIN	
+Q6	chr7:185150000	Zm00001eb331730	chr7	184184036	184186322	4.49	Uncharacterized protein		
+Q6	chr7:185150000	Zm00001eb331740	chr7	184185527	184189547	4.49	Bzip-like transcription factor-like	OS09G0542500 PROTEIN	
+Q6	chr7:185150000	Zm00001eb331750	chr7	184263715	184273270	4.51	Plastid transcriptionally active chromosome 2-like protein	OS03G0824100 PROTEIN	
+Q6	chr7:185150000	Zm00001eb331760	chr7	184275647	184278810	4.51	Peptidase A1 domain-containing protein	OS09G0542100 PROTEIN	
+Q6	chr7:185150000	Zm00001eb331770	chr7	184288826	184291879	4.51	Universal stress family protein	CELL WALL INTEGRITY_STRESS RESPONSE COMPONENT	
+Q6	chr7:185150000	Zm00001eb331780	chr7	184330442	184333780	5.0	DUF1279 family protein	PROTEIN FAM210B, MITOCHONDRIAL	
+Q6	chr7:185150000	Zm00001eb331790	chr7	184333897	184336313	5.0	Trafficking protein particle complex subunit 2-like protein	TRAFFICKING PROTEIN PARTICLE COMPLEX SUBUNIT 2-LIKE PROTEIN	endoplasmic reticulum to Golgi vesicle-mediated transport
+Q6	chr7:185150000	Zm00001eb331800	chr7	184346886	184347287	5.0	Uncharacterized protein	SUBFAMILY NOT NAMED	
+Q6	chr7:185150000	Zm00001eb331810	chr7	184378975	184379849	5.0	40S ribosomal protein S4-3		protein folding
+Q6	chr7:185150000	Zm00001eb331820	chr7	184382088	184383411	5.0	Early nodulin-like protein 16	OS09G0541100 PROTEIN	
+Q6	chr7:185150000	Zm00001eb331830	chr7	184444810	184446500	5.0	Aquaporin PIP2-2	AQUAPORIN PIP2-7-RELATED	transmembrane transport
+Q6	chr7:185150000	Zm00001eb331840	chr7	184470685	184472290	5.0	Mitochondrial phosphate carrier protein 3, mitochondrial		mitochondrial phosphate ion transmembrane transport
+Q6	chr7:185150000	Zm00001eb331850	chr7	184493338	184498966	5.0	HTH La-type RNA-binding domain-containing protein		
+Q6	chr7:185150000	Zm00001eb331860	chr7	184493342	184494680	5.0			
+Q6	chr7:185150000	Zm00001eb331870	chr7	184511276	184511675	4.97			
+Q6	chr7:185150000	Zm00001eb331880	chr7	184528042	184529635	4.97	Delayed flowering1	OS09G0540800 PROTEIN	regulation of DNA-templated transcription;positive regulation of DNA-templated transcription
+Q6	chr7:185150000	Zm00001eb331890	chr7	184546234	184553606	4.97	Nucleosome_chromatin assembly factor 104	WD-40 REPEAT-CONTAINING PROTEIN MSI2-RELATED	
+Q6	chr7:185150000	Zm00001eb331900	chr7	184552334	184556321	4.97	GDSL esterase_lipase EXL3	OS09G0540400 PROTEIN	
+Q6	chr7:185150000	Zm00001eb331910	chr7	184556440	184561421	4.97	Myb_SANT-like domain-containing protein	OS09G0292400 PROTEIN	
+Q6	chr7:185150000	Zm00001eb331920	chr7	184616130	184619309	4.89	Acyl carrier protein	ACYL CARRIER PROTEIN	fatty acid biosynthetic process
+Q6	chr7:185150000	Zm00001eb331930	chr7	184619521	184620452	4.89	DUF4408 domain-containing protein	COTTON FIBER PROTEIN	
+Q6	chr7:185150000	Zm00001eb331940	chr7	184623104	184625347	4.89	SKP1-like protein	SKP1-LIKE PROTEIN 14-RELATED	ubiquitin-dependent protein catabolic process;jasmonic acid mediated signaling pathway;protein ubiquitination;SCF-dependent proteasomal ubiquitin-dependent protein catabolic process
+Q6	chr7:185150000	Zm00001eb331950	chr7	184651731	184655894	4.89	MCM10 minichromosome maintenance deficient 10	PROTEIN MCM10 HOMOLOG	DNA replication;DNA replication initiation
+Q6	chr7:185150000	Zm00001eb331960	chr7	184723818	184732925	4.89	Beta-galactosidase	BETA-GALACTOSIDASE 12	carbohydrate metabolic process;galactose catabolic process
+Q6	chr7:185150000	Zm00001eb331970	chr7	184818709	184833544	4.87	3-dehydroquinate synthase chloroplastic	3-DEHYDROQUINATE SYNTHASE, CHLOROPLASTIC	aromatic amino acid family biosynthetic process;chorismate biosynthetic process
+Q6	chr7:185150000	Zm00001eb331980	chr7	184824751	184835697	4.87	VHS domain-containing protein	9-CIS-EPOXYCAROTENOID DIOXYGENASE NCED4, CHLOROPLASTIC	
+Q6	chr7:185150000	Zm00001eb331990	chr7	184836442	184837527	4.87	Uncharacterized protein	T20H2.15 PROTEIN	
+Q6	chr7:185150000	Zm00001eb332000	chr7	184918318	184933801	4.79	Synaptotagmin-2	OS09G0538800 PROTEIN	
+Q6	chr7:185150000	Zm00001eb332010	chr7	185034577	185038486	4.79	Uncharacterized protein	PROTEIN ALTERED PHOSPHATE STARVATION RESPONSE 1	
+Q6	chr7:185150000	Zm00001eb332020	chr7	185145186	185147430	5.24	Protein POLLENLESS 3-LIKE 2	OS09G0538500 PROTEIN	
+Q6	chr7:185150000	Zm00001eb332030	chr7	185147528	185155361	5.24	MYB transcription factor (Fragment)	TRANSCRIPTION REPRESSOR MYB4	regulation of DNA-templated transcription;regulation of lignin biosynthetic process
+Q6	chr7:185150000	Zm00001eb332040	chr7	185171089	185173422	5.24	Proteasome subunit alpha type	PROTEASOME SUBUNIT ALPHA TYPE-7-1-RELATED	ubiquitin-dependent protein catabolic process;protein catabolic process;proteasome-mediated ubiquitin-dependent protein catabolic process
+Q6	chr7:185150000	Zm00001eb332050	chr7	185225371	185226895	4.98	Extracellular ribonuclease LE	OS09G0538000 PROTEIN	
+Q6	chr7:185150000	Zm00001eb332060	chr7	185230938	185240058	4.98	Peptidyl-prolyl cis-trans isomerase	PEPTIDYL-PROLYL CIS-TRANS ISOMERASE CYP21-1	
+Q6	chr7:185150000	Zm00001eb332070	chr7	185337756	185338908	4.94	Uncharacterized protein		
+Q6	chr7:185150000	Zm00001eb332080	chr7	185338998	185339294	4.94	Uncharacterized protein		
+Q6	chr7:185150000	Zm00001eb332090	chr7	185400814	185403407	4.88	Major facilitator superfamily protein	OS09G0536700 PROTEIN	
+Q6	chr7:185150000	Zm00001eb332100	chr7	185403999	185405833	4.88	THAUMATIN-LIKE PROTEIN 1	OS09G0536400 PROTEIN	
+Q6	chr7:185150000	Zm00001eb332110	chr7	185490350	185491740	4.88	Uncharacterized protein		
+Q6	chr7:185150000	Zm00001eb332120	chr7	185555429	185557010	4.72	Pathogenesis-related thaumatin superfamily protein	OS09G0536300 PROTEIN	
+Q6	chr7:185150000	Zm00001eb332130	chr7	185580195	185584060	4.72	ARO1-like protein 3	ARMADILLO REPEAT ONLY 2	cell surface receptor signaling pathway
+Q6	chr7:185150000	Zm00001eb332140	chr7	185794493	185797905	4.72	DRBM domain-containing protein		

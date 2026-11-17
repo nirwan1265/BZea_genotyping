@@ -5,7 +5,7 @@
 ##      donor's home environment. Adapted from Landadapt scripts/geno_env/08_extract_env_all_species.R.
 ##
 ## Run on the laptop that has the rasters, from the repo root:
-##   Rscript final_script/33_env_extract.R
+##   Rscript old_scripts/33_env_extract.R
 ## Input:  data/metadata_BZea.csv (accession-id, taxa_code, race, latitude, longitude, elevation, country)
 ## Output: data/env/BZea_accession_env.csv   one row per accession: metadata + one column per layer
 ##         data/env/BZea_env_summary.tsv      per layer: accessions with a value, min, median, max

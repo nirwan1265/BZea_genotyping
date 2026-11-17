@@ -11,6 +11,7 @@ This folder keeps the earlier genotyping and introgression pipeline for referenc
   - R post-processing
 
   Its own documentation is in [`HMM_introgression/README.md`](HMM_introgression/README.md).
+- `33_env_extract.R` and `34_env_tests.R`: environment (climate, soil, elevation) at each donor accession's collection site, and tests of whether it explains the teosinte k-mer profile or the QTL effects. No QTL × environment test passed FDR 5%, so they are not part of the main analysis. Output is kept in `../data/env/`.
 
 ## Why it was replaced
 

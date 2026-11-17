@@ -15,7 +15,7 @@
 ##    about the environment *within* taxa, not the taxon differences already tested by "taxa differ".
 ##    BH q over all QTL x layers. A simple mixed model without the LOCO kinship: a screen; hits should be
 ##    confirmed with R/qtl2 (scan1 with intcovar = env).
-## Usage (repo root): Rscript final_script/34_env_tests.R [out dir, default data/env/tests]
+## Usage (repo root): Rscript old_scripts/34_env_tests.R [out dir, default data/env/tests]
 ## Inputs: data/env/BZea_accession_env.csv (33), data/introgression_spread/sourmash/kmer_taxon_profile.tsv (32b),
 ##         data/introgression_spread/tracts_all.tsv.gz + pool_summary.tsv (21),
 ##         data/phenotypes/BZea_spats_BLUEs_combined.csv (28), data/introgression_spread/joint_qtl/noperm (29.2)

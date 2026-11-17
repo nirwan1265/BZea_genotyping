@@ -559,17 +559,15 @@ The full statistics, F1 family results and the method history are in [`final_scr
 
 ### 2.10 Population structure from k-mers (step 32)
 
-**Why the ancestry calls cannot do this.** The HMM calls say *whether* a window is teosinte, not *which* teosinte: they are built from B73 k-mers that are present or missing. A PCA of the ancestry dosage (1,286 pools × 21,309 windows) therefore does not separate the five taxa: taxon explains ≤ 2.5% of the variance of each of the first 10 PCs (F1 family ~10%). The PCs follow shared donor tracts, i.e. families.
+The HMM calls say *whether* a window carries teosinte, but not *which* teosinte, because they are built only from B73 k-mers that are present or missing. A PCA of the ancestry calls therefore does not separate the five taxa (taxon explains ≤ 2.5% of the variance of each of the first 10 PCs; the PCs follow tracts shared within families).
 
-**A k-mer profile that does.** The donor DNA carries k-mers that B73 does not have, and these differ between teosinte taxa. Following the idea of reading population structure from k-mer content without alignment (Hrytsenko et al. 2025), step 32 uses **sourmash** (Brown & Irber 2016; Irber et al. 2022) to compare every pool with the teosinte assemblies:
+To see which teosinte each pool carries, we used the k-mers that the donor DNA brings in and B73 does not have, which differ between teosinte taxa. Following the idea of reading population structure from k-mer content without alignment (Hrytsenko et al. 2025), step 32 uses **sourmash** (Brown & Irber 2016; Irber et al. 2022) to compare every pool with the teosinte assemblies:
 1. **Sketch** (32a): k = 31, FracMinHash with scaled = 1,000 (every k-mer whose hash is in the lowest 1/1,000 of the hash space; the same k-mers are kept in every sample, so sketches compare directly). One sketch for B73, one per assembly (Zd Gigi, Zd Momo, Zh RIMHU001, Zl RIL003, Zv TIL01, Zv TIL11, Zx TIL18, Zx TIL25), one per pool from its trimmed reads.
 2. **Taxon-specific k-mers** (32b): for each assembly, its k-mers minus B73's; for each taxon, the union over its assemblies minus the k-mers of the other four taxa.
 3. **Profile per pool** (32b): the share of each taxon's specific k-mers found in the pool's reads, f_taxon. Its largest value is the pool's **k-mer taxon**, which is checked against the pedigree taxon. The share of all teosinte k-mers found, f_teo, measures how much donor DNA the pool has, independently of the HMM.
 4. **PCA** (32c): each pool's f values divided by their sum (depth and donor amount cancel; only *which* teosinte is left), centred log-ratio, `prcomp`. Points coloured by pedigree taxon; arrows = taxa.
 
-On simulated pools (5 taxa, 6 pools each, 10% donor, 1× reads) the k-mer taxon matched the pedigree taxon in 30 of 30 pools and the PCA separated all five taxa (PC1–PC4).
-
-**Results (1,385 teosinte donor pools; the 29 landrace pools are left out).**
+The results below are for the 1,385 teosinte donor pools; the 29 landrace pools are left out.
 
 ![PCA of the teosinte k-mer profiles](data/introgression_spread/sourmash/pca/kmer_pca.png)
 
@@ -599,31 +597,32 @@ On simulated pools (5 taxa, 6 pools each, 10% donor, 1× reads) the k-mer taxon 
   > - Zv.0250 (Ruinas de Malinalco, México, 1,901 m): 10 of 11 pools
   > - Zv.0270 (Amatlán de Quetzalcóatl, Morelos, 1,654 m): 9 of 12 pools
   >
-  > This fits the known gene flow between the two subspecies (Aguirre-Liguori et al. 2019; but see the caveat on where the assemblies come from, under *Environment* below): higher-elevation *parviglumis* is closer to the elevation range of *mexicana*. They are also close to *mexicana* on the map: 23, 25 and 45 km from the nearest Chalco collection site, among the five closest of the 36 *parviglumis* accessions (median 97 km). A labelling error would more likely affect single pools than most pools of an accession. These three are worth checking against the seed records. In the k-mer HMM, these pools also fit a lower DONOR level than the Zv assemblies give (scale factor a: median 0.8, against 0.9 for the other Zv pools), as expected if their donor DNA is partly *mexicana*-like (Zx keeps fewer B73 k-mers than Zv: d = 0.37 vs 0.43).
+  > This fits the known gene flow between the two subspecies (Aguirre-Liguori et al. 2019): higher-elevation *parviglumis* is closer to the elevation range of *mexicana*. They are also close to *mexicana* on the map: 23, 25 and 45 km from the nearest Chalco collection site, among the five closest of the 36 *parviglumis* accessions (median 97 km). A labelling error would more likely affect single pools than most pools of an accession. These three are worth checking against the seed records. In the k-mer HMM, these pools also fit a lower DONOR level than the Zv assemblies give (scale factor a: median 0.8, against 0.9 for the other Zv pools), as expected if their donor DNA is partly *mexicana*-like (Zx keeps fewer B73 k-mers than Zv: d = 0.37 vs 0.43).
+  >
+  > One other explanation should be ruled out first. The taxon-specific k-mers come from only two assemblies per taxon. If the two *parviglumis* assemblies (TIL01, TIL11) were collected far from these accessions, these accessions would share fewer of their specific k-mers and look relatively more *mexicana*-like even without gene flow. Where TIL01, TIL11, TIL18 and TIL25 were collected should be checked.
 - **In *diploperennis*,** the mismatches come mostly from Zd.0030 and Zd.0040 (both from Milpillas, 1,390 m, listed as race "Zea-diploperennis-Na"): their assignments are weaker (median ratio 1.8 and 1.5, against 3.0 and 3.5 for Zd.0010 and Zd.0020), so they are less like the two Zd assemblies.
 
 ![Per accession: pools whose k-mer taxon differs from the pedigree taxon, by elevation](data/introgression_spread/sourmash/pca/kmer_mismatch_elevation.png)
 
-**Elevation.** Colouring the PCA by the elevation of the donor accession, and placing every *parviglumis* and *mexicana* accession on one axis, f_Zx / (f_Zx + f_Zv) (the share of its *mexicana*-or-*parviglumis* k-mers that are *mexicana*), shows a continuous cline rather than two separate groups: within *parviglumis* the index rises with elevation (Spearman ρ = 0.49 over 36 accessions, p = 0.003), and the highest *parviglumis* accessions reach the values of *mexicana*. Within *mexicana* it does not change with elevation (ρ = 0.12, 37 accessions). The amount of donor DNA a pool carries (HMM donor share) does not depend on the donor's elevation (ρ = 0.00 over all accessions).
+Next, we asked whether this *mexicana*-like signal follows elevation across all *parviglumis* accessions, not only in the pools that were assigned to the wrong taxon. For this, each pool got a ***mexicana* index**: of the taxon-specific k-mers it shares with either *mexicana* or *parviglumis*, the fraction that are *mexicana*, f_Zx / (f_Zx + f_Zv). An index near 0 means the pool looks like *parviglumis*, near 1 like *mexicana*. We took the median over the pools of each accession and plotted it against the accession's elevation (right panel below; the left and middle panels are the PCA coloured by elevation).
+- **Within *parviglumis*, the index rises with elevation** (Spearman ρ = 0.49, 36 accessions, p = 0.003), and the highest accessions reach the values of *mexicana*. So the two subspecies form a continuous gradient, not two separate groups.
+- **The index also rises from west to east** (with longitude, ρ = 0.73). Elevation still adds to it once longitude is accounted for (partial ρ = 0.45, p = 0.006), but with 36 accessions, geography and elevation cannot be fully separated.
+- **Within *mexicana*, the index does not change with elevation** (ρ = 0.12, 37 accessions).
+- **How much teosinte DNA a pool carries does not depend on its donor's elevation** (HMM donor share, ρ = 0.00), so the gradient is about *which* teosinte, not how much.
 
 ![k-mer PCA coloured by elevation, and the mexicana index along elevation](data/introgression_spread/sourmash/pca/kmer_pca_elevation.png)
 
-**The four *mexicana* races** (`final_script/32d_mexicana_races.R`). Within *mexicana*, the per-assembly k-mer content separates **Chalco** from the other three races: Chalco pools share relatively more k-mers with the *mexicana* assembly TIL18, while Durango, Nobogame and most Mesa Central pools are closer to TIL25 (panel C; median log ratio +0.20 for Chalco, −0.07 Mesa Central, −0.18 Durango, −0.16 Nobogame). In the PCA of the 577 *mexicana* pools (panel B), Chalco spreads along PC2 away from the others, and Mesa Central sits between. This matches geography (panel A): Chalco is from the Valley of Mexico in the southeast of the range, Mesa Central from the central plateau to its west, and Durango and Nobogame from the north. It also matches section 3.6.13, where Chalco is the race that carries the late-flowering allele at chr5 221.8 Mb. Which collections TIL18 and TIL25 come from should be checked before reading more into the direction.
+We then looked within *mexicana*, at its four races: Chalco, Mesa Central, Durango and Nobogame (section 2.1). The taxon-level profile cannot separate them, since all four are *mexicana*. Instead, we used each pool's share of the k-mers of each of the 8 assemblies separately, and compared the two *mexicana* assemblies, TIL18 and TIL25 (figure below; collection sites from `data/metadata_BZea.csv`, where 75 of the 126 teosinte longitudes lack the minus sign; the scripts correct this, since all sites are in Mexico and Guatemala):
+- **A, collection sites:** Chalco comes from the Valley of Mexico in the southeast of the range, Mesa Central from the central plateau to its west, and Durango and Nobogame from the north.
+- **B, PCA of the 577 *mexicana* pools:** Chalco separates from the other races along PC2, and Mesa Central lies between Chalco and the northern races.
+- **C, TIL18 vs TIL25:** Chalco pools share relatively more k-mers with TIL18 (median log ratio +0.20), while Mesa Central (−0.07), Durango (−0.18) and Nobogame (−0.16) are closer to TIL25.
+- **D, *mexicana* index along elevation:** the *mexicana* races and the *parviglumis* accessions on one axis.
+
+So Chalco differs from the other three races in its k-mer content, as expected from geography. It is also the race that carries the late-flowering allele at chr5 221.8 Mb (section 3.6.13). Which collections TIL18 and TIL25 come from should be checked before reading more into the direction of panel C.
 
 ![The four mexicana races](data/introgression_spread/sourmash/pca/mexicana_races.png)
 
-**Environment of the collection sites** (`final_script/33_env_extract.R`, run on a laptop with the rasters): WorldClim 2.1 BIO1–19 and elevation, the Global Aridity Index and ET0, SoilGrids 0–5 cm (nitrogen, pH, CEC, SOC, OCD, clay, sand, silt, bulk density, coarse fragments), AM / EcM colonization, NPP and mean annual precipitation, at each donor accession's site. Output: `data/env/BZea_accession_env.csv` (one row per accession). Check: elevation from the metadata and from the rasters agree (r = 0.94 with WorldClim, 0.96 with `ELEVATION.tif`), so the corrected coordinates are right. AM/EcM relative abundance is missing for most sites and is not used.
-
-**Does the donor's environment explain the k-mer profile or the QTL effects?** (`final_script/34_env_tests.R`; outputs in `data/env/tests/`)
-
-*A. k-mer profile vs environment, per accession* (Spearman, BH q over all layers and responses; parviglumis 36 accessions, mexicana 37):
-- **parviglumis, mexicana index:** the strongest predictor is **longitude** (ρ = 0.73: eastern accessions are more *mexicana*-like), and **elevation** adds to it (partial ρ = 0.45 given longitude, p = 0.006; longitude given elevation 0.72). Of the climate layers, temperature seasonality (BIO4, ρ = −0.59) and isothermality (BIO3, ρ = 0.45) pass q < 0.05, but they follow the same west–east gradient (BIO4 vs longitude ρ = −0.83) and add nothing once longitude and elevation are in (partial ρ = −0.04). With 36 accessions, geography and climate cannot be told apart.
-- **mexicana, within-race profile (PCs of the 8 assembly containments):** strongly tied to temperature and elevation (e.g. max temperature of the warmest month, ρ = 0.72; elevation, ρ = −0.69; 13–16 layers at q < 0.05). This is mostly the race structure: Chalco is the coolest and highest race (median 2,399 m, BIO1 15.2 °C) and differs from the others in the k-mer profile (above). The *mexicana* index itself does not change with any layer within *mexicana* (all q > 0.15).
-- **Another explanation to keep in mind:** the taxon-specific k-mer sets come from only two assemblies per taxon. If the two *parviglumis* assemblies (TIL01, TIL11) come from the west of the range, eastern *parviglumis* would share fewer of their specific k-mers and look relatively more *mexicana*-like without any gene flow. Where TIL01, TIL11, TIL18 and TIL25 were collected should be checked before the gene-flow reading is used.
-
-*B. QTL effect × donor environment* (107 QTL of the 11 traits × 7 layers: elevation, BIO1, BIO6, BIO12, BIO15, aridity, soil pH; mixed model `y ~ taxon × dosage + env + dosage:env + (1 | accession)`, so the test is about the environment *within* taxa): **no QTL × environment test passes BH q < 0.05** (smallest q = 0.06). There is a mild excess of small p-values (63 tests with p < 0.05 where 40 are expected; 21 with p < 0.01 where 8 are expected). The strongest leads: EH chr8 153.6 Mb × precipitation seasonality (p = 7.5 × 10⁻⁵), Prolif chr4 171.4 Mb × soil pH (p = 2.9 × 10⁻⁴), and **ASI chr5 218.4 Mb × aridity / elevation / precipitation** (p = 3 × 10⁻⁴ to 2.5 × 10⁻³: the teosinte allele lengthens ASI more when it comes from higher, drier sites). This is a screen without the LOCO kinship; a lead would be confirmed with R/qtl2 (`scan1(..., intcovar = env)`) on the cluster. **Note:** in `data/metadata_BZea.csv`, 75 of the 126 teosinte longitudes are positive (the minus sign is missing); all teosinte sites are in Mexico and Guatemala, so the scripts use −|longitude|.
-
-**An independent check of the HMM's donor share.** The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.98 (Zh), 0.97 (Zl), 0.94 (Zv) and 0.97 (Zx) (1,292 pools, NOISY pools left out).
+Finally, the k-mer profile gives an independent check of the HMM's donor share. The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.98 (Zh), 0.97 (Zl), 0.94 (Zv) and 0.97 (Zx) (1,292 pools, NOISY pools left out).
 
 ![Teosinte k-mers vs the HMM donor share](data/introgression_spread/sourmash/pca/kmer_vs_hmm.png)
 
@@ -680,7 +679,7 @@ The full statistics and the per-plate table are in [`final_script/README.md`](fi
 - **Pool view:** the 10 chromosomes of one pool.
 - **Hover** a segment for its position, length and state. A table under the figure lists the F1 family's pools (σ, flag, donor share, SEG, DONOR, tracts).
 - **Download SVG / PNG** saves the figure on screen, legend included, for papers and slides.
-- **Colors are colorblind-safe:** B73 blue, SEG yellow, DONOR red. The pairs were checked for protan, deutan and tritan vision. The same colors are used in `blocks_<GROUP>.pdf`.
+- B73 is blue, SEG yellow and DONOR red, the same colors as in `blocks_<GROUP>.pdf`.
 
 To view it, download the file and open it in a browser. GitHub shows HTML files as code, not as a page.
 
@@ -695,22 +694,36 @@ To view it, download the file and open it in a browser. GitHub shows HTML files 
 - Zh and Zl have one assembly each, so the uncertainty can't be measured for them.
 - Zm (landraces) can't be done yet, because it needs a maize-based donor level (e.g. from NAM founder assemblies).
 
-**First check of the short tracts: relatives.** Pools from the same BC2 plant inherited their donor segments from that plant, so a real tract can show up at the same place in them. Noise is random and shouldn't line up. In the pedigree names, the part up to the last P marks the BC2 plant: `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200_P3_P2_P1.2.1.1` and `Zv.0200_P3_P2_P1.3.1.1` all come from BC2 plant `Zv.0200_P3_P2_P1`.
+A first check of whether the short tracts are real uses **relatives**. A real introgression is inherited: pools that descend from the same plant received their donor segments from that plant, so a real tract in one pool should often be found at the same place in its relatives. A false tract (noise) appears at random places, so it should be found in relatives no more often than in unrelated pools.
 
-For each tract in a pool, how often does another pool have an introgression at the same place (1,292 pools; SEG and DONOR joined):
+The relatives are read from the pedigree name. For example, in `Zv.0200_P3_P2_P1.1.1.1`:
+- `Zv.0200` is the accession (the teosinte donor);
+- `P3` is the F1 plant, `P2` the BC1 plant and `P1` the BC2 plant;
+- `.1.1.1` are the three rounds of selfing that led to this plot.
 
-| The other pool | Short tracts (< 10 Mb) | Long tracts (≥ 10 Mb) |
+So `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200_P3_P2_P1.2.1.1` and `Zv.0200_P3_P2_P1.3.1.1` all descend from the same BC2 plant, `Zv.0200_P3_P2_P1`, through different selfed lines.
+
+The check works like this (1,292 pools; SEG and DONOR counted together as "introgression"):
+1. Take one tract in one pool.
+2. Take a group of other pools with a given relationship to it, e.g. all pools from the same BC2 plant.
+3. Count how many of those pools also have an introgression at the position of the tract.
+4. Repeat for every tract in every pool, separately for short (< 10 Mb) and long (≥ 10 Mb) tracts.
+
+The table gives the result as a percentage: for example, 31.4% means that for a short tract in one pool, on average 31.4% of the other pools from the same BC2 plant have an introgression at the same place.
+
+| The other pools | Short tracts (< 10 Mb) | Long tracts (≥ 10 Mb) |
 |---|---|---|
-| Same taxon, other accession (baseline) | 17.5% | 23.7% |
+| Same taxon, other accession (unrelated: the baseline) | 17.5% | 23.7% |
 | Same accession, other F1 plant | 17.2% | 22.6% |
 | Same F1 plant, other BC1 plant | 17.1% | 22.6% |
 | Same BC1 plant, other BC2 plant | 17.4% | 24.4% |
 | **Same BC2 plant** | **31.4%** | **43.8%** |
 
-- Pools from the same BC2 plant share tracts about 1.8× as often as unrelated pools, and **short tracts show the same increase as long ones**. If the short tracts were noise, they would stay at the baseline. So most short tracts are probably real.
-- Pools of the same accession but another BC2 plant don't share more than the baseline. So the short tracts aren't an artifact of the accession's donor plant differing from the assemblies (that would be shared within an accession).
-- **Open question:** pools from the same BC1 plant but different BC2 plants should also share more than the baseline, about half the increase seen for the same BC2 plant, since a BC2 plant inherits half of its BC1 parent's donor segments. They don't (24.4% vs 23.7%). Why is not known yet.
-- The baseline is well above zero because introgressions are common and cluster in some regions; that's why it's the comparison.
+- **The baseline is not zero.** Introgressions are common and some genome regions carry them in many pools, so even unrelated pools share some by chance. That's why every row is compared with the baseline, not with zero.
+- **Pools from the same BC2 plant share tracts about 1.8 times as often as unrelated pools** (31.4% vs 17.5% for short tracts, 43.8% vs 23.7% for long tracts).
+- **Short tracts rise by the same factor as long tracts.** If the short tracts were mostly noise, they would not be inherited, and their sharing would stay at the baseline even among close relatives. Since they rise like the long tracts, most short tracts are probably real.
+- **Pools from the same accession but a different BC2 plant do not share more than the baseline.** If the short tracts were an artifact of the accession's donor plant being different from the teosinte assemblies, they would appear at the same places in every pool of that accession. They don't, so that artifact is not what makes them.
+- **Open question:** pools from the same BC1 plant but different BC2 plants should also share more than the baseline, about half the increase seen for the same BC2 plant, because each BC2 plant inherits about half of its BC1 parent's donor segments. They don't (24.4% vs 23.7% for long tracts). Why is not known yet.
 
 **Future work:**
 1. **Read check, with data we already have.** The SNP route (steps 01–12) counted each pool's B73 and teosinte reads at SNP sites. Those reads come from mapping, which loses many donor reads, but they still show which alleles are present:

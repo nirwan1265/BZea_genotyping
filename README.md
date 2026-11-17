@@ -973,10 +973,10 @@ Three QTL, all hold in the joint model (Bonferroni over 3: −log10 p > 1.78).
 **Candidate genes:**
 - **Q1, chr5 221.8 Mb, shared with DTS Q1:** Zm00001eb257680, the ortholog of rice *HEADING DATE REPRESSOR 1* (see DTS).
 - **Q3, chr10 94.5 Mb, shared with DTS Q2:** Zm00001eb418700, *ZmCCT10* (see DTS).
-- **Q2, chr9 10.9 Mb (significant for DTA, suggestive for DTS):** Zm00001eb372960 (*MADS74*; 8.36 Mb, inside the support interval 6.1–13.7 Mb). Here the teosinte allele makes plants shed pollen earlier (−0.54 d per copy), alike in every taxon. *MADS74* is a MADS-box transcription factor that PANTHER places in the subfamily of tomato *JOINTLESS*, an SVP-like MADS-box gene. If it acts like Arabidopsis *SVP*, it would be a flowering repressor, and an earlier-flowering teosinte allele would be a weaker repressor:
+- **Q2, chr9 10.9 Mb (significant for DTA, suggestive for DTS):** Zm00001eb372960 (*MADS74*; 8.36 Mb, inside the support interval 6.1–13.7 Mb). Here the teosinte allele makes plants shed pollen earlier (−0.54 d per copy), alike in every taxon. *MADS74* is an *SVP*-like MADS-box transcription factor: its Arabidopsis relative in the Gramene gene tree is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540), and its annotation names the rice SVP-like MADS-box transcription factors 22 and 55. *SVP* is a flowering repressor, so an earlier-flowering teosinte allele fits a weaker repressor:
   - SVP delays flowering by repressing the florigen gene *FT*, binding directly to the CArG motifs in its sequence. It also links flowering to temperature: plants flower later at 16 °C than at 23 °C, but *svp* mutants flower at almost the same time at both (Lee et al. 2007). At 16 °C, SVP switches on a second repressor, *TEMPRANILLO2*, which also represses *FT* and *TWIN SISTER OF FT* (Marín-González et al. 2015).
   - Natural alleles of *SVP* change flowering time: the Arabidopsis flowering QTL *FAQ1* is *SVP*, where one amino-acid change makes a loss-of-function, early-flowering allele, and how large its effect is depends on the genetic background (Méndez-Vigo et al. 2013).
-  - Whether *MADS74* is a true *SVP* ortholog, or a more distant member of the family, should be checked in its Gramene gene tree, as was done for *mads73* (ASI Q11).
+  - *mads73* (ASI Q11, chr5 218.3 Mb) is a second *SVP*-like gene among our QTL.
 
 <details><summary>All DTA QTL with per-taxon effects and all genes in the interval</summary>
 

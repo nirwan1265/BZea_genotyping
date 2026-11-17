@@ -1001,8 +1001,8 @@ ASI = anthesis–silking interval, DTS − DTA. 12 regions, 6 hold in the joint 
 | **Q12 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | -0.36 d | 14.0 | 0.3 (no) | No significant difference between taxa (Zd -0.46, Zl -0.53, Zv -0.35, Zx -0.31). The strongest ASI QTL: teosinte shortens the interval. |
 | **Q11 chr5 218.3 Mb** | Zm00001eb255670 (mads73) | +0.35 d | 8.8 | 4.1 (yes) | Differs between taxa (Zl +1.08, Zv +0.24, Zx +0.28). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
 | **Q1 chr1 4.5 Mb** | Zm00001eb001510 (remorin) | +0.24 d | 6.6 | 0.0 (no) | No significant difference between taxa (Zd +0.19, Zh +0.21, Zl +0.14, Zv +0.26, Zx +0.24). Lengthens ASI. |
-| **Q10 chr4 206.2 Mb** | Zm00001eb201580 (PAS domain protein, ADAGIO family) | -0.21 d | 4.7 | 0.3 (no) | No significant difference between taxa (Zd -0.41, Zh -0.38, Zl +0.47, Zv -0.26, Zx -0.15). Shortens ASI. |
-| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (CKX8); Zm00001eb077080 (GA2ox2) | -0.16 d | 3.6 | 0.1 (no) | No significant difference between taxa (Zd -0.19, Zh -0.46, Zl -0.20, Zv -0.19, Zx -0.13). Shortens ASI. |
+| **Q10 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | -0.21 d | 4.7 | 0.3 (no) | No significant difference between taxa (Zd -0.41, Zh -0.38, Zl +0.47, Zv -0.26, Zx -0.15). Shortens ASI. |
+| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | -0.16 d | 3.6 | 0.1 (no) | No significant difference between taxa (Zd -0.19, Zh -0.46, Zl -0.20, Zv -0.19, Zx -0.13). Shortens ASI. |
 | **Q9 chr4 52.0 Mb** | Zm00001eb175150 (tga1) | -0.24 d | 3.0 | 0.1 (no) | No significant difference between taxa (Zd -0.08, Zh -0.54, Zl -0.67, Zv -0.20, Zx -0.18). Shortens ASI. |
 
 **Candidate genes:**
@@ -1012,7 +1012,24 @@ ASI = anthesis–silking interval, DTS − DTA. 12 regions, 6 hold in the joint 
   - At low temperature (16 °C), SVP also switches on another floral repressor, *TEMPRANILLO2* (*TEM2*), which represses *FT* and *TWIN SISTER OF FT* (Marín-González et al. 2015).
   - Natural variation in *SVP* changes flowering time: the Arabidopsis flowering QTL *FAQ1* is *SVP*, where a single amino-acid change makes an early-flowering allele, and its effect depends on the genetic background (Méndez-Vigo et al. 2013).
 - **Q1, chr1 4.5 Mb:** Zm00001eb001510 (remorin family protein; Zm00001d027403 in B73 v4; 4.45 Mb, in a window with −log10 p 6.3). In a maize panel, Wang et al. (2026) found a chr1 segment (v4 4,418,001–4,420,000 bp) both by GWAS for days to silking and days to tasseling and by a genetic-differentiation scan between subpopulations (Fst 0.53), and listed its seven genes, including this one, among 41 flowering-time candidates (their Table 2). In the same segment they point to a NAC transcription factor (*NAC78*, Zm00001d027395) and a histone H4 gene (Zm00001d027394).
-- **Other known genes in the intervals:** Zm00001eb175150 (*tga1*; Q9), Zm00001eb201580 (PAS domain protein of the ADAGIO family, which includes the circadian clock F-box proteins; Q10), Zm00001eb077080 (*GA2ox2*) and Zm00001eb076990 (*CKX8*) (Q2), and Zm00001eb132420 (*LNK2*, a circadian clock gene) in Q6, which does not hold.
+- **Q10, chr4 206.2 Mb:** Zm00001eb201580 (*ZmFKF1b*, *FLAVIN-BINDING, KELCH REPEAT, F-BOX 1b*; Zm00001d053091 in B73 v4; 216.2 Mb, in a window with −log10 p 4.7). The gene is 10 Mb from the top window but inside the support interval (202.3–225.3 Mb). FKF1 is a blue-light receptor whose expression follows the circadian clock. It has a light-sensing LOV domain, an F-box (which lets it tag proteins for breakdown) and Kelch repeats. In *Arabidopsis* it stabilizes CONSTANS (CO) and raises its expression, and CO switches on the florigen gene *FT*. Chen et al. (2024) showed that the maize copy works in the same pathway:
+  - CRISPR knockouts of *ZmFKF1b*, and of its paralog *ZmFKF1a* (Zm00001d007445 in v4), each flowered significantly later than the wild type under short days, both for anthesis and for silking.
+  - Both proteins bind ZmCONZ1 (the maize CO homolog) and ZmGI1 (GIGANTEA1), and both raise the expression of *ZmCONZ1* and of the maize florigen gene *ZCN8*.
+  - *ZmFKF1b* lies in a known flowering-time QTL and in regions earlier found to be under selection, and its allele frequencies shifted during Chinese maize breeding from the 1960s–70s to the 1980s–90s.
+  - **The link to geography:** the coding sequence has three main haplotypes. Hap_Z58 (as in the inbred Zheng58) is found mostly in temperate maize, at up to 92%. Hap_C7 (as in Chang7-2) is spread evenly over temperate and tropical maize. In an F2 population, plants with Hap_C7 flowered earlier, and Hap_C7 raised *ZmCONZ1* expression more. The authors propose that Hap_C7 suits a wider range of climate zones and could help adapt tropical maize to temperate regions.
+
+  In our lines the teosinte allele shortens ASI by 0.21 d per copy, and the taxa do not differ significantly (from −0.15 d in *mexicana* to −0.41 d in *diploperennis*; *luxurians* goes the other way, +0.47 d, but with only 6 carrier lines). At the *ZmFKF1b* window itself the signal is for ASI (−log10 p 4.7), not for DTS (0.6) or DTA (0.1). Our donors were collected from 80 to 2,713 m, in very different climates, and we asked whether the Q10 effect changes with the donor's environment: it does not change with elevation, annual mean temperature, minimum temperature of the coldest month, rainfall, rainfall seasonality, aridity or soil pH (all p ≥ 0.20; `old_scripts/34_env_tests.R`, results in `data/env/tests/B_qtl_effect_x_env.tsv`). So in our population the teosinte allele acts the same way wherever the donor came from. The k-mer data can't tell which *ZmFKF1b* haplotype each donor carries, so the haplotype–climate link of Chen et al. (2024) can't be tested here.
+- **Q2, chr2 26.1 Mb:** Zm00001eb076990 (*ckx12*, cytokinin oxidase/dehydrogenase 12; Zm00001d002989 in B73 v4; 29.06 Mb, in a window with −log10 p 6.6). CKX enzymes break down cytokinin, the hormone that keeps meristem cells dividing; in rice, lower expression of the homolog *OsCKX2* (*Gn1a*) lets cytokinin build up in the inflorescence meristem and increases grain number (Ashikari et al. 2005). Ni et al. (2024) mapped kernel row number in an advanced backcross of a two-rowed *mexicana* teosinte (MT1, donor) into the inbred Mo17:
+  - The chr2 short-arm QTL *qKRN2* split into two closely linked QTL, *qKRN2-1* (fine-mapped to 272 kb) and *qKRN2-2* (775 kb), which explain 33.5% and 35.3% of the variance in kernel row number in their populations. The Mo17 alleles add about 1.4 and 1.2 rows.
+  - Of the genes in the *qKRN2-1* interval, Zm00001d002989 (this gene) was expressed 3.7 times more in young ears (3–4 mm) of the line carrying the teosinte allele than in the line carrying the Mo17 allele. RNA in situ hybridization placed its expression in the primordia of the inflorescence meristem and of the spikelet-pair meristems, which set the number of kernel rows. They propose it as the causal gene: more CKX means less cytokinin, fewer spikelet-pair meristems and fewer rows.
+
+  In our lines the teosinte allele at Q2 shortens ASI by 0.16 d per copy, and the taxa do not differ significantly. Why a gene acting in the developing ear would change ASI isn't known; we did not score kernel row number. The same interval also holds EH Q1 (+1.96 cm) and Prolif Q5–Q6 (see [Regions shared between traits](#3612-regions-shared-between-traits)).
+- **Q9, chr4 52.0 Mb:** Zm00001eb175150 (*tga1*, *teosinte glume architecture1*; 46.65 Mb, in a window with −log10 p 7.0, near the left end of the interval 46.5–52.4 Mb). *tga1* is a classic maize domestication gene: it is the reason maize kernels are naked, while teosinte kernels are sealed inside a hard fruitcase made of a hardened glume and the rachis.
+  - *tga1* encodes an SBP-box transcription factor. Maize and teosinte differ at a single fixed site in the gene, which changes one amino acid (Lys in teosinte, Asn in maize). This change turns maize TGA1 into a transcriptional repressor. Both forms bind the same GTAC motif in DNA, but the maize form makes more stable dimers. Because it is the only fixed difference, it is most likely the change that made naked kernels (Wang H et al. 2015).
+  - TGA1 sits in a gene network with the other big domestication gene, *teosinte branched1* (*tb1*): TB1 binds the *tga1* promoter and activates it. TGA1 in turn regulates MADS-box genes, a family that sets the identity of floral and inflorescence organs: of eight tested, five were expressed more in immature ears with the teosinte allele of *tga1*, and TGA1 bound the promoters of five. One of them is *zmm19*, the *Tunicate* locus, whose overexpression makes the glumes grow around each kernel. Several genes in the network show signatures of selection during domestication (Studer et al. 2017).
+
+  Since the Lys/Asn difference is fixed between maize and teosinte, every donor tract at *tga1* should carry the teosinte allele. In our lines the teosinte segment shortens ASI by 0.24 d per copy, and the taxa do not differ significantly (from −0.08 d in *diploperennis* to −0.67 d in *luxurians*). How *tga1* would change ASI isn't known: it acts in the developing ear, so the effect could come through ear development. *tga1* is 5 Mb from the top window, so another gene in the interval may also be the cause.
+- **Not held in the joint model:** Zm00001eb132420 (*LNK2*, a circadian clock gene) is in Q6 (chr3 69.5 Mb), which does not hold.
 
 The chr3 95.8 Mb peak (−log10 p 5.0) lies inside the chr3 108.3 Mb region (88.5–129.4 Mb), and the conditional scan does not add it.
 
@@ -1094,7 +1111,7 @@ Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Every gene in each interva
 | **Q4 chr3 12.8 Mb** | Zm00001eb122520 (BZR1-like); Zm00001eb122680 (CYP734A6); Zm00001eb123060 (ra2) | -2.06 cm | 5.0 | 2.0 (no) | No significant difference between taxa (Zd -5.48, Zh +0.41, Zl +0.67, Zv -2.95, Zx -1.25). Same window as PH Q3; *ra2*, a BZR1 homolog and CYP734A6 (brassinosteroids) are in the interval. |
 | **Q6 chr5 2.5 Mb** | — | +2.17 cm | 5.0 | 0.6 (no) | No significant difference between taxa (Zd +4.04, Zh +3.01, Zl +3.85, Zv +1.05, Zx +1.86). Shared with SL; just below the threshold for PH. |
 | **Q9 chr7 124.0 Mb** | — | -2.39 cm | 4.8 | 0.5 (no) | No significant difference between taxa (Zd -0.22, Zh -6.32, Zl -0.22, Zv -1.35, Zx -3.07). |
-| **Q1 chr2 25.8 Mb** | Zm00001eb076990 (CKX8); Zm00001eb077080 (GA2ox2) | +1.96 cm | 4.6 | 1.1 (no) | No significant difference between taxa (Zd -0.83, Zh +2.58, Zl +0.83, Zv +1.93, Zx +2.63). *GA2ox2* inactivates gibberellin. |
+| **Q1 chr2 25.8 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | +1.96 cm | 4.6 | 1.1 (no) | No significant difference between taxa (Zd -0.83, Zh +2.58, Zl +0.83, Zv +1.93, Zx +2.63). *GA2ox2* inactivates gibberellin. |
 | **Q11 chr8 126.2 Mb** | Zm00001eb353250 (ZCN8) | +2.36 cm | 3.2 | 0.1 (no) | No significant difference between taxa (Zd -1.30, Zh +4.32, Zl +1.80, Zv +1.03, Zx +2.48). *ZCN8* is the maize florigen. |
 
 Just below the cut: Q13 chr9 116.8 Mb (+1.63 cm, joint −log10 p 2.4; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q18 chr10 97.0 Mb (+2.40 cm, 2.5; *ZmCCT10*). Q8 chr6 105 Mb is the only QTL where taxa differ (Zv +6.5 cm, Zd +4.2, others ≈ 0 or negative), but its joint test does not pass.
@@ -1190,9 +1207,9 @@ Bonferroni over the 20 QTL: −log10 p > 2.60 (bold). Every gene in each interva
 | **Q7 chr2 191.2 Mb** | — | +0.12 | 10.3 | 1.3 (no) | No significant difference between taxa (Zd -0.02, Zh +0.20, Zl +0.02, Zv +0.09, Zx +0.16). |
 | **Q13 chr4 171.3 Mb** | — | +0.14 | 7.8 | 1.4 (no) | No significant difference between taxa (Zd +0.21, Zh -0.04, Zl +0.10, Zv +0.13, Zx +0.17). Same region as EN Q9. |
 | **Q15 chr9 32.1 Mb** | — | +0.09 | 5.8 | 0.1 (no) | No significant difference between taxa (Zd +0.08, Zh -0.02, Zl +0.13, Zv +0.07, Zx +0.10). |
-| **Q5 chr2 9.3 Mb** (added) | Zm00001eb076990 (CKX8); Zm00001eb077080 (GA2ox2) | +0.08 | 5.2 | 0.8 (no) | No significant difference between taxa (Zd +0.13, Zh +0.14, Zl +0.11, Zv +0.02, Zx +0.07). Added by the conditional scan: a second QTL on chr2 short arm. |
+| **Q5 chr2 9.3 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | +0.08 | 5.2 | 0.8 (no) | No significant difference between taxa (Zd +0.13, Zh +0.14, Zl +0.11, Zv +0.02, Zx +0.07). Added by the conditional scan: a second QTL on chr2 short arm. |
 | **Q12 chr4 120.5 Mb** (added) | — | +0.13 | 4.9 | 0.1 (no) | No significant difference between taxa (Zh +0.09, Zv +0.13, Zx +0.13). The same second chr4 QTL as EN Q8, found by the conditional scan. |
-| **Q6 chr2 34.4 Mb** (added) | Zm00001eb076990 (CKX8); Zm00001eb077080 (GA2ox2) | +0.08 | 4.7 | 0.7 (no) | No significant difference between taxa (Zd +0.07, Zl +0.01, Zv +0.13, Zx +0.09). Added by the conditional scan: a third chr2 QTL. |
+| **Q6 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | +0.08 | 4.7 | 0.7 (no) | No significant difference between taxa (Zd +0.07, Zl +0.01, Zv +0.13, Zx +0.09). Added by the conditional scan: a third chr2 QTL. |
 | **Q14 chr7 142.2 Mb** | — | +0.08 | 4.4 | 1.3 (no) | No significant difference between taxa (Zd +0.00, Zh +0.33, Zl +0.01, Zv +0.06, Zx +0.09). |
 | **Q4 chr1 213.9 Mb** | Zm00001eb040280 (CKX10) | +0.10 | 3.1 | 0.7 (no) | No significant difference between taxa (Zd +0.18, Zh +0.11, Zl -0.03, Zv +0.10, Zx +0.10). *CKX10* is a cytokinin oxidase. |
 
@@ -1370,14 +1387,14 @@ Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Every gene in each interval
 | chr3 ~10–14 Mb | EN +, Prolif +, PH −, EH − | Zm00001eb123060 (*ra2*), Zm00001eb122520 (BZR1-like), Zm00001eb122680 (CYP734A6) |
 | chr4 ~165–172 Mb | EN +, Prolif +, BW − | |
 | chr4 ~90–140 Mb (conditional QTL) | EN +, Prolif + | |
-| chr2 ~6–35 Mb (conditional QTL) | Prolif +, BL − | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*CKX8*) |
+| chr2 ~6–35 Mb (conditional QTL) | Prolif +, BL − | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*ckx12*) |
 | chr7 ~137–144 Mb | PH −, SL −, EN +, Prolif + | |
 | chr4 ~194–207 Mb | PH +, EH +, SL +, BL −, ASI − | |
 | chr5 ~2–3 Mb | EH +, SL +, PH + (just below the threshold) | |
 | chr8 ~126 Mb | EH +, NBR + | Zm00001eb353250 (*ZCN8*) |
 | chr7 ~183–186 Mb | EH +, BL − | Zm00001eb331880 (*dlf1*), Zm00001eb331630 (PRR37-like) |
 | chr9 ~131–145 Mb | PH +, NBR + | Zm00001eb397240 (*PRR73*) |
-| chr2 ~18–30 Mb | ASI −, EH +, EN + | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*CKX8*) |
+| chr2 ~18–30 Mb | ASI −, EH +, EN + | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*ckx12*) |
 | chr2 ~185–193 Mb | ASI −, Prolif + | |
 
 All genes in every region, with their GO terms and the −log10 p of the window they lie in, are in `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv` (one file per trait).
@@ -1456,11 +1473,13 @@ All references cited in this README, in alphabetical order.
 
 - Aguirre-Liguori JA, Gaut BS, Jaramillo-Correa JP, Tenaillon MI, Montes-Hernández S, García-Oliva F, Hearne SJ, Eguiarte LE (2019) Divergence with gene flow is driven by local adaptation to temperature and soil phosphorus concentration in teosinte subspecies (*Zea mays parviglumis* and *Zea mays mexicana*). *Molecular Ecology* 28:2814–2830. doi:10.1111/mec.15098
 - Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838. (IBSpy used to find einkorn introgressions in bread wheat.)
+- Ashikari M, Sakakibara H, Lin S, Yamamoto T, Takashi T, Nishimura A, Angeles ER, Qian Q, Kitano H, Matsuoka M (2005) Cytokinin oxidase regulates rice grain production. *Science* 309:741–745. (Cited from Ni et al. 2024.)
 - Baum LE, Petrie T, Soules G, Weiss N (1970) A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. *Ann Math Stat* 41:164–171.
 - Bolger AM, Lohse M, Usadel B (2014) Trimmomatic: a flexible trimmer for Illumina sequence data. *Bioinformatics* 30:2114–2120.
 - Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502.
 - Broman KW, Sen Ś (2009) *A Guide to QTL Mapping with R/qtl*. Springer, New York.
 - Brown CT, Irber L (2016) sourmash: a library for MinHash sketching of DNA. *J Open Source Softw* 1:27.
+- Chen S, Gao S, Wang D, Liu J, Ren Y, Wang Z, Wei X, Wang Q, Huang X (2024) FKF1b controls reproductive transition associated with adaptation to geographical distribution in maize. *J Integr Plant Biol* 66:943–955. doi:10.1111/jipb.13639
 - Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
 - Churchill GA, Doerge RW (1994) Empirical threshold values for quantitative trait mapping. *Genetics* 138:963–971.
 - Danecek P, Bonfield JK, Liddle J, et al. (2021) Twelve years of SAMtools and BCFtools. *GigaScience* 10:giab008.
@@ -1481,6 +1500,7 @@ All references cited in this README, in alphabetical order.
 - Marín-González E, Matías-Hernández L, Aguilar-Jaramillo AE, Lee JH, Ahn JH, Suárez-López P, Pelaz S (2015) SHORT VEGETATIVE PHASE up-regulates TEMPRANILLO2 floral repressor at low ambient temperatures. *Plant Physiol* 169:1214–1224. doi:10.1104/pp.15.00570
 - Méndez-Vigo B, Martínez-Zapater JM, Alonso-Blanco C (2013) The flowering repressor SVP underlies a novel *Arabidopsis thaliana* QTL interacting with the genetic background. *PLoS Genet* 9:e1003289. doi:10.1371/journal.pgen.1003289
 - Neupane SP, et al. (2025) Genetic basis of Fusarium ear rot resistance and productivity traits in a heterozygous multi-parent recombinant inbred intercross (RIX) maize population. *BMC Plant Biol* 25:639. (MaizeGDB annotation of *bhlh90*.)
+- Ni J, Tang D, Chen Z, Yang S, Wang X, Liu Z, Deng W, Wu H, You C, Yang J, Meng P, Bao R, Rong T, Liu J (2024) Identification and segregation of two closely linked major QTLs for kernel row number in advanced maize–teosinte populations. *Theor Appl Genet* 137:271. doi:10.1007/s00122-024-04780-0
 - Oakey H, Verbyla A, Pitchford W, Cullis B, Kuchel H (2006) Joint modeling of additive and non-additive genetic line effects in single field trials. *Theor Appl Genet* 113:809–819.
 - Odell SG, Hudson AI, Praud S, Dubreuil P, Tixier M-H, Ross-Ibarra J, Runcie DE (2022) Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci. *G3* 12:jkac011.
 - Picard toolkit. Broad Institute. https://broadinstitute.github.io/picard/
@@ -1495,10 +1515,12 @@ All references cited in this README, in alphabetical order.
 - Selvanayagam S, Quiroz-Chavez J, Ramirez-Gonzalez RH, Uauy C, Smit S, Schranz ME (2026) KCFtools: rapid alignment-free method for introgression screening and GWAS using k-mer profiles. *Bioinformatics*. doi:10.1093/bioinformatics/btag354
 - Smith MW, O'Brien SJ (2005) Mapping by admixture linkage disequilibrium: advances, limitations and guidelines. *Nat Rev Genet* 6:623–632.
 - Stitzer MC, Seetharam AS, et al., Hufford MB (2025) Extensive genome evolution distinguishes maize within a stable tribe of grasses. *bioRxiv* doi:10.1101/2025.01.22.633974. (PanAnd assemblies.)
+- Studer AJ, Wang H, Doebley JF (2017) Selection during maize domestication targeted a gene network controlling plant and inflorescence architecture. *Genetics* 207:755–765. doi:10.1534/genetics.117.300071
 - Sun X, Zhang Z, Wu J, Cui X, Feng D, Wang K, Xu M, Zhou L, Han X, Gu X, Lu T (2016) The *Oryza sativa* regulator HDR1 associates with the kinase OsK4 to control photoperiodic flowering. *PLoS Genet* 12:e1005927. doi:10.1371/journal.pgen.1005927
 - Viterbi AJ (1967) Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. *IEEE Trans Inf Theory* 13:260–269.
 - Voichek Y, Weigel D (2020) Identifying genetic variants underlying phenotypic variation in plants without complete genomes. *Nat Genet* 52:534–540.
 - Wang D, Gao Z, Dong M, et al. (2026) Integrated GWAS and Fst analysis identify flowering-time regulatory genes in maize. *Plant Genome* 19:e70185. doi:10.1002/tpg2.70185
+- Wang H, Studer AJ, Zhao Q, Meeley R, Doebley JF (2015) Evidence that the origin of naked kernels during maize domestication was caused by a single amino acid substitution in *tga1*. *Genetics* 200:965–974. doi:10.1534/genetics.115.175752
 - Yang J, Weedon MN, Purcell S, et al. (2011) Genomic inflation factors under polygenic inheritance. *Eur J Hum Genet* 19:807–812.
 - Yang J, Zaitlen NA, Goddard ME, Visscher PM, Price AL (2014) Advantages and pitfalls in the application of mixed-model association methods. *Nat Genet* 46:100–106.
 - Yang Q, Li Z, Li W, et al. (2013) CACTA-like transposable element in *ZmCCT* attenuated photoperiod sensitivity and accelerated the postdomestication spread of maize. *PNAS* 110:16969–16974.

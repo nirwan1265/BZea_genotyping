@@ -54,41 +54,58 @@ Each self halves the heterozygotes; the rest become AA or BB in equal parts. Sta
 | 2 (BC2S2) | 3/8 | 1/4 | 3/8 |
 | 3 (BC2S3) | 7/16 | 1/8 | 7/16 |
 
+### Two levels: plants and pools
+
+Everything below is computed at two levels, and it helps to keep them apart:
+- **Plant level:** the genotype of one BC2S3 plant at a locus, **AA**, **AB** or **BB**.
+- **Pool level:** what the sequenced sample shows. A sample is a pool of 6 sibling BC2S3 plants, and the HMM gives each 100-kb window of a pool one of three **pool states**:
+  - **B73:** all 6 plants are AA.
+  - **DONOR:** all 6 plants are BB.
+  - **SEG** (*segregating*): the plants differ. Their mother was AB, so each of the 6 plants is AA, AB or BB. A SEG pool is a **mix of plants**, not one heterozygous plant.
+
 ### Step 3 — One BC2S3 plant (three selfs)
 
-¾ of the genome is already AA at BC2 and stays AA. The ¼ that is AB goes through three selfs:
+At BC2, ¾ of the genome is AA (Step 1). It stays AA under selfing. The other ¼ is AB, and it has been selfed **three** times (BC2S1, BC2S2, BC2S3), so it is split as in the **3 selfs** row of Step 2: 7/16 AA, 1/8 AB, 7/16 BB.
 
 | Genotype | Calculation | Expected |
 |---|---|---|
-| AA | 0.75 + 0.25 × 7/16 | **85.94%** |
-| AB | 0.25 × 1/8 | **3.13%** |
-| BB | 0.25 × 7/16 | **10.94%** |
-| Donor alleles | 10.94 + ½ × 3.13 | **12.5%** |
+| AA | ¾ (AA since BC2) + ¼ × 7/16 | 0.75 + 0.1094 = **85.94%** |
+| AB | ¼ × 1/8 | **3.13%** |
+| BB | ¼ × 7/16 | **10.94%** |
+| Donor alleles | BB + ½ × AB | 10.94 + 1.56 = **12.5%** |
 
-This is the expectation for **one plant**.
+### Step 4 — One pool (6 BC2S3 siblings)
 
-### Step 4 — One sequenced pool (6 BC2S3 siblings)
+The 6 plants in a pool are the selfed offspring of one **BC2S2 mother**, so the pool state at a locus is set by **her** genotype:
+- mother **AA** → all her offspring are AA → pool state **B73**
+- mother **BB** → all her offspring are BB → pool state **DONOR**
+- mother **AB** → her offspring segregate 1 AA : 2 AB : 1 BB (Mendel, selfing a heterozygote), so each of the 6 plants is AA with chance ¼, AB with ½ and BB with ¼ → pool state **SEG**
 
-We didn't sequence single plants. We sequenced a pool of 6 siblings, so what we see in a region is the genotype of their **BC2S2 mother** (two selfs), which sets what the 6 plants can be:
+The mother is a BC2S2 plant, i.e. **two** selfs after BC2. So her genotype follows the **2 selfs** row of Step 2 (3/8 AA, 1/4 AB, 3/8 BB) for the ¼ of the genome that was AB at BC2, plus the ¾ that is AA anyway:
 
-| BC2S2 mother | Calculation | Expected share | The 6 plants | Pool state (HMM) |
+| BC2S2 mother | Calculation | Expected share of the genome | The 6 plants | Pool state |
 |---|---|---|---|---|
-| AA | 0.75 + 0.25 × 3/8 | **84.38%** | all AA | **B73** |
-| AB | 0.25 × 1/4 | **6.25%** | each AA, AB or BB (¼, ½, ¼) | **SEG** |
-| BB | 0.25 × 3/8 | **9.38%** | all BB | **DONOR** |
+| AA | ¾ + ¼ × 3/8 | 0.75 + 0.0938 = **84.38%** | all AA | **B73** |
+| AB | ¼ × 1/4 | **6.25%** | AA, AB or BB with chance ¼, ½, ¼ (1:2:1) | **SEG** |
+| BB | ¼ × 3/8 | **9.38%** | all BB | **DONOR** |
 
-**The two views agree.** Taking the plants inside the pool states:
-- AA = B73 + ¼ SEG = 84.38 + 1.56 = **85.94%**
-- AB = ½ SEG = **3.13%**
-- BB = DONOR + ¼ SEG = 9.38 + 1.56 = **10.94%**
-- Donor alleles = DONOR + ½ SEG = 9.38 + 3.13 = **12.5%**
+### Step 5 — From pool states back to plants
 
-So the HMM's pool states are compared with Step 4, and converted to plant genotypes with the formulas above to compare with Step 3. Both are shown in the results.
+Steps 3 and 4 describe the same plants, so one can be computed from the other. B73 pools contain only AA plants and DONOR pools only BB plants. SEG pools contain the 1:2:1 mix, so on average **¼ of a SEG region is AA in a plant, ½ is AB and ¼ is BB**. Adding up, with SEG = 6.25%:
+
+| Plant genotype | From the pool states | Expected |
+|---|---|---|
+| AA | B73 + ¼ × SEG = 84.38 + 1.56 | **85.94%** |
+| AB | ½ × SEG = ½ × 6.25 | **3.13%** |
+| BB | DONOR + ¼ × SEG = 9.38 + 1.56 | **10.94%** |
+| Donor alleles | DONOR + ½ × SEG = 9.38 + 3.13 | **12.5%** |
+
+These are exactly the Step 3 numbers. This is how the HMM results are reported at both levels: the pool states as called (compared with Step 4), and converted to plant genotypes with this table (compared with Step 3). Heterozygosity (AB) can only be estimated this way, as half of SEG; no single plant is genotyped.
 
 ### Implication for low-pass pooled genotyping
 
-- **Het is small:** only 3.1% of a plant's genome is expected to be AB. At 0.8x, single-site het calls are unreliable anyway, so we call pool states over 100-kb windows instead of genotypes at sites.
-- **Most donor should be fixed:** of the 12.5% donor alleles, most should sit in DONOR regions (9.4%), where all 6 plants are BB. SEG regions (6.25%) hold the rest, as a 1:2:1 mix of plants.
+- **Het is small:** only 3.1% of a plant's genome is expected to be AB (Step 3). At 0.8x, single-site het calls are unreliable anyway, so we call pool states over 100-kb windows instead of genotypes at sites.
+- **Most donor should be fixed:** of the 12.5% donor alleles, most should sit in DONOR regions (9.38%), where all 6 plants are BB. SEG regions (6.25%) hold the rest, as a 1:2:1 mix of plants (Step 5).
 - **What we found:** het matches the expectation (SEG 6.23%, AB 3.12%), but DONOR is only about half of it (5.0% vs 9.4%). See [Results](#28-results).
 
 ---

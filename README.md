@@ -542,11 +542,37 @@ Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `final
 - **F1 families:** only 2 of 98 F1 families reach the expected 12.5% donor alleles (Zx.0390_P2, Zx.0130_P1); most sit between 5% and 11%. AB/(AB+BB) is above 22% in most F1 families of every taxon.
 - **Small taxa:** Zd (6 F1 families), Zl (5) and Zh (2) have few F1 families, so their intervals are less reliable. Zd's SEG (5.1%) is somewhat below the expectation (p = 0.0004).
 
-**One sample, as an example** (PN12_SID1106, Zv). The state of each 100-kb window along the 10 chromosomes:
+**Where in the genome the introgressions are.** Each pool's calls were put on a 100-kb grid (B73 = 0, SEG = 0.5, DONOR = 1: the share of donor alleles among the pool's plants), then averaged over all 1,292 donor pools and over 1-Mb bins. Each row is a chromosome; the colour is the share of donor alleles in that bin (8.1% on average, 12.5% expected for BC2S3):
 
-![Example sample](final_script/figures/results_spread/example_PN12_SID1106.png)
+![Donor allele share along the genome, all pools](final_script/figures/results_spread/introgression_landscape.png)
 
-On such a plot there are only three colours, the three pool states. AB isn't drawn, because a pool can't show which plants are AB: inside a yellow (SEG) region about half the 6 plants are AB, a quarter AA and a quarter BB. All samples can be browsed in the [interactive viewer](#212-interactive-figures-step-23).
+- **Most of the genome carries a similar amount of teosinte:** the median 1-Mb bin has 7.7% donor alleles, and 90% of bins lie between 5.3% and 11.6%. Only 13 of the 2,138 bins reach the BC2S3 expectation of 12.5% (12 on chr2, one on chr7).
+- **More teosinte:** chr2 (11.3% on average over the chromosome) and chr9 (10.8%). The most is at the start of chr2 (0–8 Mb: 13.8%), and it is high there in every large taxon (*diploperennis*, *parviglumis* and *mexicana* 14.3–14.5%).
+- **Less teosinte:** chr5 (6.1%), chr4 and chr6 (6.5% each). The least is near the end of chr5 (185–193 Mb: 4.0%, down to 3.6% in single bins) and in the middle of chr4 (100–120 Mb: 4.8%).
+
+The same per taxon, in 5-Mb bins along the whole genome:
+
+![Donor allele share along the genome, per taxon](final_script/figures/results_spread/introgression_landscape_by_taxon.png)
+
+- The taxa differ in where they carry teosinte. For example, *luxurians* has much more than average on chr9 (10–40 Mb: 16.2%), *huehuetenangensis* on chr3 (14.5% over the chromosome, against 8.8% in all pools), while *diploperennis* has almost none in chr5 185–193 Mb (0.3%) and chr4 100–120 Mb (0.5%), two regions where *parviglumis* still has about 7%.
+- The small taxa come from few F1 families (*huehuetenangensis* 2, *luxurians* 5, *diploperennis* 6), so a block of colour in their rows can be one family's tract carried by many pools, not a property of the taxon.
+- A region with little teosinte in every taxon could mean selection against teosinte alleles there during the selfing (see the selection explanation above); we have not tested this.
+
+**Number and length of tracts per taxon.** A tract is a run of 100-kb windows in the same state. Introgressed tracts join adjacent SEG and DONOR tracts into one piece of donor DNA (as in [Tract lengths](#265-how-long-are-the-tracts)).
+
+| Taxon | Pools | SEG tracts (per pool) | SEG median length | DONOR tracts (per pool) | DONOR median length | Introgressed tracts per pool | Introgressed median length |
+|---|---|---|---|---|---|---|---|
+| Zd | 227 | 1,122 (4.9) | 7.2 Mb | 788 (3.5) | 7.7 Mb | 6.2 | 10.3 Mb |
+| Zh | 61 | 323 (5.3) | 7.9 Mb | 288 (4.7) | 8.4 Mb | 6.8 | 12.7 Mb |
+| Zl | 98 | 588 (6.0) | 8.5 Mb | 370 (3.8) | 9.4 Mb | 7.2 | 12.2 Mb |
+| Zv | 333 | 3,090 (9.3) | 5.6 Mb | 2,456 (7.4) | 7.9 Mb | 11.3 | 9.4 Mb |
+| Zx | 573 | 5,311 (9.3) | 4.6 Mb | 4,538 (7.9) | 7.4 Mb | 11.1 | 9.4 Mb |
+| **All** | **1,292** | **10,434 (8.1)** | **5.4 Mb** | **8,440 (6.5)** | **7.7 Mb** | **9.8** | **9.8 Mb** |
+
+- A pool carries about 10 pieces of donor DNA, with a median length of about 10 Mb.
+- *parviglumis* and *mexicana* pools carry nearly twice as many tracts as *diploperennis*, *huehuetenangensis* and *luxurians* pools (about 11 vs 6–7 introgressed tracts), and their SEG tracts are shorter (4.6–5.6 vs 7.2–8.5 Mb). Their donor allele share is not twice as high (table above), so they carry more, shorter pieces. We have not yet looked into why.
+
+Figures and tables from `final_script/24b_introgression_landscape.py` (`introgression_landscape_bins.tsv`, `tract_stats_by_taxon.tsv` in `final_script/figures/results_spread/`). Single samples can be browsed in the [interactive viewer](#212-interactive-figures-step-23).
 
 The full statistics, F1 family results and the method history are in [`final_script/README.md`](final_script/README.md).
 

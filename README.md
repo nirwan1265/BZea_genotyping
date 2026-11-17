@@ -69,7 +69,7 @@ This is the expectation for **one plant**.
 
 ### Step 4 — One sequenced pool (6 BC2S3 siblings)
 
-We don't sequence single plants. We sequence a pool of 6 siblings, so what we can see in a region is the genotype of their **BC2S2 mother** (two selfs), which sets what the 6 plants can be:
+We didn't sequence single plants. We sequenced a pool of 6 siblings, so what we see in a region is the genotype of their **BC2S2 mother** (two selfs), which sets what the 6 plants can be:
 
 | BC2S2 mother | Calculation | Expected share | The 6 plants | Pool state (HMM) |
 |---|---|---|---|---|

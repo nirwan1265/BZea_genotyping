@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --time=01:00:00
+#SBATCH --time=04:00:00
 #SBATCH --mem=24G
 ##SBATCH --partition=compute   # uncomment and set if your account needs a partition
 # =============================================================================
@@ -17,7 +17,8 @@
 #     scp ~/Documents/Research/data/BZea/introgression_spread/assoc_gridlmm_spats/genes/peaks_*_ALL.tsv \
 #         <server>:${D21}/assoc_gridlmm_spats/genes/
 #   Submit:  N=$(wc -w <<< "$TRAITS"); sbatch --array=1-$N 29.2_joint_qtl_noperm.sh
-#   Output:  ${D29}/noperm/qtl2_<TRAIT>_{qtl,by_taxon,genes,scan}.tsv, qtl2_<TRAIT>_manhattan.png  (~5 min per trait)
+#   Output:  ${D29}/noperm/qtl2_<TRAIT>_{qtl,by_taxon,genes,scan,added,conditional}.tsv, qtl2_<TRAIT>_manhattan.png
+#            (~5 min per trait, plus ~2 min per conditional scan)
 #   Mexicana split by race: copy the SUBTAXON run peaks to ${D21}/assoc_gridlmm_spats_subtaxon/genes/ and
 #     sbatch --export=ALL,TAXON_COL=SUBTAXON --array=1-$N 29.2_joint_qtl_noperm.sh   (output ${D29}/noperm_subtaxon)
 #   Later, with permutations: 29_joint_qtl.sh
@@ -38,5 +39,9 @@ if (( $(ls $GFF_GLOB 2>/dev/null | wc -l) > 1 )); then        # several per-chro
   GFF1=${D29}/b73_v5_genes.gff3
   if [[ ! -s "$GFF1" ]]; then cat $GFF_GLOB | awk -F'\t' '$3=="gene"' > "$GFF1.$$" && mv "$GFF1.$$" "$GFF1"; fi
 fi
-echo "trait $T | inputs $D25 | peaks $PEAKS | out $OUT"
-TAXON_COL="$TAXON_COL" NPERM=0 PEAKS="$PEAKS" GFF="$GFF1" CORES=${SLURM_CPUS_PER_TASK:-1} Rscript "${FINAL_DIR}/29_joint_qtl.R" "$D25" "$T" "$OUT"
+# conditional scans (more QTL inside a significant region) use the same genome-wide threshold as the k-mer scan
+SDIR=$(dirname "$PEAKS_DIR")
+COND=$(awk -F'\t' 'NR>1 && $2=="ALL"{print $6}' "$SDIR/summary_${T}.tsv" 2>/dev/null || true)
+echo "trait $T | inputs $D25 | peaks $PEAKS | threshold ${COND:-none} | out $OUT"
+TAXON_COL="$TAXON_COL" NPERM=0 PEAKS="$PEAKS" COND_MLOG10P="$COND" GRIDLMM_SCAN="$SDIR/scan_${T}.tsv" GFF="$GFF1" \
+  CORES=${SLURM_CPUS_PER_TASK:-1} Rscript "${FINAL_DIR}/29_joint_qtl.R" "$D25" "$T" "$OUT"

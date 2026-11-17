@@ -709,7 +709,10 @@ BLUEs are two-stage (`final_script/28_spats_blues.R`; details in `final_script/R
 | EN (ear number: nodes with ears) | 0.68 | 0.42 | 0.33 |
 | Prolif (prolificacy: most ears on one node) | 0.61 | 0.55 | 0.21 |
 | NBR (nodes with brace roots) | 0.52 | 0.47 | 0.34 |
-| SPAD (leaf greenness) | 0.49 | 0.54 | 0.19 |
+| SPAD2 (leaf greenness, SPAD meter, 36 days after silking); 2023 only | 0.40 | | |
+| LAE (leaves above the ear); 2025 only | | 0.40 | |
+| Kinki (how much the stem bends, score 0–2); 2023 only | 0.29 | | |
+| StPu (stem pubescence), StPi (stem pigmentation); present/absent, line means | | | 0.16, 0.09 |
 | BW (blade width), BL (blade length), SL (sheath length); 2023 only | 0.51, 0.56, 0.73 | | |
 
 ### 3.3 Analysis 1: k-mer ancestry GWAS
@@ -766,6 +769,7 @@ The scan tests one window at a time, ignoring the others. Analysis 2 takes **the
 - **Per-taxon effects:** the same fit within each taxon (taxa with ≥ 5 carrier plots at that QTL).
 - **Do the taxa differ?** LOD of the model with a separate QTL effect per taxon (`scan1` with `intcovar = taxon`) minus LOD of the model with one shared effect; likelihood-ratio test with (taxa − 1) df.
 - **Effect per copy:** `fit1(..., contrasts = cbind(mu = c(1, 1), a = c(-1, 1)))`; the B73 allele mean is mu − a and the teosinte allele mean mu + a, so a is the effect of one teosinte copy.
+- **More than one QTL in a region? Conditional scans.** The scan's regions are runs of windows above the threshold, and with long tracts one region can span tens of Mb and hold more than one QTL. So after fitting the scan's peaks, the genome is scanned again with taxon **and all QTL so far** as covariates (`scan1(..., addcovar = cbind(taxon, QTL genotypes))`). The best window still above the genome-wide threshold is added as a QTL, and this is repeated until none is left (forward selection by conditional scans; Broman & Sen 2009). Only windows that are significant in the ordinary scan and not in LD with a QTL already in the model (r² ≤ 0.5) can be added: this splits a significant region when it holds a second, independent signal, and it cannot create a new region. Close peaks with no independent signal stay one QTL. Added QTL are listed in `qtl2_<TRAIT>_added.tsv` and drawn with an open triangle in the figures.
 - **Significance:** the joint model does not search the genome; it tests the k QTL of a trait, so a Bonferroni correction over k (−log10 p > −log10(0.05/k), e.g. 2.08 for 6 QTL) is used for both the joint test and "taxa differ".
 
 #### 3.4.1 Why the joint model starts from the peaks, and not from all windows at once
@@ -1203,16 +1207,17 @@ The same two analyses were rerun with *mexicana* split into its four races (Chal
 
 #### 3.6.14 Other traits
 
-These six traits were scanned with the same pipeline; their figures are in `figures/kmerGWAS_joint_qtl_<TRAIT>.png` and their tables in the same folders as above.
+Scanned with the same pipeline; figures in `figures/kmerGWAS_joint_qtl_<TRAIT>.png`, tables in the same folders as above. SPAD (the first SPAD reading) is not reported; SPAD2 is used for leaf greenness.
 
-| Trait | Plots | 5% threshold | QTL | Hold in joint model | Strongest QTL (−log10 p) |
-|---|---|---|---|---|---|
-| SPAD | 1286 | 4.29 | 4 | 4 | chr1 24.8 Mb (4.6) |
-| SPAD2 | 1124 | 4.32 | 6 | 4 | chr1 148.6 Mb (6.0) |
-| LAE | 1274 | 4.15 | 8 | 2 | chr2 34.5 Mb (9.3) |
-| Kinki | 1140 | 4.33 | 6 | 4 | chr2 30.1 Mb (12.0) |
-| StPu | 1286 | 6.96 | 1 | 1 | chr4 240.8 Mb (8.5) |
-| StPi | 1286 | 4.77 | 7 | 4 | chr2 19.9 Mb (11.8) |
+| Trait | What it is | Plots | 5% threshold | QTL | Hold in joint model | Strongest QTL (−log10 p) |
+|---|---|---|---|---|---|---|
+| SPAD2 | leaf greenness (SPAD meter, a proxy for chlorophyll), 36 days after silking; 2023 | 1124 | 4.32 | 6 | 4 | chr1 148.6 Mb (6.0) |
+| LAE | number of leaves above the ear; 2025 | 1274 | 4.15 | 8 | 2 | chr2 34.5 Mb (9.3) |
+| Kinki | how much the stem bends, score 0–2; 2023 | 1140 | 4.33 | 6 | 4 | chr2 30.1 Mb (12.0) |
+| StPu | stem pubescence (present/absent; line mean) | 1286 | 6.96 | 1 | 1 | chr4 240.8 Mb (8.5) |
+| StPi | stem pigmentation (present/absent; line mean) | 1286 | 4.77 | 7 | 4 | chr2 19.9 Mb (11.8) |
+
+StPu and StPi are scored present/absent, so their line means are mostly 0 with a few high values, and they agree poorly between years (r = 0.16 and 0.09). With such a skewed trait, a few plots can give very small p-values by chance, which is why the permutation threshold for StPu (6.96) is far above the others; the permutations account for this. A model for binary traits (e.g. a logistic mixed model) would suit them better.
 
 ### 3.7 What is new here
 
@@ -1230,8 +1235,8 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - **Donor reference.** DONOR levels come from MaizeGDB assemblies, not from our donor plants (Section 2, Limitations).
 - **Replication:** peaks should be checked in each year separately and within taxon.
 - **Small taxa:** *luxurians* (Zl) and *huehuetenangensis* (Zh) have 5–25 carrier plots at most QTL, so their per-taxon effects have wide CIs. The large *luxurians*-specific effects (DTS/DTA chr5 221.8 Mb) should be checked against how many accessions and F1 families the carriers come from.
-- **How peaks are split into regions.** A region is a run of windows above the threshold, joined when less than 5 Mb apart. With long tracts, whole chromosome arms can sit above the threshold, so separate peaks can end up in one region and get only one QTL in the joint model (e.g. BL chr4 197 and 238 Mb; BW chr6 133 and 146 Mb), and the split changes when the threshold moves (EN chr2 22 and 202 Mb were one region with 100 permutations). A peak-finding rule that also needs a drop in −log10 p between peaks (e.g. R/qtl2 `find_peaks(..., peakdrop = 1.5)`) would separate them; to be decided.
-- **GO terms** come from a candidate-gene list made for the 100-permutation regions; genes in new regions (e.g. EH, EN) can have no GO terms yet.
+- **How peaks are split into regions.** A region is a run of windows above the threshold, joined when less than 5 Mb apart, so one region can hold more than one QTL (e.g. BL chr4 197 and 238 Mb; BW chr6 133 and 146 Mb). The conditional scans of the joint model (section 3.4) now test this; the joint QTL tables above are from the run before they were added and will be updated after the rerun.
+- **GO terms** come from a candidate-gene list made for the 100-permutation regions; 8,688 of the 18,798 genes in the current regions have no GO terms yet (`data/introgression_spread/GO/genes_missing_GO.txt`).
 
 ---
 
@@ -1243,6 +1248,7 @@ All references cited in this README, in alphabetical order.
 - Baum LE, Petrie T, Soules G, Weiss N (1970) A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. *Ann Math Stat* 41:164–171.
 - Bolger AM, Lohse M, Usadel B (2014) Trimmomatic: a flexible trimmer for Illumina sequence data. *Bioinformatics* 30:2114–2120.
 - Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502.
+- Broman KW, Sen Ś (2009) *A Guide to QTL Mapping with R/qtl*. Springer, New York.
 - Brown CT, Irber L (2016) sourmash: a library for MinHash sketching of DNA. *J Open Source Softw* 1:27.
 - Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
 - Churchill GA, Doerge RW (1994) Empirical threshold values for quantitative trait mapping. *Genetics* 138:963–971.

@@ -8,7 +8,8 @@
 ##   joint QTL dir: qtl2_<TRAIT>_qtl.tsv and qtl2_<TRAIT>_by_taxon.tsv (step 29 / 29.2; e.g. introgression_spread/joint_QTL)
 ##   TRAITs:        default = every trait with a qtl2_<TRAIT>_qtl.tsv
 ## Panel A: -log10 p per 100-kb window, chromosomes in black/grey, dotted line = 5% permutation threshold (when the
-##          step-26 summary has one), QTL numbered at their top window.
+##          step-26 summary has one), QTL numbered at their top window (open triangle = QTL added by the
+##          conditional scans of step 29, i.e. a second QTL inside a significant region).
 ## Panel B: per QTL, effect per teosinte copy (trait units) with 95% CI: black = joint model (all QTL together, all taxa),
 ##          colours = within each taxon (taxa with >= 5 carrier plots). Right: -log10 p of the joint test and of
 ##          "taxa differ" (two columns; these are p-values, not effects).
@@ -48,13 +49,15 @@ make_fig <- function(trait) {
   q[, chrn := as.integer(sub("^chr", "", chr))]
   q <- q[order(chrn, pos_Mb)]; q[, id := paste0("Q", seq_len(.N))]
   q <- merge(q, len[, .(chrn, off)], by = "chrn"); q[, x := pos_Mb * 1e6 + off]
+  q[, cond := if ("found_by" %in% names(q)) found_by == "conditional scan" else FALSE]
   q[, ytop := sapply(seq_len(.N), function(i) { w <- sc[chrn == q$chrn[i] & abs(pos - q$pos_Mb[i] * 1e6) < 1e5]; if (nrow(w)) max(w$y) else NA })]
   pA <- ggplot(sc, aes(x, y)) +
     geom_point(aes(colour = factor(chrn %% 2)), size = 0.5, show.legend = FALSE) +
     scale_colour_manual(values = c("0" = "grey55", "1" = "black")) +
     scale_x_continuous(breaks = len$mid, labels = len$chrn, expand = c(0.01, 0)) +
     scale_y_continuous(expand = expansion(mult = c(0.02, 0.12))) +
-    geom_point(data = q, aes(x, ytop), shape = 25, fill = "#D55E00", colour = "#D55E00", size = 2.4) +
+    geom_point(data = q, aes(x, ytop, fill = cond), shape = 25, colour = "#D55E00", size = 2.4, show.legend = FALSE) +
+    scale_fill_manual(values = c(`FALSE` = "#D55E00", `TRUE` = "white")) +
     geom_text(data = q, aes(x, ytop, label = id), vjust = -1.2, size = 3.2, colour = "#D55E00") +
     labs(x = "Chromosome", y = expression(-log[10](italic(p))),
          title = sprintf("%s: k-mer additive scan (GridLMM, taxon + LOCO K, %s plots)", trait,

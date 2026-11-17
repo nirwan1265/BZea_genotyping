@@ -13,6 +13,11 @@
 ##   Joint:     fit1 at each QTL with taxon + the other QTL as covariates: conditional LOD, effect per copy, SE
 ##   Per taxon: fit1 at each QTL within each taxon (other QTL as covariates): effect per copy, SE
 ##   Effect per teosinte copy: fit1(contrasts = cbind(mu = c(1, 1), a = c(-1, 1))), coefficient a.
+##   More QTL in a region? Conditional scans (forward selection): scan1 with taxon + all QTL so far as covariates;
+##              the best window above the threshold is added as a QTL, and the scan is repeated until none is left.
+##              Only windows that are significant in the ordinary scan and not in LD with a QTL already in the
+##              model (r^2 <= MAX_R2_WITH_QTL) can be added, so this splits significant regions, it does not
+##              create new ones. This is how two peaks inside one long significant region are told apart.
 ##
 ## Usage:  Rscript 29_joint_qtl.R <assoc input dir (step 25)> <TRAIT> <out dir>
 ## Without permutations (NPERM=0), the QTL come from:
@@ -21,7 +26,10 @@
 ##   THRESHOLD_LOD=<LOD>                    peaks of the R/qtl2 additive scan above this LOD
 ## Env:    TAXON_COL (TAXON | SUBTAXON), NPERM (1000), CORES (1), PEAKDROP (Inf: one QTL per chromosome per scan; e.g. 2 allows more, but tracts
 ##         are long and neighbouring peaks on a chromosome are rarely separable), DROP (1.5),
-##         MIN_TAXON_CARRIERS (5), GFF (B73 v5 GFF3: genes in the intervals)
+##         MIN_TAXON_CARRIERS (5), GFF (B73 v5 GFF3: genes in the intervals),
+##         COND_MLOG10P (genome-wide -log10 p threshold for the conditional scans; default: the permutation threshold;
+##         29.2 passes the step-26 one), MAX_ADDED_QTL (10; 0 = no conditional scans), MAX_R2_WITH_QTL (0.5),
+##         GRIDLMM_SCAN (step-26 scan_<TRAIT>.tsv: GridLMM -log10 p and effect for added QTL)
 ## Needs:  R with qtl2 and data.table (both on CRAN).
 ## Outputs (<out dir>):
 ##   qtl2_<TRAIT>_scan.tsv          LOD per window: additive, per-taxon (intcovar), difference
@@ -29,6 +37,8 @@
 ##   qtl2_<TRAIT>_qtl.tsv           one row per QTL: interval, LOD, conditional LOD (joint), effect ± SE, LOD taxa-differ, PVE
 ##   qtl2_<TRAIT>_by_taxon.tsv      QTL x taxon: carriers (SEG/DONOR), effect per copy ± SE, LOD
 ##   qtl2_<TRAIT>_genes.tsv         B73 v5 genes in each QTL interval (with GFF)
+##   qtl2_<TRAIT>_added.tsv         QTL added by the conditional scans: round, window, conditional LOD and -log10 p
+##   qtl2_<TRAIT>_conditional.tsv   the last conditional scan (LOD per window given all QTL)
 ##   qtl2_<TRAIT>_manhattan.png     additive and per-taxon LOD, thresholds
 ## =============================================================================
 suppressPackageStartupMessages({ library(qtl2); library(data.table) })
@@ -126,6 +136,43 @@ if (PEAKS != "") {
       pk$pos[i] >= pk$ci_lo[j] && pk$pos[i] <= pk$ci_hi[j]) keep[i] <- FALSE
   pk <- pk[keep, ]
   pk$gridlmm_mlog10p <- NA; pk$gridlmm_beta <- NA
+}
+Q <- pk$Marker
+
+## ---------- more QTL inside the significant regions? conditional scans (forward selection) ----------
+COND_MLOG10P <- Sys.getenv("COND_MLOG10P", ""); MAX_ADD <- envn("MAX_ADDED_QTL", 10); R2_MAX <- envn("MAX_R2_WITH_QTL", 0.5)
+thr_cond <- if (COND_MLOG10P != "") qchisq(10^-as.numeric(COND_MLOG10P), 1, lower.tail = FALSE) / (2 * log(10)) else thr_add
+GS <- Sys.getenv("GRIDLMM_SCAN", "")
+gs <- if (GS != "" && file.exists(GS)) fread(GS, data.table = FALSE) else NULL
+if (!is.na(thr_cond) && MAX_ADD > 0) {
+  marg <- setNames(sc$lod_additive, sc$Marker)[colnames(G)]               # ordinary scan: only significant windows
+  added <- list(); cs <- NULL
+  for (rnd in seq_len(MAX_ADD)) {
+    cs <- scan1(probs, y, K, addcovar = cbind(covar, G[, Q, drop = FALSE] / 2), cores = CORES)
+    r2 <- suppressWarnings(apply(cor(G, G[, Q, drop = FALSE])^2, 1, max)); r2[is.na(r2)] <- 1
+    ok <- rownames(cs)[marg[rownames(cs)] > thr_cond & r2[rownames(cs)] <= R2_MAX]
+    if (!length(ok)) break
+    best <- ok[which.max(cs[ok, 1])]
+    if (cs[best, 1] <= thr_cond) break
+    ch <- sub("^chr", "", map$chr[match(best, map$Marker)]); pos <- map$pos[match(best, map$Marker)] / 1e6
+    cs2 <- cs; cs2[!rownames(cs2) %in% ok, 1] <- 0                         # support interval around this window
+    ci <- tryCatch(lod_int(cs2, pmap, chr = ch, drop = DROP), error = function(e) NULL)
+    lo <- if (is.null(ci)) pos else ci[1, "ci_lo"]; hi <- if (is.null(ci)) pos else ci[1, "ci_hi"]
+    added[[rnd]] <- data.frame(trait = trait, round = rnd, qtl = best, chr = paste0("chr", ch), pos_Mb = pos,
+                               lod_conditional = round(cs[best, 1], 2), mlog10p_conditional = round(lod2p(cs[best, 1], 1), 2),
+                               max_r2_with_earlier_qtl = round(r2[best], 2))
+    say("conditional scan %d: added %s (conditional LOD %.2f, -log10 p %.2f)", rnd, best, cs[best, 1], lod2p(cs[best, 1], 1))
+    gi <- if (!is.null(gs)) match(best, gs$Marker) else NA
+    pk <- rbindlist(list(pk, data.frame(chr = ch, pos = pos, ci_lo = lo, ci_hi = hi, found_by = "conditional scan",
+                                        Marker = best, lod = sc$lod_additive[match(best, sc$Marker)],
+                                        gridlmm_mlog10p = if (is.na(gi)) NA else -log10(gs$p_add[gi]),
+                                        gridlmm_beta = if (is.na(gi)) NA else gs$beta_add[gi])), fill = TRUE)
+    pk <- as.data.frame(pk); Q <- c(Q, best)
+  }
+  if (length(added)) fwrite(rbindlist(added), file.path(out_dir, sprintf("qtl2_%s_added.tsv", trait)), sep = "\t")
+  if (!is.null(cs)) fwrite(data.frame(Marker = rownames(cs), lod_conditional = round(cs[, 1], 3)),
+                           file.path(out_dir, sprintf("qtl2_%s_conditional.tsv", trait)), sep = "\t")
+  say("conditional scans: %d QTL added (threshold LOD %.2f)", length(added), thr_cond)
 }
 pk <- pk[order(match(pk$chr, cn), pk$pos), ]
 Q <- pk$Marker

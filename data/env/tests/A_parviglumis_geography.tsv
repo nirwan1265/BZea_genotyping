@@ -1,0 +1,6 @@
+test	rho	p
+index ~ longitude	0.73	1.39354911321126e-06
+index ~ elevation	0.487	0.00262334094819178
+index ~ longitude | elevation	0.716	9.09376363951569e-07
+index ~ elevation | longitude	0.452	0.00562671801209851
+index ~ BIO4 | longitude, elevation	-0.037	0.832556236326774

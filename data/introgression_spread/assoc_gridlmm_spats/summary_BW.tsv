@@ -1,2 +1,2 @@
 trait	scope	plots	windows	permutations	threshold	top_window	top_mlog10p	top_beta	n_above
-BW	ALL	1197	21309	100	4.48	chr6:146450000	9.17	-0.31	1371
+BW	ALL	1197	21309	1000	4.22	chr6:146450000	9.17	-0.31	1478

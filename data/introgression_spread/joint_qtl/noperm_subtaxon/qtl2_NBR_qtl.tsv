@@ -1,0 +1,10 @@
+trait	qtl	chr	pos_Mb	interval_start_Mb	interval_end_Mb	found_by	carriers	gridlmm_mlog10p	gridlmm_effect_per_copy	lod	mlog10p	lod_joint	mlog10p_joint	effect_per_copy_joint	se	lod_taxa_differ	mlog10p_taxa_differ	pve_alone	threshold_lod
+NBR	chr1:11050000	chr1	11.05	9.300001	13	k-mer scan (step 26)	135	4.8	-0.116	4.05	4.8	1.51	2.07	-0.078	0.03	1.72	0.47	0.0131	
+NBR	chr1:23350000	chr1	23.35	21.900001	25.6	k-mer scan (step 26)	128	4.45	-0.109	3.72	4.45	1.12	1.64	-0.066	0.029	4.08	2.06	0.012	
+NBR	chr1:210150000	chr1	210.15	201.900001	211.1	k-mer scan (step 26)	132	4.37	-0.109	3.64	4.37	0.75	1.2	-0.062	0.034	4.36	2.26	0.012	
+NBR	chr1:219850000	chr1	219.85	216.300001	222.5	k-mer scan (step 26)	129	4.23	-0.113	3.51	4.23	0.09	0.29	-0.027	0.041	4.12	2.08	0.0115	
+NBR	chr1:262350000	chr1	262.35	257.200001	264.5	k-mer scan (step 26)	138	4.77	-0.117	4.01	4.77	0.98	1.47	-0.07	0.033	2.94	1.22	0.0131	
+NBR	chr5:161650000	chr5	161.65	157.500001	172	k-mer scan (step 26)	115	4.13	0.111	3.41	4.13	3.81	4.55	0.115	0.028	2	0.62	0.011	
+NBR	chr8:126350000	chr8	126.35	125.000001	127.6	k-mer scan (step 26)	137	4.26	0.113	3.53	4.26	3.55	4.28	0.112	0.028	2.38	0.85	0.011	
+NBR	chr9:139950000	chr9	139.95	131.300001	145.8	k-mer scan (step 26)	185	4.23	0.09	3.5	4.23	3.91	4.66	0.094	0.022	0.79	0.09	0.0112	
+NBR	chr10:98150000	chr10	98.15	96.900001	99.6	k-mer scan (step 26)	117	10.59	0.186	9.65	10.58	9.89	10.82	0.185	0.027	5.26	2.98	0.0316	

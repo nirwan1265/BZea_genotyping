@@ -65,14 +65,18 @@ Everything below is computed at two levels, and it helps to keep them apart:
 
 ### Step 3 — One BC2S3 plant (three selfs)
 
-At BC2, ¾ of the genome is AA (Step 1). It stays AA under selfing. The other ¼ is AB, and it has been selfed **three** times (BC2S1, BC2S2, BC2S3), so it is split as in the **3 selfs** row of Step 2: 7/16 AA, 1/8 AB, 7/16 BB.
+Start from the BC2 numbers in Step 1: **¾ of the genome is AA** and **¼ is AB** (BC1 = ½ AA + ½ AB; crossing to B73 again turns the AA half into AA and splits the AB half into AA and AB, so BC2 = ½ + ¼ = ¾ AA and ¼ AB).
 
-| Genotype | Calculation | Expected |
-|---|---|---|
-| AA | ¾ (AA since BC2) + ¼ × 7/16 | 0.75 + 0.1094 = **85.94%** |
-| AB | ¼ × 1/8 | **3.13%** |
-| BB | ¼ × 7/16 | **10.94%** |
-| Donor alleles | BB + ½ × AB | 10.94 + 1.56 = **12.5%** |
+Then the BC2 plant is selfed three times (BC2S1, BC2S2, BC2S3):
+- the **¾ that is AA** stays AA: selfing AA only gives AA.
+- the **¼ that is AB** segregates, as in the **3 selfs** row of Step 2: of that ¼, 7/16 becomes AA, 1/8 stays AB and 7/16 becomes BB.
+
+| Genotype | From the ¾ AA at BC2 | From the ¼ AB at BC2 | Expected |
+|---|---|---|---|
+| AA | ¾ | ¼ × 7/16 | 0.75 + 0.1094 = **85.94%** |
+| AB | 0 | ¼ × 1/8 | **3.13%** |
+| BB | 0 | ¼ × 7/16 | **10.94%** |
+| Donor alleles | | BB + ½ × AB | 10.94 + 1.56 = **12.5%** |
 
 ### Step 4 — One pool (6 BC2S3 siblings)
 
@@ -81,13 +85,13 @@ The 6 plants in a pool are the selfed offspring of one **BC2S2 mother**, so the 
 - mother **BB** → all her offspring are BB → pool state **DONOR**
 - mother **AB** → her offspring segregate 1 AA : 2 AB : 1 BB (Mendel, selfing a heterozygote), so each of the 6 plants is AA with chance ¼, AB with ½ and BB with ¼ → pool state **SEG**
 
-The mother is a BC2S2 plant, i.e. **two** selfs after BC2. So her genotype follows the **2 selfs** row of Step 2 (3/8 AA, 1/4 AB, 3/8 BB) for the ¼ of the genome that was AB at BC2, plus the ¾ that is AA anyway:
+The mother is a BC2S2 plant, i.e. **two** selfs after BC2. Same logic as Step 3, with the **2 selfs** row of Step 2: the ¾ of the genome that is AA at BC2 stays AA, and the ¼ that is AB at BC2 becomes 3/8 AA, 1/4 AB and 3/8 BB:
 
-| BC2S2 mother | Calculation | Expected share of the genome | The 6 plants | Pool state |
-|---|---|---|---|---|
-| AA | ¾ + ¼ × 3/8 | 0.75 + 0.0938 = **84.38%** | all AA | **B73** |
-| AB | ¼ × 1/4 | **6.25%** | AA, AB or BB with chance ¼, ½, ¼ (1:2:1) | **SEG** |
-| BB | ¼ × 3/8 | **9.38%** | all BB | **DONOR** |
+| BC2S2 mother | From the ¾ AA at BC2 | From the ¼ AB at BC2 | Expected share of the genome | The 6 plants | Pool state |
+|---|---|---|---|---|---|
+| AA | ¾ | ¼ × 3/8 | 0.75 + 0.0938 = **84.38%** | all AA | **B73** |
+| AB | 0 | ¼ × 1/4 | **6.25%** | AA, AB or BB with chance ¼, ½, ¼ (1:2:1) | **SEG** |
+| BB | 0 | ¼ × 3/8 | **9.38%** | all BB | **DONOR** |
 
 ### Step 5 — From pool states back to plants
 

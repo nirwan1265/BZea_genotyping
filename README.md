@@ -754,7 +754,7 @@ GridLMM (Runcie & Crawford 2019), maximum likelihood, one chromosome at a time w
 
 #### 3.3.4 Significance: permutations
 
-For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile over the permutations is the **5% genome-wide (family-wise) threshold** (Churchill & Doerge 1994). This accounts for the strong correlation between neighbouring windows; Bonferroni over 21,309 windows (−log10 p = 5.63) would be far too strict. The thresholds below come from **1,000 permutations** per trait (run on the cluster, 100 jobs of 10). With *mexicana* split by race (section 3.6.13), phenotypes are shuffled within race.
+For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile of these 1,000 genome-wide maxima is the threshold. It controls the **family-wise error rate (FWER) at 5% across the whole genome**: if the trait had no QTL, a scan would put any window above it in only 5% of cases (Churchill & Doerge 1994). Because each permutation keeps the real correlation between neighbouring windows, the threshold accounts for it; Bonferroni over 21,309 windows (−log10 p = 5.63) would treat them as independent and be too strict. It is not a false discovery rate (FDR), which would instead limit the share of false hits among the significant windows. The thresholds come from **1,000 permutations** per trait (run on the cluster, 100 jobs of 10). With *mexicana* split by race (section 3.6.13), phenotypes are shuffled within race.
 
 #### 3.3.5 Regions and genes
 
@@ -770,7 +770,7 @@ The scan tests one window at a time, ignoring the others. Analysis 2 takes **the
 - **Do the taxa differ?** LOD of the model with a separate QTL effect per taxon (`scan1` with `intcovar = taxon`) minus LOD of the model with one shared effect; likelihood-ratio test with (taxa − 1) df.
 - **Effect per copy:** `fit1(..., contrasts = cbind(mu = c(1, 1), a = c(-1, 1)))`; the B73 allele mean is mu − a and the teosinte allele mean mu + a, so a is the effect of one teosinte copy.
 - **More than one QTL in a region? Conditional scans.** The scan's regions are runs of windows above the threshold, and with long tracts one region can span tens of Mb and hold more than one QTL. So after fitting the scan's peaks, the genome is scanned again with taxon **and all QTL so far** as covariates (`scan1(..., addcovar = cbind(taxon, QTL genotypes))`). The best window still above the genome-wide threshold is added as a QTL, and this is repeated until none is left (forward selection by conditional scans; Broman & Sen 2009). Only windows that are significant in the ordinary scan and not in LD with a QTL already in the model (r² ≤ 0.5) can be added: this splits a significant region when it holds a second, independent signal, and it cannot create a new region. Close peaks with no independent signal stay one QTL. Added QTL are listed in `qtl2_<TRAIT>_added.tsv` and drawn with an open triangle in the figures.
-- **Significance:** the joint model does not search the genome; it tests the k QTL of a trait, so a Bonferroni correction over k (−log10 p > −log10(0.05/k), e.g. 2.08 for 6 QTL) is used for both the joint test and "taxa differ".
+- **Significance:** the joint model does not search the genome; it tests the k QTL of a trait, so a Bonferroni correction over k (−log10 p > −log10(0.05/k), e.g. 2.08 for 6 QTL) is used for both the joint test and "taxa differ". This also controls the FWER at 5%, here over the k QTL of the trait.
 
 #### 3.4.1 Why the joint model starts from the peaks, and not from all windows at once
 
@@ -788,7 +788,7 @@ This is the mixed-model counterpart of TeoNAM's joint linkage mapping (Chen et a
 # Cluster: everything at once (inputs, scan, 1,000 permutations, peaks + genes, joint QTL),
 # for taxon and for mexicana split by race; from final_script/, with the GWAS conda env active
 bash submit_assoc_all.sh
-# Laptop alternative for Analysis 1: one terminal per trait (100 permutations), then more with run_perm_local.sh
+# Laptop alternative for Analysis 1: one terminal per trait (scan + first 100 permutations), then up to 1,000
 bash final_script/run_assoc_local.sh DTS
 TOTAL=1000 bash final_script/run_perm_local.sh DTS
 # genes + GO, and the side-by-side figures (laptop)
@@ -801,7 +801,6 @@ All results are in `data/introgression_spread/`:
 - `joint_qtl/noperm/`: joint QTL tables, per-taxon effects, genes per QTL, and the figures
 - `GO/`: every gene in the regions with GO terms and its window's −log10 p (`genes_GO_all_<TRAIT>.tsv`)
 - `assoc_gridlmm_spats_subtaxon/`, `joint_qtl/noperm_subtaxon/`, `GO_subtaxon/`: the same with *mexicana* split by race
-- `laptop_100perm/`: the earlier laptop run with 100 permutations
 
 ### 3.6 Results
 
@@ -825,24 +824,6 @@ All results are in `data/introgression_spread/`:
 
 "Hold in joint model" = QTL whose joint −log10 p passes Bonferroni over that trait's QTL. The other six traits are in [3.6.14](#3614-other-traits).
 
-**100 vs 1,000 permutations.** A threshold from 100 permutations is the 95th percentile of only 100 values, so it can be off by several tenths of −log10 p; 1,000 permutations pin it down. The genome scans are the same (except DTA, see below); only the thresholds moved:
-
-| Trait | Threshold, 100 permutations | Threshold, 1,000 permutations | QTL (100) | QTL (1,000) |
-|---|---|---|---|---|
-| DTS | 4.53 | 5.25 | 6 | 2 |
-| DTA | 4.90 | 5.14 | 4 | 3 |
-| ASI | 4.47 | 4.35 | 13 | 12 |
-| PH | 4.07 | 4.19 | 15 | 16 |
-| EH | 4.69 | 4.27 | 14 | 18 |
-| EN | 4.35 | 4.57 | 14 | 19 |
-| Prolif | 4.61 | 4.55 | 12 | 12 |
-| NBR | 4.13 | 4.21 | 9 | 8 |
-| SL | 3.92 | 4.06 | 13 | 13 |
-| BL | 4.25 | 4.14 | 6 | 5 |
-| BW | 4.48 | 4.22 | 8 | 7 |
-
-DTS lost four of its six QTL: its threshold rose from 4.53 to 5.25, and those four peaks were between 4.6 and 5.1. The earlier laptop results are kept in `data/introgression_spread/laptop_100perm/`.
-
 #### 3.6.1 Days to silking (DTS)
 
 ![DTS: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_DTS.png)
@@ -854,7 +835,7 @@ Two QTL pass the 1,000-permutation threshold (−log10 p > 5.25), and both hold 
 | **Q2 chr10 94.5 Mb** | +1.01 d | 8.9 | 1.0 (no) | Same effect in every taxon with carriers (Zd +1.2, Zv +0.8, Zx +0.9). This is the ZmCCT10 region: teosinte alleles delay flowering everywhere. |
 | **Q1 chr5 221.8 Mb** | +1.00 d | 9.7 | 14.1 (yes) | Strong, but mostly *luxurians* (+4.8 d) and *diploperennis* (+1.9 d); Zv and Zx only about +0.5 d. |
 
-**Peaks that were significant with 100 permutations but not with 1,000** (threshold 4.53 then, 5.25 now): chr1 85.8 Mb (−log10 p 5.1; mostly *luxurians*), chr9 10.9 Mb (4.9), chr5 206.4 Mb (4.9; holds *ZAG3*/*bde1*) and chr9 41.4 Mb (4.6). They are suggestive only. The scan itself did not change; only the threshold did. chr9 10.9 Mb is significant for DTA (below).
+**Suggestive peaks** (above −log10 p 4.5 but below the 5.25 threshold): chr1 85.8 Mb (5.1; mostly *luxurians*), chr9 10.9 Mb (4.9), chr5 206.4 Mb (4.9; holds *ZAG3*/*bde1*) and chr9 41.4 Mb (4.6). chr9 10.9 Mb is significant for DTA (below).
 
 **Candidate genes (in the support intervals; candidates, not proven causal):**
 - **Q2, chr10:** *ZmCCT10* (**Zm00001eb418700**, annotated "GHD7_2"; 96.18 Mb), the main teosinte photoperiod gene; teosinte alleles delay flowering under long days (Hung et al. 2012; Yang et al. 2013).
@@ -884,8 +865,6 @@ Three QTL, all hold in the joint model (Bonferroni over 3: −log10 p > 1.78).
 | **Q2 chr9 10.9 Mb** | −0.54 d | 5.6 | 0.6 (no) | Teosinte flowers earlier, alike in all taxa (Zd −0.7, Zh −0.4, Zl −1.5, Zv −0.3, Zx −0.5). The same peak is suggestive for DTS (−log10 p 4.9). *MADS74* (Zm00001eb372960; JOINTLESS/SVP-like MADS-box; SVP-like genes repress flowering) is in the interval. |
 | **Q1 chr5 221.8 Mb** | +0.65 d | 5.5 | 11.2 (yes) | The DTS Q1 window (HDR1-like gene), mostly *luxurians* (+3.7 d) and *diploperennis* (+1.5 d). It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
 
-**This DTA scan differs from the earlier laptop run.** Every other trait gives the same scan on the laptop and on the cluster (differences < 10⁻⁷), but DTA differs by up to 1.7 −log10 p, with the same plots and genotypes. So the laptop DTA run used different DTA values, most likely an earlier version of the BLUE file. The cluster run uses the BLUEs in `data/phenotypes/BZea_spats_BLUEs_combined.csv`. The *luxurians* chr1 76 Mb peak and the chr2 226 Mb and chr9 2.0 Mb peaks of the laptop run are below the threshold now (−log10 p 4.5, 4.8 and 5.0, threshold 5.14).
-
 <details><summary>All DTA QTL with per-taxon effects and known genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Known genes in interval |
@@ -906,7 +885,7 @@ ASI = anthesis–silking interval, DTS − DTA. 12 regions, 6 hold in the joint 
 - **Q12, chr7 (the strongest ASI QTL):** *bhlh90* (**Zm00001eb323880**, bHLH transcription factor 90; 165.74 Mb, in a window with −log10 p 13.2 next to the top window). MaizeGDB annotates it as the ortholog of Arabidopsis *FLOWERING BHLH 4* (Neupane et al. 2025); Gramene lists Arabidopsis *FBH3* (AT1G51140) as its closest homolog and rice *OsFBH1* / *POH1* (Os08g0506700) as its closest rice gene. In Arabidopsis the four FBH proteins bind E-boxes in the *CONSTANS* promoter and activate *CO*: their overexpression causes early flowering regardless of photoperiod, and *CO* levels drop in the *fbh* quadruple mutant (Ito et al. 2012). In rice, POH1 forms a dimer with HBP1, both bind the *Hd1* promoter and activate *Hd1*; their overexpression delays flowering by suppressing *Ehd1*, *Hd3a* and *RFT1* (Yin et al. 2023). Not characterised for flowering in maize.
 - Other genes in the intervals: *tga1* (Zm00001eb175150; Q9, chr4), ADAGIO3 (Zm00001eb201580; Q10, circadian), *MADS73* (Zm00001eb255670; Q11), *GA2ox2* (Zm00001eb077080) and *CKX8* (Zm00001eb076990) (Q2), *LNK2* (Zm00001eb132420; Q6, circadian; does not hold).
 
-The chr3 95.8 Mb peak of the 100-permutation run (−log10 p 5.0) is still above the threshold, but now joins the chr3 108.3 Mb region (88.5–129.4 Mb), so it has no QTL of its own (see Limitations).
+The chr3 95.8 Mb peak (−log10 p 5.0) is above the threshold but lies inside the chr3 108.3 Mb region (88.5–129.4 Mb), so it has no QTL of its own (see Limitations).
 
 <details><summary>All ASI QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -933,7 +912,7 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold).
 
 ![PH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_PH.png)
 
-16 regions, 8 hold in the joint model (Bonferroni over 16: −log10 p > 2.51); effects are in cm per teosinte copy and mostly **alike across taxa** (no "taxa differ" test passes). Strongest: **Q16 chr10 97.0 Mb** (+5.6 cm; the ZmCCT10 region: later flowering, taller plants), **Q15 chr9 139.8 Mb** (+4.7 cm), **Q14 chr7 139.1 Mb** (−5.0 cm), **Q3 chr3 12.8 Mb** (−3.8 cm; the interval holds *ramosa2*, Zm00001eb123060), **Q1 chr1 201.8 Mb** (−4.2 cm), Q2 chr2 2.5 Mb (−2.6 cm), Q4 chr4 198.4 Mb (+4.1 cm) and Q7 chr5 117.8 Mb (−3.6 cm). The chr6 peaks (Q8–Q13) and the new chr4 218.7 Mb, chr5 64.2 Mb (*td1*, Zm00001eb228140) and chr6 67.2 Mb peaks lose their signal in the joint model. The chr5 2.6 Mb QTL of the 100-permutation run (+3.2 cm) is now just below the threshold (−log10 p 4.18 vs 4.19).
+16 regions, 8 hold in the joint model (Bonferroni over 16: −log10 p > 2.51); effects are in cm per teosinte copy and mostly **alike across taxa** (no "taxa differ" test passes). Strongest: **Q16 chr10 97.0 Mb** (+5.6 cm; the ZmCCT10 region: later flowering, taller plants), **Q15 chr9 139.8 Mb** (+4.7 cm), **Q14 chr7 139.1 Mb** (−5.0 cm), **Q3 chr3 12.8 Mb** (−3.8 cm; the interval holds *ramosa2*, Zm00001eb123060), **Q1 chr1 201.8 Mb** (−4.2 cm), Q2 chr2 2.5 Mb (−2.6 cm), Q4 chr4 198.4 Mb (+4.1 cm) and Q7 chr5 117.8 Mb (−3.6 cm). The chr6 peaks (Q8–Q13), Q5 chr4 218.7 Mb and Q6 chr5 64.2 Mb (*td1*, Zm00001eb228140) lose their signal in the joint model. A chr5 2.6 Mb peak (shared with EH and SL) is just below the threshold (−log10 p 4.18 vs 4.19).
 
 <details><summary>All PH QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -964,7 +943,7 @@ Bonferroni over the 16 QTL: −log10 p > 2.51 (bold).
 
 ![EH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EH.png)
 
-18 regions, 7 hold (Bonferroni over 18: −log10 p > 2.56). Ear height follows flowering: several QTL hold known flowering genes in their intervals: **Q11 chr8 126.2 Mb** (+2.4 cm; *ZCN8*, Zm00001eb353250, the maize florigen), **Q10 chr7 184.2 Mb** (+2.0 cm; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630), and, just below the cut, Q13 chr9 116.8 Mb (+1.6 cm, joint −log10 p 2.4; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q18 chr10 97.0 Mb (+2.4 cm, 2.5; *ZmCCT10*). **Q4 chr3 12.8 Mb** (−2.1 cm) is the same window as PH Q3 (*ra2*, plus a BZR1 homolog, Zm00001eb122520, and CYP734A6, Zm00001eb122680, for brassinosteroids); **Q1 chr2 25.8 Mb** (+2.0 cm) holds *GA2ox2* (Zm00001eb077080; gibberellin inactivation); Q5 chr4 198.4 Mb (+3.0 cm, the strongest) and Q6 chr5 2.5 Mb (+2.2 cm) are shared with PH and SL; Q9 chr7 124.0 Mb (−2.4 cm) is new with 1,000 permutations. Q8 chr6 105 Mb is the only QTL where taxa differ (Zv +6.5 cm, Zd +4.2, others ≈ 0 or negative).
+18 regions, 7 hold (Bonferroni over 18: −log10 p > 2.56). Ear height follows flowering: several QTL hold known flowering genes in their intervals: **Q11 chr8 126.2 Mb** (+2.4 cm; *ZCN8*, Zm00001eb353250, the maize florigen), **Q10 chr7 184.2 Mb** (+2.0 cm; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630), and, just below the cut, Q13 chr9 116.8 Mb (+1.6 cm, joint −log10 p 2.4; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q18 chr10 97.0 Mb (+2.4 cm, 2.5; *ZmCCT10*). **Q4 chr3 12.8 Mb** (−2.1 cm) is the same window as PH Q3 (*ra2*, plus a BZR1 homolog, Zm00001eb122520, and CYP734A6, Zm00001eb122680, for brassinosteroids); **Q1 chr2 25.8 Mb** (+2.0 cm) holds *GA2ox2* (Zm00001eb077080; gibberellin inactivation); Q5 chr4 198.4 Mb (+3.0 cm, the strongest) and Q6 chr5 2.5 Mb (+2.2 cm) are shared with PH and SL; Q9 chr7 124.0 Mb (−2.4 cm) also holds. Q8 chr6 105 Mb is the only QTL where taxa differ (Zv +6.5 cm, Zd +4.2, others ≈ 0 or negative).
 
 <details><summary>All EH QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -999,7 +978,7 @@ Bonferroni over the 18 QTL: −log10 p > 2.56 (bold).
 
 19 regions, 11 hold (Bonferroni over 19: −log10 p > 2.58). EN counts the stem nodes that bear an ear. **Every QTL that holds is positive: teosinte alleles add ear-bearing nodes**, as expected from teosinte, which bears ears at many nodes, and mostly alike across taxa. Strongest: **Q3 chr2 22.4 Mb** (+0.17 per copy, joint −log10 p 16.8), **Q8 chr4 166.9 Mb** (+0.21, 15.5), **Q1 chr1 22.9 Mb** (+0.20, 15.0; *ZmD14* (Zm00001eb007670), the strigolactone receptor, is in the interval), **Q4 chr2 202.3 Mb** (+0.14, 12.3) and **Q12 chr7 143.6 Mb** (+0.16, 11.1).
 
-**chr2 202.3 Mb is not new.** In the 100-permutation run, the windows above the lower threshold joined most of chr2 (3.7–220 Mb) into one region, so this peak was hidden under the chr2 22.4 Mb region. With the higher threshold the two are separate. The same happens on other chromosomes: a region is a run of windows above the threshold, so how many regions a broad signal is split into depends on the threshold (see Limitations). Q4 is the one EN QTL where taxa differ: Zv +0.18 and Zx +0.16, but Zd −0.08.
+Q4 chr2 202.3 Mb is the one EN QTL where taxa differ: Zv +0.18 and Zx +0.16, but Zd −0.08.
 
 Q5 chr3 12.4 Mb (+0.07) holds *ra2* (Zm00001eb123060) and Q14 chr8 133.6 Mb holds *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880); neither holds in the joint model.
 
@@ -1035,7 +1014,7 @@ Bonferroni over the 19 QTL: −log10 p > 2.58 (bold).
 
 ![Prolif: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_Prolif.png)
 
-12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38); the same QTL as with 100 permutations. Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q5 chr2 191.2 Mb** (+0.14, 13.1), **Q6 chr3 11.4 Mb** (+0.16, 12.8), Q12 chr9 32.1 Mb, Q11 chr7 142.2 Mb and Q4 chr1 213.9 Mb. The QTL that hold are all positive (teosinte adds ears per node) and alike across taxa: the same loci raise both the number of ear-bearing nodes and the number of ears per node. Q4 holds *CKX10* (Zm00001eb040280; cytokinin oxidase).
+12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN:** **Q1 chr1 23.2 Mb** (+0.20, joint −log10 p 17.8), **Q10 chr4 171.3 Mb** (+0.20, 16.7), **Q5 chr2 191.2 Mb** (+0.14, 13.1), **Q6 chr3 11.4 Mb** (+0.16, 12.8), Q12 chr9 32.1 Mb, Q11 chr7 142.2 Mb and Q4 chr1 213.9 Mb. The QTL that hold are all positive (teosinte adds ears per node) and alike across taxa: the same loci raise both the number of ear-bearing nodes and the number of ears per node. Q4 holds *CKX10* (Zm00001eb040280; cytokinin oxidase).
 
 <details><summary>All Prolif QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1085,7 +1064,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold).
 
 ![SL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_SL.png)
 
-13 regions, 12 hold (Bonferroni over 13: −log10 p > 2.41); unchanged from the 100-permutation run. Strongest: **Q9 chr7 141.7 Mb** (−0.32 per copy; same region as PH Q14), **Q2 chr2 6.2 Mb** (−0.24), **Q10 chr9 157.2 Mb** (−0.25), **Q3 chr4 200.6 Mb** (+0.28; same region as PH Q4 and EH Q5) and **Q4 chr5 2.5 Mb** (+0.26; same as EH Q6). Sheath length shares several regions with plant height, as expected: the sheath wraps the internode, and longer internodes make both taller plants and longer sheaths.
+13 regions, 12 hold (Bonferroni over 13: −log10 p > 2.41). Strongest: **Q9 chr7 141.7 Mb** (−0.32 per copy; same region as PH Q14), **Q2 chr2 6.2 Mb** (−0.24), **Q10 chr9 157.2 Mb** (−0.25), **Q3 chr4 200.6 Mb** (+0.28; same region as PH Q4 and EH Q5) and **Q4 chr5 2.5 Mb** (+0.26; same as EH Q6). Sheath length shares several regions with plant height, as expected: the sheath wraps the internode, and longer internodes make both taller plants and longer sheaths.
 
 <details><summary>All SL QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1113,7 +1092,7 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold).
 
 ![BL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BL.png)
 
-5 regions, 4 hold (Bonferroni over 5: −log10 p > 2.00). **Q1 chr2 39.8 Mb** (−1.83 per teosinte copy, joint −log10 p 11.4) dominates; *FT-INTERACTING PROTEIN 1* (Zm00001eb079900) is in its interval. **Q4 chr4 197.1 Mb** (−1.72; the PH/EH/SL chr4 region), **Q5 chr7 185.2 Mb** (−1.19; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630; the same region as EH Q10) and Q2 chr3 184.4 Mb (+0.92; *liguleless2*, Zm00001eb147220). Q3 chr3 203.2 Mb holds *ZCN12* (Zm00001eb153190) and *CCD8* (Zm00001eb153000) but is just below the cut (2.0). The chr4 238.3 Mb peak of the 100-permutation run (−log10 p 5.5) is still above the threshold, but now joins the chr4 197 Mb region (192–245 Mb), so it has no QTL of its own (see Limitations).
+5 regions, 4 hold (Bonferroni over 5: −log10 p > 2.00). **Q1 chr2 39.8 Mb** (−1.83 per teosinte copy, joint −log10 p 11.4) dominates; *FT-INTERACTING PROTEIN 1* (Zm00001eb079900) is in its interval. **Q4 chr4 197.1 Mb** (−1.72; the PH/EH/SL chr4 region), **Q5 chr7 185.2 Mb** (−1.19; *dlf1*, Zm00001eb331880, and a PRR37-like gene, Zm00001eb331630; the same region as EH Q10) and Q2 chr3 184.4 Mb (+0.92; *liguleless2*, Zm00001eb147220). Q3 chr3 203.2 Mb holds *ZCN12* (Zm00001eb153190) and *CCD8* (Zm00001eb153000) but is just below the cut (2.0). The chr4 238.3 Mb peak (−log10 p 5.5) is above the threshold but lies inside the chr4 197 Mb region (192–245 Mb), so it has no QTL of its own (see Limitations).
 
 <details><summary>All BL QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1133,7 +1112,7 @@ Bonferroni over the 5 QTL: −log10 p > 2.00 (bold).
 
 ![BW: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BW.png)
 
-7 regions, 6 hold (Bonferroni over 7: −log10 p > 2.15). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves. Strongest: **Q4 chr5 39.2 Mb** (−0.31 per copy, joint −log10 p 9.4), **Q5 chr6 146.4 Mb** (−0.29), **Q3 chr4 237.6 Mb** (−0.22), Q7 chr9 1.8 Mb (the DTA chr9 region), Q6 chr7 136.2 Mb and Q1 chr4 166.3 Mb (the EN/Prolif chr4 region). The chr6 133.1 Mb peak (*fea4*, Zm00001eb280500; −log10 p 4.85) of the 100-permutation run is still above the threshold, but now joins the chr6 146 Mb region (131.8–160.5 Mb), so it has no QTL of its own (see Limitations).
+7 regions, 6 hold (Bonferroni over 7: −log10 p > 2.15). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves. Strongest: **Q4 chr5 39.2 Mb** (−0.31 per copy, joint −log10 p 9.4), **Q5 chr6 146.4 Mb** (−0.29), **Q3 chr4 237.6 Mb** (−0.22), Q7 chr9 1.8 Mb (the DTA chr9 region), Q6 chr7 136.2 Mb and Q1 chr4 166.3 Mb (the EN/Prolif chr4 region). The chr6 133.1 Mb peak (*fea4*, Zm00001eb280500; −log10 p 4.85) is above the threshold but lies inside the chr6 146 Mb region (131.8–160.5 Mb), so it has no QTL of its own (see Limitations).
 
 <details><summary>All BW QTL with per-taxon effects and known genes in the interval</summary>
 
@@ -1236,7 +1215,7 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - **Replication:** peaks should be checked in each year separately and within taxon.
 - **Small taxa:** *luxurians* (Zl) and *huehuetenangensis* (Zh) have 5–25 carrier plots at most QTL, so their per-taxon effects have wide CIs. The large *luxurians*-specific effects (DTS/DTA chr5 221.8 Mb) should be checked against how many accessions and F1 families the carriers come from.
 - **How peaks are split into regions.** A region is a run of windows above the threshold, joined when less than 5 Mb apart, so one region can hold more than one QTL (e.g. BL chr4 197 and 238 Mb; BW chr6 133 and 146 Mb). The conditional scans of the joint model (section 3.4) now test this; the joint QTL tables above are from the run before they were added and will be updated after the rerun.
-- **GO terms** come from a candidate-gene list made for the 100-permutation regions; 8,688 of the 18,798 genes in the current regions have no GO terms yet (`data/introgression_spread/GO/genes_missing_GO.txt`).
+- **GO terms:** 2,300 of the 18,798 genes in the regions have no GO annotation in the lookup (`data/introgression_spread/GO/genes_missing_GO.txt`); they are listed in the gene tables without GO terms.
 
 ---
 

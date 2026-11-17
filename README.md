@@ -555,6 +555,8 @@ The full statistics, F1 family results and the method history are in [`final_scr
 - **B73 controls are clean:** all 10 have ≤ 0.56% non-B73 windows (donor share ≤ 0.28%). This is a fair test, because the k-mer route never used the controls to filter sites.
 - **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
+- **Independent k-mer check (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa).
+
 ### 2.10 Population structure from k-mers (step 32)
 
 **Why the ancestry calls cannot do this.** The HMM calls say *whether* a window is teosinte, not *which* teosinte: they are built from B73 k-mers that are present or missing. A PCA of the ancestry dosage (1,286 pools × 21,309 windows) therefore does not separate the five taxa: taxon explains ≤ 2.5% of the variance of each of the first 10 PCs (F1 family ~10%). The PCs follow shared donor tracts, i.e. families.
@@ -565,14 +567,50 @@ The full statistics, F1 family results and the method history are in [`final_scr
 3. **Profile per pool** (32b): the share of each taxon's specific k-mers found in the pool's reads, f_taxon. Its largest value is the pool's **k-mer taxon**, which is checked against the pedigree taxon. The share of all teosinte k-mers found, f_teo, measures how much donor DNA the pool has, independently of the HMM.
 4. **PCA** (32c): each pool's f values divided by their sum (depth and donor amount cancel; only *which* teosinte is left), centred log-ratio, `prcomp`. Points coloured by pedigree taxon; arrows = taxa.
 
-On simulated pools (5 taxa, 6 pools each, 10% donor, 1× reads) the k-mer taxon matched the pedigree taxon in 30 of 30 pools and the PCA separated all five taxa (PC1–PC4). Real data: *to be added after the run*.
+On simulated pools (5 taxa, 6 pools each, 10% donor, 1× reads) the k-mer taxon matched the pedigree taxon in 30 of 30 pools and the PCA separated all five taxa (PC1–PC4).
+
+**Results (1,385 teosinte donor pools; the 29 landrace pools are left out).**
+
+![PCA of the teosinte k-mer profiles](data/introgression_spread/sourmash/pca/kmer_pca.png)
+
+- **The k-mer content separates the taxa.** PC1 and PC2 (79% of the variance) pull *diploperennis* and *luxurians* apart from the rest; PC3 separates *huehuetenangensis*; PC4 separates *parviglumis* from *mexicana*, which overlap most, as expected for the two closest subspecies.
+- **The k-mer taxon matches the pedigree taxon in 1,300 of 1,385 pools (93.9%).**
+
+  | Pedigree taxon | Pools | Same k-mer taxon | Other k-mer taxon |
+  |---|---|---|---|
+  | Zd *diploperennis* | 249 | 216 (86.7%) | Zx 19, Zv 14 |
+  | Zh *huehuetenangensis* | 61 | 61 (100%) | |
+  | Zl *luxurians* | 118 | 114 (96.6%) | Zv 2, Zx 2 |
+  | Zv *parviglumis* | 380 | 340 (89.5%) | Zx 40 |
+  | Zx *mexicana* | 577 | 569 (98.6%) | Zv 7, Zd 1 |
+
+- **The mismatches are mostly weak assignments.** `ratio` = the pool's largest f_taxon ÷ its second largest. Pools that disagree have a median ratio of 1.08, i.e. two taxa are nearly tied, against 1.70 for pools that agree. Among pools with a clear assignment (ratio ≥ 1.5), 859 of 862 agree (99.7%). Pools that disagree also carry less donor DNA (HMM donor share, median 5.4% vs 7.8%).
+- **The *parviglumis* pools that look like *mexicana* come from high-elevation accessions.** Of the 40, 34 are from accessions above 1,400 m, and the share rises with elevation (Spearman ρ = 0.60 across the 36 Zv accessions, p = 10⁻⁴):
+
+  | Zv accessions at | Pools with k-mer taxon Zx |
+  |---|---|
+  | < 1,000 m (12 accessions) | 0 of 120 |
+  | 1,000–1,400 m (13) | 6 of 130 (5%) |
+  | 1,400–1,600 m (7) | 10 of 86 (12%) |
+  | 1,600–2,000 m (4) | 24 of 44 (55%) |
+
+  The three accessions where most pools look like *mexicana* are Zv.0200 (Cerro Nananchi, Morelos, 1,400 m; 6 of 6), Zv.0250 (Ruinas de Malinalco, México, 1,901 m; 10 of 11) and Zv.0270 (Amatlán de Quetzalcóatl, Morelos, 1,654 m; 9 of 12). Higher-elevation *parviglumis* is closer to the elevation range of *mexicana*, and the two subspecies have diverged with ongoing gene flow (Aguirre-Liguori et al. 2019), so these accessions may carry *mexicana*-like DNA. A labelling error would more likely affect single pools than most pools of an accession. Either way, they are worth checking against the seed records.
+- **In *diploperennis*,** the mismatches come mostly from Zd.0030 and Zd.0040 (both from Milpillas, 1,390 m, listed as race "Zea-diploperennis-Na"): their assignments are weaker (median ratio 1.8 and 1.5, against 3.0 and 3.5 for Zd.0010 and Zd.0020), so they are less like the two Zd assemblies.
+
+![Per accession: pools whose k-mer taxon differs from the pedigree taxon, by elevation](data/introgression_spread/sourmash/pca/kmer_mismatch_elevation.png)
+
+**An independent check of the HMM's donor share.** The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.98 (Zh), 0.97 (Zl), 0.94 (Zv) and 0.97 (Zx) (1,292 pools, NOISY pools left out).
+
+![Teosinte k-mers vs the HMM donor share](data/introgression_spread/sourmash/pca/kmer_vs_hmm.png)
+
+Per-pool shares of each taxon's k-mers: `data/introgression_spread/sourmash/pca/kmer_taxon_shares.png`. Tables: `kmer_taxon_profile.tsv` (per pool), `pca/kmer_taxon_agreement.tsv`, `pca/kmer_accession_agreement.tsv` (per accession, with elevation), `pca/kmer_vs_hmm.tsv`, `pca/kmer_pca_scores.tsv`.
 
 ```bash
 N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' ${D11}/pools.tsv | wc -l)
 J=$(sbatch --parsable --array=1-$(( 9 + (N + 9) / 10 ))%60 32a_sourmash_sketch.sh)   # needs: pip install sourmash
 sbatch --dependency=afterok:$J 32b_kmer_taxon_profile.sh
 ```
-Output in `${D32}`: `kmer_taxon_profile.tsv` (per pool: f per taxon, f_teo, containment per assembly, k-mer taxon, agreement), `pca/kmer_pca.png`, `pca/kmer_taxon_shares.png`, `pca/kmer_taxon_agreement.tsv`.
+Output in `${D32}` (copied to `data/introgression_spread/sourmash/`): `kmer_taxon_profile.tsv` (per pool: f per taxon, f_teo, containment per assembly, k-mer taxon, agreement) and `pca/`. The PCA step alone, on a laptop: `POOL_SUMMARY=<pool_summary.tsv> Rscript final_script/32c_kmer_pca.R kmer_taxon_profile.tsv pca data/metadata_BZea.csv` (needs R with data.table, ggplot2, patchwork).
 
 ### 2.11 Noisy pools and resequencing
 
@@ -1223,6 +1261,7 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 
 All references cited in this README, in alphabetical order.
 
+- Aguirre-Liguori JA, Gaut BS, Jaramillo-Correa JP, Tenaillon MI, Montes-Hernández S, García-Oliva F, Hearne SJ, Eguiarte LE (2019) Divergence with gene flow is driven by local adaptation to temperature and soil phosphorus concentration in teosinte subspecies (*Zea mays parviglumis* and *Zea mays mexicana*). *Molecular Ecology* 28:2814–2830. doi:10.1111/mec.15098
 - Ahmed HI, et al. (2023) Einkorn genomics sheds light on history of the oldest domesticated wheat. *Nature* 620:830–838. (IBSpy used to find einkorn introgressions in bread wheat.)
 - Baum LE, Petrie T, Soules G, Weiss N (1970) A maximization technique occurring in the statistical analysis of probabilistic functions of Markov chains. *Ann Math Stat* 41:164–171.
 - Bolger AM, Lohse M, Usadel B (2014) Trimmomatic: a flexible trimmer for Illumina sequence data. *Bioinformatics* 30:2114–2120.

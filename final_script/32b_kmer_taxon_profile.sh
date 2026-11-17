@@ -19,4 +19,4 @@ need python3 Rscript
 ASMS=(); for x in "${DONOR_ASSEMBLIES[@]}"; do IFS=: read -r n t _ <<< "$x"; ASMS+=("$n:$t"); done
 python3 "${FINAL_DIR}/32b_kmer_taxon_profile.py" --refs "${D32}/refs" --pools "${D32}/pools" \
   --assemblies "${ASMS[@]}" --pools_tsv "${D11}/pools.tsv" --out "${D32}/kmer_taxon_profile.tsv"
-Rscript "${FINAL_DIR}/32c_kmer_pca.R" "${D32}/kmer_taxon_profile.tsv" "${D32}/pca"
+POOL_SUMMARY="${D21}/pool_summary.tsv" Rscript "${FINAL_DIR}/32c_kmer_pca.R" "${D32}/kmer_taxon_profile.tsv" "${D32}/pca" "$METADATA"

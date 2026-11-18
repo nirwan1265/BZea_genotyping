@@ -969,6 +969,7 @@ bash final_script/run_assoc_local.sh DTS
 TOTAL=1000 bash final_script/run_perm_local.sh DTS
 # Check: the same analysis on each year's BLUEs separately (default DTS; folders *_y2023, *_y2025)
 bash submit_year_check.sh
+python final_script/31b_year_compare.py --trait DTS --out figures/DTS_by_year.png   # laptop, after copying
 # genes + GO, and the side-by-side figures (laptop)
 D=data/introgression_spread
 Rscript final_script/30_genes_go.R $D/assoc_gridlmm_spats/genes $D/GO/GO_terms_all_candidates.txt $D/GO
@@ -1027,6 +1028,34 @@ Two QTL pass the 1,000-permutation threshold (−log10 p > 5.25), and both hold 
 | Q2 | chr10 94.5 Mb | 92.8–102.3 | 9.1 | +1.01 d ± 0.17 | **8.9** | 1.0 | Zd +1.19 (23), Zv +0.84 (22), Zx +0.94 (62) | [145 genes](qtl_genes/DTS_qtl_genes.tsv) |
 
 Bonferroni over the 2 QTL: −log10 p > 1.60 (bold). Every gene in each interval, with its GO annotation and the k-mer GWAS −log10 p of its window: [`qtl_genes/DTS_qtl_genes.tsv`](qtl_genes/DTS_qtl_genes.tsv).
+
+</details>
+
+<details><summary>Check: DTS in each year separately (2023 and 2025)</summary>
+
+To see whether the DTS QTL hold up in each year, the whole analysis (inputs, LOCO GridLMM scan, 1,000 permutations, joint QTL model) was rerun on each year's SpATS BLUEs alone (`submit_year_check.sh`). The DTS BLUEs of the two years correlate at r = 0.69.
+
+![DTS: k-mer ancestry GWAS on the combined BLUEs and on each year](figures/DTS_by_year.png)
+
+GridLMM −log10 p of the window (effect per teosinte copy, days); \* = above that run's threshold within 2 Mb. The joint-model column says where the locus holds (Bonferroni over that run's QTL).
+
+| Locus | Both years | 2023 only | 2025 only | Holds in the joint model |
+|---|---|---|---|---|
+| **chr10 94.5–97.8 Mb (*ZmCCT10*)** | 9.1 (+1.02)\* | 11.8 (+1.37)\* | 12.7 (+0.84)\* | both years, 2023, 2025 |
+| **chr5 221.8 Mb** | 9.7 (+1.00)\* | 9.4 (+1.15)\* | 4.9 (+0.47)\* | both years, 2023; 2025 at 225.4 Mb |
+| chr9 7.3 Mb | 4.4 (−0.52) | 3.9 (−0.59) | 10.3 (−0.56)\* | 2025 |
+| chr8 129.2 Mb | 2.5 (+0.47) | 1.0 (+0.32) | 7.7 (+0.61)\* | 2025 |
+| chr7 184.6 Mb (*dlf1*) | 2.4 (+0.37) | 2.6 (+0.45) | 4.8 (+0.37)\* | 2025 (taxa differ, −log10 p 3.1) |
+| chr1 3.8 Mb | 2.4 (+0.41) | 2.4 (+0.49) | 5.2 (+0.43)\* | 2025 |
+| chr1 289.6 Mb | 1.6 (−0.30) | 0.9 (−0.25) | 4.6 (−0.38)\* | 2025 |
+| chr2 226.8 Mb | 3.6 (+0.49) | 6.5 (+0.80)\* | 0.0 (+0.01) | 2023 |
+| chr5 205.8 Mb | 4.8 (+0.83) | 5.7 (+1.08)\* | 1.3 (+0.26) | 2023 |
+
+- **Both QTL of the combined analysis are found in each year.** *ZmCCT10* is significant in both years, with the teosinte allele flowering later in both (+1.37 d in 2023, +0.84 d in 2025). The chr5 221.8 Mb QTL is strong in 2023 and above the threshold in 2025, but its effect is smaller in 2025 (+0.47 vs +1.15 d), and the 2025 joint model places the chr5 QTL 3.6 Mb away, at 225.4 Mb, where the taxa no longer differ.
+- **Other QTL are found in one year only.** The strongest, chr9 7.3 Mb (2025), has the same direction in 2023 (teosinte earlier by about half a day) but is not significant there. The 2025 QTL at chr7 184.6 Mb holds *dlf1* (*delayed flowering1*, Zm00001eb331880, 184.53 Mb), and the one at chr8 129.2 Mb lies 2.5 Mb from the florigen gene *ZCN8* (Zm00001eb353250, 126.68 Mb; outside the interval 127.8–135.1 Mb).
+- **Why single years find more QTL than the combined BLUEs:** each run has its own threshold, and 2025's is lower (4.35, against 5.05 and 5.25). The 2025 scan is also more inflated (λ_GC 6.7, against 3.8 in 2023 and 4.0 combined). Effects that differ between years (genotype × year) partly cancel in the combined BLUEs. So QTL seen in one year only are weaker evidence than the two seen in every run.
+
+Results: `data/introgression_spread/assoc_gridlmm_spats_y2023`, `_y2025` and `joint_qtl/noperm_y2023`, `_y2025`. Figure: `final_script/31b_year_compare.py`.
 
 </details>
 
@@ -1535,7 +1564,7 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - **λ_GC** is high under LOCO; the permutation threshold controls the genome-wide error, but linked windows on the same chromosome are not independent evidence, and two nearby peaks may be one QTL.
 - **The pool is not the plot.** The genotype is 6 plants of a plot; the phenotype is the plot mean. For SEG plots, plants differ; the dosage of 1 is the expectation.
 - **Donor reference.** DONOR levels come from MaizeGDB assemblies, not from our donor plants (Section 2, Limitations).
-- **Replication:** peaks should be checked in each year separately and within taxon.
+- **Replication:** DTS was checked in each year separately (section 3.6.1: both main QTL replicate); the other traits are not yet, and none within taxon.
 - **Small taxa:** *luxurians* (Zl) and *huehuetenangensis* (Zh) have 5–25 carrier plots at most QTL, so their per-taxon effects have wide CIs. The large *luxurians*-specific effects (DTS/DTA chr5 221.8 Mb) should be checked against how many accessions and F1 families the carriers come from.
 - **How peaks are split into regions.** A region is a run of windows above the threshold, joined when less than 5 Mb apart, so one region can hold more than one QTL. The conditional scans of the joint model (section 3.4) test this. They added 6 QTL in the taxon run (BL chr2 9.4; EN chr4 120.2; Prolif chr2 9.3, chr2 34.4, chr4 120.5; StPi chr2 168.1 Mb) and 5 in the race run, and confirmed that other peaks inside regions (e.g. BL chr4 238 Mb, BW chr6 133 Mb, ASI chr3 96 Mb) are not independent QTL.
 - **GO terms:** 2,300 of the 18,798 genes in the regions have no GO annotation in the lookup (`data/introgression_spread/GO/genes_missing_GO.txt`); they are listed in the gene tables without GO terms.

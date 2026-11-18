@@ -5,7 +5,7 @@ This repository goes from raw paired-end reads of **pooled, low-coverage (~0.8×
 - **Introgressions are called from k-mers**, not from mapped SNPs: for each pool, which B73 single-copy 31-mers its reads contain, per 100-kb window, decoded with an HMM that models the pool: each window is **B73** (all 6 plants AA), **DONOR** (all BB) or **SEG** (segregating: the plants are a mix of AA, AB and BB).
 - **QTL are mapped on that k-mer ancestry**: a genome scan (k-mer ancestry GWAS, GridLMM with leave-one-chromosome-out kinship) finds the peaks, and a joint QTL model (R/qtl2) fits them together, with an effect for each teosinte taxon.
 
-> **Pipeline and every command:** [`final_script/`](final_script/README.md). Results tables: [`data/introgression_spread/`](data/introgression_spread/). Figures: [`figures/`](figures/).
+> **Pipeline and commands from the k-mer and SNP steps on:** [`final_script/`](final_script/README.md) (the pre-processing scripts are not in the repository yet; see Section 1). Results tables: [`data/introgression_spread/`](data/introgression_spread/). Figures: [`figures/`](figures/).
 
 ## Contents
 
@@ -40,7 +40,7 @@ B73 was crossed with teosinte, backcrossed twice to B73 and then selfed three ti
 - **A** = the B73 allele, **B** = the teosinte (donor) allele
 - **AA** = homozygous B73, **AB** = heterozygous, **BB** = homozygous teosinte
 
-**Assumptions:** B73 is AA, the teosinte donor contributes one B allele to the F1, and there is no selection or segregation distortion. (In practice one plant was selected at each selfing step, so a departure from these numbers can point to selection; see [Results](#28-results).) These are the same for every donor taxon: Zd (*diploperennis*), Zh (*huehuetenangensis*), Zl (*luxurians*), Zv (*parviglumis*) and Zx (*mexicana*).
+**Assumptions:** B73 is AA, the teosinte donor contributes one B allele to the F1, and there is no selection or segregation distortion. (In practice one plant was selected at each selfing step, so a departure from these numbers can point to selection, but also to segregation distortion, lower survival or fertility of some genotypes, or errors in the calls; see [Results](#28-results).) These are the same for every donor taxon: Zd (*diploperennis*), Zh (*huehuetenangensis*), Zl (*luxurians*), Zv (*parviglumis*) and Zx (*mexicana*).
 
 ### Step 1 — Two backcrosses (BC2)
 
@@ -112,7 +112,7 @@ Steps 3 and 4 describe the same plants, so one can be computed from the other. B
 | BB | DONOR + ¼ × SEG = 9.38 + 1.56 | **10.94%** |
 | Donor alleles | DONOR + ½ × SEG = 9.38 + 3.13 | **12.5%** |
 
-These are exactly the Step 3 numbers. This is how the HMM results are reported at both levels: the pool states as called (compared with Step 4), and converted to plant genotypes with this table (compared with Step 3). Heterozygosity (AB) can only be estimated this way, as half of SEG; no single plant is genotyped.
+These are exactly the Step 3 numbers. This is how the HMM results are reported at both levels: the pool states as called (compared with Step 4), and converted to plant genotypes with this table (compared with Step 3). Heterozygosity (AB) can only be estimated this way, as half of SEG; no single plant is genotyped. So AB, BB and AA in this README are **Mendelian estimates from the HMM pool states**, not measured plant genotypes, and AB always equals half of SEG by construction. (The HMM's SEG state leaves out pools in which all 12 gametes happened to carry the same allele, k = 0 or 12; under Mendel that is 2 × ½¹² = 0.05% of SEG windows, small enough to ignore.)
 
 ### Implication for low-pass pooled genotyping
 
@@ -530,15 +530,18 @@ The figure has three groups, because these numbers are different kinds of measur
 Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `final_script/figures/results_spread/family_values.tsv`.
 
 **What this shows:**
-- **Het is as expected:** SEG (6.23%) and AB (3.12%) match the BC2S3 expectation; the F1-family bootstrap finds no difference (p = 0.93).
-- **Homozygous donor is about 60% of the expectation** (BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That loss is the whole shortfall in donor alleles (8.1% vs 12.5%).
-- **So a larger share of the remaining donor is het:** 32% of donor-carrying plants are AB, against 22% expected. This is not extra het: AB is exactly as expected (3.1% of the genome). The share goes up only because BB went down, so AB is a bigger part of a smaller total. This holds on every chromosome (29–35%).
-- **A likely reason: selection during selfing.** At every selfing step one plant per row was chosen and advanced (ear to row), and the plants with the best-looking ears were the ones kept. That selection works against BB more than against AB:
+- **SEG is as expected:** the HMM calls 6.23% of the genome SEG, against 6.25% expected for BC2S3; the F1-family bootstrap finds no difference (p = 0.93). The AB estimate (3.12%) is half of SEG by construction, so it is the same result, not a second one.
+- **DONOR is about half of the expectation** (4.95% vs 9.38% of the genome; estimated BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That deficit is the whole shortfall in donor alleles (8.1% vs 12.5%).
+- **So a larger share of the remaining donor is estimated to be het:** 32% of donor-carrying plants are AB, against 22% expected. This is not extra het: SEG, and so AB, is as expected. The share goes up only because DONOR went down, so AB is a bigger part of a smaller total. This holds on every chromosome (29–35%).
+- **Why is DONOR low? This is not settled.** The deficit could be biological, or it could come from the calls:
+  - **Errors in the calls.** DONOR windows called SEG would raise SEG above 6.25%, which we don't see, but DONOR windows called B73 (where the donor keeps most of B73's k-mers, d_w close to 1) would lower DONOR without changing SEG. The DONOR level comes from assemblies of other teosinte plants (section 2.13), so the SEG/DONOR split needs an independent check.
+  - **Segregation distortion or lower survival** of plants carrying teosinte alleles, in any generation. This would also lower the donor share inside SEG pools; we test this with the SEG pools themselves ([Checking the deficit](#281-checking-the-deficit-donor-copies-in-seg-pools) below).
+  - **Selection of the plant that was advanced.** At every selfing step one plant per row was chosen and advanced (ear to row), and the plants with the best-looking ears were the ones kept. This would remove DONOR (the advanced plant was BB) more than SEG (it was AB). It is a hypothesis; the reasons it would act against BB more than AB are:
   - **Selecting against teosinte.** A plant homozygous for a teosinte segment (BB) shows the teosinte form of the traits that segment controls (e.g. smaller or harder ears), with no B73 copy to mask it. Such plants don't look as good as B73-like plants, so they are less often chosen. An AB plant still has a B73 copy, which often hides the teosinte effect, so it is chosen more often than a BB plant.
   - **Selecting for vigour, like hybrid vigour.** An AB plant is a small "hybrid" between B73 and teosinte at that segment, and AB plants can be more vigorous than either homozygote. Picking the best-looking ears is, in part, picking for that vigour, which keeps AB.
   - **Hidden harmful alleles.** Teosinte is outcrossing, so it carries recessive harmful alleles that do no harm in AB plants but show up in BB plants (the same reason maize inbreeding reduces vigour). This also removes BB plants.
 
-  The result is fewer BB plants while AB stays as expected, which is exactly what raises AB/(AB+BB) and lowers the total donor share. TeoNAM (Chen et al. 2019), a maize × teosinte population made the same way (backcross, then selfing), also reported more heterozygosity than expected, as did our lab's earlier lines.
+  If this is the cause, the result is fewer BB plants while AB stays as expected, which is the pattern we see. It is consistent with selection, but the data so far don't rule out the other explanations. TeoNAM (Chen et al. 2019), a maize × teosinte population made the same way (backcross, then selfing), also reported more heterozygosity than expected, as did our lab's earlier lines.
 - **F1 families:** only 2 of 98 F1 families reach the expected 12.5% donor alleles (Zx.0390_P2, Zx.0130_P1); most sit between 5% and 11%. AB/(AB+BB) is above 22% in most F1 families of every taxon.
 - **Small taxa:** Zd (6 F1 families), Zl (5) and Zh (2) have few F1 families, so their intervals are less reliable. Zd's SEG (5.1%) is somewhat below the expectation (p = 0.0004).
 
@@ -556,7 +559,7 @@ The same per taxon, in 5-Mb bins along the whole genome:
 
 - The taxa differ in where they carry teosinte. For example, *luxurians* has much more than average on chr9 (10–40 Mb: 16.2%), *huehuetenangensis* on chr3 (14.5% over the chromosome, against 8.8% in all pools), while *diploperennis* has almost none in chr5 185–193 Mb (0.3%) and chr4 100–120 Mb (0.5%), two regions where *parviglumis* still has about 7%.
 - The small taxa come from few F1 families (*huehuetenangensis* 2, *luxurians* 5, *diploperennis* 6), so a block of colour in their rows can be one family's tract carried by many pools, not a property of the taxon.
-- A region with little teosinte in every taxon could mean selection against teosinte alleles there during the selfing (see the selection explanation above); we have not tested this.
+- A region with little teosinte in every taxon could mean selection or distortion against teosinte alleles there, or a region where DONOR is hard to call; we have not tested this.
 
 **Number and length of tracts per taxon.** A tract is a run of 100-kb windows in the same state. Introgressed tracts join adjacent SEG and DONOR tracts into one piece of donor DNA (as in [Tract lengths](#265-how-long-are-the-tracts)).
 
@@ -576,12 +579,22 @@ Figures and tables from `final_script/24b_introgression_landscape.py` (`introgre
 
 The full statistics, F1 family results and the method history are in [`final_script/README.md`](final_script/README.md).
 
+#### 2.8.1 Checking the deficit: donor copies in SEG pools
+
+A SEG pool comes from an AB mother, and its 6 BC2S3 plants were grown and sampled without selection. Under Mendel, half of their 12 gene copies are teosinte on average (donor allele share p = ½). The explanations for the DONOR deficit predict different things here:
+- **Selection of the advanced plant** acts on the *mother* (whether she was AB or BB), not on her progeny, so it leaves p = ½ in SEG pools.
+- **Segregation distortion or lower survival** of plants carrying teosinte alleles acts in every generation, including the last one, so it gives p < ½ in SEG pools.
+
+The SEG level of r depends on p: more donor copies means fewer B73 k-mers (r = d_w + (1 − d_w) g(f), section 2.6.1). For each pool, p is found so that the mean r expected over its SEG windows matches the mean r observed (method of moments, with the pool's own d_w, scale a and k-mer coverage). The same pools also give two checks of the levels: the mean r in DONOR windows against a·d_w, and in B73 windows against 1. A simulation of SEG windows at p = ½ with each pool's noise checks that the method returns ½.
+
+Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`). **Results pending** (it needs the per-pool HMM outputs on the cluster).
+
 ### 2.9 Validation
 
 - **B73 controls are clean:** all 10 have ≤ 0.56% non-B73 windows (donor share ≤ 0.28%). This is a fair test, because the k-mer route never used the controls to filter sites.
 - **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
-- **Independent k-mer check (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa).
+- **A second k-mer measure (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa). It uses other k-mers (teosinte k-mers present, not B73 k-mers missing) but the same reads, so it is complementary, not fully independent. It checks the total donor share, not the SEG/DONOR split.
 
 ### 2.10 Population structure from k-mers (step 32)
 
@@ -623,7 +636,7 @@ The results below are for the 1,385 teosinte donor pools; the 29 landrace pools 
   > - Zv.0250 (Ruinas de Malinalco, México, 1,901 m): 10 of 11 pools
   > - Zv.0270 (Amatlán de Quetzalcóatl, Morelos, 1,654 m): 9 of 12 pools
   >
-  > This fits the known gene flow between the two subspecies (Aguirre-Liguori et al. 2019): higher-elevation *parviglumis* is closer to the elevation range of *mexicana*. They are also close to *mexicana* on the map: 23, 25 and 45 km from the nearest Chalco collection site, among the five closest of the 36 *parviglumis* accessions (median 97 km). A labelling error would more likely affect single pools than most pools of an accession. These three are worth checking against the seed records. In the k-mer HMM, these pools also fit a lower DONOR level than the Zv assemblies give (scale factor a: median 0.8, against 0.9 for the other Zv pools), as expected if their donor DNA is partly *mexicana*-like (Zx keeps fewer B73 k-mers than Zv: d = 0.37 vs 0.43).
+  > This could reflect the known gene flow between the two subspecies (Aguirre-Liguori et al. 2019), or how well the two Zv and two Zx assemblies represent each taxon; it is a hypothesis, not evidence of *mexicana* introgression into these accessions: higher-elevation *parviglumis* is closer to the elevation range of *mexicana*. They are also close to *mexicana* on the map: 23, 25 and 45 km from the nearest Chalco collection site, among the five closest of the 36 *parviglumis* accessions (median 97 km). A labelling error would more likely affect single pools than most pools of an accession. These three are worth checking against the seed records. In the k-mer HMM, these pools also fit a lower DONOR level than the Zv assemblies give (scale factor a: median 0.8, against 0.9 for the other Zv pools), as expected if their donor DNA is partly *mexicana*-like (Zx keeps fewer B73 k-mers than Zv: d = 0.37 vs 0.43).
   >
   > One other explanation should be ruled out first. The taxon-specific k-mers come from only two assemblies per taxon. If the two *parviglumis* assemblies (TIL01, TIL11) were collected far from these accessions, these accessions would share fewer of their specific k-mers and look relatively more *mexicana*-like even without gene flow. Where TIL01, TIL11, TIL18 and TIL25 were collected should be checked.
 - **In *diploperennis*,** the mismatches come mostly from Zd.0030 and Zd.0040 (both from Milpillas, 1,390 m, listed as race "Zea-diploperennis-Na"): their assignments are weaker (median ratio 1.8 and 1.5, against 3.0 and 3.5 for Zd.0010 and Zd.0020), so they are less like the two Zd assemblies.
@@ -648,7 +661,7 @@ So Chalco differs from the other three races in its k-mer content, as expected f
 
 ![The four mexicana races](data/introgression_spread/sourmash/pca/mexicana_races.png)
 
-Finally, the k-mer profile gives an independent check of the HMM's donor share. The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.98 (Zh), 0.97 (Zl), 0.94 (Zv) and 0.97 (Zx) (1,292 pools, NOISY pools left out).
+Finally, the k-mer profile gives a second measure of the HMM's donor share. The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads, so the check is complementary rather than fully independent. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.98 (Zh), 0.97 (Zl), 0.94 (Zv) and 0.97 (Zx) (1,292 pools, NOISY pools left out).
 
 ![Teosinte k-mers vs the HMM donor share](data/introgression_spread/sourmash/pca/kmer_vs_hmm.png)
 
@@ -711,9 +724,9 @@ To view it, download the file and open it in a browser. GitHub shows HTML files 
 
 ### 2.13 Limitations and future work
 
-**Short tracts aren't proven yet.** The k-mer HMM calls tracts down to about 400 kb. Short tracts are expected from the crossing scheme ([Tract lengths](#265-how-long-are-the-tracts)), so most are probably real, but single short calls haven't been checked with independent data.
+**Short tracts aren't proven yet.** The k-mer HMM calls tracts down to about 400 kb. Short tracts are expected from the crossing scheme ([Tract lengths](#265-how-long-are-the-tracts)), and they are shared by relatives as often as long tracts (below), but single short calls haven't been checked with independent data.
 
-**SEG vs DONOR isn't checked directly either.** A SEG call says the family still segregates (plants AA, AB or BB). No independent data has confirmed this split yet. The split is what gives the main result (het as expected, homozygous donor about half), so it should be checked independently.
+**SEG vs DONOR isn't checked directly either.** A SEG call says the family still segregates (plants AA, AB or BB). No independent data has confirmed this split yet. The split is what gives the main result (SEG as expected, DONOR about half), so it should be checked independently: best by genotyping single plants from a few plots in regions called B73, SEG and DONOR, or by simulating pools with known states.
 
 **The DONOR level depends on the assemblies.** The model needs to know how much of each window's B73 k-mers a teosinte genome keeps (d_w). The best source would have been **the actual donor parents** of our lines, sequenced. We don't have them, so we use teosinte assemblies from MaizeGDB (PanAnd). Those are other plants of the same taxa, so in diverse taxa they can differ from our donors:
 - Zv and Zx still switch between SEG and DONOR about twice as often as the other taxa, even after allowing for this uncertainty.
@@ -747,7 +760,7 @@ The table gives the result as a percentage: for example, 31.4% means that for a 
 
 - **The baseline is not zero.** Introgressions are common and some genome regions carry them in many pools, so even unrelated pools share some by chance. That's why every row is compared with the baseline, not with zero.
 - **Pools from the same BC2 plant share tracts about 1.8 times as often as unrelated pools** (31.4% vs 17.5% for short tracts, 43.8% vs 23.7% for long tracts).
-- **Short tracts rise by the same factor as long tracts.** If the short tracts were mostly noise, they would not be inherited, and their sharing would stay at the baseline even among close relatives. Since they rise like the long tracts, most short tracts are probably real.
+- **Short tracts rise by the same factor as long tracts.** If the short tracts were mostly noise, they would not be inherited, and their sharing would stay at the baseline even among close relatives. Since they rise like the long tracts, the short tracts are inherited like the long ones. This is pedigree-consistency evidence, not proof that each call is right: it doesn't tell how many calls are false, or how genome position and donor–assembly similarity affect sharing.
 - **Pools from the same accession but a different BC2 plant do not share more than the baseline.** If the short tracts were an artifact of the accession's donor plant being different from the teosinte assemblies, they would appear at the same places in every pool of that accession. They don't, so that artifact is not what makes them.
 - **Open question:** pools from the same BC1 plant but different BC2 plants should also share more than the baseline, about half the increase seen for the same BC2 plant, because each BC2 plant inherits about half of its BC1 parent's donor segments. They don't (24.4% vs 23.7% for long tracts). Why is not known yet.
 
@@ -777,7 +790,7 @@ We ran **two analyses** on the same genotypes (k-mer teosinte ancestry per 100-k
 | Question | Where in the genome are the QTL? | How many separate QTL, how large is each, and does the effect differ between teosinte taxa? |
 | What is tested | Every window, one at a time | The QTL found by Analysis 1, plus any second QTL that a conditional scan finds inside one of its regions; all fitted together |
 | Effect | One effect per teosinte copy, shared by all taxa | The effect of each QTL adjusted for the others, and its effect within each taxon |
-| Significance | 5% genome-wide threshold from permutations | Bonferroni over the QTL of that trait (no genome search, so no permutations needed) |
+| Significance | 5% genome-wide threshold from permutations | Bonferroni over the QTL of that trait; the QTL were chosen from the same data, so this characterizes the scan's signals rather than confirming them |
 | Output | Manhattan plot, regions, genes in each region | QTL table, per-taxon effects, test that taxa differ |
 
 Both use taxon as a fixed effect and a leave-one-chromosome-out (LOCO) kinship built from the same ancestry calls. At the same windows the two packages give the same answer (DTS: −log10 p 5.12 / 9.68 / 9.08 in GridLMM and 5.09 / 9.67 / 9.08 in R/qtl2), so Analysis 2 describes exactly the QTL of Analysis 1.
@@ -846,7 +859,7 @@ The table compares the two choices of K on the same data (DTS, 1,284 plots, taxo
 
 With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC falls **below 1**: the model over-corrects. LOCO is the fix.
 
-**λ_GC under LOCO (~4) is not a sign of false positives here.** λ_GC assumes most markers are null and independent. In this population each QTL is tagged by hundreds of linked windows (tracts of several Mb, and with LOCO the tested chromosome's own background is not in K), and the traits are polygenic, so the median test statistic is expected to be high (Yang et al. 2011). Significance is therefore set by **permutation**, not by λ_GC.
+**λ_GC under LOCO (~4) needs checking.** λ_GC assumes most markers are null and independent. In this population each QTL is tagged by hundreds of linked windows (tracts of several Mb, and with LOCO the tested chromosome's own background is not in K), and the traits are polygenic, so a high median test statistic is expected even without false positives (Yang et al. 2011). But a high λ_GC can also mean the test is miscalibrated, so this explanation is not proven. Significance is set by **permutation** (next section), and whether that threshold holds when lines are related is still to be checked.
 
 #### 3.3.3 Model
 
@@ -864,9 +877,11 @@ We used **taxon** (5 levels: Zd, Zh, Zl, Zv, Zx) as the fixed effect, not the **
 
 For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile of these 1,000 genome-wide maxima is the threshold. It controls the **family-wise error rate (FWER) at 5% across the whole genome**: if the trait had no QTL, a scan would put any window above it in only 5% of cases (Churchill & Doerge 1994). Because each permutation keeps the real correlation between neighbouring windows, the threshold accounts for it; Bonferroni over 21,309 windows (−log10 p = 5.63) would treat them as independent and be too strict. The thresholds come from **1,000 permutations** per trait. With *mexicana* split by race (section 3.6.13), phenotypes are shuffled within race.
 
+**Caveat: the plots are related.** Permutation assumes the phenotypes can be swapped between plots. Plots from the same F1 family share tracts and phenotypes, so shuffling within taxon also breaks that family structure, and the threshold may not give exactly 5% FWER. A check that keeps the relatedness is planned: simulate phenotypes with no QTL from the fitted model (taxon effects + u ~ N(0, σ²_g K) + e), run the whole scan on each, and count how often any window passes the threshold (it should be about 5%). The strongest QTL (e.g. ZmCCT10, −log10 p 9–14) are far above any plausible threshold; QTL close to the threshold are the ones the check could change.
+
 #### 3.3.5 Regions and genes
 
-Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one region per locus, and gives each a support interval: the windows within 1.5 −log10 p of the top window (like a 1.5-LOD drop). Every B73 v5 gene overlapping the interval is listed from the GFF3. Output: `genes/regions_genes_<TRAIT>_ALL.tsv` (one row per gene, with the region's position, top −log10 p and effect). Step 30 (`final_script/30_genes_go.R`) adds each gene's window −log10 p and effect and its GO terms: `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv`.
+Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one region per locus, and gives each a support interval: the windows within 1.5 −log10 p of the top window. This is a drop in −log10 p, not in LOD, so it is not the usual 1.5-LOD interval, and how often it contains the causal gene has not been calibrated. Every B73 v5 gene overlapping the interval is listed from the GFF3. Output: `genes/regions_genes_<TRAIT>_ALL.tsv` (one row per gene, with the region's position, top −log10 p and effect). Step 30 (`final_script/30_genes_go.R`) adds each gene's window −log10 p and effect and its GO terms: `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv`.
 
 ### 3.4 Analysis 2: joint QTL model with per-taxon effects
 
@@ -880,7 +895,7 @@ The scan in Analysis 1 tests each window on its own. A peak can therefore be a r
 
 `y = taxon + Σ_i γ_i · p_i + β · p_w + u + e` (for every window w; i = the QTL already in the model)
 
-If the best window is still above the genome-wide threshold of Analysis 1, it is a QTL that the others do not explain: it is added to the list, and the scan is repeated, until no window passes. Two rules stop it from adding the wrong things: a window must be significant in the ordinary scan too (so this can split a region, but never create a new one), and it must not be in strong LD with a QTL already in the model (r² ≤ 0.5), since two nearly identical predictors give unstable, opposite effects. This is forward selection by conditional scans (Broman & Sen 2009). Close peaks with no independent signal stay one QTL. Added QTL are listed in `qtl2_<TRAIT>_added.tsv` and drawn as open triangles in the figures.
+If the best window is still above the genome-wide threshold of Analysis 1, it is a QTL that the others do not explain: it is added to the list, and the scan is repeated, until no window passes. Two rules stop it from adding the wrong things: a window must be significant in the ordinary scan too (so this can split a region, but never create a new one), and it must not be in strong LD with a QTL already in the model (r² ≤ 0.5), since two nearly identical predictors give unstable, opposite effects. This is forward selection by conditional scans (Broman & Sen 2009), which uses the main scan's threshold, as is standard; the conditional scan has its own null distribution, so this threshold is approximate. Close peaks with no independent signal stay one QTL. Added QTL are listed in `qtl2_<TRAIT>_added.tsv` and drawn as open triangles in the figures.
 
 **Step 2: joint test and effect of each QTL.** Each QTL j is then fitted with taxon and **all the other QTL** as covariates (`fit1`):
 
@@ -898,7 +913,7 @@ If the best window is still above the genome-wide threshold of Analysis 1, it is
 
 is compared with the model with one shared effect a. The LOD difference is converted to −log10 p with (number of taxa − 1) df. A significant result means the teosinte allele at that QTL has a different effect depending on the taxon it came from.
 
-**Significance.** The joint model does not search the genome: for a trait with k QTL it makes k joint tests and k "taxa differ" tests. Each is significant if −log10 p > −log10(0.05 / k) (Bonferroni over the k QTL of that trait; e.g. 2.08 for 6 QTL). This also controls the family-wise error rate at 5%, here over the k QTL.
+**Significance.** The joint model does not search the genome: for a trait with k QTL it makes k joint tests and k "taxa differ" tests. Each is significant if −log10 p > −log10(0.05 / k) (Bonferroni over the k QTL of that trait; e.g. 2.08 for 6 QTL). Bonferroni controls the family-wise error rate over a fixed set of k tests. Here the k QTL were picked from the scan of the same phenotypes, so the joint p-values are not an independent confirmation, and the effects of QTL found this way tend to be overestimated (winner's curse). The joint model is best read as **characterizing** the scan's signals: which of them remain once the others are fitted, how large each is, and whether the taxa differ. "Hold" in the tables below means the QTL passes this test; independent data would be needed to confirm a QTL.
 
 Every statistical step is an R/qtl2 function; the script only converts the k-mer calls into R/qtl2's format.
 

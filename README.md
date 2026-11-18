@@ -998,8 +998,9 @@ All results are in `data/introgression_spread/`:
 | SL | 1196 | 4.06 | 13 | 12 | chr7 141.7 Mb (−log10 p 9.2, -0.32 per copy) |
 | BL | 1197 | 4.14 | 6 | 5 | chr2 39.8 Mb (−log10 p 12.0, -1.58 per copy) |
 | BW | 1197 | 4.22 | 7 | 6 | chr6 146.4 Mb (−log10 p 9.2, -0.29 per copy) |
+| SPAD2 | 1124 | 4.32 | 6 | 4 | chr1 148.6 Mb (−log10 p 6.0, -2.51 per copy) |
 
-"Hold in joint model" = QTL whose joint −log10 p passes Bonferroni over that trait's QTL. The other six traits are in [3.6.14](#3614-other-traits).
+"Hold in joint model" = QTL whose joint −log10 p passes Bonferroni over that trait's QTL. The other six traits are in [3.6.14](#3615-other-traits).
 
 **Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position; an open triangle marks a QTL added by the conditional scans (a second QTL inside a significant region, section 3.4). Middle: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon (taxa with ≥ 5 carrier plots). Right: two columns of **−log10 p** (not effects): "Joint test" = is the QTL still significant with all other QTL in the model; "Taxa differ" = does its effect differ between taxa. For example, DTS Q1 "9.7 | 14.1" means p = 10⁻⁹·⁷ for the QTL and p = 10⁻¹⁴·¹ for the difference between taxa. Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering).
 
@@ -1124,7 +1125,7 @@ ASI = anthesis–silking interval, DTS − DTA. 12 regions, 6 hold in the joint 
   - The chr2 short-arm QTL *qKRN2* split into two closely linked QTL, *qKRN2-1* (fine-mapped to 272 kb) and *qKRN2-2* (775 kb), which explain 33.5% and 35.3% of the variance in kernel row number in their populations. The Mo17 alleles add about 1.4 and 1.2 rows.
   - Of the genes in the *qKRN2-1* interval, Zm00001d002989 (this gene) was expressed 3.7 times more in young ears (3–4 mm) of the line carrying the teosinte allele than in the line carrying the Mo17 allele. RNA in situ hybridization placed its expression in the primordia of the inflorescence meristem and of the spikelet-pair meristems, which set the number of kernel rows. They propose it as the causal gene: more CKX means less cytokinin, fewer spikelet-pair meristems and fewer rows.
 
-  In our lines the teosinte allele at Q2 shortens ASI by 0.16 d per copy, and the taxa do not differ significantly. Why a gene acting in the developing ear would change ASI isn't known; we did not score kernel row number. The same interval also holds EH Q1 (+1.96 cm) and Prolif Q5–Q6 (see [Regions shared between traits](#3612-regions-shared-between-traits)).
+  In our lines the teosinte allele at Q2 shortens ASI by 0.16 d per copy, and the taxa do not differ significantly. Why a gene acting in the developing ear would change ASI isn't known; we did not score kernel row number. The same interval also holds EH Q1 (+1.96 cm) and Prolif Q5–Q6 (see [Regions shared between traits](#3613-regions-shared-between-traits)).
 - **Q9, chr4 52.0 Mb:** Zm00001eb175150 (*tga1*, *teosinte glume architecture1*; 46.65 Mb, in a window with −log10 p 7.0, near the left end of the interval 46.5–52.4 Mb). *tga1* is a classic maize domestication gene: it is the reason maize kernels are naked, while teosinte kernels are sealed inside a hard fruitcase made of a hardened glume and the rachis.
   - *tga1* encodes an SBP-box transcription factor. Maize and teosinte differ at a single fixed site in the gene, which changes one amino acid (Lys in teosinte, Asn in maize). This change turns maize TGA1 into a transcriptional repressor. Both forms bind the same GTAC motif in DNA, but the maize form makes more stable dimers. Because it is the only fixed difference, it is most likely the change that made naked kernels (Wang H et al. 2015).
   - TGA1 sits in a gene network with the other big domestication gene, *teosinte branched1* (*tb1*): TB1 binds the *tga1* promoter and activates it. TGA1 in turn regulates MADS-box genes, a family that sets the identity of floral and inflorescence organs: of eight tested, five were expressed more in immature ears with the teosinte allele of *tga1*, and TGA1 bound the promoters of five. One of them is *zmm19*, the *Tunicate* locus, whose overexpression makes the glumes grow around each kernel. Several genes in the network show signatures of selection during domestication (Studer et al. 2017).
@@ -1480,11 +1481,48 @@ Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Every gene in each interval
 
 </details>
 
-#### 3.6.12 Regions shared between traits
+#### 3.6.12 Leaf greenness after silking (SPAD2; 2023 only)
+
+![SPAD2: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_SPAD2.png)
+
+SPAD2 is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The meter reads how green the leaf is, a proxy for its chlorophyll; at this stage the leaves begin to senesce, so a high value means the leaf keeps its chlorophyll longer (stay-green), and nitrogen moving out of the leaf to the grain lowers it. 6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08).
+
+| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|
+| **Q6 chr10 148.3 Mb** | Zm00001eb432850 (chlorophyll a/b-binding protein) | +2.39 | 4.9 | 0.3 (no) | No significant difference between taxa (Zd +1.83, Zh +2.80, Zl +3.56, Zv +1.16, Zx +3.25). Same region as the first SPAD reading (chr10 145.9 Mb) and the second-best PredN region. |
+| **Q4 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | -2.81 | 4.4 | 0.4 (no) | No significant difference between taxa (Zd -1.39, Zl -0.90, Zv -1.07, Zx -3.80). The gene is next to the top window. |
+| **Q3 chr1 148.6 Mb** | Zm00001eb027950 (red chlorophyll catabolite reductase) | -2.51 | 2.4 | 0.2 (no) | No significant difference between taxa (Zd -2.86, Zh -6.07, Zl -3.27, Zv -2.98, Zx -1.95). RCCR breaks down chlorophyll during senescence; at the edge of a 19-Mb interval. |
+
+**Candidate genes:**
+- **Q6, chr10 148.3 Mb:** Zm00001eb432850 (chlorophyll a/b-binding protein, chloroplastic; 148.97 Mb, window −log10 p 4.5). Chlorophyll a/b-binding (light-harvesting) proteins hold most of the leaf's chlorophyll in the antenna of photosystem II, so more of them means more chlorophyll per leaf area, which is what the SPAD meter reads. The teosinte allele makes leaves greener (+2.39 SPAD units per copy, alike across taxa).
+- **The end of chr10 shows up in three leaf traits.** It is also a QTL for the first SPAD reading (mid-season, both years; chr10 145.9 Mb, interval 144.5–147.3 Mb, +1.16 per copy, holds in the joint model) and the second-best region for leaf nitrogen predicted from leaf spectra (PredN, 2025, top window 147.55 Mb, −log10 p 2.7, below its threshold; see [Other traits](#3615-other-traits)). In all three the teosinte allele makes leaves greener or richer in nitrogen. The first SPAD interval also holds Zm00001eb431800 (glutamyl-tRNA reductase, 146.77 Mb), the first committed step of chlorophyll synthesis. The SPAD and SPAD2 intervals are next to each other but do not overlap (144.5–147.3 and 147.5–149.8 Mb), so this may be one QTL or two linked ones.
+- **Q3, chr1 148.6 Mb:** Zm00001eb027950 (red chlorophyll catabolite reductase, RCCR; 144.52 Mb, −log10 p 4.9), an enzyme of the pathway that breaks chlorophyll down during leaf senescence. Here the teosinte allele makes leaves less green (−2.51 per copy). The gene is at the very start of a 19-Mb interval with 184 genes, 4 Mb from the top window; the interval also holds *bundle sheath defective2* (Zm00001eb029690, 162.00 Mb), needed for Rubisco assembly.
+- **Q4, chr7 123.3 Mb:** Zm00001eb313460 (senescence-associated protein; 123.47 Mb, −log10 p 4.7, next to the top window). The teosinte allele makes leaves less green (−2.81 per copy).
+- Q5 chr9 112.6 Mb (+2.66 per copy) spans 28.5 Mb and 506 genes, too wide to point to one gene.
+
+These candidates come from the gene annotation only; none has been tested for SPAD in maize, and SPAD2 was measured once, in one year. Every gene in each interval, with its GO terms: [`qtl_genes/SPAD2_qtl_genes.tsv`](qtl_genes/SPAD2_qtl_genes.tsv).
+
+<details><summary>All SPAD2 QTL with per-taxon effects and all genes in the interval</summary>
+
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval |
+|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 39.9 Mb | 36.1–41.1 | 5.2 | -1.76 ± 0.75 | 1.7 | 0.3 | Zd +0.64 (23), Zh +1.01 (8), Zl -4.44 (9), Zv -1.07 (28), Zx -3.19 (52) | [131 genes](qtl_genes/SPAD2_qtl_genes.tsv) |
+| Q2 | chr1 58.5 Mb | 57.5–60.1 | 5.8 | -1.01 ± 0.89 | 0.6 | 0.1 | Zd -3.27 (19), Zh -1.38 (9), Zl -0.91 (7), Zv -1.15 (24), Zx +0.40 (50) | [42 genes](qtl_genes/SPAD2_qtl_genes.tsv) |
+| Q3 | chr1 148.6 Mb | 144.5–163.4 | 6.0 | -2.51 ± 0.88 | **2.4** | 0.2 | Zd -2.86 (12), Zh -6.07 (5), Zl -3.27 (7), Zv -2.98 (18), Zx -1.95 (45) | [184 genes](qtl_genes/SPAD2_qtl_genes.tsv) |
+| Q4 | chr7 123.3 Mb | 119.8–129.1 | 4.7 | -2.81 ± 0.69 | **4.4** | 0.4 | Zd -1.39 (7), Zl -0.90 (5), Zv -1.07 (43), Zx -3.80 (54) | [173 genes](qtl_genes/SPAD2_qtl_genes.tsv) |
+| Q5 | chr9 112.5 Mb | 90.6–119.1 | 4.7 | +2.66 ± 0.60 | **5.0** | 0.2 | Zd +3.28 (15), Zl +3.17 (15), Zv +1.65 (43), Zx +3.04 (78) | [506 genes](qtl_genes/SPAD2_qtl_genes.tsv) |
+| Q6 | chr10 148.3 Mb | 147.5–149.8 | 5.0 | +2.39 ± 0.55 | **4.9** | 0.3 | Zd +1.83 (41), Zh +2.80 (5), Zl +3.56 (13), Zv +1.16 (33), Zx +3.25 (71) | [128 genes](qtl_genes/SPAD2_qtl_genes.tsv) |
+
+Bonferroni over the 6 QTL: −log10 p > 2.08 (bold). Every gene in each interval, with its GO annotation and the k-mer GWAS −log10 p of its window: [`qtl_genes/SPAD2_qtl_genes.tsv`](qtl_genes/SPAD2_qtl_genes.tsv).
+
+</details>
+
+#### 3.6.13 Regions shared between traits
 
 | Region | Traits (sign of the teosinte effect) | Known genes in the intervals |
 |---|---|---|
 | chr10 ~92–106 Mb | DTS +, DTA +, PH +, EH + (just below the cut), NBR + | Zm00001eb418700 (*ZmCCT10*) |
+| chr10 ~144–150 Mb | SPAD2 +, SPAD +, PredN + (below its threshold) | Zm00001eb432850 (chlorophyll a/b-binding), Zm00001eb431800 (glutamyl-tRNA reductase) |
 | chr5 ~217–222 Mb | DTS +, DTA +, ASI + (mostly *luxurians*) | Zm00001eb257680 (HDR1-like), Zm00001eb255670 (*mads73*) |
 | chr9 ~1–14 Mb | DTA −, DTS − (suggestive), BW − | Zm00001eb372960 (*MADS74*) |
 | chr1 ~22–24 Mb | EN +, Prolif +, NBR − | Zm00001eb007670 (*ZmD14*) |
@@ -1503,7 +1541,7 @@ Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Every gene in each interval
 
 All genes in every region, with their GO terms and the −log10 p of the window they lie in, are in `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv` (one file per trait).
 
-#### 3.6.13 *mexicana* split by race (SUBTAXON)
+#### 3.6.14 *mexicana* split by race (SUBTAXON)
 
 The same two analyses were rerun with *mexicana* split into its four races (Chalco, Mesa Central, Durango, Nobogame; section 2.1) instead of one Zx group: the fixed effect, the permutation strata and the per-taxon effects all use the race. Figures: `figures/subtaxon/kmerGWAS_joint_qtl_<TRAIT>.png`; tables: `data/introgression_spread/assoc_gridlmm_spats_subtaxon/` and `data/introgression_spread/joint_qtl/noperm_subtaxon/`.
 
@@ -1536,13 +1574,13 @@ The same two analyses were rerun with *mexicana* split into its four races (Chal
 
 </details>
 
-#### 3.6.14 Other traits
+#### 3.6.15 Other traits
 
-Scanned with the same pipeline; figures in `figures/kmerGWAS_joint_qtl_<TRAIT>.png`, tables in the same folders as above. SPAD (the first SPAD reading) is not reported; SPAD2 is used for leaf greenness.
+Scanned with the same pipeline; figures in `figures/kmerGWAS_joint_qtl_<TRAIT>.png`, tables in the same folders as above. SPAD (the first SPAD reading) is not reported on its own; SPAD2 has its own section (3.6.12).
 
 | Trait | What it is | Plots | 5% threshold | QTL | Hold in joint model | Strongest QTL (−log10 p) |
 |---|---|---|---|---|---|---|
-| SPAD2 | leaf greenness (SPAD meter, a proxy for chlorophyll), 36 days after silking; 2023 | 1124 | 4.32 | 6 | 4 | chr1 148.6 Mb (6.0) |
+| PredN | leaf nitrogen predicted from leaf spectra (scans with Mahalanobis distance > 3 dropped; mean of the rest per plot); 2025, field B5 block 2, one plot per line; H2 0.25 (`final_script/28b_spats_nitrogen.R`) | 711 | 4.24 | 0 | 0 | chr9 149.3 Mb (2.7) |
 | LAE | number of leaves above the ear; 2025 | 1274 | 4.15 | 8 | 2 | chr2 34.5 Mb (9.3) |
 | Kinki | how much the stem bends, score 0–2; 2023 | 1140 | 4.33 | 6 | 4 | chr2 30.1 Mb (12.0) |
 | StPu | stem pubescence (present/absent; line mean) | 1286 | 6.96 | 1 | 1 | chr4 240.8 Mb (8.5) |

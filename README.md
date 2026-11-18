@@ -1663,8 +1663,8 @@ All references cited in this README, in alphabetical order.
 - Oakey H, Verbyla A, Pitchford W, Cullis B, Kuchel H (2006) Joint modeling of additive and non-additive genetic line effects in single field trials. *Theor Appl Genet* 113:809–819.
 - Odell SG, Hudson AI, Praud S, Dubreuil P, Tixier M-H, Ross-Ibarra J, Runcie DE (2022) Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci. *G3* 12:jkac011.
 - Picard toolkit. Broad Institute. https://broadinstitute.github.io/picard/
-- Portwood JL 2nd, Woodhouse MR, Cannon EK, et al. (2019) MaizeGDB 2018: the maize multi-genome genetics and genomics database. *Nucleic Acids Res* 47:D1146–D1154. (Source of the teosinte assemblies.)
 - Poretsky E, Cagirici HB, Andorf CM, Sen TZ (2024) Harnessing the predicted maize pan-interactome for putative gene function prediction and prioritization of candidate genes for important traits. *G3* 14:jkae059. doi:10.1093/g3journal/jkae059
+- Portwood JL 2nd, Woodhouse MR, Cannon EK, et al. (2019) MaizeGDB 2018: the maize multi-genome genetics and genomics database. *Nucleic Acids Res* 47:D1146–D1154. (Source of the teosinte assemblies.)
 - Quiroz-Chávez J (2023) Wheat haplotype diversity by a k-mer based approach. PhD thesis, University of East Anglia. (IBSpy.)
 - Rabiner LR (1989) A tutorial on hidden Markov models and selected applications in speech recognition. *Proc IEEE* 77:257–286.
 - Rahman A, Hallgrímsdóttir I, Eisen M, Pachter L (2018) Association mapping from sequencing reads using k-mers. *eLife* 7:e32920.
@@ -1674,8 +1674,8 @@ All references cited in this README, in alphabetical order.
 - Runcie DE, Crawford L (2019) Fast and flexible linear mixed models for genome-wide genetics. *PLoS Genet* 15:e1007978.
 - sabre: barcode demultiplexing and trimming tool for FastQ files. https://github.com/najoshi/sabre
 - Selvanayagam S, Quiroz-Chavez J, Ramirez-Gonzalez RH, Uauy C, Smit S, Schranz ME (2026) KCFtools: rapid alignment-free method for introgression screening and GWAS using k-mer profiles. *Bioinformatics*. doi:10.1093/bioinformatics/btag354
-- Smith MW, O'Brien SJ (2005) Mapping by admixture linkage disequilibrium: advances, limitations and guidelines. *Nat Rev Genet* 6:623–632.
 - Smith LH, Langdale JA, Chollet R (1998) A functional Calvin cycle is not indispensable for the light activation of C4 phosphoenolpyruvate carboxylase kinase and its target enzyme in the maize mutant *bundle sheath defective2-mutable1*. *Plant Physiol* 118:191–197.
+- Smith MW, O'Brien SJ (2005) Mapping by admixture linkage disequilibrium: advances, limitations and guidelines. *Nat Rev Genet* 6:623–632.
 - Stitzer MC, Seetharam AS, et al., Hufford MB (2025) Extensive genome evolution distinguishes maize within a stable tribe of grasses. *bioRxiv* doi:10.1101/2025.01.22.633974. (PanAnd assemblies.)
 - Studer AJ, Wang H, Doebley JF (2017) Selection during maize domestication targeted a gene network controlling plant and inflorescence architecture. *Genetics* 207:755–765. doi:10.1534/genetics.117.300071
 - Sun D, Chen S, Cui Z, Lin J, Liu M, Jin Y, Zhang A, Gao Y, Cao H, Ruan Y (2022) Genome-wide association study reveals the genetic basis of brace root angle and diameter in maize. *Front Genet* 13:963852. doi:10.3389/fgene.2022.963852

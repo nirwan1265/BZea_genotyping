@@ -15,6 +15,7 @@ set -euo pipefail
 export TRAITS=${TRAITS:-DTS}
 source config.sh
 mkdir -p logs
+Rscript -e 'library(GridLMM); library(qtl2)' > /dev/null 2>&1 || { echo "GridLMM/qtl2 not found: activate the GWAS conda env first"; exit 1; }
 NTR=$(wc -w <<< "$TRAITS")
 for Y in 2023 2025; do
   P=${FINAL_DIR}/../data/phenotypes/BZea_spats_BLUEs_${Y}.csv

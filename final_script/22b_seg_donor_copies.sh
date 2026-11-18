@@ -11,7 +11,7 @@
 # =============================================================================
 # 22b — Donor allele share inside SEG calls, against the Mendelian 1/2 (22b_seg_donor_copies.py).
 #   Output in ${D21}: seg_donor_copies.tsv (per pool), seg_donor_copies.tsv.taxon.tsv (per taxon)
-#   Needs python3 with numpy, pandas, scipy (e.g. conda activate /usr/local/usrapps/maize/ntanduk/bzea_gwas).
+#   Needs python3 with numpy, pandas, scipy: submit with the k-mer env active (kmer_env, as for steps 19-22).
 #   Submit after 21:  sbatch 22b_seg_donor_copies.sh
 #   Middle of long SEG tracts only (edge check): sbatch --export=ALL,CORE_MB=5,TRIM_MB=1 22b_seg_donor_copies.sh
 #     -> ${D21}/seg_donor_copies_core5.tsv

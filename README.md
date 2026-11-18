@@ -1251,6 +1251,17 @@ Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Every gene in each interva
 
 Just below the cut: Q13 chr9 116.8 Mb (+1.63 cm, joint −log10 p 2.4; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q18 chr10 97.0 Mb (+2.40 cm, 2.5; *ZmCCT10*). Q8 chr6 105 Mb is the only QTL where taxa differ (Zv +6.5 cm, Zd +4.2, others ≈ 0 or negative), but its joint test does not pass.
 
+**Candidate genes in Q18 (chr10 97.0 Mb, just below the cut):** the Q18 interval (88.8–100.5 Mb) is the *ZmCCT10* region, which also holds DTS Q2, DTA Q3, PH Q16 and NBR Q8. Besides *ZmCCT10* (Zm00001eb418700; 96.18 Mb, window −log10 p 6.5), whose teosinte allele delays flowering, three genes in it are of interest:
+- Zm00001eb417870 (*ZmEMF1a*; Zm00001d024813 in B73 v4; 90.88 Mb, window −log10 p 6.3). An EMBRYONIC FLOWER1 (EMF1)-like Polycomb protein; EMF1 is named after the *Arabidopsis* mutant that flowers right after germination. Li et al. (2026) cloned it as the gene behind the maize small-kernel mutant *sks1* (three EMS alleles):
+  - ZmEMF1a binds subunits of both Polycomb complexes (PRC1 and PRC2) and places the repressive histone marks H3K27me3 (at 6 days after pollination) and H2Aub1 (at 10 days) on its targets in the endosperm. Without it, endosperm cells keep dividing and fail to expand and differentiate, so the kernels are small.
+  - Its main targets are MADS-box genes: 25 MADS genes lose H3K27me3 and are switched on in the mutant.
+  - **The link to ear height:** besides small kernels, *sks1* plants are significantly shorter, with lower ears, shorter internodes and a shorter tassel spindle.
+  - Its paralog *ZmEMF1b* (Zm00001d010894, on chr8) is expressed mostly in tassels.
+- Zm00001eb418530 (95.20 Mb, window −log10 p 6.1 for EH and 8.6–10.2 for DTS, DTA and PH), another EMF1-like protein, not characterized in maize. Of the three, it is the only one that is also inside the DTS Q2, DTA Q3 and PH Q16 intervals.
+- Zm00001eb417540 (*mads85*, MADS transcription factor 85; 89.03 Mb, window −log10 p 5.9), related to rice *OsMADS87*. *OsMADS87* is a type I MADS gene expressed in the young endosperm before it becomes cellular; it is imprinted and heat-sensitive, and changing its expression changes seed size: rice seeds lacking it become cellular earlier and lose less size under moderate heat (Chen C et al. 2016). No role in plant or ear height is known.
+
+In our lines the teosinte segment raises the ear by 2.40 cm per copy at Q18, but the joint test (−log10 p 2.5) is just below the cut, and every window from 89 to 100 Mb is significant for EH (−log10 p 5.9–6.9), so the four genes can't be told apart with our tract lengths. *ZmCCT10* (later flowering; the strongest signal for DTS, DTA and PH here) and *ZmEMF1a* (shorter plants with lower ears in the mutant) are the best supported.
+
 <details><summary>All EH QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval |
@@ -1548,6 +1559,7 @@ All references cited in this README, in alphabetical order.
 - Broman KW, Gatti DM, Simecek P, et al. (2019) R/qtl2: software for mapping quantitative trait loci with high-dimensional data and multiparent populations. *Genetics* 211:495–502.
 - Broman KW, Sen Ś (2009) *A Guide to QTL Mapping with R/qtl*. Springer, New York.
 - Brown CT, Irber L (2016) sourmash: a library for MinHash sketching of DNA. *J Open Source Softw* 1:27.
+- Chen C, Begcy K, Liu K, Folsom JJ, Wang Z, Zhang C, Walia H (2016) Heat stress yields a unique MADS box transcription factor in determining seed size and thermal sensitivity. *Plant Physiol* 171:606–622. doi:10.1104/pp.15.01992
 - Chen S, Gao S, Wang D, Liu J, Ren Y, Wang Z, Wei X, Wang Q, Huang X (2024) FKF1b controls reproductive transition associated with adaptation to geographical distribution in maize. *J Integr Plant Biol* 66:943–955. doi:10.1111/jipb.13639
 - Chen Q, et al. (2019) TeoNAM: a nested association mapping population for domestication and agronomic trait analysis in maize. *Genetics* 213:1065–1078.
 - Chuck GS, Brown PJ, Meeley R, Hake S (2014) Maize SBP-box transcription factors *unbranched2* and *unbranched3* affect yield traits by regulating the rate of lateral primordia initiation. *PNAS* 111:18775–18780. doi:10.1073/pnas.1407401112
@@ -1566,6 +1578,7 @@ All references cited in this README, in alphabetical order.
 - Lander ES, Waterman MS (1988) Genomic mapping by fingerprinting random clones: a mathematical analysis. *Genomics* 2:231–239. (Coverage formula behind g.)
 - Lee JH, Yoo SJ, Park SH, Hwang I, Lee JS, Ahn JH (2007) Role of SVP in the control of flowering time by ambient temperature in *Arabidopsis*. *Genes Dev* 21:397–402.
 - Li H (2013) Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM. *arXiv* 1303.3997.
+- Li X, Zhang M, Huang Y, Li M, Zhu H, Li S, Shi D, Xu L, Wang Q, Zhang J, et al., Wang J, Liu H (2026) Polycomb protein ZmEMF1a restricts endosperm proliferation and directs differentiation via stage-specific H2Aub1 and H3K27me3 landscapes in maize. *New Phytol* 252:1130–1148. doi:10.1111/nph.71543
 - Lippert C, Listgarten J, Liu Y, Kadie CM, Davidson RI, Heckerman D (2011) FaST linear mixed models for genome-wide association studies. *Nat Methods* 8:833–835.
 - Listgarten J, Lippert C, Kadie CM, Davidson RI, Eskin E, Heckerman D (2012) Improved linear mixed models for genome-wide association studies. *Nat Methods* 9:525–526.
 - Marín-González E, Matías-Hernández L, Aguilar-Jaramillo AE, Lee JH, Ahn JH, Suárez-López P, Pelaz S (2015) SHORT VEGETATIVE PHASE up-regulates TEMPRANILLO2 floral repressor at low ambient temperatures. *Plant Physiol* 169:1214–1224. doi:10.1104/pp.15.00570

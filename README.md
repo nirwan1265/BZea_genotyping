@@ -31,7 +31,7 @@ B73 was crossed with teosinte, backcrossed twice to B73 and then selfed three ti
 **B73 × teosinte → F1 → BC1 (× B73) → BC2 (× B73) → BC2S1 → BC2S2 → BC2S3**
 
 - **Selfing, ear to row:** a plant is selfed, its progeny are planted, several are selfed, **one is selected** and advanced to the next generation, and so on. So each BC2S3 plot is grown from the seed of one BC2S2 mother (one selfed ear).
-- **Sequenced sample:** one leaf each was taken from 6 different BC2S3 plants of the plot and pooled into one sample. These 6 plants are siblings, not copies of one plant: each got its own two gametes from the BC2S2 mother. So where the mother is heterozygous, each plant is AA, AB or BB with chance ¼, ½, ¼.
+- **Sequenced sample:** one leaf each was taken from 6 different BC2S3 plants of the plot and pooled into one sample. The 6 plants were not random: the best-looking plants of the plot were chosen. These 6 plants are siblings, not copies of one plant: each got its own two gametes from the BC2S2 mother. So where the mother is heterozygous, each plant is AA, AB or BB with chance ¼, ½, ¼.
 - **Pedigree names:** in `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200` is the teosinte accession, `P3` the F1 plant, `P2` the BC1 plant, `P1` the BC2 plant, and `.1.1.1` the selfed line. Pools that share `Zv.0200_P3` descend from one F1 plant (an **F1 family**: they all carry the same teosinte haplotype); pools that share `Zv.0200_P3_P2_P1` come from the same BC2 plant.
 
 ## Expected genotype proportions (per locus)
@@ -533,15 +533,7 @@ Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `final
 - **SEG is as expected:** the HMM calls 6.23% of the genome SEG, against 6.25% expected for BC2S3; the F1-family bootstrap finds no difference (p = 0.93). The AB estimate (3.12%) is half of SEG by construction, so it is the same result, not a second one.
 - **DONOR is about half of the expectation** (4.95% vs 9.38% of the genome; estimated BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That deficit is the whole shortfall in donor alleles (8.1% vs 12.5%).
 - **So a larger share of the remaining donor is estimated to be het:** 32% of donor-carrying plants are AB, against 22% expected. This is not extra het: SEG, and so AB, is as expected. The share goes up only because DONOR went down, so AB is a bigger part of a smaller total. This holds on every chromosome (29–35%).
-- **Why is DONOR low? This is not settled.** The deficit could be biological, or it could come from the calls:
-  - **Errors in the calls.** DONOR windows called SEG would raise SEG above 6.25%, which we don't see, but DONOR windows called B73 (where the donor keeps most of B73's k-mers, d_w close to 1) would lower DONOR without changing SEG. The DONOR level comes from assemblies of other teosinte plants (section 2.13), so the SEG/DONOR split needs an independent check.
-  - **Segregation distortion or lower survival** of plants carrying teosinte alleles, in any generation. This would also lower the donor share inside SEG pools; we test this with the SEG pools themselves ([Checking the deficit](#281-checking-the-deficit-donor-copies-in-seg-pools) below).
-  - **Selection of the plant that was advanced.** At every selfing step one plant per row was chosen and advanced (ear to row), and the plants with the best-looking ears were the ones kept. This would remove DONOR (the advanced plant was BB) more than SEG (it was AB). It is a hypothesis; the reasons it would act against BB more than AB are:
-  - **Selecting against teosinte.** A plant homozygous for a teosinte segment (BB) shows the teosinte form of the traits that segment controls (e.g. smaller or harder ears), with no B73 copy to mask it. Such plants don't look as good as B73-like plants, so they are less often chosen. An AB plant still has a B73 copy, which often hides the teosinte effect, so it is chosen more often than a BB plant.
-  - **Selecting for vigour, like hybrid vigour.** An AB plant is a small "hybrid" between B73 and teosinte at that segment, and AB plants can be more vigorous than either homozygote. Picking the best-looking ears is, in part, picking for that vigour, which keeps AB.
-  - **Hidden harmful alleles.** Teosinte is outcrossing, so it carries recessive harmful alleles that do no harm in AB plants but show up in BB plants (the same reason maize inbreeding reduces vigour). This also removes BB plants.
-
-  If this is the cause, the result is fewer BB plants while AB stays as expected, which is the pattern we see. It is consistent with selection, but the data so far don't rule out the other explanations. TeoNAM (Chen et al. 2019), a maize × teosinte population made the same way (backcross, then selfing), also reported more heterozygosity than expected, as did our lab's earlier lines.
+- **Why is DONOR low?** See [Why is there less donor DNA than expected?](#281-why-is-there-less-donor-dna-than-expected) below.
 - **F1 families:** only 2 of 98 F1 families reach the expected 12.5% donor alleles (Zx.0390_P2, Zx.0130_P1); most sit between 5% and 11%. AB/(AB+BB) is above 22% in most F1 families of every taxon.
 - **Small taxa:** Zd (6 F1 families), Zl (5) and Zh (2) have few F1 families, so their intervals are less reliable. Zd's SEG (5.1%) is somewhat below the expectation (p = 0.0004).
 
@@ -579,15 +571,54 @@ Figures and tables from `final_script/24b_introgression_landscape.py` (`introgre
 
 The full statistics, F1 family results and the method history are in [`final_script/README.md`](final_script/README.md).
 
-#### 2.8.1 Checking the deficit: donor copies in SEG pools
+#### 2.8.1 Why is there less donor DNA than expected?
 
-A SEG pool comes from an AB mother, and its 6 BC2S3 plants were grown and sampled without selection. Under Mendel, half of their 12 gene copies are teosinte on average (donor allele share p = ½). The explanations for the DONOR deficit predict different things here:
-- **Selection of the advanced plant** acts on the *mother* (whether she was AB or BB), not on her progeny, so it leaves p = ½ in SEG pools.
-- **Segregation distortion or lower survival** of plants carrying teosinte alleles acts in every generation, including the last one, so it gives p < ½ in SEG pools.
+The lines carry 8.1% donor alleles instead of 12.5%. All of the shortfall is in DONOR (4.95% of the genome vs 9.38% expected), while SEG is as expected (6.23% vs 6.25%). Three things can lower the donor share, and the data can tell them apart in part:
+- **Selection.** At every selfing step one plant per row was advanced (ear to row), and the plants with the best-looking ears were kept. The 6 plants pooled for sequencing were also the best-looking plants of their plot.
+- **Segregation distortion or lower survival** of seeds and seedlings carrying teosinte alleles.
+- **Errors in the calls.** The DONOR level comes from assemblies of other teosinte plants (section 2.13), so DONOR windows could be called B73 where the donor keeps most of B73's k-mers (d_w close to 1). This would lower DONOR without changing SEG.
 
-The SEG level of r depends on p: more donor copies means fewer B73 k-mers (r = d_w + (1 − d_w) g(f), section 2.6.1). For each pool, p is found so that the mean r expected over its SEG windows matches the mean r observed (method of moments, with the pool's own d_w, scale a and k-mer coverage). The same pools also give two checks of the levels: the mean r in DONOR windows against a·d_w, and in B73 windows against 1. A simulation of SEG windows at p = ½ with each pool's noise checks that the method returns ½.
+**Check 1: how many donor copies do SEG pools carry?** A SEG pool comes from an AB mother. Under Mendel, half of its plants' 12 gene copies are teosinte (donor allele share p = ½). The SEG level of r depends on p: more donor copies means fewer B73 k-mers (r = d_w + (1 − d_w) g(f), section 2.6.1). For each pool, p was found so that the mean r expected over its SEG windows matches the mean r observed (method of moments, with the pool's own d_w, scale a and k-mer coverage). Three checks come with it: a simulation of SEG windows at p = ½ with each pool's noise (the method should return ½), the mean r in DONOR windows against a·d_w, and the mean r in B73 windows against 1.
 
-Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`). **Results pending** (it needs the per-pool HMM outputs on the cluster).
+| Taxon | Pools | Donor allele share in SEG pools, median (95% CI) | DONOR level: r − a·d_w | B73 level: r − 1 | Simulation at p = ½ |
+|---|---|---|---|---|---|
+| Zd | 223 | 0.461 (0.449–0.476) | −0.005 | 0.000 | 0.500 |
+| Zh | 61 | 0.478 (0.445–0.495) | +0.005 | +0.002 | 0.501 |
+| Zl | 96 | 0.453 (0.439–0.466) | −0.006 | +0.002 | 0.500 |
+| Zv | 333 | 0.455 (0.444–0.462) | +0.019 | +0.003 | 0.499 |
+| Zx | 565 | 0.461 (0.453–0.466) | +0.010 | 0.000 | 0.499 |
+| **All** | **1,278** | **0.459 (0.454–0.463)** | **+0.008** | **+0.001** | **0.500** |
+
+- **The method works:** the simulation returns ½, and the B73 and DONOR levels are where the model puts them (offsets ≤ 0.02).
+- **SEG pools carry 46% donor alleles, not 50%,** alike in all five taxa. A small part of this can come from the DONOR offset (a DONOR r slightly above a·d_w pulls the estimate down by about 0.01 overall, 0.03 in Zv), but Zd and Zl have negative offsets and are still at 0.45–0.46.
+- **This fits the choice of the best-looking plants.** Within a SEG plot the plants are AA, AB and BB; choosing the best-looking ones for the pool favours plants without the teosinte form of a trait, i.e. fewer BB, so fewer donor copies. Seeds or seedlings with teosinte alleles doing worse would give the same result; the two can't be told apart here.
+
+**Check 2: what would a loss like this do over the whole crossing scheme?** If every generation passed on teosinte alleles at 0.46 instead of 0.5 (F1 → BC1 → BC2 → two selfings to the BC2S2 mother):
+
+| | SEG | DONOR | Donor alleles |
+|---|---|---|---|
+| Mendel (0.5) | 6.25% | 9.38% | 12.5% |
+| Transmission 0.46 in every generation | 5.22% | 6.70% | 9.10% |
+| **Observed** | **6.23%** | **4.95%** | **8.1%** |
+
+- A loss of this size explains most of the missing donor alleles (about 3.4 of the 4.4 points).
+- But it gets the split wrong: it should lower SEG too (to about 5.2%), while SEG is on expectation and DONOR is even lower. So something acts **against BB more than against AB**.
+- That is what choosing the best-looking plant to advance does, if teosinte effects are mostly recessive:
+  - **Selecting against teosinte.** A BB plant shows the teosinte form of the traits its segment controls (e.g. smaller or harder ears), with no B73 copy to mask it, so it is less often chosen. An AB plant still has a B73 copy, which often hides the teosinte effect.
+  - **Selecting for vigour.** An AB plant is a small "hybrid" between B73 and teosinte at that segment and can be more vigorous than either homozygote; picking the best-looking ears is in part picking for that vigour.
+  - **Hidden harmful alleles.** Teosinte is outcrossing, so it carries recessive harmful alleles that do no harm in AB plants but show up in BB plants (the same reason maize inbreeding reduces vigour).
+
+  TeoNAM (Chen et al. 2019), a maize × teosinte population made the same way (backcross, then selfing), also reported more heterozygosity than expected, as did our lab's earlier lines.
+
+**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR, SEG as expected), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.46). Lower survival of teosinte-carrying seeds and seedlings may add to it.
+
+**Caveats.**
+- The transmission calculation assumes the same loss in every generation and in both sexes; it is a rough guide.
+- Check 1 uses only windows called SEG. Parts of a SEG tract with 10–11 donor copies can look like DONOR, and parts with 1–2 copies like B73; if they were called so, the estimate would move down or up. A rerun on the middle of long SEG tracts only (≥ 5 Mb, 1 Mb trimmed at each end; `--core_mb 5`) checks this. **Pending.**
+- Call errors (DONOR called B73) are not ruled out; genotyping single plants from a few plots in regions called B73, SEG and DONOR would settle the split.
+- Because the pooled plants were chosen, a SEG pool's donor copies are not exactly Binomial(12, ½) as the HMM assumes. The shift (0.46 vs 0.5) is small compared with the spread the SEG emission already allows.
+
+Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`; per-pool and per-taxon tables in `data/introgression_spread/seg_donor_copies/`).
 
 ### 2.9 Validation
 

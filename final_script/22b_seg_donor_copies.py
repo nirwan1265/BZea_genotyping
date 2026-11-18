@@ -18,6 +18,7 @@ p is solved so that the mean expected r equals the mean observed r. Checks on th
   B73 windows:   mean r - 1
 --selftest simulates SEG windows at p = 0.5 with the same noise and shows that the estimator returns 0.5.
 
+Option --core_mb 5 --trim_mb 1: only the middle of SEG tracts >= 5 Mb (calls most certain; checks edge effects).
 Usage (cluster, after steps 20-21):
   python final_script/22b_seg_donor_copies.py --hmm_dir $D20 --ref_dir $D19 --pool_summary $D21/pool_summary.tsv \
       --assemblies "$ASMS" --plants 6 --out $D21/seg_donor_copies.tsv [--selftest]
@@ -41,6 +42,8 @@ ap.add_argument("--plants", type=int, default=6)
 ap.add_argument("--rho_loglik", default="", help="step 21 rho_loglik.tsv (default: <pool_summary dir>/rho_loglik.tsv)")
 ap.add_argument("--out", required=True)
 ap.add_argument("--selftest", action="store_true")
+ap.add_argument("--core_mb", type=float, default=0, help="use only SEG tracts >= this long (Mb); 0 = all SEG windows")
+ap.add_argument("--trim_mb", type=float, default=1, help="with --core_mb: drop this much at each end of a tract")
 ap.add_argument("--seed", type=int, default=1)
 a = ap.parse_args()
 rng = np.random.default_rng(a.seed)
@@ -54,7 +57,29 @@ def read_obs(path):
         return np.array([float(l.rstrip("\n").split("\t")[i]) for l in f])
 
 
+def read_chrom(path):
+    with gzip.open(path, "rt") as f:
+        c = f.readline().rstrip("\n").split("\t").index("seqname")
+        return np.array([l.split("\t")[c] for l in f])
+
+
 B = read_obs(f"{a.ref_dir}/B73.tsv.gz")
+CHROM = read_chrom(f"{a.ref_dir}/B73.tsv.gz")
+STEP_MB = 0.1
+
+
+def core(seg):
+    """SEG windows in runs >= core_mb (a run stops at a chromosome boundary), minus trim_mb at each end"""
+    if a.core_mb <= 0: return seg
+    out = np.zeros_like(seg); t = int(round(a.trim_mb / STEP_MB)); need = int(round(a.core_mb / STEP_MB))
+    i, n = 0, len(seg)
+    while i < n:
+        if not seg[i]: i += 1; continue
+        j = i
+        while j + 1 < n and seg[j + 1] and CHROM[j + 1] == CHROM[i]: j += 1
+        if j - i + 1 >= need and j - i + 1 > 2 * t: out[i + t:j + 1 - t] = True
+        i = j + 1
+    return out
 asm = {}
 for item in a.assemblies.split(","):
     name, tax = item.split(":")[:2]
@@ -96,7 +121,7 @@ for s in ps.itertuples():
         st, r, ok, lam = z["states_R1"][j], z["r"].astype(float), z["ok"], float(z["lam"])
         par = float(z["par_best"][j]); sig = float(z["sigma"])
     dw = np.clip(par * d_tax[s.GROUP], 0.01, 0.95)
-    seg, don, b73 = ok & (st == 1), ok & (st == 2), ok & (st == 0)
+    seg, don, b73 = core(st == 1) & ok, ok & (st == 2), ok & (st == 0)
     if seg.sum() < 20: continue
     row = {"SAMPLE": s.SAMPLE, "GROUP": s.GROUP, "lam": round(lam, 3), "sigma": round(sig, 3), "scale_a": par,
            "n_seg": int(seg.sum()), "n_donor": int(don.sum()),
@@ -128,5 +153,6 @@ def summ(x):
 
 T = pd.DataFrame([{"taxon": t, **summ(x)} for t, x in D.groupby("GROUP")] + [{"taxon": "All", **summ(D)}])
 T.to_csv(a.out + ".taxon.tsv", sep="\t", index=False)
+print("SEG windows: " + (f"tracts >= {a.core_mb:g} Mb, {a.trim_mb:g} Mb trimmed at each end" if a.core_mb > 0 else "all"))
 print(f"rho = {rho_best:g}; {len(D)} pools with >= 20 SEG windows; plants per pool = {a.plants} (expected p = 0.5)")
 print(T.to_string(index=False))

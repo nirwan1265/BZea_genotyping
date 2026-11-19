@@ -609,25 +609,41 @@ The lines carry 8.1% donor alleles instead of 12.5%. All of the shortfall is in 
   - **Selecting for vigour.** An AB plant is a small "hybrid" between B73 and teosinte at that segment and can be more vigorous than either homozygote; picking the best-looking ears is in part picking for that vigour.
   - **Hidden harmful alleles.** Teosinte is outcrossing, so it carries recessive harmful alleles that do no harm in AB plants but show up in BB plants (the same reason maize inbreeding reduces vigour).
 
-**Check 3: what does TeoNAM lead us to expect?** TeoNAM (Chen et al. 2019; 1,257 BC1S4 lines) is a maize × teosinte population made the same way (backcross, then selfing). It also keeps less teosinte than Mendel predicts (19% of alleles against 25%), and more of what it keeps is still heterozygous (8% of the genome against 3.1%). Our lab's earlier lines also showed more heterozygosity than expected. A calculation note from our lab (18 November 2026) fits a simple model to TeoNAM's two numbers and carries it over to our BC2S3 pools. The model has three numbers, each 0.5 under Mendel:
+**Check 3: comparison with TeoNAM.** TeoNAM (Chen et al. 2019; 1,257 BC1S4 lines) is a maize × teosinte population made the same way (backcross, then selfing). It also kept less teosinte than Mendel predicts: 15% of SNP calls were homozygous teosinte (14.2–16.2% across its five subpopulations) against 23.4% expected, and 8.1% were heterozygous against 3.1% expected. The authors' explanation is the one we reach above: "unconscious selection for more heterozygous plants", and, at the region with the highest heterozygosity near *tga1*, selection against plants homozygous for the teosinte allele, which "have poor ear and kernel quality". Our lab's earlier lines also showed more heterozygosity than expected.
+
+TeoNAM is independent support, not a yardstick: its numbers cannot be compared directly with ours.
+- **Low-coverage method.** TeoNAM lines were genotyped by GBS (low-coverage sequencing at selected SNP sites), and missing calls were filled in by imputation (FSFHap in TASSEL5), which assumed a heterozygosity of 3.125%. We did not call SNPs or impute: each 100-kb window gets its state from its own k-mer counts, and the HMM links neighbouring windows.
+- **Not a genome share.** Their 8.1% heterozygous figure is "across all SNP sites", and those sites are not spread evenly over the genome. Ours are shares of the genome (100-kb windows along every chromosome).
+- **Uncertain heterozygous calls.** At low depth a heterozygous site often shows reads from only one allele (heterozygotes missed), while sequencing errors and repeats can create false ones, so their heterozygous share is uncertain in both directions.
+- **Different population.** W22 instead of B73, inbred teosinte instead of outbred teosinte plants (which may carry more harmful recessive alleles), and BC1S4 single lines instead of BC2S3 pools.
+
+To still ask what TeoNAM's numbers would mean for our pools, a calculation note from our lab (18 November 2026) fits a simple model to them. The model has three numbers, each 0.5 under Mendel:
 - t: the share of the genome that is heterozygous after a backcross;
 - k: the share of heterozygous genome that stays heterozygous after one selfing;
 - q: of the heterozygous genome that becomes fixed, the share fixed for teosinte.
 
 Two observed values cannot set three numbers, so one is kept at 0.5 in turn. This gives two bounding cases: **selection during selfing** (t = 0.5, k = 0.63, q = 0.36) and **selection at the backcross** (t = 0.38, k = 0.68, q = 0.5). For a pool, the expected donor share inside a heterozygous (SEG) segment is (1 − k)·q + k/2; it falls below ½ only when q < ½, i.e. when selfing fixes B73 more often than teosinte.
 
-| Expectation for our BC2S3 pools | DONOR (homozygous) | SEG (heterozygous) | Donor alleles | Donor share inside SEG pools |
+| Expected for our BC2S3 pools | DONOR (homozygous) | SEG (heterozygous) | Donor alleles | Donor share inside SEG pools |
 |---|---|---|---|---|
 | Mendel | 9.38% | 6.25% | 12.5% | 0.500 |
-| TeoNAM-calibrated, selection during selfing | 5.4% | 10.0% | 9.8% | 0.447 |
-| TeoNAM-calibrated, selection at the backcross | 3.9% | 6.6% | 7.2% | 0.500 |
+| From TeoNAM, selection during selfing | 5.4% | 10.0% | 9.8% | 0.447 |
+| From TeoNAM, selection at the backcross | 3.9% | 6.6% | 7.2% | 0.500 |
 | **Observed** | **4.95%** | **6.23%** | **8.1%** | **0.459** |
 
-- DONOR and the donor allele share fall inside the TeoNAM-calibrated range; SEG is just below it (6.23% against 6.6–10.0%).
-- The donor share inside SEG pools (0.459) is close to the "selection during selfing" case (0.447) and away from the "selection at the backcross" case (0.500).
-- So a population made the same way loses teosinte to about the same extent, and the share inside SEG pools points to selection during selfing. The model uses one average for the whole genome and assumes our lines behave like TeoNAM (TeoNAM used W22 and inbred teosinte; we used B73 and outbred teosinte plants, which may carry more harmful recessive alleles). The truth is probably a mix of the two cases.
+- DONOR and the donor allele share fall inside the range from TeoNAM.
+- The SEG range rests almost entirely on TeoNAM's 8.1% heterozygous figure, the least certain of its numbers. If their true heterozygosity were lower, the range would move down to ours:
 
-**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.46). This fits TeoNAM's "selection during selfing" case. Lower survival of teosinte-carrying seeds and seedlings may add to it.
+  | TeoNAM heterozygosity used | Expected SEG for our pools |
+  |---|---|
+  | 8% (as reported) | 6.6–10.0% |
+  | 6% | 5.3–8.7% |
+  | 5% | 4.6–7.9% |
+  | **Observed** | **6.23%** |
+
+- The donor share inside SEG pools (0.459) is closer to the "selection during selfing" case (0.447) than to the "selection at the backcross" case (0.500). The model uses one average for the whole genome; the truth is probably a mix of the two cases.
+
+**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.46). TeoNAM's authors explained their excess of heterozygous and maize genome the same way. Lower survival of teosinte-carrying seeds and seedlings may add to it.
 
 **Caveats.**
 - The transmission calculation assumes the same loss in every generation and in both sexes; it is a rough guide.

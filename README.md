@@ -714,6 +714,18 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
    - `Zv0480_P3_P2_P1211` is **contaminated**: 53% of its stray donor alleles (inside our B73 tracts) are homozygous-donor sites of `Zx0550_P4_P3_P5311`, a *mexicana* sample. This explains why its DONOR regions show intermediate fractions (mean 0.33).
    - `Zx0090_P2_P5_P1111` and `Zx0160_P2_P4_P1111` look like **sample swaps or wrong plants**: 8 and 10 of their DONOR tracts show no teosinte at all. Their targeted-sequencing DNA does not seem to come from the pool we sequenced.
 
+**Examples: our calls on top of the targeted-sequencing reads.** Each panel is one sample and one chromosome. The band at the top is our k-mer call of the pool; the points are the targeted-sequencing donor allele fraction at each real SNP. The outlined tract is a SEG tract of ours, chosen to show each outcome seen in the SEG row of the table:
+
+![Our k-mer calls on top of the targeted-sequencing reads, five examples](figures/targseq_examples.png)
+
+1. **We call SEG; the targeted sequencing shows only the B73 allele** (`Zd0010_P3_P3_P3211`, chr10 120–129 Mb; 103 SNPs in 7 regions, 3 at a low fraction near 0.2). The plant sequenced carries no teosinte here: an AA plant from a segregating family, or a region where our SEG call is wrong.
+2. **We call SEG; intermediate throughout** (`Zd0010_P3_P3_P3411`, chr10 81–152 Mb; 32 SNPs at 0.3–0.7, none ≥ 0.8). One teosinte copy (AB), as expected for SEG.
+3. **We call SEG; two teosinte copies** (`Zx0030_P2_P2_P2111`, chr3 71–81 Mb; 8 SNPs ≥ 0.8, none intermediate). The plant is BB here, like the DONOR tracts on both sides. This panel also shows the whole chromosome working as expected: SNPs in our DONOR tracts sit near 1, SNPs in our SEG tracts (0–40 and 175–210 Mb) are intermediate, and SNPs in our B73 tracts are at 0.
+4. **We call SEG; a mixture** (`Zx0510_P1_P3_P2111`, chr4 149–219 Mb; 37 SNPs intermediate, 12 ≥ 0.8, the high ones at 187–200 Mb). Mostly one teosinte copy, with regions of two.
+5. **We call SEG; part B73, part intermediate** (`Zx0560_P4_P3_P5111`, chr2 186–216 Mb). Only the B73 allele at 186–191 Mb (36 SNPs), intermediate at 200–201 Mb (8 SNPs). For one plant this is a crossover between 191 and 200 Mb; for a bulk, a change in how many plants carry teosinte.
+
+All five outcomes are possible for a SEG family: its plants can be AA, AB or BB, and change along the chromosome where they recombined. A single plant shows them as clean 0, ½ and 1 blocks; a bulk shows them as fractions in between. **How to read the points:** the panel SNPs come in clusters (one targeted region each, often 5–30 SNPs), so points stack at one position; and the fractions of SNPs in one region can differ (for example 0.3 and 0.95 at chr4 186.9 Mb), probably from amplification bias. A region is therefore read by its majority, and a tract by its median (as in the table).
+
 **One plant or a bulk?** This matters only for the SEG row, and it waits for confirmation of what DNA was sequenced:
 - **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 21 : 71 : 8 among the clearly called tracts, which would mean BB plants are strongly depleted, as in the selection we infer in 2.8.1. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.37–0.51).
 - **If it is a bulk of several plants,** the SEG fraction should be about 0.46, which is what we see, and most SEG tracts would look intermediate (AB), which is also what we see.
@@ -721,7 +733,7 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 
 **Limits.** Only tracts of 1 Mb or more were compared, so short tracts are still unchecked; many tracts had too few panel SNPs for a clear call (24–47% unclear); and two samples were not aligned (one had only an R2 file, one job ran out of time) and were not rerun.
 
-Scripts: `final_script/34_targseq_align.sh`, `34b_targseq_call.sh`, `34c_targseq_compare.py` (site-level comparison), `34d_targseq_tracts.py` (tracts), `34e_targseq_figure.py` (figure). Results: `data/introgression_spread/targseq/` (`tract_summary.tsv`, `tracts_targseq.tsv`, `hidden_b73_windows.tsv`, `per_sample.tsv`, `sites_used.tsv.gz`).
+Scripts: `final_script/34_targseq_align.sh`, `34b_targseq_call.sh`, `34c_targseq_compare.py` (site-level comparison), `34d_targseq_tracts.py` (tracts), `34e_targseq_figure.py` (summary figure), `34f_targseq_examples.py` (example panels). Results: `data/introgression_spread/targseq/` (`tract_summary.tsv`, `tracts_targseq.tsv`, `hidden_b73_windows.tsv`, `per_sample.tsv`, `sites_used.tsv.gz`).
 
 ### 2.10 Population structure from k-mers (step 32)
 

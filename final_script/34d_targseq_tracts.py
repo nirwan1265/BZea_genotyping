@@ -5,17 +5,20 @@
 Reads 34c's sites_used.tsv.gz (sample, pool, chr, pos, dp, af, state) and the k-mer tracts. Compares whole tracts,
 not 1-Mb bins, so that each comparison rests on many SNPs.
 
-Donor-allele evidence at a site ("alt site"): at least --min_alt alt reads and AF >= --min_af. Single noisy reads
-(about 2% of sites in our B73 regions have AF 0.1-0.35) are not counted.
+Sites: only real SNPs are used. Most sites in the targseq VCF are never homozygous for the alternative allele in any
+sample (91% in the first run): they are amplification or sequencing errors that appear at random sites in single samples
+at AF ~0.3. A site is used for sample X only if it is homozygous alt (AF >= 0.9, depth >= 10) in at least
+--min_hom other samples (leave-one-out, so a sample's own reads do not decide which of its sites are used).
+Donor-allele evidence at a site ("alt site"): at least --min_alt alt reads and AF >= --min_af.
 
 If the targseq DNA is one plant of the plot, the plant's genotype in a tract of ours should be:
   our B73   -> AA (no alt sites)
   our DONOR -> BB (alt sites at AF ~1)
   our SEG   -> AA, AB or BB: 1/4 : 1/2 : 1/4 under Mendel (the plant is a BC2S3 child of an AB mother)
 Plant genotype of a tract (tracts >= --min_mb, with >= --min_sites covered sites):
-  BB if >= 2 alt sites and their median AF >= 0.8; AB if >= 2 alt sites and median AF 0.25-0.75;
-  AA if no more alt sites than noise allows (the sample's own noise rate in our B73 tracts, Poisson 99th
-  percentile) and at least --min_sites covered sites; otherwise unclear.
+  carrier = more alt sites than the sample's noise rate allows (noise = its alt-site rate in our B73 tracts;
+  Poisson p < 0.001) and >= 2 alt sites; then BB if their median AF >= 0.8, AB if 0.25-0.75, else unclear;
+  AA if not a carrier and at least --min_sites covered sites; otherwise unclear.
   A DONOR region whose teosinte allele equals B73 at almost every panel SNP can look AA; --min_sites guards
   against that (see the AA share of our DONOR tracts: it is the false-AA rate).
 Hidden introgressions in our B73 tracts: 2-Mb windows (1-Mb steps) with more alt sites than the sample's noise
@@ -40,12 +43,19 @@ ap.add_argument("--min_alt", type=int, default=3)
 ap.add_argument("--min_af", type=float, default=0.2)
 ap.add_argument("--min_mb", type=float, default=1.0)
 ap.add_argument("--min_sites", type=int, default=30)
+ap.add_argument("--min_hom", type=int, default=1)
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
 ST = {0: "B73", 1: "SEG", 2: "DONOR"}
 
 S = pd.read_csv(a.sites, sep="\t")
 S["alt"] = np.rint(S.af * S.dp).astype(int)
+# real SNPs: homozygous alt in >= min_hom samples other than this one
+S["hom"] = (S.af >= 0.9) & (S.dp >= 10)
+nh = S.groupby(["chr", "pos"]).hom.transform("sum") - S.hom.astype(int)
+n0 = S[["chr", "pos"]].drop_duplicates().shape[0]
+S = S[nh >= a.min_hom].copy()
+print(f"sites: {n0:,} in the VCF; {S[['chr', 'pos']].drop_duplicates().shape[0]:,} homozygous alt in >= {a.min_hom} other sample(s)")
 S["is_alt"] = (S.alt >= a.min_alt) & (S.af >= a.min_af)
 T = pd.read_csv(a.tracts, sep="\t")
 T = T[T.SAMPLE.isin(S.pool.unique())].copy()
@@ -69,9 +79,10 @@ for (smp, pool), g in S.groupby(["sample", "pool"]):
             m = (pos >= r.START) & (pos < r.END)
             n, k = int(m.sum()), int(alt[m].sum())
             med = float(np.median(af[m][alt[m]])) if k else np.nan
-            if k >= 2 and med >= 0.8: geno = "BB"
-            elif k >= 2 and 0.25 <= med <= 0.75: geno = "AB"
-            elif n >= a.min_sites and k <= poisson.ppf(0.99, nr * n): geno = "AA"
+            carrier = k >= 2 and poisson.sf(k - 1, nr * n) < 1e-3
+            if carrier and med >= 0.8: geno = "BB"
+            elif carrier and 0.25 <= med <= 0.75: geno = "AB"
+            elif not carrier and n >= a.min_sites: geno = "AA"
             else: geno = "unclear"
             rows.append({"sample": smp, "pool": pool, "chr": ch, "start": r.START, "end": r.END, "Mb": round(r.Mb, 2),
                          "our_call": r.STATE, "sites": n, "alt_sites": k, "median_alt_af": round(med, 3) if k else np.nan,

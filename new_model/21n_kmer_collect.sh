@@ -14,7 +14,10 @@
 #   Run from new_model/ after 20n:  sbatch 21n_kmer_collect.sh
 # =============================================================================
 set -euo pipefail
-source "${SLURM_SUBMIT_DIR:-$PWD}/../final_script/config.sh"
+HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)                 # new_model/
+source "${HERE}/../final_script/config.sh"
+# config.sh sets these from the submit folder; point them back at final_script/
+FINAL_DIR=$(cd "${HERE}/../final_script" && pwd); MAP_DIR=${FINAL_DIR}/genetic_maps
 need python3
 DNEW=${DNEW:-${KMER_DIR}/new_model}
 python3 "${FINAL_DIR}/21_kmer_collect.py" --hmm_dir "${DNEW}/hmm" --ref_dir "$D19" --out_dir "${DNEW}/introgression" \

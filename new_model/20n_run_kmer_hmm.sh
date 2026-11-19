@@ -16,7 +16,10 @@
 #     sbatch --array=1-$(( (N + 29) / 30 )) 20n_run_kmer_hmm.sh
 # =============================================================================
 set -euo pipefail
-source "${SLURM_SUBMIT_DIR:-$PWD}/../final_script/config.sh"
+HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)                 # new_model/
+source "${HERE}/../final_script/config.sh"
+# config.sh sets these from the submit folder; point them back at final_script/
+FINAL_DIR=$(cd "${HERE}/../final_script" && pwd); MAP_DIR=${FINAL_DIR}/genetic_maps
 need python3
 python3 -c "import numpy, scipy" 2> /dev/null || die "python3 here has no numpy/scipy"
 DNEW=${DNEW:-${KMER_DIR}/new_model}
@@ -32,6 +35,6 @@ for (( i = FIRST; i < FIRST + KMER_HMM_POOLS_PER_TASK && i < ${#POOLS[@]}; i++ )
 done
 (( ${#TODO[@]} )) || { echo "task ${IDX}: all done already"; exit 0; }
 ASMS=$(for a in "${DONOR_ASSEMBLIES[@]}"; do IFS=: read -r n t _ <<< "$a"; echo "${n}:${t}"; done | paste -sd,)
-python3 "${SLURM_SUBMIT_DIR:-$PWD}/20n_kmer_hmm.py" --d_spread --level_dir "${DNEW}/levels" \
+python3 "${HERE}/20n_kmer_hmm.py" --d_spread --level_dir "${DNEW}/levels" \
   --samples "$(IFS=,; echo "${TODO[*]}")" --pools_tsv "${D11}/pools.tsv" --win_dir "$D16" --ref_dir "$D19" \
   --assemblies "$ASMS" --map_dir "$MAP_DIR" --out_dir "$OUT" --plants "$KMER_PLANTS"

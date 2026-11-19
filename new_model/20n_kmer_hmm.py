@@ -5,7 +5,9 @@ new_model / 20n — copy of final_script/20_kmer_hmm.py with one addition: --lev
   --level_dir DIR: DONOR level per window from <DIR>/<TAXON>.npy (new_model/20c: learned from all pools of
   the taxon) instead of the mean of the taxon's assemblies. Everything else is unchanged: the per-pool scale
   grid, d_spread (tau from the assemblies), SEG emission, transitions, rho grid and decoding.
-  Without --level_dir this script gives the same results as step 20.
+  --acc_level_dir DIR (with --meta): per-accession levels from new_model/20d, <ACCESSION>.npy; a pool uses its
+  accession's level if the file exists, otherwise the taxon level (--level_dir, or the assemblies).
+  Without --level_dir and --acc_level_dir this script gives the same results as step 20.
 
 --- original description (step 20) ---
 20 — Introgression HMM on k-mer windows (Nirwan's BC2S3 HMM; new emission).
@@ -127,6 +129,7 @@ def main():
     ap.add_argument("--d_spread", action="store_true", help="widen DONOR/SEG by the between-assembly spread of d (see top)")
     ap.add_argument("--d_spread_half", type=int, default=5, help="windows each side to average the spread over")
     ap.add_argument("--level_dir", default="", help="new_model/20c levels: <TAXON>.npy replaces the assembly mean")
+    ap.add_argument("--acc_level_dir", default="", help="new_model/20d levels: <ACCESSION>.npy (needs --meta)")
     a = ap.parse_args()
 
     rho_grid = [float(x) for x in a.rho_grid.split(",")]
@@ -185,6 +188,14 @@ def main():
     C = {s: load(s) for s in controls}
     Cn = {s: v / np.median(v) for s, v in C.items()}
 
+    acc_of = {}
+    if a.acc_level_dir:
+        if not a.meta: sys.exit("--acc_level_dir needs --meta")
+        with open(a.meta, encoding="utf-8", errors="ignore") as f:
+            next(f)
+            for line in f:
+                p = line.rstrip("\r\n").split("\t")
+                if len(p) > 1: acc_of[p[0]] = p[1].split("_")[0]
     family = {}
     if a.family_dir:
         with open(a.meta, encoding="utf-8", errors="ignore") as f:
@@ -224,7 +235,11 @@ def main():
         famfile = f"{a.family_dir}/{S}.npy" if a.family_dir else ""
         if famfile and os.path.exists(famfile):
             dw0, grid, kind = np.load(famfile).astype(float), fam_grid, "family_scale"
-        elif tax in d_tax: dw0, grid, kind = d_tax[tax], scale_grid, "assembly_scale"
+        elif tax in d_tax:
+            dw0, grid, kind = d_tax[tax], scale_grid, "assembly_scale"
+            accf = f"{a.acc_level_dir}/{acc_of.get(S, '')}.npy" if a.acc_level_dir else ""
+            if accf and acc_of.get(S) and os.path.exists(accf):
+                dw0 = np.load(accf).astype(float)
         elif role.get(S) == "control": dw0, grid, kind = d_all, scale_grid, "assembly_scale"
         else:              dw0, grid, kind = None, const_grid, "constant_d"
 
@@ -261,7 +276,8 @@ def main():
         np.savez_compressed(f"{a.out_dir}/{S}.npz", rho_grid=np.array(rho_grid), loglik=ll, par_best=par_best,
                             param_kind=kind, states_R1=st1, states_R=stR, rigidity=a.rigidity, r=r.astype(np.float32),
                             ok=ok, sigma=sig_p, lam=lam, taxon=tax, role=role.get(S, "NA"), d_spread=bool(tau0 is not None),
-                            level_source="pools" if (a.level_dir and os.path.exists(f"{a.level_dir}/{tax}.npy")) else "assemblies")
+                            level_source=("accession" if (a.acc_level_dir and acc_of.get(S) and os.path.exists(f"{a.acc_level_dir}/{acc_of.get(S)}.npy"))
+                                          else "pools" if (a.level_dir and os.path.exists(f"{a.level_dir}/{tax}.npy")) else "assemblies"))
         jb = int(np.argmax(ll)); v = st1[jb][st1[jb] >= 0]
         print(f"{S} ({tax}): sigma {sig_p:.3f} | best rho for this pool {rho_grid[jb]} | {kind} {par_best[jb]} | "
               f"SEG {100*np.mean(v==1):.2f}% DONOR {100*np.mean(v==2):.2f}%")

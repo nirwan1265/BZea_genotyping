@@ -51,4 +51,55 @@ python compare_old_new.py --old $D21/tracts_all.tsv.gz --new $DNEW/introgression
 
 **What success looks like:** SEG tracts between two DONOR tracts stop being BB in the targeted sequencing (47% now), the hotspot counts drop, and the rest of the validation table (B73 → AA, DONOR → BB, SEG → AB) does not get worse. Only then would the new levels replace the current ones.
 
-Files: `20c_pool_levels.py` / `.sh` (levels), `20n_kmer_hmm.py` / `20n_run_kmer_hmm.sh` (HMM), `21n_kmer_collect.sh` (calls), `compare_old_new.py` (old vs new).
+## Result of the taxon-level fit (20c → 20n → 21n), 19 Nov 2026
+
+| Check | Assembly levels (current) | Taxon levels (20c) |
+|---|---|---|
+| Genome share DONOR / SEG | 4.94% / 6.22% | 4.88% / 6.22% |
+| SEG between two DONOR tracts (% of genome) | 0.38% | 0.32% |
+| Hotspots: chr6 21–23 / chr1 297 / chr7 54–65 / chr3 75–78 Mb (pools) | 48 / 28 / 28 / 19 | 11 / 14 / 23 / 16 |
+| Targeted seq.: DONOR tracts that are BB | 90.7% | 93.7% |
+| Targeted seq.: SEG tracts that are AA / AB / BB | 17.9 / 74.3 / 7.8% | 6.2 / 81.8 / 12.1% |
+| Targeted seq.: B73 tracts that are AA | 97.1% | 96.2% |
+| Targeted seq.: SEG between two DONOR tracts that are BB | 47% (38 tracts) | 71% (38 tracts) |
+
+Better DONOR calls, fewer SEG calls where the plant has no teosinte, and two hotspots mostly gone; but the
+SEG-between-DONOR error stays (the remaining ones are BB even more often), and chr7 and chr3 barely move. So the
+error is not one level per taxon: within a taxon, families carry different teosinte haplotypes. Next: one level
+per accession. The genome shares hardly move, so the DONOR deficit (main README 2.8.1) does not depend on how the
+DONOR level is set.
+
+## Per accession (20d → 20na → 21na)
+
+`20d_accession_levels.py` fits the same three-group model on the pools of **one accession** (84 accessions; median
+11 pools; in a window often 1–3 carry teosinte). To stay stable with so few pools, the group sizes get 5 pseudo-pools
+at the taxon-wide mix, and the level is shrunk towards the accession's taxon level from 20c:
+level = (n·d̂ + K·d_taxon)/(n + K), K = 2. Accessions with fewer than 4 pools keep the taxon level.
+
+Simulation (two accessions of 12 pools; one has a hotspot 0.18 above the taxon level): the error in the hotspot falls
+from 0.18 to 0.07 with K = 2 (0.05 with K = 1, 0.09 with K = 3), the other accession is unchanged, and 90% of the
+other windows stay within ±0.047 (K = 1: ±0.058; K = 3: ±0.039). So the per-accession fit corrects about 60% of an
+accession-specific shift and adds little noise.
+
+`20n_kmer_hmm.py` takes `--acc_level_dir` (with `--meta`): a pool uses its accession's level if there is one, else
+the taxon level. Outputs go to `${DNEW}/acc/` so the taxon-level run is kept.
+
+```bash
+cd new_model && conda activate /rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/machine_learning
+sbatch --array=1-5 20d_accession_levels.sh                       # accession levels (needs 20c's levels)
+D11=$(bash -c 'source ../final_script/config.sh; echo $D11')
+N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor") && $3!="Zm"' $D11/pools.tsv | wc -l)
+J=$(sbatch --parsable --array=1-$(( (N + 29) / 30 )) 20na_run_kmer_hmm.sh)   # after 20d has finished
+sbatch --dependency=afterok:$J 21na_kmer_collect.sh
+# then the checks, with $DNEW/acc in place of $DNEW:
+D21=/share/maize/ntanduk/kmer/introgression_spread; DA=/share/maize/ntanduk/kmer/new_model/acc
+mkdir -p $DA/targseq $DA/targseq_tracts
+python ../final_script/34c_targseq_compare.py --vcf_dir $D21/targseq/vcf --tracts $DA/introgression/tracts_all.tsv.gz \
+  --pool_summary $DA/introgression/pool_summary.tsv --names ../data/phenotypes/raw/name_change_final.txt --out $DA/targseq > $DA/targseq/log.txt
+python ../final_script/34d_targseq_tracts.py --sites $DA/targseq/sites_used.tsv.gz --tracts $DA/introgression/tracts_all.tsv.gz \
+  --out $DA/targseq_tracts > $DA/targseq_tracts/log.txt
+python compare_old_new.py --old $D21/tracts_all.tsv.gz --new $DA/introgression/tracts_all.tsv.gz --pool_summary $D21/pool_summary.tsv \
+  --targseq_old ../data/introgression_spread/targseq/tracts_targseq.tsv --targseq_new $DA/targseq_tracts/tracts_targseq.tsv | tee $DA/compare_old_new.txt
+```
+
+Files: `20c_pool_levels.py` / `.sh` (taxon levels), `20d_accession_levels.py` / `.sh` (accession levels), `20n_kmer_hmm.py` (HMM, copy of step 20 with `--level_dir` / `--acc_level_dir`), `20n_run_kmer_hmm.sh` / `20na_run_kmer_hmm.sh` (taxon / accession runs), `21n_kmer_collect.sh` / `21na_kmer_collect.sh` (calls), `compare_old_new.py` (old vs new).

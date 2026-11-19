@@ -39,8 +39,12 @@ ap.add_argument("--tracts", required=True, help="current tracts_all.tsv.gz")
 ap.add_argument("--out", required=True)
 ap.add_argument("--min_old", type=float, default=2000)
 ap.add_argument("--min_new", type=float, default=200)
+ap.add_argument("--rule", default="all", choices=["all", "any"], help="which informative set (p1 RULE)")
+ap.add_argument("--taxa", default="Zv,Zx")
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
+TAG = "_any" if a.rule == "any" else ""
+WIN = f"{a.pilot_dir}/windows{TAG}"
 warnings.simplefilter("ignore", RuntimeWarning)
 CHRS = ("chr3", "chr7")
 HOT = {"chr7 54-65 Mb": ("chr7", 54e6, 66e6), "chr3 75-78 Mb": ("chr3", 75e6, 79e6)}
@@ -53,7 +57,7 @@ def read_win(path):
 
 
 P = pd.read_csv(a.pools, sep="\t")
-ctrl = sorted({os.path.basename(f)[:-7] for f in glob.glob(f"{a.pilot_dir}/windows/Zv/*.tsv.gz")} - set(P.SAMPLE))
+ctrl = sorted({os.path.basename(f)[:-7] for f in glob.glob(f"{WIN}/{a.taxa.split(',')[0]}/*.tsv.gz")} - set(P.SAMPLE))
 print(f"pilot pools {len(P)}, controls with new windows {len(ctrl)}")
 Bold = read_win(f"{a.d19}/B73.tsv.gz")
 IDX = Bold.index
@@ -97,16 +101,16 @@ for s in P.SAMPLE:
         with np.load(f, allow_pickle=True) as z: lam[s] = float(z["lam"])
 
 res = {}
-for tx in ("Zv", "Zx"):
-    pools = [s for s in P[P.TAXON == tx].SAMPLE if os.path.exists(f"{a.pilot_dir}/windows/{tx}/{s}.tsv.gz") and os.path.exists(f"{a.d16}/{s}.tsv.gz")]
+for tx in a.taxa.split(","):
+    pools = [s for s in P[P.TAXON == tx].SAMPLE if os.path.exists(f"{WIN}/{tx}/{s}.tsv.gz") and os.path.exists(f"{a.d16}/{s}.tsv.gz")]
     if not pools: print(f"{tx}: no pools with both old and new windows"); continue
-    Bnew = read_win(f"{a.pilot_dir}/sets/B73_inf_{tx}.tsv.gz").reindex(IDX).fillna(0).values
+    Bnew = read_win(f"{a.pilot_dir}/sets/B73_inf_{tx}{TAG}.tsv.gz").reindex(IDX).fillna(0).values
     Co = [read_win(f"{a.d16}/{c}.tsv.gz").reindex(IDX).fillna(0).values for c in ctrl]
-    Cn = [read_win(f"{a.pilot_dir}/windows/{tx}/{c}.tsv.gz").reindex(IDX).fillna(0).values for c in ctrl]
+    Cn = [read_win(f"{WIN}/{tx}/{c}.tsv.gz").reindex(IDX).fillna(0).values for c in ctrl]
     Ro, Rn, ST, LN, ISL = [], [], [], [], []
     for s in pools:
         Ro.append(scores(read_win(f"{a.d16}/{s}.tsv.gz").reindex(IDX).fillna(0).values, Co, Bold.values, a.min_old))
-        Rn.append(scores(read_win(f"{a.pilot_dir}/windows/{tx}/{s}.tsv.gz").reindex(IDX).fillna(0).values, Cn, Bnew, a.min_new))
+        Rn.append(scores(read_win(f"{WIN}/{tx}/{s}.tsv.gz").reindex(IDX).fillna(0).values, Cn, Bnew, a.min_new))
         st, ln, isl = labels(s); ST.append(st); LN.append(ln); ISL.append(isl)
     Ro, Rn, ST, LN, ISL = map(np.vstack, (Ro, Rn, ST, LN, ISL))
     # controls scored against the other controls: B73 everywhere, for the noise

@@ -37,3 +37,31 @@ Outputs: `result/contrast_old_new.tsv` (printed too) and `result/island_examples
 - Little change: the noise in those windows is mostly per window (not counting noise), and only counting both sides (teosinte k-mers too, fix 2) or deeper sequencing would help.
 
 Checks before step 2: `grep "informative k-mers" logs/p1_build_sets.*.out` should give a count per taxon (a share of the ~680 M B73 single-copy k-mers), and `zcat $KMER_DIR/new_model/pilot_fix1/sets/B73_inf_Zv.tsv.gz | head` should show chr3/chr7 windows with counts.
+
+## Result of the pilot (RULE=all), 19 Nov 2026
+
+| Hotspot | Contrast old → new | SEG-island windows closer to the DONOR level, old → new |
+|---|---|---|
+| *parviglumis* chr7 54–65 Mb | 0.46 → **3.16** | 49% → **93%** |
+| *mexicana* chr7 54–65 Mb | 1.31 → 1.94 | 15% → **87%** |
+| *mexicana* chr3 75–78 Mb | 2.45 → 3.36 | 6% → **71%** |
+| *parviglumis* chr3 75–78 Mb | 1.85 → no estimate | – |
+| rest of chr3 + chr7 | ~3.0 → 3.1–3.4 | – |
+
+Where the informative k-mers exist, the SEG islands at the hotspots read as DONOR, as the targeted sequencing says (figure `../../data/new_model/island_examples.png`: the long chr7 islands sit flat at the DONOR level in the new counts). The old counts are useless at chr7 in *parviglumis*: the teosinte keeps 90% of the B73 k-mers there, so DONOR and B73 are only 0.1 apart.
+
+**The gap:** under RULE=all, *parviglumis* chr3 75–79 Mb keeps only 34–505 informative k-mers per window (*mexicana*: 3,100–13,900), and parts of chr7 55–78 Mb too, so those windows drop out (≥ 200 needed). One or both *parviglumis* assemblies carry nearly all the B73 k-mers there, while our *parviglumis* donors keep only 67%: the assemblies wrongly mark as shared the very k-mers our donors lack.
+
+## Next: RULE=any for *parviglumis*
+
+RULE=any keeps the k-mers missing from **at least one** assembly (B73_uniq minus the k-mers all assemblies share). More k-mers survive, including those our donors lack; some will be present in our donors, which is handled because the DONOR level is learned from our own pools (20c) in the full build.
+
+```bash
+cd /share/maize/ntanduk/BZea_genotyping/new_model/pilot_fix1
+conda activate /rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/kmer_env
+J=$(sbatch --parsable --export=ALL,RULE=any --array=1 p1_build_sets.sh)                       # Zv only
+sbatch --dependency=afterok:$J --export=ALL,RULE=any,TAXA=Zv --array=1-70%100 p1_pool_windows.sh   # Zv pools + controls
+# when done (machine_learning env):
+python p1_contrast.py --pilot_dir $KMER_DIR/new_model/pilot_fix1 --pools pools.tsv --d16 $D16 --d19 $D19 \
+  --hmm_dir $D20 --tracts $D21/tracts_all.tsv.gz --out $KMER_DIR/new_model/pilot_fix1/result_any --rule any --taxa Zv
+```

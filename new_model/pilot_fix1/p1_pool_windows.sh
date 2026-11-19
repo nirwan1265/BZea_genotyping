@@ -13,6 +13,8 @@
 #   One array task per pool: tasks 1-60 = pools.tsv (this folder), 61-70 = the first 10 B73 controls of
 #   <D11>/pools.tsv. Per pool: count its reads with KMC (as step 17; reuses ${KMER_DIR}/kmc/<SAMPLE> if
 #   it exists), intersect with B73_inf_<TAXON> (controls: both Zv and Zx), windows with kcftools on chr3 + chr7.
+#   RULE=any: use the RULE=any sets (sets/B73_inf_<T>_any), write windows_any/<TAXON>/. TAXA=Zv limits the run to
+#   the pools of that taxon (plus controls): sbatch --export=ALL,RULE=any,TAXA=Zv --array=1-70%100 p1_pool_windows.sh
 #   Output: ${P}/windows/<TAXON>/<SAMPLE>.tsv.gz. Temporary disk ~25 GB per running task (deleted after).
 #   Run from new_model/pilot_fix1/ after step 1, k-mer env active:  sbatch --array=1-70%100 p1_pool_windows.sh
 # =============================================================================
@@ -23,18 +25,21 @@ need kmc kmc_tools kcftools awk gzip
 CPUS=${SLURM_CPUS_PER_TASK:-8}
 P=${KMER_DIR}/new_model/pilot_fix1
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <task index>}}
+RULE=${RULE:-all}; TAG=""; [[ $RULE == any ]] && TAG=_any; WD=${P}/windows${TAG}
+ONLY=${TAXA:-}
 mapfile -t PILOT < <(awk -F'\t' 'NR > 1 {print $1 "\t" $2}' "${HERE}/pools.tsv")
 mapfile -t CTRL < <(awk -F'\t' 'NR > 1 && $2 == "control" {print $1}' "${D11}/pools.tsv" | head -10)
 if (( IDX <= ${#PILOT[@]} )); then
   IFS=$'\t' read -r S TX <<< "${PILOT[$((IDX - 1))]}"; SETS=("$TX")
+  [[ -z $ONLY || $ONLY == *"$TX"* ]] || { echo "${S} (${TX}): not in TAXA=${ONLY}"; exit 0; }
 else
   k=$(( IDX - ${#PILOT[@]} - 1 )); (( k < ${#CTRL[@]} )) || { echo "task ${IDX}: nothing"; exit 0; }
-  S=${CTRL[$k]}; SETS=(Zv Zx)
+  S=${CTRL[$k]}; SETS=(Zv Zx); [[ -n $ONLY ]] && read -r -a SETS <<< "${ONLY//,/ }"
 fi
-todo=0; for T in "${SETS[@]}"; do [[ -s ${P}/windows/${T}/${S}.tsv.gz ]] || todo=1; done
+todo=0; for T in "${SETS[@]}"; do [[ -s ${WD}/${T}/${S}.tsv.gz ]] || todo=1; done
 (( todo )) || { echo "${S}: done already"; exit 0; }
-for T in "${SETS[@]}"; do [[ -s ${P}/sets/B73_inf_${T}.kmc_pre ]] || die "missing ${P}/sets/B73_inf_${T} (run p1_build_sets.sh)"; done
-TMP=${P}/tmp/pool_${S}; rm -rf "$TMP"; mkdir -p "$TMP"
+for T in "${SETS[@]}"; do [[ -s ${P}/sets/B73_inf_${T}${TAG}.kmc_pre ]] || die "missing ${P}/sets/B73_inf_${T}${TAG} (run p1_build_sets.sh with RULE=${RULE})"; done
+TMP=${P}/tmp/pool_${S}${TAG}; rm -rf "$TMP"; mkdir -p "$TMP"
 if   [[ -s ${KMER_DIR}/kmc/${S}.kmc_pre ]]; then reads=${KMER_DIR}/kmc/${S}
 elif [[ -s ${KMER_DIR}/${S}.kmc_pre ]];     then reads=${KMER_DIR}/${S}
 else
@@ -46,9 +51,9 @@ else
   reads=${TMP}/reads
 fi
 for T in "${SETS[@]}"; do
-  mkdir -p "${P}/windows/${T}"; out=${P}/windows/${T}/${S}.tsv.gz
+  mkdir -p "${WD}/${T}"; out=${WD}/${T}/${S}.tsv.gz
   [[ -s $out ]] && continue
-  kmc_tools simple "$reads" "${P}/sets/B73_inf_${T}" intersect "${TMP}/u" -ocleft
+  kmc_tools simple "$reads" "${P}/sets/B73_inf_${T}${TAG}" intersect "${TMP}/u" -ocleft
   kmc_tools transform "${TMP}/u" dump "${TMP}/u.txt"
   awk '{print ">k\n" $1}' "${TMP}/u.txt" > "${TMP}/u.fa"; rm -f "${TMP}/u.txt" "${TMP}"/u.kmc_*
   kmc -k"$KMER_K" -m40 -t"$CPUS" -ci1 -fm "${TMP}/u.fa" "${TMP}/u2" "$TMP" > "${TMP}/kmc_u2.log" 2>&1; rm -f "${TMP}/u.fa"

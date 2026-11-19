@@ -14,7 +14,7 @@ The outlined tract is the one described in the title. The three bad samples of 2
 
 Usage: python final_script/34f_targseq_examples.py --sites data/introgression_spread/targseq/sites_used.tsv.gz \
          --tracts data/introgression_spread/tracts_all.tsv.gz --out figures/targseq_examples.png \
-         [--example SAMPLE:CHR:START_MB:END_MB:"title" ...]
+         [--example SAMPLE:CHR[@FROM-TO]:START_MB:END_MB:"title" ...]   (@FROM-TO: zoom the panel to FROM-TO Mb)
 Needs: numpy, pandas, matplotlib.
 """
 import argparse
@@ -29,8 +29,7 @@ EX = [
     "Zd0010_P3_P3_P3411:chr10:81.28:152.45:we call SEG, the targeted sequencing says AB (agree)",
     "Zx0030_P2_P2_P2111:chr3:70.58:81.28:the chromosome agrees, except the outlined SEG tract between two DONOR tracts: it is BB (our error)",
     "Zx0510_P1_P3_P2111:chr4:149.16:219.23:we call SEG, the targeted sequencing says AB with a BB stretch at 192–200 Mb",
-    "Zd0010_P3_P3_P3211:chr10:120.16:129.36:we call SEG, the targeted sequencing sees no donor allele (AA plant, or our error)",
-    "Zx0560_P4_P3_P5111:chr2:185.74:216.04:we call SEG, the targeted sequencing says no donor allele at 186–191 Mb, AB at 200–201 Mb",
+    "Zv0030_P1_P3_P1111:chr1@280-309:297.01:299.21:parviglumis, zoomed to 280–309 Mb: SEG between two DONOR tracts, BB in the targeted sequencing (our error)",
 ]
 ap = argparse.ArgumentParser()
 ap.add_argument("--sites", required=True)
@@ -68,16 +67,20 @@ def regions(x):
 fig, axes = plt.subplots(len(ex), 1, figsize=(12.5, 2.75 * len(ex)))
 for k, (ax, (smp, ch, s0, e0, title)) in enumerate(zip(np.atleast_1d(axes), ex)):
     s0, e0 = float(s0), float(e0)
+    view = None
+    if "@" in ch:                                   # chr1@280-309: zoom to 280-309 Mb
+        ch, v = ch.split("@"); view = tuple(float(q) for q in v.split("-"))
     x = S[(S["sample"] == smp) & (S.chr == ch)]
     pool = x.pool.iloc[0]
     t = T[(T.SAMPLE == pool) & (T.CHROM == ch)]
     L = t.END.max() / 1e6
+    Lw = (view[1] - view[0]) if view else L          # scale for minimum widths
     Y1, Y2, H = 1.62, 1.30, 0.20                  # row 1 (k-mer) and row 2 (targseq call) bands
     for r in t.itertuples():
         ax.add_patch(Rectangle((r.START / 1e6, Y1), (r.END - r.START) / 1e6, H, color=COL[r.STATE], lw=0))
     ax.add_patch(Rectangle((0, Y2 + H / 2 - 0.01), L, 0.02, color="#eeece6", lw=0))
     for p0, p1, call, n in sorted(regions(x), key=lambda r: r[2] != "none"):   # informative regions drawn last
-        w = max((p1 - p0) / 1e6, 0.008 * L)
+        w = max((p1 - p0) / 1e6, 0.008 * Lw)
         x0 = (p0 + p1) / 2e6 - w / 2
         if call == "none":       # uninformative or AA: a short light tick
             ax.add_patch(Rectangle((x0, Y2 + 0.05), w, H - 0.10, color="#dddbd3", lw=0))
@@ -96,7 +99,7 @@ for k, (ax, (smp, ch, s0, e0, title)) in enumerate(zip(np.atleast_1d(axes), ex))
     for yy, lab in [(Y1 + H / 2, "k-mer call (pool)"), (Y2 + H / 2, "targeted seq. call"), (0.5, "targeted seq. SNPs:\ndonor allele fraction")]:
         ax.text(-0.035, yy, lab, ha="right", va="center", fontsize=8, color=INK, transform=ax.get_yaxis_transform())
     ax.set_title(f"{k + 1}. {smp}, {ch}: {title}", loc="left", fontsize=9, color=INK)
-    ax.set_xlim(0, L); ax.set_ylim(-0.06, 1.89)
+    ax.set_xlim(*(view or (0, L))); ax.set_ylim(-0.06, 1.89)
     ax.set_yticks([0, 0.5, 1]); ax.set_yticklabels(["0", "0.5", "1"])
     ax.spines[["top", "right", "left"]].set_visible(False)
     ax.tick_params(labelsize=8, colors=MUTED)

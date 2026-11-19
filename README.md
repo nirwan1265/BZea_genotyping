@@ -356,7 +356,7 @@ A hidden Markov model (HMM) is used because we can't see a pool's true state dir
 - each state gives r values in a typical range, and
 - the state rarely changes from one window to the next, because introgressed segments are long compared with a 100-kb window (median about 10 Mb in our pools; see [Tract lengths](#265-how-long-are-the-tracts) below).
 
-The HMM combines both to find the most likely series of states along each chromosome. It has the same three-state structure as the SNP HMM in step 14 (`14_hmm_pooled.py`); see Rabiner (1989) for HMMs in general. Only the observation is different: a k-mer score per window instead of SNP reads.
+The HMM combines both to find the most likely series of states along each chromosome. It has the same three-state structure as the SNP HMM in step 14 (`14_hmm_pooled.py`); see Rabiner (1989) for HMMs in general. Only the observation is different: a k-mer score per window instead of SNP reads. The design follows the HMM that Zhong et al. (2025) built to call introgressions in 888 maize near-isogenic lines with B73 as the recurrent parent: three states (homozygous B73, heterozygous, homozygous donor), starting frequencies set by the expected genotype frequencies of the generation, transitions from the average recombination rate over all generations of line development, and, after a change, a move to the other two states in proportion to their expected frequencies. Like theirs, our model does not need the donor's genotype, and its key parameter is chosen by a grid search (theirs: the non-informative rate and error rates, checked against SNP-chip calls on 24 lines; ours: the recombination scale ρ, chosen by likelihood). Their observations are GBS SNP calls on single lines; ours are k-mer scores of pools of six plants, which needs the pool-aware emissions below.
 
 **The four parts of the model:**
 
@@ -435,7 +435,7 @@ One caveat: a teosinte parent is an outcrossing, heterozygous plant, and the F1 
 Between two neighbouring windows, the chance of a state change is **s = ρ × θ**:
 - **θ** is the recombination fraction between the two window centres, from the NAM genetic map (Haldane: θ = ½(1 − e^(−2·Morgans))). On average a 100-kb step is 0.075 cM, but it's near 0 around centromeres and higher near chromosome ends.
 - **ρ** scales it. Our lines went through several meioses (BC1, BC2, three selfings), so segment ends are more frequent than one meiosis would give. ρ is not guessed: every pool is run with ρ = 0.25, 0.5, 1, 1.5, 2, 3, 4 and 8, and the value with the highest total likelihood over all donor pools (low-depth pools left out) is used. That is **ρ = 1.5**.
-- **Where to:** if the state changes, it moves to one of the other two states in proportion to their prior (e.g. from B73, more often to DONOR (9.4%) than to SEG (6.25%)).
+- **Where to:** if the state changes, it moves to one of the other two states in proportion to their prior (e.g. from B73, more often to DONOR (9.4%) than to SEG (6.25%)), as in Zhong et al. (2025).
 
 With ρ = 1.5, the chance of a change is about **0.1% per window** on average. The model stays in the same state unless several windows in a row clearly fit another state. I checked this with the model itself, on a Zd DONOR tract at average recombination. A SEG piece inside it is called only when about **4 windows in a row (400 kb)** clearly look SEG (r = 0.66); less clear windows (r = 0.55) need 5. One noisy window can't break a tract, because the 2% outlier term caps its evidence.
 
@@ -1778,6 +1778,7 @@ All references cited in this README, in alphabetical order.
 - Xiao Y, Guo J, Dong Z, Richardson A, Patterson E, Mangrum S, Bybee S, Bertolini E, Bartlett M, et al., Whipple C (2022) Boundary domain genes were recruited to suppress bract growth and promote branching in maize. *Sci Adv* 8:eabm6835. doi:10.1126/sciadv.abm6835
 - Xie Y, Zhao Y, Chen L, Wang Y, Xue W, Kong D, Li C, Zhou L, Li H, Zhao Y, Wang B, Xu M, Zhao B, Bilska-Kos A, Wang H (2023) ZmELF3.1 integrates the RA2-TSH4 module to repress maize tassel branching. *New Phytol*. doi:10.1111/nph.19329
 - Zhang J, Verbraeken L, Sprenger H, et al., Maere S, Nelissen H (2025) High-resolution transcriptional atlas of growing maize shoot organs throughout plant development under well-watered and drought conditions. *bioRxiv*. doi:10.1101/2025.03.12.642568
+- Zhong T, Mullens A, Morales L, Swarts KL, Stafstrom WC, He Y, Sermons SM, Yang Q, Lopez-Zuniga LO, Rucker E, Thomason WE, Nelson RJ, Jamann T, Balint-Kurti PJ, Holland JB (2025) A maize near-isogenic line population designed for gene discovery and characterization of allelic effects. *Plant J* 122:e70228. doi:10.1111/tpj.70228
 - Yang J, Weedon MN, Purcell S, et al. (2011) Genomic inflation factors under polygenic inheritance. *Eur J Hum Genet* 19:807–812.
 - Yang J, Zaitlen NA, Goddard ME, Visscher PM, Price AL (2014) Advantages and pitfalls in the application of mixed-model association methods. *Nat Genet* 46:100–106.
 - Yang Q, Li Z, Li W, et al. (2013) CACTA-like transposable element in *ZmCCT* attenuated photoperiod sensitivity and accelerated the postdomestication spread of maize. *PNAS* 110:16969–16974.

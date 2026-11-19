@@ -879,6 +879,40 @@ Simulation test (5 taxa × 6 pools, 10% donor, 1× reads, scaled = 20): 30 / 30 
 
 ---
 
+## 15b. Fine-mapping inside the QTL support intervals (SuSiE), step 33
+
+`33_susie_finemap.R <step-25 dir> <TRAIT> <qtl2_<TRAIT>_qtl.tsv> <out dir> [qtl_genes/<TRAIT>_qtl_genes.tsv]`
+
+For each QTL of the joint model (step 29), the windows of its support interval are fitted together with `susieR::susie`:
+y = taxon + the trait's other QTL (top windows) + polygenic (LOCO kinship) + interval windows + e. The polygenic h2 is
+estimated by REML without the interval (eigen-decomposition of K, 1-D search); y, windows and covariates are multiplied by
+V^(-1/2) (V = h2 K + (1 − h2) I) and the covariates projected out; then `susie(X, y, L = 10)`.
+Outputs per trait: `susie_<TRAIT>_qtl.tsv` (interval, genes, credible-set width and genes, top windows = fewest windows with
+half of the probability, best window PIP), `susie_<TRAIT>_cs.tsv` (one row per 95% credible set), `susie_<TRAIT>_pip.tsv`
+(PIP per window), `susie_<TRAIT>_genes.tsv` (PIP per gene). Options: PAD_MB (0), SUSIE_L (10), COVERAGE (0.95),
+MIN_ABS_CORR (0.5). About 15 s per trait on a laptop; needs `susieR` and `data.table`.
+
+`33b_pip_to_gene_tables.py --susie <out dir> --genes qtl_genes` adds `window_pip`, `in_credible_set` and `in_top_windows`
+to the gene tables (run again after the gene tables are rebuilt).
+
+Windows inside the same tract in every pool have identical dosage and share the probability, so the resolution is set by
+where tracts end inside the interval. Results and interpretation: main README, section 3.4.3.
+
+## 15c. Validation with targeted sequencing of 96 plots (MolBreeding panel), steps 34–34c
+
+96 of our plots were also genotyped by targeted sequencing at high depth (`/rsstu/users/r/rrellan/BZea/targseq/data`,
+paired-end FASTQ named e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`; all 96 match a plot, 90 have k-mer calls).
+- `34_targseq_align.sh` (array, one task per sample): fastp, bwa mem to B73 v5, sorted BAM. No duplicate removal.
+- `34b_targseq_call.sh` (array 1–10, one task per chromosome): bcftools mpileup with allele depths + multi-sample call,
+  biallelic SNPs with QUAL >= 30.
+- `34c_targseq_compare.py`: donor allele fraction (AF) per sample and site against our call at that place. No donor genotype
+  is needed. Sites are filtered without using our calls (depth >= 10 in >= 20 samples; dropped if alt in more than half
+  of the samples: paralogs or differences between our B73 and the v5 reference). Outputs: AF classes by our call, per-sample
+  summary (donor alleles inside our B73 windows = missed introgressions; AF in SEG and DONOR windows), 1-Mb bin concordance
+  (our call vs the targseq call), AF histograms. Expected AF: B73 0; DONOR 1 where the donor differs from B73; SEG about
+  0.5 if the targseq DNA is the same pool, 0 / 0.5 / 1 if it is one plant of the plot.
+Tested on simulated data (10 samples, two chromosomes): the expected classes and 100% bin concordance are recovered.
+
 ## 16. Mexicana races as sub-taxa (SUBTAXON)
 
 *Mexicana* (Zx, 570 plots) comes from four races that differ in origin and adaptation: **Chalco** (14 accessions, 115 plots; highland, median 2,388 m), **Mesa Central** (16, 165), **Durango** (3, 146) and **Nobogame** (2, 142); `data/metadata_BZea.csv` (`taxa_code`). *Parviglumis* is all Balsas. Step 25 with `--metadata` adds `SUBTAXON` (Zd, Zh, Zl, Zv, Zx_Chal, Zx_Dura, Zx_Mesa, Zx_Nobo) and `ELEVATION` to `pheno.csv`.

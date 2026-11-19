@@ -18,14 +18,17 @@
 ##
 ## Usage:  Rscript 33_susie_finemap.R <assoc input dir (step 25)> <TRAIT> <qtl table (step 29 qtl2_<TRAIT>_qtl.tsv)>
 ##                                    <out dir> [genes table: qtl_genes/<TRAIT>_qtl_genes.tsv]
-## Env:    PAD_MB (1: the region is the support interval +- PAD_MB), SUSIE_L (10), COVERAGE (0.95),
+## Env:    PAD_MB (0: the region is the support interval; > 0 widens it on each side), SUSIE_L (10), COVERAGE (0.95),
 ##         MIN_ABS_CORR (0.5: a CS whose windows are less correlated than this is dropped, susieR default),
 ##         FIX_COL (TAXON)
 ## Needs:  R with susieR and data.table.
 ## Outputs (<out dir>):
 ##   susie_<TRAIT>_cs.tsv     one row per credible set: QTL, windows, span, purity, lead window, genes in the CS
 ##   susie_<TRAIT>_pip.tsv    PIP per window and QTL region (with the CS it belongs to)
-##   susie_<TRAIT>_qtl.tsv    one row per QTL: support interval width, number of CS, total CS width
+##   susie_<TRAIT>_qtl.tsv    one row per QTL: support interval, genes in it, CS width and genes in it, and the
+##                            "top windows": the fewest windows holding half of the probability (windows with the
+##                            same PIP as the last one, i.e. the same tract pattern, are all included), and their genes
+##   susie_<TRAIT>_genes.tsv  per gene (with a genes table): PIP of its window (highest if it spans two), in CS, in top windows
 ## =============================================================================
 suppressPackageStartupMessages({ library(susieR); library(data.table) })
 args <- commandArgs(TRUE)
@@ -33,7 +36,7 @@ if (length(args) < 4) stop("usage: Rscript 33_susie_finemap.R <assoc dir> <TRAIT
 in_dir <- args[1]; trait <- args[2]; qtl_f <- args[3]; out_dir <- args[4]; genes_f <- if (length(args) >= 5) args[5] else ""
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 envn <- function(k, d) { v <- Sys.getenv(k, ""); if (v == "") d else as.numeric(v) }
-PAD <- envn("PAD_MB", 1) * 1e6; L <- envn("SUSIE_L", 10); COV <- envn("COVERAGE", 0.95); MINR <- envn("MIN_ABS_CORR", 0.5)
+PAD <- envn("PAD_MB", 0) * 1e6; L <- envn("SUSIE_L", 10); COV <- envn("COVERAGE", 0.95); MINR <- envn("MIN_ABS_CORR", 0.5)
 FIX_COL <- Sys.getenv("FIX_COL", "TAXON")
 
 ph <- fread(file.path(in_dir, "pheno.csv"), data.table = FALSE)
@@ -71,7 +74,7 @@ reml_h2 <- function(yt, Ct, d) {
   optimize(f, c(0.001, 0.999))$minimum
 }
 
-cs_rows <- list(); pip_rows <- list(); q_rows <- list()
+cs_rows <- list(); pip_rows <- list(); q_rows <- list(); gene_rows <- list()
 for (i in seq_len(nrow(Q))) {
   q <- Q[i, ]; chr <- q$chr; lead <- q$qtl
   lo <- q$interval_start_Mb * 1e6 - PAD; hi <- q$interval_end_Mb * 1e6 + PAD
@@ -111,16 +114,41 @@ for (i in seq_len(nrow(Q))) {
       lead_window = top, lead_pip = round(max(pip[m]), 3), scan_top_window_in_cs = lead %in% w$Marker[m],
       n_genes = genes$n, genes = genes$ids, gene_names = genes$names)
   }
+  ## top windows: fewest windows holding half of the region's probability (ties = same tract pattern, all kept)
+  ## (none when SuSiE finds no credible set: the probability is then spread over the whole region)
+  top <- integer(0)
+  if (ncs > 0) { o <- order(-pip); cum <- cumsum(pip[o]) / sum(pip); k <- which(cum >= 0.5)[1]
+                 top <- which(signif(pip, 4) >= signif(pip[o][k], 4)) }
   pip_rows[[i]] <- data.frame(trait = trait, qtl = lead, Marker = w$Marker, chr = chr, start = w$start, end = w$end,
-                              pip = signif(pip, 4), cs = inCS)
+                              pip = signif(pip, 4), cs = inCS, top_windows = seq_along(pip) %in% top)
+  gi <- list(n_int = NA, n_cs = NA, n_top = NA, top_names = "")
+  if (!is.null(GN)) {
+    gq <- unique(GN[GN$QTL_window == lead, c("gene", "gene_name", "chr", "start", "end")])
+    gp <- vapply(seq_len(nrow(gq)), function(k) { h <- which(w$start < gq$end[k] & w$end > gq$start[k]); if (length(h)) max(pip[h]) else NA_real_ }, 1)
+    gc <- vapply(seq_len(nrow(gq)), function(k) any(!is.na(inCS[w$start < gq$end[k] & w$end > gq$start[k]])), TRUE)
+    gt <- vapply(seq_len(nrow(gq)), function(k) any(seq_along(pip)[w$start < gq$end[k] & w$end > gq$start[k]] %in% top), TRUE)
+    gene_rows[[i]] <- data.frame(trait = trait, QTL_window = lead, gene = gq$gene, window_pip = signif(gp, 3),
+                                 in_credible_set = gc, in_top_windows = gt)
+    gi <- list(n_int = nrow(gq), n_cs = sum(gc), n_top = sum(gt),
+               top_names = paste(ifelse(is.na(gq$gene_name[gt]) | gq$gene_name[gt] == "", gq$gene[gt],
+                                        paste0(gq$gene[gt], " (", gq$gene_name[gt], ")")), collapse = "; "))
+  }
   q_rows[[i]] <- data.frame(trait = trait, qtl = lead, holds_joint_model = q$holds, mlog10p_joint = q$mlog10p_joint,
-                            interval_Mb = round(q$interval_end_Mb - q$interval_start_Mb, 2),
+                            interval_start_Mb = q$interval_start_Mb, interval_end_Mb = q$interval_end_Mb,
+                            interval_Mb = round(q$interval_end_Mb - q$interval_start_Mb, 2), genes_interval = gi$n_int,
                             region_windows = ncol(Xr), h2_polygenic = round(h2, 3), n_cs = ncs,
-                            cs_Mb_total = round(width_tot / 1e6, 2))
+                            cs_Mb_total = round(width_tot / 1e6, 2), genes_cs = gi$n_cs,
+                            top_windows = length(top), top_windows_Mb = round(sum(w$end[top] - w$start[top]) / 1e6, 2),
+                            top_windows_span = if (length(top)) sprintf("%.2f-%.2f", min(w$start[top]) / 1e6, max(w$end[top]) / 1e6) else NA,
+                            top_windows_pip = if (length(top)) round(sum(pip[top]) / sum(pip), 3) else NA,
+                            best_window = if (ncs > 0) w$Marker[which.max(pip)] else NA,
+                            best_window_pip = round(max(pip), 3), genes_top_windows = if (length(top)) gi$n_top else NA,
+                            top_window_genes = gi$top_names)
   message(sprintf("  %-18s interval %5.1f Mb | %3d windows | h2 %.2f | %d CS, %.1f Mb", lead,
                   q$interval_end_Mb - q$interval_start_Mb, ncol(Xr), h2, ncs, width_tot / 1e6))
 }
 fwrite(rbindlist(q_rows), file.path(out_dir, sprintf("susie_%s_qtl.tsv", trait)), sep = "\t")
 fwrite(rbindlist(pip_rows), file.path(out_dir, sprintf("susie_%s_pip.tsv", trait)), sep = "\t")
+if (length(gene_rows)) fwrite(rbindlist(gene_rows), file.path(out_dir, sprintf("susie_%s_genes.tsv", trait)), sep = "\t")
 if (length(cs_rows)) fwrite(rbindlist(cs_rows), file.path(out_dir, sprintf("susie_%s_cs.tsv", trait)), sep = "\t")
-message("WROTE ", out_dir, "/susie_", trait, "_{qtl,pip,cs}.tsv")
+message("WROTE ", out_dir, "/susie_", trait, "_{qtl,pip,cs,genes}.tsv")

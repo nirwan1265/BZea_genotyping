@@ -10,7 +10,7 @@ the gap is small, DONOR and SEG overlap, and a DONOR stretch can be read as SEG 
 
 Reports, per taxon: contrast quantiles over the genome and in the four places where SEG tracts between two DONOR
 tracts recur (chr6 21-23, chr1 296-298, chr7 54-65, chr3 75-78 Mb), and the contrast of the windows where such
-tracts occur, against all windows.
+tracts occur in >= 5 pools, against all windows (with 300-570 pools nearly every window has at least one).
 Output: contrast_<TAXON>.tsv.gz (window, chr, start, level, noise, contrast, pools with a sandwiched SEG there).
 Usage (from new_model/, any env with numpy + pandas):
   D19=...; D20=...; D21=...   (config.sh of the current run)
@@ -91,9 +91,9 @@ for t, pl in sorted(P.items()):
     df.to_csv(f"{a.out_dir}/contrast_{t}.tsv.gz", sep="\t", index=False, compression="gzip")
     q = lambda x: "/".join(f"{v:.1f}" for v in np.quantile(x, [0.1, 0.5, 0.9])) if len(x) else "-"
     row = {"taxon": t, "pools": len(pl), "genome (10/50/90%)": q(contrast[ok]),
-           "windows with sandwiched SEG": q(contrast[ok & (nsw > 0)]),
+           "windows with sandwiched SEG in >= 5 pools": q(contrast[ok & (nsw >= 5)]),
            "low contrast (<3) genome": f"{100 * np.mean(contrast[ok] < 3):.1f}%",
-           "low contrast (<3) where sandwiched": f"{100 * np.mean(contrast[ok & (nsw > 0)] < 3):.1f}%" if (ok & (nsw > 0)).any() else "-"}
+           "low contrast (<3) where sandwiched in >= 5 pools": f"{100 * np.mean(contrast[ok & (nsw >= 5)] < 3):.1f}%" if (ok & (nsw >= 5)).any() else "-"}
     for c, s, e in HOT:
         m = ok & (CH == c) & (ST >= s * 1e6) & (ST < (e + 1) * 1e6)
         row[f"{c} {s}-{e}"] = f"{np.median(contrast[m]):.1f} (level {np.median(d[m]):.2f})" if m.any() else "-"

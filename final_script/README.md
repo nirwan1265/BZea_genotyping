@@ -912,6 +912,10 @@ paired-end FASTQ named e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`
   (our call vs the targseq call), AF histograms. Expected AF: B73 0; DONOR 1 where the donor differs from B73; SEG about
   0.5 if the targseq DNA is the same pool, 0 / 0.5 / 1 if it is one plant of the plot.
 Tested on simulated data (10 samples, two chromosomes): the expected classes and 100% bin concordance are recovered.
+- `34d_targseq_tracts.py`: the same check per tract of ours, assuming the targseq DNA is one plant of the plot. A site counts
+  as donor evidence only with >= 3 alt reads and AF >= 0.2. Plant genotype per tract (AA / AB / BB / unclear) against our call
+  (B73 -> AA, DONOR -> BB, SEG -> AA : AB : BB = 1 : 2 : 1 under Mendel), and 2-Mb windows inside our B73 regions with more
+  donor evidence than the sample's own noise allows (hidden introgressions). Tested on simulated single plants at our real tracts.
 
 ## 16. Mexicana races as sub-taxa (SUBTAXON)
 

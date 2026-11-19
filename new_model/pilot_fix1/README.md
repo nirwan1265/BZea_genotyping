@@ -20,7 +20,7 @@
 cd /share/maize/ntanduk/BZea_genotyping/new_model/pilot_fix1 && mkdir -p logs
 conda activate /rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/kmer_env      # kmc, kmc_tools, kcftools
 J=$(sbatch --parsable --array=1-2 p1_build_sets.sh)                             # ~1-3 h
-sbatch --dependency=afterok:$J --array=1-70%10 p1_pool_windows.sh               # ~30-60 min per pool, 10 at a time
+sbatch --dependency=afterok:$J --array=1-70%100 p1_pool_windows.sh              # ~30-60 min per pool; ~25 GB temp disk each
 
 # when all 70 are done:
 conda activate /rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/machine_learning

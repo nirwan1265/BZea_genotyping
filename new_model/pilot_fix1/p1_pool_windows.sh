@@ -14,7 +14,7 @@
 #   <D11>/pools.tsv. Per pool: count its reads with KMC (as step 17; reuses ${KMER_DIR}/kmc/<SAMPLE> if
 #   it exists), intersect with B73_inf_<TAXON> (controls: both Zv and Zx), windows with kcftools on chr3 + chr7.
 #   Output: ${P}/windows/<TAXON>/<SAMPLE>.tsv.gz. Temporary disk ~25 GB per running task (deleted after).
-#   Run from new_model/pilot_fix1/ after step 1, k-mer env active:  sbatch --array=1-70%10 p1_pool_windows.sh
+#   Run from new_model/pilot_fix1/ after step 1, k-mer env active:  sbatch --array=1-70%100 p1_pool_windows.sh
 # =============================================================================
 set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)

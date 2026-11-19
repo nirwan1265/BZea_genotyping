@@ -1,0 +1,7 @@
+taxon	region	pools	contrast_old	noise_old	donor_level_old	island_windows_closer_to_DONOR_old	contrast_new	noise_new	donor_level_new	island_windows_closer_to_DONOR_new	windows_with_estimate
+Zv	chr7 54-65 Mb	36	0.46	0.109	0.9	49% of 1052	3.16	0.148	0.122	93% of 389	37
+Zv	chr3 75-78 Mb	36	1.85	0.099	0.673	9% of 120				-	0
+Zv	rest of chr3 + chr7	36	3.12	0.104	0.379	20% of 1688	3.35	0.135	0.139	42% of 992	3228
+Zx	chr7 54-65 Mb	24	1.31	0.13	0.7	15% of 246	1.94	0.185	0.35	87% of 61	25
+Zx	chr3 75-78 Mb	24	2.45	0.089	0.632	6% of 355	3.36	0.141	0.094	71% of 337	38
+Zx	rest of chr3 + chr7	24	2.97	0.117	0.361	10% of 3873	3.05	0.159	0.134	15% of 3320	3024

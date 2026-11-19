@@ -1,0 +1,61 @@
+SAMPLE	TAXON	why	targseq
+PN13_SID1159	Zv	sandwiched SEG at hotspot	True
+PN16_SID1505	Zv	sandwiched SEG at hotspot	True
+PN16_SID1513	Zx	sandwiched SEG at hotspot	True
+PN17_SID1542	Zx	sandwiched SEG at hotspot	True
+PN17_SID1585	Zx	sandwiched SEG at hotspot	True
+PN17_SID1600	Zx	sandwiched SEG at hotspot	True
+PN3_SID273	Zx	sandwiched SEG at hotspot	True
+PN3_SID288	Zx	sandwiched SEG at hotspot	True
+PN5_SID433	Zx	sandwiched SEG at hotspot	True
+PN6_SID500	Zx	sandwiched SEG at hotspot	True
+PN6_SID513	Zx	sandwiched SEG at hotspot	True
+PN10_SID870	Zv	sandwiched SEG at hotspot	False
+PN11_SID1000	Zv	sandwiched SEG at hotspot	False
+PN11_SID1034	Zv	sandwiched SEG at hotspot	False
+PN11_SID994	Zv	sandwiched SEG at hotspot	False
+PN12_SID1072	Zv	sandwiched SEG at hotspot	False
+PN12_SID1109	Zv	sandwiched SEG at hotspot	False
+PN12_SID1121	Zv	sandwiched SEG at hotspot	False
+PN15_SID1390	Zv	sandwiched SEG at hotspot	False
+PN16_SID1464	Zv	sandwiched SEG at hotspot	False
+PN16_SID1475	Zv	sandwiched SEG at hotspot	False
+PN16_SID1502	Zv	sandwiched SEG at hotspot	False
+PN16_SID1506	Zv	sandwiched SEG at hotspot	False
+PN16_SID1508	Zv	sandwiched SEG at hotspot	False
+PN16_SID1531	Zx	sandwiched SEG at hotspot	False
+PN17_SID1543	Zx	sandwiched SEG at hotspot	False
+PN17_SID1590	Zx	sandwiched SEG at hotspot	False
+PN17_SID1593	Zx	sandwiched SEG at hotspot	False
+PN17_SID1596	Zx	sandwiched SEG at hotspot	False
+PN17_SID1612	Zx	sandwiched SEG at hotspot	False
+PN12_SID1112	Zv	DONOR at hotspot	True
+PN13_SID1158	Zv	DONOR at hotspot	True
+PN13_SID1179	Zv	DONOR at hotspot	True
+PN16_SID1467	Zv	DONOR at hotspot	True
+PN17_SID1571	Zx	DONOR at hotspot	True
+PN17_SID1589	Zx	DONOR at hotspot	True
+PN17_SID1615	Zx	DONOR at hotspot	True
+PN17_SID1620	Zx	DONOR at hotspot	True
+PN4_SID323	Zx	DONOR at hotspot	True
+PN11_SID1015	Zv	DONOR at hotspot	False
+PN11_SID1030	Zv	DONOR at hotspot	False
+PN12_SID1079	Zv	DONOR at hotspot	False
+PN12_SID1086	Zv	DONOR at hotspot	False
+PN12_SID1090	Zv	DONOR at hotspot	False
+PN10_SID871	Zv	SEG at hotspot	True
+PN13_SID1195	Zv	SEG at hotspot	True
+PN15_SID1358	Zv	SEG at hotspot	True
+PN16_SID1488	Zv	SEG at hotspot	True
+PN17_SID1554	Zx	SEG at hotspot	True
+PN4_SID298	Zx	SEG at hotspot	True
+PN4_SID359	Zx	SEG at hotspot	True
+PN5_SID427	Zx	SEG at hotspot	True
+PN10_SID895	Zv	targeted-seq sample	True
+PN11_SID1040	Zv	targeted-seq sample	True
+PN11_SID1052	Zv	targeted-seq sample	True
+PN12_SID1065	Zv	targeted-seq sample	True
+PN12_SID1073	Zv	targeted-seq sample	True
+PN12_SID1084	Zv	targeted-seq sample	True
+PN12_SID1091	Zv	targeted-seq sample	True
+PN12_SID1098	Zv	targeted-seq sample	True

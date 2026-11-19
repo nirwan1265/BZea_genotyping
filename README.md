@@ -1088,7 +1088,7 @@ All results are in `data/introgression_spread/`:
 
 "Hold in joint model" = QTL whose joint −log10 p passes Bonferroni over that trait's QTL. The other five traits are in [3.6.15](#3615-other-traits).
 
-**Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position; an open triangle marks a QTL added by the conditional scans (a second QTL inside a significant region, section 3.4). Middle: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon (taxa with ≥ 5 carrier plots). Right: two columns of **−log10 p** (not effects): "Joint test" = is the QTL still significant with all other QTL in the model; "Taxa differ" = does its effect differ between taxa. For example, DTS Q1 "9.7 | 14.1" means p = 10⁻⁹·⁷ for the QTL and p = 10⁻¹⁴·¹ for the difference between taxa. Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering).
+**Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position; an open triangle marks a QTL added by the conditional scans (a second QTL inside a significant region, section 3.4). Middle: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon (taxa with ≥ 5 carrier plots). Right: two columns of **−log10 p** (not effects): "Joint test" = is the QTL still significant with all other QTL in the model; "Taxa differ" = does its effect differ between taxa. For example, DTS Q1 "9.7 | 14.1" means p = 10⁻⁹·⁷ for the QTL and p = 10⁻¹⁴·¹ for the difference between taxa. Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering). **Fine-mapping PIP** (section 3.4.3): the probability of the window holding each known gene, in the order the genes are listed; **top** = in the top windows (the fewest windows holding half of the QTL's probability), CS = in the 95% credible set but outside the top windows, outside CS = outside the 95% credible set, flat = the probability is spread over the whole interval (highest window ≤ 0.03), so fine-mapping does not separate its genes. A low PIP does not rule a gene out (3.4.3).
 
 #### 3.6.1 Days to silking (DTS)
 
@@ -1096,10 +1096,10 @@ All results are in `data/introgression_spread/`:
 
 Two QTL pass the 1,000-permutation threshold (−log10 p > 5.25), and both hold in the joint model (Bonferroni over 2 QTL: −log10 p > 1.60).
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | +1.00 d | 9.7 | 14.1 (yes) | Differs between taxa (Zd +1.94, Zl +4.77, Zv +0.46, Zx +0.48). Strong, but mostly *luxurians* and *diploperennis*; Zv and Zx only about +0.5 d. |
-| **Q2 chr10 94.5 Mb** | Zm00001eb418700 (ZmCCT10) | +1.01 d | 8.9 | 1.0 (no) | No significant difference between taxa (Zd +1.19, Zv +0.84, Zx +0.94). The ZmCCT10 (Zm00001eb418700) region: teosinte alleles delay flowering everywhere. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.646 (**top**) | +1.00 d | 9.7 | 14.1 (yes) | Differs between taxa (Zd +1.94, Zl +4.77, Zv +0.46, Zx +0.48). Strong, but mostly *luxurians* and *diploperennis*; Zv and Zx only about +0.5 d. |
+| **Q2 chr10 94.5 Mb** | Zm00001eb418700 (ZmCCT10) | 0.010 (flat) | +1.01 d | 8.9 | 1.0 (no) | No significant difference between taxa (Zd +1.19, Zv +0.84, Zx +0.94). The ZmCCT10 (Zm00001eb418700) region: teosinte alleles delay flowering everywhere. |
 
 **Suggestive peaks** (above −log10 p 4.5 but below the 5.25 threshold): chr1 85.8 Mb (5.1; mostly *luxurians*), chr9 10.9 Mb (4.9), chr5 206.4 Mb (4.9; holds Zm00001eb250710, *ZAG3*/*bde1*) and chr9 41.4 Mb (4.6). chr9 10.9 Mb is significant for DTA (below).
 
@@ -1152,11 +1152,11 @@ Results: `data/introgression_spread/assoc_gridlmm_spats_y2023`, `_y2025` and `jo
 
 Three QTL, all hold in the joint model (Bonferroni over 3: −log10 p > 1.78).
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q3 chr10 94.5 Mb** | Zm00001eb418700 (ZmCCT10) | +0.92 d | 9.1 | 1.4 (no) | No significant difference between taxa (Zd +1.27, Zv +0.72, Zx +0.74). Same QTL as DTS Q2 (ZmCCT10, Zm00001eb418700), the strongest DTA QTL; all taxa delay. |
-| **Q2 chr9 10.9 Mb** | Zm00001eb372960 (MADS74) | -0.54 d | 5.6 | 0.6 (no) | No significant difference between taxa (Zd -0.69, Zh -0.39, Zl -1.51, Zv -0.34, Zx -0.48). Teosinte flowers earlier. Suggestive for DTS (−log10 p 4.9). |
-| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | +0.65 d | 5.5 | 11.2 (yes) | Differs between taxa (Zd +1.47, Zl +3.67, Zv +0.21, Zx +0.19). Same QTL as DTS Q1 (Zm00001eb257680), mostly *luxurians* and *diploperennis*. It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q3 chr10 94.5 Mb** | Zm00001eb418700 (ZmCCT10) | 0.008 (flat) | +0.92 d | 9.1 | 1.4 (no) | No significant difference between taxa (Zd +1.27, Zv +0.72, Zx +0.74). Same QTL as DTS Q2 (ZmCCT10, Zm00001eb418700), the strongest DTA QTL; all taxa delay. |
+| **Q2 chr9 10.9 Mb** | Zm00001eb372960 (MADS74) | 0.006 (CS) | -0.54 d | 5.6 | 0.6 (no) | No significant difference between taxa (Zd -0.69, Zh -0.39, Zl -1.51, Zv -0.34, Zx -0.48). Teosinte flowers earlier. Suggestive for DTS (−log10 p 4.9). |
+| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.409 (**top**) | +0.65 d | 5.5 | 11.2 (yes) | Differs between taxa (Zd +1.47, Zl +3.67, Zv +0.21, Zx +0.19). Same QTL as DTS Q1 (Zm00001eb257680), mostly *luxurians* and *diploperennis*. It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
 
 **Candidate genes:**
 - **Q1, chr5 221.8 Mb, shared with DTS Q1:** Zm00001eb257680, the ortholog of rice *HEADING DATE REPRESSOR 1* (see DTS). *Fine-mapping (3.4.3): PIP 0.409 (the highest in the interval); in the top windows (10 genes).*
@@ -1184,14 +1184,14 @@ Bonferroni over the 3 QTL: −log10 p > 1.78 (bold). Top windows: the fewest win
 
 ASI = anthesis–silking interval, DTS − DTA. 12 regions, 6 hold in the joint model (Bonferroni over 12: −log10 p > 2.38). Many other chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts.
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q12 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | -0.36 d | 14.0 | 0.3 (no) | No significant difference between taxa (Zd -0.46, Zl -0.53, Zv -0.35, Zx -0.31). The strongest ASI QTL: teosinte shortens the interval. |
-| **Q11 chr5 218.3 Mb** | Zm00001eb255670 (mads73) | +0.35 d | 8.8 | 4.1 (yes) | Differs between taxa (Zl +1.08, Zv +0.24, Zx +0.28). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
-| **Q1 chr1 4.5 Mb** | Zm00001eb001510 (remorin) | +0.24 d | 6.6 | 0.0 (no) | No significant difference between taxa (Zd +0.19, Zh +0.21, Zl +0.14, Zv +0.26, Zx +0.24). Lengthens ASI. |
-| **Q10 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | -0.21 d | 4.7 | 0.3 (no) | No significant difference between taxa (Zd -0.41, Zh -0.38, Zl +0.47, Zv -0.26, Zx -0.15). Shortens ASI. |
-| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | -0.16 d | 3.6 | 0.1 (no) | No significant difference between taxa (Zd -0.19, Zh -0.46, Zl -0.20, Zv -0.19, Zx -0.13). Shortens ASI. |
-| **Q9 chr4 52.0 Mb** | Zm00001eb175150 (tga1) | -0.24 d | 3.0 | 0.1 (no) | No significant difference between taxa (Zd -0.08, Zh -0.54, Zl -0.67, Zv -0.20, Zx -0.18). Shortens ASI. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q12 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | 0.080 (CS) | -0.36 d | 14.0 | 0.3 (no) | No significant difference between taxa (Zd -0.46, Zl -0.53, Zv -0.35, Zx -0.31). The strongest ASI QTL: teosinte shortens the interval. |
+| **Q11 chr5 218.3 Mb** | Zm00001eb255670 (mads73) | 0.136 (**top**) | +0.35 d | 8.8 | 4.1 (yes) | Differs between taxa (Zl +1.08, Zv +0.24, Zx +0.28). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
+| **Q1 chr1 4.5 Mb** | Zm00001eb001510 (remorin) | 0.102 (**top**) | +0.24 d | 6.6 | 0.0 (no) | No significant difference between taxa (Zd +0.19, Zh +0.21, Zl +0.14, Zv +0.26, Zx +0.24). Lengthens ASI. |
+| **Q10 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | 0.007 (flat) | -0.21 d | 4.7 | 0.3 (no) | No significant difference between taxa (Zd -0.41, Zh -0.38, Zl +0.47, Zv -0.26, Zx -0.15). Shortens ASI. |
+| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.019 (CS); 0.018 (CS) | -0.16 d | 3.6 | 0.1 (no) | No significant difference between taxa (Zd -0.19, Zh -0.46, Zl -0.20, Zv -0.19, Zx -0.13). Shortens ASI. |
+| **Q9 chr4 52.0 Mb** | Zm00001eb175150 (tga1) | 0.019 (CS) | -0.24 d | 3.0 | 0.1 (no) | No significant difference between taxa (Zd -0.08, Zh -0.54, Zl -0.67, Zv -0.20, Zx -0.18). Shortens ASI. |
 
 **Candidate genes:**
 - **Q12, chr7 165.6 Mb (the strongest ASI QTL):** Zm00001eb323880 (*bhlh90*, bHLH transcription factor 90; 165.74 Mb, in a window with −log10 p 13.2 next to the top window). MaizeGDB annotates it as the ortholog of Arabidopsis *FLOWERING BHLH 4* (Neupane et al. 2025); Gramene lists Arabidopsis *FBH3* (AT1G51140) as its closest homolog and rice *OsFBH1* / *POH1* (Os08g0506700) as its closest rice gene. In Arabidopsis the four FBH proteins bind E-boxes in the *CONSTANS* promoter and activate *CO*: their overexpression causes early flowering regardless of photoperiod, and *CO* levels drop in the *fbh* quadruple mutant (Ito et al. 2012). In rice, POH1 forms a dimer with HBP1, both bind the *Hd1* promoter and activate *Hd1*; their overexpression delays flowering by suppressing *Ehd1*, *Hd3a* and *RFT1* (Yin et al. 2023). *Fine-mapping (3.4.3): PIP 0.080 (highest window 0.29); in the 95% credible set, but outside the top windows (165.50–165.70 Mb, 4 genes).*
@@ -1248,9 +1248,9 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Top windows: the fewest wi
 
 Number of stem nodes that carry brace roots. 8 regions, 4 hold (Bonferroni over 8: −log10 p > 2.20).
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | +0.17 | 5.7 | 3.1 (yes) | Differs between taxa (Zd +0.05, Zv +0.26, Zx +0.09). The strongest NBR QTL; largest in *parviglumis*. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.005 (outside CS) | +0.17 | 5.7 | 3.1 (yes) | Differs between taxa (Zd +0.05, Zv +0.26, Zx +0.09). The strongest NBR QTL; largest in *parviglumis*. |
 
 **Candidate gene:**
 - **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (GRMZM2G174736 in B73 v3; 97.41 Mb, in a window with −log10 p 9.0; the top window has 10.3). Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). Their significant chr10 SNP for brace root diameter (chr10.S_95437751, in older B73 coordinates) explains 13.95% of the variance, and GRMZM2G174736 is one of their candidate genes for brace root diameter:
@@ -1295,11 +1295,11 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
 
 SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The meter reads how green the leaf is, a proxy for its chlorophyll; at this stage the leaves begin to senesce, so a high value means the leaf keeps its chlorophyll longer (stay-green), and nitrogen moving out of the leaf to the grain lowers it. 6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08).
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q6 chr10 148.3 Mb** | Zm00001eb432440 (FRS6-like); Zm00001eb432850 (chlorophyll a/b-binding protein) | +2.39 | 4.9 | 0.3 (no) | No significant difference between taxa (Zd +1.83, Zh +2.80, Zl +3.56, Zv +1.16, Zx +3.25). Same region as the second-best PredN region. |
-| **Q4 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | -2.81 | 4.4 | 0.4 (no) | No significant difference between taxa (Zd -1.39, Zl -0.90, Zv -1.07, Zx -3.80). The gene is next to the top window. |
-| **Q3 chr1 148.6 Mb** | Zm00001eb027950 (rccr1); Zm00001eb029690 (bsd2); Zm00001eb028550 (ppd1) | -2.51 | 2.4 | 0.2 (no) | No significant difference between taxa (Zd -2.86, Zh -6.07, Zl -3.27, Zv -2.98, Zx -1.95). Chlorophyll breakdown (*rccr1*), Rubisco (*bsd2*) and photosystem I assembly (*ppd1*) genes in a 19-Mb interval. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q6 chr10 148.3 Mb** | Zm00001eb432440 (FRS6-like); Zm00001eb432850 (chlorophyll a/b-binding protein) | 0.144 (**top**); 0.055 (CS) | +2.39 | 4.9 | 0.3 (no) | No significant difference between taxa (Zd +1.83, Zh +2.80, Zl +3.56, Zv +1.16, Zx +3.25). Same region as the second-best PredN region. |
+| **Q4 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | 0.041 (**top**) | -2.81 | 4.4 | 0.4 (no) | No significant difference between taxa (Zd -1.39, Zl -0.90, Zv -1.07, Zx -3.80). The gene is next to the top window. |
+| **Q3 chr1 148.6 Mb** | Zm00001eb027950 (rccr1); Zm00001eb029690 (bsd2); Zm00001eb028550 (ppd1) | 0.003 (flat); 0.005 (flat); 0.004 (flat) | -2.51 | 2.4 | 0.2 (no) | No significant difference between taxa (Zd -2.86, Zh -6.07, Zl -3.27, Zv -2.98, Zx -1.95). Chlorophyll breakdown (*rccr1*), Rubisco (*bsd2*) and photosystem I assembly (*ppd1*) genes in a 19-Mb interval. |
 
 **Candidate genes:**
 - **Q6, chr10 148.3 Mb:** Zm00001eb432440 (FAR1-RELATED SEQUENCE 6-like; 148.33 Mb). It lies in the top window of the QTL (−log10 p 5.0; the windows of the interval range from 3.7 to 5.0), next to a second FAR1-related gene (Zm00001eb432450). FAR1 and FHY3 are light-signalling transcription factors; in *Arabidopsis* they switch on *HEMB1*, an enzyme of chlorophyll synthesis, when seedlings first turn green (Tang et al. 2012). This maize gene is not characterized; the ATP-synthase GO terms it carries in MaizeGDB are automatic predictions and do not fit a FAR1 protein. The teosinte allele makes leaves greener (+2.39 SPAD units per copy, alike across taxa). *Fine-mapping (3.4.3): PIP 0.144 (the highest in the interval); in the top windows (26 genes).*
@@ -1337,12 +1337,12 @@ Bonferroni over the 6 QTL: −log10 p > 2.08 (bold). Top windows: the fewest win
 
 16 regions, 8 hold in the joint model (Bonferroni over 16: −log10 p > 2.51). Effects are in cm per teosinte copy and alike across taxa (no "taxa differ" test passes).
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q16 chr10 97.0 Mb** | Zm00001eb418700 (ZmCCT10) | +5.64 cm | 10.1 | 0.6 (no) | No significant difference between taxa (Zd +4.49, Zv +8.29, Zx +5.11). The ZmCCT10 region: later flowering, taller plants. |
-| **Q14 chr7 139.1 Mb** | Zm00001eb316740 (tsh4) | -4.97 cm | 9.8 | 0.1 (no) | No significant difference between taxa (Zd -5.08, Zh -6.45, Zl -0.91, Zv -4.47, Zx -5.73). Same region as SL Q9. |
-| **Q3 chr3 12.8 Mb** | Zm00001eb123060 (ra2) | -3.77 cm | 7.2 | 0.8 (no) | No significant difference between taxa (Zd -5.16, Zh +5.38, Zl +0.26, Zv -3.20, Zx -4.30). Same window as EH Q4. |
-| **Q4 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | +4.11 cm | 2.9 | 0.1 (no) | No significant difference between taxa (Zd +7.56, Zh +10.21, Zl +14.45, Zv +5.63, Zx +3.49). Same region as EH Q5 and SL Q3. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q16 chr10 97.0 Mb** | Zm00001eb418700 (ZmCCT10) | 0.022 (flat) | +5.64 cm | 10.1 | 0.6 (no) | No significant difference between taxa (Zd +4.49, Zv +8.29, Zx +5.11). The ZmCCT10 region: later flowering, taller plants. |
+| **Q14 chr7 139.1 Mb** | Zm00001eb316740 (tsh4) | 0.017 (CS) | -4.97 cm | 9.8 | 0.1 (no) | No significant difference between taxa (Zd -5.08, Zh -6.45, Zl -0.91, Zv -4.47, Zx -5.73). Same region as SL Q9. |
+| **Q3 chr3 12.8 Mb** | Zm00001eb123060 (ra2) | 0.117 (**top**) | -3.77 cm | 7.2 | 0.8 (no) | No significant difference between taxa (Zd -5.16, Zh +5.38, Zl +0.26, Zv -3.20, Zx -4.30). Same window as EH Q4. |
+| **Q4 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.035 (**top**) | +4.11 cm | 2.9 | 0.1 (no) | No significant difference between taxa (Zd +7.56, Zh +10.21, Zl +14.45, Zv +5.63, Zx +3.49). Same region as EH Q5 and SL Q3. |
 
 **Candidate genes:**
 - **Q14, chr7 139.1 Mb:** Zm00001eb316740 (*tsh4*, *tassel sheath4*; 138.54 Mb, in a window with −log10 p 9.9; the top window is at 139.05 Mb, −log10 p 10.4). *tsh4* encodes an SBP-box (SPL) transcription factor and is one of the genes that miR156 represses (the dominant *Corngrass1* mutant overexpresses miR156). It works in the developing tassel and ear: *Fine-mapping (3.4.3): PIP 0.017 (highest window 0.06); in the 95% credible set, but outside the top windows (137.40–141.70 Mb, 26 genes).*
@@ -1400,13 +1400,13 @@ Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Top windows: the fewest wi
 
 18 regions, 7 hold (Bonferroni over 18: −log10 p > 2.56). Ear height follows flowering: several QTL hold known flowering genes in their intervals.
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q5 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | +3.00 cm | 8.1 | 0.1 (no) | No significant difference between taxa (Zd +2.11, Zh -1.06, Zl +6.50, Zv +2.52, Zx +3.82). The strongest EH QTL; shared with PH and SL. |
-| **Q10 chr7 184.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | +2.03 cm | 5.3 | 0.5 (no) | No significant difference between taxa (Zd +2.90, Zl -0.78, Zv +1.39, Zx +2.34). Same region as BL Q6. |
-| **Q4 chr3 12.8 Mb** | Zm00001eb122520 (BZR1-like); Zm00001eb122680 (CYP734A6); Zm00001eb123060 (ra2) | -2.06 cm | 5.0 | 2.0 (no) | No significant difference between taxa (Zd -5.48, Zh +0.41, Zl +0.67, Zv -2.95, Zx -1.25). Same window as PH Q3; *ra2*, a BZR1 homolog and CYP734A6 (brassinosteroids) are in the interval. |
-| **Q1 chr2 25.8 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | +1.96 cm | 4.6 | 1.1 (no) | No significant difference between taxa (Zd -0.83, Zh +2.58, Zl +0.83, Zv +1.93, Zx +2.63). *GA2ox2* inactivates gibberellin. |
-| **Q11 chr8 126.2 Mb** | Zm00001eb353250 (ZCN8) | +2.36 cm | 3.2 | 0.1 (no) | No significant difference between taxa (Zd -1.30, Zh +4.32, Zl +1.80, Zv +1.03, Zx +2.48). *ZCN8* is the maize florigen. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q5 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.044 (**top**) | +3.00 cm | 8.1 | 0.1 (no) | No significant difference between taxa (Zd +2.11, Zh -1.06, Zl +6.50, Zv +2.52, Zx +3.82). The strongest EH QTL; shared with PH and SL. |
+| **Q10 chr7 184.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.028 (CS); 0.061 (**top**) | +2.03 cm | 5.3 | 0.5 (no) | No significant difference between taxa (Zd +2.90, Zl -0.78, Zv +1.39, Zx +2.34). Same region as BL Q6. |
+| **Q4 chr3 12.8 Mb** | Zm00001eb122520 (BZR1-like); Zm00001eb122680 (CYP734A6); Zm00001eb123060 (ra2) | 0.003 (outside CS); 0.009 (CS); 0.060 (**top**) | -2.06 cm | 5.0 | 2.0 (no) | No significant difference between taxa (Zd -5.48, Zh +0.41, Zl +0.67, Zv -2.95, Zx -1.25). Same window as PH Q3; *ra2*, a BZR1 homolog and CYP734A6 (brassinosteroids) are in the interval. |
+| **Q1 chr2 25.8 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | <0.001 (flat); <0.001 (flat) | +1.96 cm | 4.6 | 1.1 (no) | No significant difference between taxa (Zd -0.83, Zh +2.58, Zl +0.83, Zv +1.93, Zx +2.63). *GA2ox2* inactivates gibberellin. |
+| **Q11 chr8 126.2 Mb** | Zm00001eb353250 (ZCN8) | 0.053 (**top**) | +2.36 cm | 3.2 | 0.1 (no) | No significant difference between taxa (Zd -1.30, Zh +4.32, Zl +1.80, Zv +1.03, Zx +2.48). *ZCN8* is the maize florigen. |
 
 Just below the cut: Q13 chr9 116.8 Mb (+1.63 cm, joint −log10 p 2.4; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q18 chr10 97.0 Mb (+2.40 cm, 2.5; *ZmEMF1a*, below). Q8 chr6 105 Mb is the only QTL where taxa differ (Zv +6.5 cm, Zd +4.2, others ≈ 0 or negative), but its joint test does not pass.
 
@@ -1451,10 +1451,10 @@ Bonferroni over the 18 QTL: −log10 p > 2.56 (bold). Top windows: the fewest wi
 
 19 regions plus one QTL added by the conditional scans (Q8 chr4 120.2 Mb, open triangle); 11 of the 20 hold (Bonferroni over 20: −log10 p > 2.60). EN counts the stem nodes that bear an ear. **Every QTL that holds is positive: teosinte alleles add ear-bearing nodes**, as expected from teosinte, which bears ears at many nodes.
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q1 chr1 22.9 Mb** | Zm00001eb007670 (ZmD14) | +0.19 | 14.9 | 2.2 (no) | No significant difference between taxa (Zd +0.19, Zh +0.15, Zl -0.12, Zv +0.26, Zx +0.20). *ZmD14* is the strigolactone receptor (shoot branching). |
-| **Q2 chr1 81.3 Mb** | Zm00001eb020350 (clock-coupling ZGT) | +0.09 | 3.3 | 2.0 (no) | No significant difference between taxa (Zd +0.01, Zh -0.03, Zl -0.04, Zv +0.14, Zx +0.11). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q1 chr1 22.9 Mb** | Zm00001eb007670 (ZmD14) | 0.062 (CS) | +0.19 | 14.9 | 2.2 (no) | No significant difference between taxa (Zd +0.19, Zh +0.15, Zl -0.12, Zv +0.26, Zx +0.20). *ZmD14* is the strigolactone receptor (shoot branching). |
+| **Q2 chr1 81.3 Mb** | Zm00001eb020350 (clock-coupling ZGT) | 0.002 (flat) | +0.09 | 3.3 | 2.0 (no) | No significant difference between taxa (Zd +0.01, Zh -0.03, Zl -0.04, Zv +0.14, Zx +0.11). |
 
 Q5 chr3 12.4 Mb (+0.07) holds *ra2* (Zm00001eb123060) and Q15 chr8 133.6 Mb holds *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880); neither holds in the joint model.
 
@@ -1493,12 +1493,12 @@ Bonferroni over the 20 QTL: −log10 p > 2.60 (bold). Top windows: the fewest wi
 
 12 regions plus three QTL added by the conditional scans (Q5 chr2 9.3 Mb, Q6 chr2 34.4 Mb and Q12 chr4 120.5 Mb, open triangles); 10 of the 15 hold (Bonferroni over 15: −log10 p > 2.48). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN, all positive** (teosinte adds ears per node): the same loci raise both the number of ear-bearing nodes and the number of ears per node.
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q8 chr3 11.4 Mb** | Zm00001eb122680 (CYP734A6) | +0.16 | 13.3 | 0.5 (no) | No significant difference between taxa (Zd +0.19, Zh +0.12, Zl +0.08, Zv +0.21, Zx +0.13). |
-| **Q5 chr2 9.3 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | +0.08 | 5.2 | 0.8 (no) | No significant difference between taxa (Zd +0.13, Zh +0.14, Zl +0.11, Zv +0.02, Zx +0.07). Added by the conditional scan: a second QTL on chr2 short arm. |
-| **Q6 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | +0.08 | 4.7 | 0.7 (no) | No significant difference between taxa (Zd +0.07, Zl +0.01, Zv +0.13, Zx +0.09). Added by the conditional scan: a third chr2 QTL. |
-| **Q4 chr1 213.9 Mb** | Zm00001eb040280 (CKX10) | +0.10 | 3.1 | 0.7 (no) | No significant difference between taxa (Zd +0.18, Zh +0.11, Zl -0.03, Zv +0.10, Zx +0.10). *CKX10* is a cytokinin oxidase. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q8 chr3 11.4 Mb** | Zm00001eb122680 (CYP734A6) | 0.206 (**top**) | +0.16 | 13.3 | 0.5 (no) | No significant difference between taxa (Zd +0.19, Zh +0.12, Zl +0.08, Zv +0.21, Zx +0.13). |
+| **Q5 chr2 9.3 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 5.2 | 0.8 (no) | No significant difference between taxa (Zd +0.13, Zh +0.14, Zl +0.11, Zv +0.02, Zx +0.07). Added by the conditional scan: a second QTL on chr2 short arm. |
+| **Q6 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 4.7 | 0.7 (no) | No significant difference between taxa (Zd +0.07, Zl +0.01, Zv +0.13, Zx +0.09). Added by the conditional scan: a third chr2 QTL. |
+| **Q4 chr1 213.9 Mb** | Zm00001eb040280 (CKX10) | 0.005 (outside CS) | +0.10 | 3.1 | 0.7 (no) | No significant difference between taxa (Zd +0.18, Zh +0.11, Zl -0.03, Zv +0.10, Zx +0.10). *CKX10* is a cytokinin oxidase. |
 
 <details><summary>All Prolif QTL with per-taxon effects and all genes in the interval</summary>
 
@@ -1558,12 +1558,12 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold). Top windows: the fewest wi
 
 5 regions plus one QTL added by the conditional scans (Q1 chr2 9.4 Mb, open triangle); 5 of the 6 hold (Bonferroni over 6: −log10 p > 2.08). **chr2 has two QTL** (Q1 and Q2), which were one region in the scan.
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q2 chr2 39.8 Mb** | Zm00001eb079900 (FTIP1) | -1.58 | 8.8 | 1.8 (no) | No significant difference between taxa (Zd -0.83, Zl +1.52, Zv -1.67, Zx -1.92). Not in *luxurians*; *FT-INTERACTING PROTEIN 1* is in the interval. |
-| **Q5 chr4 197.1 Mb** | Zm00001eb197430 (ns2) | -1.74 | 7.8 | 0.0 (no) | No significant difference between taxa (Zd -0.57, Zh -2.69, Zl -3.47, Zv -1.91, Zx -1.75). The PH/EH/SL chr4 region. |
-| **Q6 chr7 185.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | -1.16 | 5.0 | 1.1 (no) | No significant difference between taxa (Zd +0.19, Zl +0.60, Zv -1.25, Zx -1.71). Same region as EH Q10. |
-| **Q4 chr3 203.2 Mb** | Zm00001eb153000 (CCD8); Zm00001eb153190 (ZCN12) | +0.86 | 2.1 | 0.3 (no) | No significant difference between taxa (Zd +0.30, Zh +0.54, Zl +0.87, Zv +0.60, Zx +1.42). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q2 chr2 39.8 Mb** | Zm00001eb079900 (FTIP1) | 0.045 (**top**) | -1.58 | 8.8 | 1.8 (no) | No significant difference between taxa (Zd -0.83, Zl +1.52, Zv -1.67, Zx -1.92). Not in *luxurians*; *FT-INTERACTING PROTEIN 1* is in the interval. |
+| **Q5 chr4 197.1 Mb** | Zm00001eb197430 (ns2) | 0.034 (**top**) | -1.74 | 7.8 | 0.0 (no) | No significant difference between taxa (Zd -0.57, Zh -2.69, Zl -3.47, Zv -1.91, Zx -1.75). The PH/EH/SL chr4 region. |
+| **Q6 chr7 185.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.021 (CS); 0.065 (**top**) | -1.16 | 5.0 | 1.1 (no) | No significant difference between taxa (Zd +0.19, Zl +0.60, Zv -1.25, Zx -1.71). Same region as EH Q10. |
+| **Q4 chr3 203.2 Mb** | Zm00001eb153000 (CCD8); Zm00001eb153190 (ZCN12) | 0.013 (flat); 0.021 (flat) | +0.86 | 2.1 | 0.3 (no) | No significant difference between taxa (Zd +0.30, Zh +0.54, Zl +0.87, Zv +0.60, Zx +1.42). |
 
 Q3 chr3 184.4 Mb (+0.91; *liguleless2*, Zm00001eb147220) is just below the cut (2.0). The chr4 238.3 Mb peak (−log10 p 5.5) lies inside the chr4 197 Mb region and the conditional scan does not add it: given chr4 197 Mb and the other QTL, it is not an independent QTL.
 
@@ -1588,9 +1588,9 @@ Bonferroni over the 6 QTL: −log10 p > 2.08 (bold). Top windows: the fewest win
 
 7 regions, 6 hold (Bonferroni over 7: −log10 p > 2.15). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves.
 
-| QTL | Known genes | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|
-| **Q6 chr7 136.2 Mb** | Zm00001eb316740 (tsh4) | -0.17 | 4.3 | 0.3 (no) | No significant difference between taxa (Zd -0.11, Zh -0.16, Zl -0.06, Zv -0.26, Zx -0.14). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
+|---|---|---|---|---|---|---|
+| **Q6 chr7 136.2 Mb** | Zm00001eb316740 (tsh4) | 0.004 (outside CS) | -0.17 | 4.3 | 0.3 (no) | No significant difference between taxa (Zd -0.11, Zh -0.16, Zl -0.06, Zv -0.26, Zx -0.14). |
 
 The chr6 133.1 Mb peak (*fea4*, Zm00001eb280500; −log10 p 4.85) lies inside the chr6 146 Mb region (131.8–160.5 Mb), and the conditional scan does not add it: it is not independent of chr6 146 Mb.
 

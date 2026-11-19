@@ -643,11 +643,13 @@ Two observed values cannot set three numbers, so one is kept at 0.5 in turn. Thi
 
 - The donor share inside SEG pools (0.459) is closer to the "selection during selfing" case (0.447) than to the "selection at the backcross" case (0.500). The model uses one average for the whole genome; the truth is probably a mix of the two cases.
 
-**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.46). TeoNAM's authors explained their excess of heterozygous and maize genome the same way. Lower survival of teosinte-carrying seeds and seedlings may add to it.
+**Check 4: are the calls right?** Independent data say yes. 85 of our plots were also genotyped by high-depth targeted sequencing, and every tract of ours (≥ 1 Mb) was compared with it (details in [2.9.1](#291-independent-check-targeted-sequencing-of-85-plots)). **96.5% of our B73 tracts carry no teosinte, and only 0.6% are homozygous teosinte**; 86% of our DONOR tracts are homozygous teosinte. So the low DONOR share is not DONOR called as B73: the teosinte really is missing. Inside our SEG tracts the targeted sequencing gives a median donor allele fraction of 0.45, close to the 0.46 of Check 1.
+
+**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.46). TeoNAM's authors explained their excess of heterozygous and maize genome the same way, and the targeted sequencing (Check 4) rules out calling errors as the cause. Lower survival of teosinte-carrying seeds and seedlings may add to it.
 
 **Caveats.**
 - The transmission calculation assumes the same loss in every generation and in both sexes; it is a rough guide.
-- Call errors (DONOR called B73) are not ruled out; genotyping single plants from a few plots in regions called B73, SEG and DONOR would settle the split.
+- Call errors (DONOR called B73) are ruled out for tracts of 1 Mb or more (Check 4); shorter tracts were not checked.
 - Because the pooled plants were chosen, a SEG pool's donor copies are not exactly Binomial(12, ½) as the HMM assumes. The shift (0.46 vs 0.5) is small compared with the spread the SEG emission already allows.
 
 Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`; per-pool and per-taxon tables in `data/introgression_spread/seg_donor_copies/`).
@@ -658,6 +660,55 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 - **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
 - **A second k-mer measure (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa). It uses other k-mers (teosinte k-mers present, not B73 k-mers missing) but the same reads, so it is complementary, not fully independent. It checks the total donor share, not the SEG/DONOR split.
+
+- **Targeted sequencing of 85 plots (section 2.9.1):** an independent, high-depth genotype for the same plots agrees with our calls: 96.5% of our B73 tracts carry no teosinte, 86% of our DONOR tracts are homozygous teosinte, and our SEG tracts are intermediate.
+
+#### 2.9.1 Independent check: targeted sequencing of 85 plots
+
+**Data.** 96 of our plots were also genotyped by targeted sequencing: a fixed panel of SNP regions, sequenced at high depth (paired-end reads; median 23 reads per SNP in our comparison). The samples are named after the plot (e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`), and all 96 match a plot of ours. 95 samples had both read files, 94 aligned, 88 belong to a pool with k-mer calls, and **85** had enough SNPs to compare. The DNA is thought to come from one plant of each plot, but this is not yet confirmed (see "One plant or a bulk?" below).
+
+**Methods.**
+1. **Reads to SNPs** (steps 34, 34b). Adapters trimmed (fastp), reads aligned to B73 v5 (bwa mem; duplicates kept, since the panel may be amplicon-based), and variable sites found in all samples together (bcftools mpileup with mapping and base quality ≥ 20, multi-sample call, biallelic SNPs with QUAL ≥ 30): 656,483 SNPs. Kept: sites with ≥ 10 reads in ≥ 20 samples, and not carrying the alternative allele in more than half of the samples (at any one place most pools are B73, so such sites are paralogs or places where our B73 differs from the reference): **84,813 sites**.
+2. **Donor allele fraction.** At each site, a sample's donor allele fraction is alt reads / all reads; the reference is B73, so the alternative allele is the non-B73 one. The donor genotypes are not needed. A site counts as **carrying donor alleles** if it has ≥ 3 alt reads and a fraction ≥ 0.2.
+3. **Real SNPs only.** Most of the 84,813 sites are not real SNPs (see Results 1). A site is used for a sample only if it is homozygous for the alternative allele (fraction ≥ 0.9, ≥ 10 reads) in at least one *other* sample. Leaving the sample out means its own reads do not decide which of its sites are used. **7,666 real SNPs** remain.
+4. **Our call at each site** (step 34c): the k-mer state (B73 / SEG / DONOR) of the sample's pool at that position.
+5. **Tract comparison** (step 34d). Each tract of ours of 1 Mb or more is compared with the targeted-sequencing reads inside it. The sample's own noise (sites carrying donor alleles inside our B73 tracts; median 0.41 per 100 real SNPs) sets what counts as signal:
+   - **carrier:** at least 2 sites carry donor alleles, and more than the noise allows (Poisson, p < 0.001); then **BB** if their median fraction is ≥ 0.8, **AB** if it is 0.25–0.75;
+   - **AA:** not a carrier, with at least 15 sites covered;
+   - **unclear:** otherwise (too few sites).
+
+   A DONOR region whose teosinte carries the B73 allele at most panel SNPs can look AA; the AA share of our DONOR tracts measures this.
+6. **Missed introgressions.** Inside our B73 tracts, 2-Mb windows (1-Mb steps) with more donor-carrying sites than the sample's noise allows (Poisson, p < 0.001).
+
+**Results.**
+
+![Targeted sequencing against the k-mer calls](figures/targseq_validation.png)
+
+*a: sites carrying donor alleles per 100 SNPs, inside our B73, SEG and DONOR calls, for all sites and for real SNPs only. b: genotype of our tracts in the targeted sequencing. c: median donor allele fraction of each tract that carries donor alleles.*
+
+| Our call | Tracts ≥ 1 Mb | Clearly called | AA (no teosinte) | AB (intermediate) | BB (homozygous teosinte) |
+|---|---|---|---|---|---|
+| **B73** | 1,503 | 1,142 | **96.5%** (97.7% of Mb) | 2.9% | 0.6% |
+| **SEG** | 733 | 391 | 21.2% | **71.1%** | 7.7% |
+| **DONOR** | 749 | 397 | 9.1% | 5.0% | **85.9%** (89.2% of Mb) |
+
+1. **91% of the targeted-sequencing "SNPs" were amplification errors.** Of the 84,813 sites, only 7,666 are homozygous for the alternative allele in any sample. The others carry the alternative allele at a fraction of about 0.3, at random sites, in single samples; they are not shared by relatives and do not come from another sample in the batch. This fits errors made early in the amplification, which are then copied. On all sites, about 1 in 100 sites inside our B73 tracts looked like donor alleles, and a first comparison called 74% of our B73 tracts "AB". On real SNPs the contrast is clean: donor alleles at 0.6 per 100 SNPs in our B73 tracts, 16.2 in SEG and 25.5 in DONOR (figure, a).
+2. **Our B73 calls are right.** 96.5% of our B73 tracts (97.7% of their length) show no teosinte, and 0.6% are homozygous teosinte. So DONOR is not being called B73, and the low DONOR share (section 2.8.1) is real.
+3. **Our DONOR calls are right.** 86% of our DONOR tracts (89% of their length) are homozygous teosinte, with a median donor allele fraction of **1.00** in the carrier tracts (figure, c); the targeted sequencing has no bias towards the B73 allele. The 9% that look AA are mostly regions where the teosinte carries the B73 allele at the panel SNPs; half of them (18 of 36) come from the two swapped samples in point 6.
+4. **Our SEG calls are intermediate.** 71% of our SEG tracts are AB, with a median donor allele fraction of **0.45** (308 carrier tracts; figure, c). This is close to the 0.46 measured from the k-mers inside SEG pools (Check 1 in 2.8.1), so two independent methods give the same number.
+5. **Missed introgressions are rare.** Inside our B73 tracts, 195 of 22,505 windows of 2 Mb (in 61 samples) carry more donor alleles than noise allows, against about 23 expected by chance. That is under 1% of the B73-called genome. Their median donor allele fraction is 0.36, so they are short intermediate (SEG-like) pieces at most, not missed DONOR.
+6. **Three samples are bad and explain most mismatches:**
+   - `Zv0480_P3_P2_P1211` is **contaminated**: 53% of its stray donor alleles (inside our B73 tracts) are homozygous-donor sites of `Zx0550_P4_P3_P5311`, a *mexicana* sample. This explains why its DONOR regions show intermediate fractions (mean 0.33).
+   - `Zx0090_P2_P5_P1111` and `Zx0160_P2_P4_P1111` look like **sample swaps or wrong plants**: 8 and 10 of their DONOR tracts show no teosinte at all. Their targeted-sequencing DNA does not seem to come from the pool we sequenced.
+
+**One plant or a bulk?** This matters only for the SEG row, and it waits for confirmation of what DNA was sequenced:
+- **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 21 : 71 : 8 among the clearly called tracts, which would mean BB plants are strongly depleted, as in the selection we infer in 2.8.1. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.37–0.51).
+- **If it is a bulk of several plants,** the SEG fraction should be about 0.46, which is what we see, and most SEG tracts would look intermediate (AB), which is also what we see.
+- The data lean towards a bulk, but the B73 and DONOR rows hold either way: they are the validation.
+
+**Limits.** Only tracts of 1 Mb or more were compared, so short tracts are still unchecked; many tracts had too few panel SNPs for a clear call (24–47% unclear); and two samples were not aligned (one had only an R2 file, one job ran out of time) and were not rerun.
+
+Scripts: `final_script/34_targseq_align.sh`, `34b_targseq_call.sh`, `34c_targseq_compare.py` (site-level comparison), `34d_targseq_tracts.py` (tracts), `34e_targseq_figure.py` (figure). Results: `data/introgression_spread/targseq/` (`tract_summary.tsv`, `tracts_targseq.tsv`, `hidden_b73_windows.tsv`, `per_sample.tsv`, `sites_used.tsv.gz`).
 
 ### 2.10 Population structure from k-mers (step 32)
 
@@ -789,7 +840,7 @@ To view it, download the file and open it in a browser. GitHub shows HTML files 
 
 **Short tracts aren't proven yet.** The k-mer HMM calls tracts down to about 400 kb. Short tracts are expected from the crossing scheme ([Tract lengths](#265-how-long-are-the-tracts)), and they are shared by relatives as often as long tracts (below), but single short calls haven't been checked with independent data.
 
-**SEG vs DONOR isn't checked directly either.** A SEG call says the family still segregates (plants AA, AB or BB). No independent data has confirmed this split yet. The split is what gives the main result (SEG as expected, DONOR about half), so it should be checked independently: best by genotyping single plants from a few plots in regions called B73, SEG and DONOR, or by simulating pools with known states.
+**SEG vs DONOR is now checked with targeted sequencing** ([2.9.1](#291-independent-check-targeted-sequencing-of-85-plots)): our DONOR tracts are homozygous teosinte (86%), our SEG tracts intermediate (71% AB, donor allele fraction 0.45) and our B73 tracts clean (96.5%). What is still open is whether the targeted-sequencing DNA is one plant or a bulk, which decides how the SEG row is read, and tracts shorter than 1 Mb, which were not compared.
 
 **The DONOR level depends on the assemblies.** The model needs to know how much of each window's B73 k-mers a teosinte genome keeps (d_w). The best source would have been **the actual donor parents** of our lines, sequenced. We don't have them, so we use teosinte assemblies from MaizeGDB (PanAnd). Those are other plants of the same taxa, so in diverse taxa they can differ from our donors:
 - Zv and Zx still switch between SEG and DONOR about twice as often as the other taxa, even after allowing for this uncertainty.

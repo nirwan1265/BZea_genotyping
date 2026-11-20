@@ -127,6 +127,10 @@ if a.gallery_dir:
     import os
     os.makedirs(a.gallery_dir, exist_ok=True)
     TT = pd.read_csv(a.targseq_tracts, sep="\t") if a.targseq_tracts else None
+    # the three bad samples of README 2.9.1 point 6: flagged in the title so the figure is not read as a model error
+    BAD = {"Zv0480_P3_P2_P1211": "BAD SAMPLE: contaminated with another sample's DNA (README 2.9.1, point 6)",
+           "Zx0090_P2_P5_P1111": "BAD SAMPLE: swap or wrong plant (README 2.9.1, point 6)",
+           "Zx0160_P2_P4_P1111": "BAD SAMPLE: swap or wrong plant (README 2.9.1, point 6)"}
     made = []
     for smp, xs in S.groupby("sample"):
         pool = xs.pool.iloc[0]
@@ -143,7 +147,7 @@ if a.gallery_dir:
             if TT is not None:
                 q = TT[(TT["sample"] == smp) & (TT.chr == ch) & (TT.our_call != "B73") & TT.plant_genotype.isin(["AA", "AB", "BB"])]
                 lab = [(r.start, r.end, r.plant_genotype) for r in q.itertuples()]
-            draw(ax, smp, ch, None, None, f"{smp} (pool {pool}), {ch}", lab)
+            draw(ax, smp, ch, None, None, f"{smp} (pool {pool}), {ch}" + (f"  —  {BAD[smp]}" if smp in BAD else ""), lab)
         axes[-1, 0].set_xlabel("position (Mb, B73 v5)", fontsize=9, color=MUTED)
         legend(fig)
         fig.tight_layout(rect=(0.09, 0, 1, 1 - 0.45 / (2.6 * len(chs) + 0.5)))

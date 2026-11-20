@@ -52,7 +52,22 @@ Where the informative k-mers exist, the SEG islands at the hotspots read as DONO
 
 **The gap:** under RULE=all, *parviglumis* chr3 75–79 Mb keeps only 34–505 informative k-mers per window (*mexicana*: 3,100–13,900), and parts of chr7 55–78 Mb too, so those windows drop out (≥ 200 needed). One or both *parviglumis* assemblies carry nearly all the B73 k-mers there, while our *parviglumis* donors keep only 67%: the assemblies wrongly mark as shared the very k-mers our donors lack.
 
-## Next: RULE=any for *parviglumis*
+## Result of RULE=any for *parviglumis*, 19 Nov 2026
+
+481,508,596 informative k-mers (RULE=all: 292,099,170). *parviglumis* chr3 75–79 Mb now has 9,000–18,000 per window (RULE=all: 34–505).
+
+| Hotspot (*parviglumis*) | Contrast old → RULE=all → RULE=any | Island windows closer to DONOR, old → all → any |
+|---|---|---|
+| chr7 54–65 Mb | 0.46 → 3.16 → 2.10 | 49% → 93% → 70% |
+| chr3 75–78 Mb | 1.85 → no estimate → 2.97 | 9% → – → 2% |
+| rest of chr3 + chr7 | 3.12 → – → 3.50 | – |
+
+Per pool (`result_any/pool_scores.tsv`; score 0 = DONOR level, 1 = B73):
+- **chr7:** most island pools move to 0–0.1 in the new counts, including PN13_SID1159, which the targeted sequencing calls BB. Pools with a targeted BB call score 0 to −0.1; the one AB pool scores 0.76. The fix works here. RULE=all is better than RULE=any, because some of the extra k-mers are carried by our donors.
+- **chr3:** the three island pools score 0.55, 0.51 and 1.14 in **both** old and new counts. The pools called DONOR score about 0, and the SEG pools (targeted AB) about 0.75–0.87. A second k-mer set with higher contrast gives the same scores, so the islands are not a contrast problem: the reads put them between DONOR and SEG, or at B73. The one with targeted sequencing (PN16_SID1505) is BB. Targeted calls at *mexicana* chr3 islands are mixed (AA, BB and AB). Fix 1 does not resolve chr3.
+- Two pools look odd in both counts: PN15_SID1390 (above B73 at chr7, called DONOR at chr3 but scoring 0.64) and PN12_SID1086 (called DONOR at chr7, scoring 0.65).
+
+## RULE=any: how it was run
 
 RULE=any keeps the k-mers missing from **at least one** assembly (B73_uniq minus the k-mers all assemblies share). More k-mers survive, including those our donors lack; some will be present in our donors, which is handled because the DONOR level is learned from our own pools (20c) in the full build.
 

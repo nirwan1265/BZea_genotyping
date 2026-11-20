@@ -17,7 +17,7 @@ set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)
 source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"
 FINAL_DIR=$(cd "${HERE}/../../final_script" && pwd); MAP_DIR=${FINAL_DIR}/genetic_maps
-python3 -c "import numpy, scipy" 2> /dev/null || die "python3 here has no numpy/scipy: activate your python env before submitting"
+python -c "import numpy, scipy" 2> /dev/null || die "python here has no numpy/scipy: activate your python env before submitting"
 [[ -n $(ls "${FX}/choice/"*.npz 2> /dev/null) ]] || die "no choices in ${FX}/choice (run fx1_3 first)"
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <task index>}}
 OUT=${FXR}/hmm; mkdir -p "$OUT"
@@ -30,6 +30,6 @@ for (( i = FIRST; i < FIRST + KMER_HMM_POOLS_PER_TASK && i < ${#POOLS[@]}; i++ )
 done
 (( ${#TODO[@]} )) || { echo "task ${IDX}: all done already"; exit 0; }
 ASMS=$(for a in "${DONOR_ASSEMBLIES[@]}"; do IFS=: read -r n t _ <<< "$a"; echo "${n}:${t}"; done | paste -sd,)
-python3 "${HERE}/fx1_kmer_hmm.py" --d_spread ${FX_LEVEL_DIR:+--level_dir "$FX_LEVEL_DIR"} --fix_dir "${FX}/choice" --new_win_dir "${FX}/windows" --new_ref_dir "${FX}/sets" \
+python "${HERE}/fx1_kmer_hmm.py" --d_spread ${FX_LEVEL_DIR:+--level_dir "$FX_LEVEL_DIR"} --fix_dir "${FX}/choice" --new_win_dir "${FX}/windows" --new_ref_dir "${FX}/sets" \
   --min_new "$FX_MIN_NEW" --samples "$(IFS=,; echo "${TODO[*]}")" --pools_tsv "${D11}/pools.tsv" --win_dir "$D16" --ref_dir "$D19" \
   --assemblies "$ASMS" --map_dir "$MAP_DIR" --out_dir "$OUT" --plants "$KMER_PLANTS"

@@ -41,6 +41,7 @@ ap.add_argument("--min_old", type=float, default=2000)
 ap.add_argument("--min_new", type=float, default=200)
 ap.add_argument("--rule", default="all", choices=["all", "any"], help="which informative set (p1 RULE)")
 ap.add_argument("--taxa", default="Zv,Zx")
+ap.add_argument("--targseq", default="../../data/introgression_spread/targseq/tracts_targseq.tsv", help="34d tracts (optional)")
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
 TAG = "_any" if a.rule == "any" else ""
@@ -151,6 +152,36 @@ pd.set_option("display.width", 250); pd.set_option("display.max_columns", 30)
 print("\nContrast = (1 - DONOR level) x g(1/2) / noise, medians over windows; old = all B73 k-mers, new = informative only")
 print(S.to_string(index=False))
 S.to_csv(f"{a.out}/contrast_old_new.tsv", sep="\t", index=False)
+
+# per pool at each hotspot: median score on a 0 = DONOR level, 1 = B73 scale (SEG expected at g(1/2) ~ 0.6),
+# over the windows the pool calls SEG-island there (or all its windows there), with the targeted-seq genotype if any
+TS = None
+if a.targseq and os.path.exists(a.targseq):
+    TS = pd.read_csv(a.targseq, sep="\t")
+prow = []
+for tx, d in res.items():
+    for reg, (c, s0, e0) in HOT.items():
+        m = (chrom == c) & (pos >= s0) & (pos < e0)
+        for i, s in enumerate(d["pools"]):
+            isl = d["ISL"][i] & m
+            w = isl if isl.any() else m
+            st = d["ST"][i][w]; st = st[st >= 0]
+            call = "SEG island" if isl.any() else ({0: "B73", 1: "SEG", 2: "DONOR"}[int(np.bincount(st).argmax())] if len(st) else "-")
+            r = {"taxon": tx, "region": reg, "pool": s, "call_there": call}
+            for lab in ("old", "new"):
+                o = d["out"][lab]; y = (o["R"][i] - o["level"]) / (1 - o["level"])
+                r[f"score_{lab}"] = round(float(np.nanmedian(y[w])), 2) if np.isfinite(y[w]).any() else np.nan
+            if TS is not None:
+                t = TS[(TS.pool == s) & (TS.chr == c) & (TS.start < e0) & (TS.end > s0)]
+                r["targseq"] = ",".join(f"{g}({n})" for g, n in zip(t.plant_genotype, t.sites)) if len(t) else ""
+            prow.append(r)
+PS = pd.DataFrame(prow)
+PS.to_csv(f"{a.out}/pool_scores.tsv", sep="\t", index=False)
+print(f"\nPer pool (score: 0 = DONOR level, ~{np.median([d['g'] for d in res.values()]):.2f} = SEG, 1 = B73; "
+      "targseq = plant genotype(sites) of the targeted-seq tracts overlapping the hotspot)")
+for (tx, reg), g in PS.groupby(["taxon", "region"], sort=False):
+    print(f"\n{tx} {reg}")
+    print(g[g.call_there != "B73"].drop(columns=["taxon", "region"]).to_string(index=False))
 
 # figure: island pools, r rescaled to DONOR level = 0, B73 = 1
 import matplotlib

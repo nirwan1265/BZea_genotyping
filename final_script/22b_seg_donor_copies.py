@@ -29,6 +29,7 @@ Needs: numpy, pandas, scipy.
 import argparse
 import gzip
 import math
+import os
 import numpy as np
 import pandas as pd
 from scipy.optimize import brentq
@@ -45,6 +46,8 @@ ap.add_argument("--selftest", action="store_true")
 ap.add_argument("--core_mb", type=float, default=0, help="use only SEG tracts >= this long (Mb); 0 = all SEG windows")
 ap.add_argument("--trim_mb", type=float, default=1, help="with --core_mb: drop this much at each end of a tract")
 ap.add_argument("--seed", type=int, default=1)
+ap.add_argument("--level_dir", default="", help="MODEL=fix1: DONOR levels from all pools, <TAXON>.npy (new_model/20c)")
+ap.add_argument("--fix_dir", default="", help="MODEL=fix1: <TAXON>.npz (new_model/fix1 choices: use_new, level_hmm)")
 a = ap.parse_args()
 rng = np.random.default_rng(a.seed)
 N2 = 2 * a.plants
@@ -85,6 +88,14 @@ for item in a.assemblies.split(","):
     name, tax = item.split(":")[:2]
     asm.setdefault(tax, []).append(read_obs(f"{a.ref_dir}/{name}.tsv.gz") / np.maximum(B, 1))
 d_tax = {t: np.mean(v, axis=0) for t, v in asm.items()}
+# MODEL=fix1: the DONOR level the HMM used (20c levels; in switched windows the level learned on informative k-mers)
+for t in list(d_tax):
+    if a.level_dir and os.path.exists(f"{a.level_dir}/{t}.npy"):
+        d_tax[t] = np.load(f"{a.level_dir}/{t}.npy").astype(float)
+    if a.fix_dir and os.path.exists(f"{a.fix_dir}/{t}.npz"):
+        with np.load(f"{a.fix_dir}/{t}.npz", allow_pickle=True) as z:
+            u = z["use_new"].astype(bool); lv = np.nan_to_num(z["level_hmm"].astype(float), nan=0.5)
+        d_tax[t] = np.where(u, lv, d_tax[t])
 
 
 def wk(p):

@@ -1,6 +1,7 @@
 #!/bin/bash
 # new_model/fix1 — settings shared by the fx1_* scripts (sourced AFTER final_script/config.sh).
 # Nothing here changes final_script/ or the current run; all outputs go to ${FX}.
+[[ ${MODEL:-spread} == fix1 ]] && { echo "fx1_* scripts read the current run: unset MODEL first (unset MODEL)" >&2; exit 1; }
 FX=${FX:-${KMER_DIR}/new_model/fix1}                     # all outputs of the full build
 PILOT_SETS=${KMER_DIR}/new_model/pilot_fix1/sets         # Zv / Zx informative sets of the pilot (RULE=all), reused
 KMER_ENV=/rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/kmer_env            # kmc, kmc_tools, kcftools

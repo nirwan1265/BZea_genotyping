@@ -164,6 +164,18 @@ if (( SPREAD == 1 )); then
   (( ROUND == 0 )) || { echo "SPREAD=1 is for ROUND=0 (assembly levels) only" >&2; exit 1; }
   D20=${KMER_DIR}/hmm_spread; D21=${KMER_DIR}/introgression_spread; RUN_TAG=spread
 fi
+# MODEL=fix1 (adopted 20 Nov 2026; new_model/fix1): in the windows where it raises the DONOR/SEG contrast only the
+# informative k-mers are counted (B73 k-mers missing from every assembly of the taxon), and the DONOR level comes from
+# our own pools (new_model/20c) instead of the assemblies. Steps 22-34 then read these calls and write next to them.
+# Opt in per shell or job (export MODEL=fix1, or new_model/fix1/fx1_7_downstream.sh); default = the run above.
+MODEL=${MODEL:-spread}
+if [[ $MODEL == fix1 ]]; then
+  case "${SLURM_JOB_NAME:-}" in kmer_hmm|kmer_collect|kmer_famlev)
+    echo "MODEL=fix1: steps 20-21 of this model are new_model/fix1/fx1_*.sh; unset MODEL to run the old ones" >&2; exit 1;; esac
+  FIX1_DIR=${KMER_DIR}/new_model/fix1
+  D20=${FIX1_DIR}/with_levels/hmm; D21=${FIX1_DIR}/with_levels/introgression; RUN_TAG=fix1
+  FIX1_CHOICE_DIR=${FIX1_DIR}/choice; FIX1_LEVEL_DIR=${KMER_DIR}/new_model/levels
+fi
 D20B=${KMER_DIR}/family_levels_fam${ROUND}   # family DONOR levels used in round ROUND (made by 20b)
 KMER_HMM_POOLS_PER_TASK=30          # array size = ceil(pools / this)
 KMER_PLANTS=6                       # plants per pool (SEG pools: donor copies ~ Binomial(2n, 1/2)); comma list if it varies

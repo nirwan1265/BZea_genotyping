@@ -53,3 +53,21 @@ Watch: `squeue -u $USER`; failed pools: `grep -l FAILED logs/fx1_2_pools.*.out`;
 Windows switched to the informative k-mers: 33% (*diploperennis*) to 53% (*huehuetenangensis*) of the windows where both contrasts could be measured (≥ 5 pools called DONOR). Median contrast there rose from 3.3 to 3.8 (*parviglumis*) and 4.1 to 4.7 (*mexicana*). These gains are optimistic, because windows were chosen where the measured new contrast was higher; the targeted-sequencing table is the unbiased check. *parviglumis* chr7 54–65 Mb: 95% switched, contrast 1.16 → 2.63. *parviglumis* chr3 75–78 Mb: unchanged, as the pilot predicted. chr6 21–23 and chr1 297 Mb did not change: there the DONOR level is wrong rather than the contrast low, and 20c's learned levels fixed them (48 → 11, 28 → 14).
 
 **Next:** `fx1_submit_levels.sh` reruns steps 4–6 (no recount) with fix 1 in the switched windows and 20c's taxon levels in the others. Outputs go to `${FX}/with_levels/`.
+
+## Adopted (20 Nov 2026): rerun everything downstream on the new calls
+
+`final_script/config.sh` has a switch, `MODEL=fix1`: with it, steps 22–34 read the calls in `${FX}/with_levels/introgression` and write next to them. The default (no `MODEL`) is still the old run, so nothing old is overwritten. Two small additions in `final_script/`, both off unless `MODEL=fix1`: `22b_seg_donor_copies` takes `--level_dir`/`--fix_dir`, because it needs the same DONOR levels the HMM used (tested on simulated pools: SEG donor share 0.49 with them, 0.62 without). New: `33a_qtl_gene_tables.py` builds `qtl_genes/<TRAIT>_qtl_genes.tsv` (made by hand until now; it reproduces the current tables: same genes, p values and names).
+
+```bash
+# 1. cluster (login node, GWAS env active): 22, 22b, 23, 24, GWAS + permutations + joint QTL (taxon, races, per year, N 2025)
+conda activate /usr/local/usrapps/maize/ntanduk/bzea_gwas
+cd /share/maize/ntanduk/BZea_genotyping && git pull && cd new_model/fix1 && bash fx1_7_downstream.sh
+# 2. laptop, from the repo root, when all jobs are done
+C=ntanduk@login.hpc.ncsu.edu:/share/maize/ntanduk/kmer/new_model/fix1
+mkdir -p data/introgression_fix1/targseq data/introgression_fix1/model
+rsync -av $C/with_levels/introgression/ data/introgression_fix1/
+rsync -av $C/with_levels/targseq/ data/introgression_fix1/targseq/
+rsync -av --exclude log.txt $C/with_levels/targseq_tracts/ data/introgression_fix1/targseq/
+rsync -av "$C/choice/summary_*.tsv" $C/with_levels/compare_old_new.txt data/introgression_fix1/model/
+bash new_model/fix1/fx1_8_laptop.sh     # GO, gene tables, SuSiE + PIP, figures, checks
+```

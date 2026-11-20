@@ -25,4 +25,5 @@ OUT="${D21}/seg_donor_copies.tsv"; [[ "$CORE_MB" != 0 ]] && OUT="${D21}/seg_dono
 ASMS=$(for a in "${DONOR_ASSEMBLIES[@]}"; do IFS=: read -r n t _ <<< "$a"; echo "${n}:${t}"; done | paste -sd,)
 python3 "${FINAL_DIR}/22b_seg_donor_copies.py" --hmm_dir "$D20" --ref_dir "$D19" \
   --pool_summary "${D21}/pool_summary.tsv" --assemblies "$ASMS" --plants "$KMER_PLANTS" \
-  --out "$OUT" --core_mb "$CORE_MB" --trim_mb "$TRIM_MB" --selftest
+  --out "$OUT" --core_mb "$CORE_MB" --trim_mb "$TRIM_MB" --selftest \
+  ${FIX1_LEVEL_DIR:+--level_dir "$FIX1_LEVEL_DIR"} ${FIX1_CHOICE_DIR:+--fix_dir "$FIX1_CHOICE_DIR"}

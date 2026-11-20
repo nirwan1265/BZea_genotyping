@@ -15,8 +15,8 @@
 # =============================================================================
 set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)
-source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"; use_py_env
-python3 -c "import numpy, scipy, pandas" 2> /dev/null || die "python3 in ${PY_ENV} has no numpy/scipy/pandas"
+source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"
+python3 -c "import numpy, scipy, pandas" 2> /dev/null || die "python3 here has no numpy/scipy/pandas: activate your python env before submitting"
 T=${FX_TAXA[$(( ${SLURM_ARRAY_TASK_ID:-1} - 1 ))]}
 mkdir -p "${FX}/choice"
 python3 "${HERE}/fx1_3_choose.py" --taxon "$T" --fx_dir "$FX" --d16 "$D16" --d19 "$D19" --pools_tsv "${D11}/pools.tsv" \

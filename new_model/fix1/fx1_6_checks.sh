@@ -15,7 +15,7 @@
 # =============================================================================
 set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)
-source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"; use_py_env
+source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"
 FINAL_DIR=$(cd "${HERE}/../../final_script" && pwd); REPO=$(cd "${HERE}/../.." && pwd)
 mkdir -p "${FXR}/targseq" "${FXR}/targseq_tracts"
 python3 "${FINAL_DIR}/34c_targseq_compare.py" --vcf_dir "${D21}/targseq/vcf" --tracts "${FXR}/introgression/tracts_all.tsv.gz" \

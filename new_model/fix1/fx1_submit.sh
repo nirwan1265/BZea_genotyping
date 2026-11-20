@@ -3,7 +3,8 @@
 # fix1 — submit the whole build as one chain of Slurm jobs (run on the login node, from new_model/fix1/):
 #     cd /share/maize/ntanduk/BZea_genotyping/new_model/fix1 && bash fx1_submit.sh
 #   1 sets (5 taxa) -> 2 pool windows (all pools, %100) -> 3 choose windows (5 taxa) -> 4 HMM (%100) -> 5 calls -> 6 checks
-#   Each job loads its own env (fx1_config.sh), so no conda activate is needed. Step 2 continues even if a few pools
+#   Jobs use the env active when you submit, so it needs kmc/kmc_tools/kcftools AND python with numpy/scipy/pandas;
+#   otherwise submit 1-2 and 3-6 separately, each with its env active. Step 2 continues even if a few pools
 #   fail (they keep the old counts in the HMM); every other step needs the one before it to succeed.
 #   Safe to rerun: finished pieces are skipped.
 # =============================================================================

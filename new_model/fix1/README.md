@@ -23,7 +23,7 @@ One difference from step 20, in switched windows only: step 20 drops a window wh
 - **This build** switches 118 of the 120 hotspot windows (contrast 4.7) and calls all 10 DONOR there.
 - **No side effects:** SEG and B73 pools are unchanged, and the windows called correctly genome-wide rise from 97.1% to 100% in the DONOR pools.
 
-## Run (one command, on the login node; each job loads its own env)
+## Run (one command, on the login node; jobs use the env active when you submit)
 
 ```bash
 cd /share/maize/ntanduk/BZea_genotyping && git pull
@@ -59,9 +59,10 @@ Windows switched to the informative k-mers: 33% (*diploperennis*) to 53% (*huehu
 `final_script/config.sh` has a switch, `MODEL=fix1`: with it, steps 22–34 read the calls in `${FX}/with_levels/introgression` and write next to them. The default (no `MODEL`) is still the old run, so nothing old is overwritten. Two small additions in `final_script/`, both off unless `MODEL=fix1`: `22b_seg_donor_copies` takes `--level_dir`/`--fix_dir`, because it needs the same DONOR levels the HMM used (tested on simulated pools: SEG donor share 0.49 with them, 0.62 without). New: `33a_qtl_gene_tables.py` builds `qtl_genes/<TRAIT>_qtl_genes.tsv` (made by hand until now; it reproduces the current tables: same genes, p values and names).
 
 ```bash
-# 1. cluster (login node, GWAS env active): 22, 22b, 23, 24, GWAS + permutations + joint QTL (taxon, races, per year, N 2025)
-conda activate /usr/local/usrapps/maize/ntanduk/bzea_gwas
-cd /share/maize/ntanduk/BZea_genotyping && git pull && cd new_model/fix1 && bash fx1_7_downstream.sh
+# 1. cluster (login node); the scripts set no env, jobs use the one active when you submit
+cd /share/maize/ntanduk/BZea_genotyping && git pull && cd new_model/fix1
+bash fx1_7a_stats.sh     # with your python env active (numpy, scipy, pandas, matplotlib): 22, 22b, 23, 24
+bash fx1_7b_gwas.sh      # with the GWAS env active (GridLMM, qtl2): GWAS, permutations, joint QTL
 # 2. laptop, from the repo root, when all jobs are done
 C=ntanduk@login.hpc.ncsu.edu:/share/maize/ntanduk/kmer/new_model/fix1
 mkdir -p data/introgression_fix1/targseq data/introgression_fix1/model

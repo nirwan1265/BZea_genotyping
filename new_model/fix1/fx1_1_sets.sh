@@ -17,7 +17,7 @@
 # =============================================================================
 set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)
-source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"; use_kmer_env
+source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"
 need kmc kmc_tools kcftools awk gzip
 CPUS=${SLURM_CPUS_PER_TASK:-8}
 T=${FX_TAXA[$(( ${SLURM_ARRAY_TASK_ID:-1} - 1 ))]}

@@ -15,9 +15,9 @@
 # =============================================================================
 set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)
-source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"; use_py_env
+source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"
 FINAL_DIR=$(cd "${HERE}/../../final_script" && pwd); MAP_DIR=${FINAL_DIR}/genetic_maps
-python3 -c "import numpy, scipy" 2> /dev/null || die "python3 in ${PY_ENV} has no numpy/scipy"
+python3 -c "import numpy, scipy" 2> /dev/null || die "python3 here has no numpy/scipy: activate your python env before submitting"
 [[ -n $(ls "${FX}/choice/"*.npz 2> /dev/null) ]] || die "no choices in ${FX}/choice (run fx1_3 first)"
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <task index>}}
 OUT=${FXR}/hmm; mkdir -p "$OUT"

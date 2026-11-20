@@ -3,9 +3,11 @@
 This repository goes from raw paired-end reads of **pooled, low-coverage (~0.8×)** BC2S3 samples to **teosinte introgression calls** and **QTL** for flowering, height, ear and leaf traits. B73 was crossed to 5 teosinte taxa, backcrossed twice to B73 and selfed three times; each sample is a pool of 6 plants from one BC2S3 plot.
 
 - **Introgressions are called from k-mers**, not from mapped SNPs: for each pool, which B73 single-copy 31-mers its reads contain, per 100-kb window, decoded with an HMM that models the pool: each window is **B73** (all 6 plants AA), **DONOR** (all BB) or **SEG** (segregating: the plants are a mix of AA, AB and BB).
-- **QTL are mapped on that k-mer ancestry**: a genome scan (k-mer ancestry GWAS, GridLMM with leave-one-chromosome-out kinship) finds the peaks, and a joint QTL model (R/qtl2) fits them together, with an effect for each teosinte taxon.
+- **QTL are mapped on that k-mer ancestry**: a genome scan (k-mer ancestry GWAS, GridLMM with leave-one-chromosome-out kinship) finds the peaks, and a joint QTL model (R/qtl2) fits them together, with an effect for each teosinte taxon. Each QTL interval is then fine-mapped (SuSiE).
 
-> **Pipeline and commands from the k-mer and SNP steps on:** [`final_script/`](final_script/README.md) (the pre-processing scripts are not in the repository yet; see Section 1). Results tables: [`data/introgression_spread/`](data/introgression_spread/). Figures: [`figures/`](figures/).
+> **This README describes the current model (adopted 20 November 2026).** It differs from the first model in two places, both in how the HMM is fed, not in the HMM itself: where the teosinte shares most of the B73 k-mers, only the **informative** k-mers are counted (B73 k-mers missing from every assembly of the taxon), and the DONOR level of each window is **learned from our own pools** instead of taken from assemblies of other plants (section [2.6.6](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)). Checked against targeted sequencing of the same plots (three bad samples left out), SEG calls that are heterozygous rose from 74% to 86% and DONOR calls that are homozygous teosinte from 91% to 95% (section 2.9.1); the genome-wide shares and the GWAS scans hardly change. The first model, with all its results, is kept in [`old_model_README.md`](old_model_README.md) (results in `data/introgression_spread/`).
+
+> **Pipeline and commands from the k-mer and SNP steps on:** [`final_script/`](final_script/README.md) (the pre-processing scripts are not in the repository yet; see Section 1). Results tables: [`data/introgression_fix1/`](data/introgression_fix1/). Figures: [`figures/`](figures/).
 
 ## Contents
 
@@ -131,7 +133,8 @@ These are exactly the Step 3 numbers. This is how the HMM results are reported a
 
 ### 2. Introgression calling (Section 2)
 - **k-mer windows** (KMC 3 + KCFtools): for each pool, the B73 single-copy 31-mers seen in its reads, per 100-kb window; no read mapping (`final_script/` steps 16–19).
-- **Expected DONOR level** per window from the teosinte genome assemblies (MaizeGDB / PanAnd).
+- **Informative k-mers** per taxon (B73 single-copy k-mers missing from every assembly of the taxon), counted where they separate DONOR from SEG better than all B73 k-mers (`new_model/fix1/`).
+- **Expected DONOR level** per window: from the teosinte genome assemblies (MaizeGDB / PanAnd) to start with, then learned from all pools of each taxon (`new_model/20c_pool_levels.py`, `new_model/fix1/`).
 - **HMM** with three states, B73 / SEG / DONOR, genetic-map transitions and pool-aware emissions (steps 20–21). Outputs: per-pool state per window, tracts, `pool_summary.tsv`, `family_summary.tsv`, chromosome paintings, interactive figures.
 - **Population structure from k-mers** (sourmash; step 32).
 - **SNP route** (ANGSD sites and read counts, GL-HMM; steps 01–15), kept as a cross-check.
@@ -141,6 +144,7 @@ These are exactly the Step 3 numbers. This is how the HMM results are reported a
 - **k-mer ancestry GWAS:** GridLMM, taxon as fixed effect, **LOCO kinship** from the ancestry dosage, 5% genome-wide threshold from 1,000 permutations (steps 25–27); rerun with *mexicana* split by race.
 - **Joint QTL model:** the peaks fitted together in R/qtl2: effect of each QTL adjusted for the others, its effect in each taxon, and a test that the taxa differ (step 29).
 - **Genes and GO terms** in each QTL interval, side-by-side figures (steps 30–31).
+- **Fine-mapping** of each QTL interval with SuSiE: posterior inclusion probability (PIP) per window, credible sets, genes per QTL (steps 33, 33a, 33b).
 
 ## Software and packages
 
@@ -172,6 +176,7 @@ These are exactly the Step 3 numbers. This is how the HMM results are reported a
 
 - **R** (>= 4.1) with **SpATS** (spatial BLUEs), dplyr, tidyr
 - **GridLMM** R package (`github.com/deruncie/GridLMM`), data.table, ggplot2
+- **R/qtl2** (joint QTL model) and **susieR** (fine-mapping)
 - **Python** with pandas, numpy: inputs (dosage, LOCO kinship) and regions/genes
 
 ### Gene annotation resources
@@ -292,7 +297,7 @@ We first did it the usual way (steps 01–15): map reads to B73, count each pool
 
 Finding introgressions by counting reference k-mers in genome windows, without mapping reads, was developed in wheat: **IBSpy** (Uauy lab; Quiroz-Chávez 2023) was used to find einkorn introgressions in bread wheat (Ahmed et al. 2023), and **KCFtools** (Selvanayagam et al. 2026) is a fast tool for k-mer introgression screening and k-mer GWAS, which we use for the per-window counts. k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come from teosinte genome assemblies (PanAnd-1.0, Stitzer et al. 2025), downloaded from **MaizeGDB** (Portwood et al. 2019).
 
-**What we added:** low-coverage *pools* instead of single plants, a three-state pool model (B73 / SEG / DONOR) with per-window DONOR levels from assemblies, and the HMM on the NAM genetic map.
+**What we added:** low-coverage *pools* instead of single plants, a three-state pool model (B73 / SEG / DONOR) with per-window DONOR levels (from assemblies, then learned from our own pools), counting only the informative k-mers where the teosinte shares most of B73's (section 2.6.6), and the HMM on the NAM genetic map.
 
 ### 2.4 How it works
 
@@ -310,7 +315,7 @@ Finding introgressions by counting reference k-mers in genome windows, without m
    - d is the share of B73 k-mers a donor genome keeps. It depends on the taxon and on the window, and is measured per window from teosinte genome assemblies (PanAnd-1.0 from MaizeGDB, step 19). Genome-wide: Zd 0.27, Zl 0.26, Zh 0.34, Zx 0.37, Zv 0.43.
    - SEG: k-mers the donor lacks come only from the B73 plants in the pool. For 6 plants, the pool's donor fraction follows Binomial(12, ½).
 4. **HMM along each chromosome (steps 20–21).** The windows' r values are read along each chromosome by a three-state hidden Markov model (B73 / SEG / DONOR). It uses the NAM genetic map, so a state change costs more where recombination is rare. Adjacent windows in the same state become tracts. **The model is explained step by step in [The HMM in detail](#26-the-hmm-in-detail) below.**
-5. **Allow for our donor plants differing from the assembly plants (step 20).** Where the two assemblies of a taxon disagree on d, the model is told that the DONOR level there is uncertain, so it doesn't flip between SEG and DONOR on small differences (see τ_w under [Emissions](#261-emissions-how-well-does-r-fit-each-state)).
+5. **Allow for our donor plants differing from the assembly plants (step 20).** Where the two assemblies of a taxon disagree on d, the model is told that the DONOR level there is uncertain, so it doesn't flip between SEG and DONOR on small differences (see τ_w under [Emissions](#261-emissions-how-well-does-r-fit-each-state)). In the current model, d is then learned from all our pools of the taxon, and where the teosinte keeps most of B73's k-mers only the informative ones are counted ([2.6.6](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)).
 6. **Tests (step 22).** Observed vs expected BC2S3 proportions, with a bootstrap over F1 families. Pools of one F1 family share segments, so the F1 family is the unit.
 
 ### 2.5 How r is calculated: a worked example
@@ -452,34 +457,69 @@ With ρ = 1.5, the chance of a change is about **0.1% per window** on average. T
 | r (k-mer score) | pool × window | pool count ÷ fit of the B73 controls | `20_kmer_hmm.py` |
 | σ (noise) | pool, then × window factor | robust SD of r in B73 windows; control spread | `20_kmer_hmm.py` |
 | λ (k-mer coverage) | pool | share of B73 k-mers seen | `20_kmer_hmm.py` |
-| d_w (DONOR level) | donor taxon × window | MaizeGDB assemblies of that taxon | `19_kmer_donor_reference.sh` |
-| τ_w (uncertainty of d_w) | donor taxon × window | disagreement of the taxon's two assemblies | `20_kmer_hmm.py` (`--d_spread`) |
+| d_w (DONOR level) | donor taxon × window | learned from all pools of the taxon, shrunk towards the assemblies' level (2.6.6); in switched windows, from the pools called DONOR | `new_model/20c_pool_levels.py`, `new_model/fix1/fx1_3_choose.py` (start: `19_kmer_donor_reference.sh`) |
+| τ_w (uncertainty of d_w) | donor taxon × window | disagreement of the taxon's two assemblies; in switched windows, the spread between our DONOR pools | `new_model/fix1/fx1_kmer_hmm.py` (`--d_spread`) |
+| Counted k-mers | donor taxon × window | all B73 single-copy k-mers, or only the informative ones where they raise the contrast (2.6.6) | `new_model/fix1/fx1_3_choose.py` |
 | a (scale on d) | pool | best likelihood over 0.5–1.8 | `20_kmer_hmm.py` |
 | ρ (switch rate) | whole data set | best total likelihood | `21_kmer_collect.py` |
 | Prior | fixed | BC2S3 expectation | `config.sh` |
 | Plants per pool | fixed | 6 | `config.sh` (`KMER_PLANTS`) |
 | Outlier share | fixed | 2% | `20_kmer_hmm.py` (`--eps`) |
 
-"Donor taxon" is the pool's teosinte (Zd, Zh, Zl, Zv or Zx, from the sample sheet). Every pool of that taxon uses the same d_w and τ_w, taken from the MaizeGDB assemblies of the taxon; nothing here comes from our BC1 or BC2 plants.
+"Donor taxon" is the pool's teosinte (Zd, Zh, Zl, Zv or Zx, from the sample sheet). Every pool of that taxon uses the same d_w and τ_w. In the current model d_w is learned from all the pools of the taxon at once (2.6.6), without using any calls, except in switched windows; nothing here comes from our BC1 or BC2 plants. The HMM itself (emissions, transitions, decoding) is the same as in step 20: `new_model/fix1/fx1_kmer_hmm.py` is a copy of `20_kmer_hmm.py` with the two inputs of 2.6.6 added.
 
-**Why the prior is fixed.** It only sets the state each chromosome starts in, and which state a switch goes to. It doesn't set how much of the genome ends up in each state: with about 2,000 windows per chromosome, the data decide. DONOR came out at 5.0% although the prior expects 9.4%, so the prior isn't forcing the result.
+**Why the prior is fixed.** It only sets the state each chromosome starts in, and which state a switch goes to. It doesn't set how much of the genome ends up in each state: with about 2,000 windows per chromosome, the data decide. DONOR came out at 4.9% although the prior expects 9.4%, so the prior isn't forcing the result.
 
 #### 2.6.5 How long are the tracts?
 
 Tract length depends on how many meioses broke the donor chromosome up: here the F1, BC1 and BC2 plants, then two rounds of selfing before the BC2S2 mother of each pool. Each crossover cuts a donor segment, so after these meioses most segments are many Mb long, but a few are short. Short ones come mostly from regions with high recombination (near chromosome ends, where 500 kb can be more than 1 cM) and from crossovers in different generations falling close together.
 
-To check that short tracts are expected and not just a feature of our data, the crosses were simulated on the NAM genetic map (F1 → BC1 → BC2 → BC2S1 → BC2S2, crossovers placed at random along the map, 400 lines per chromosome, no selection), and the lengths of the introgressed tracts (SEG and DONOR joined) were compared with our calls (1,292 pools):
+To check that short tracts are expected and not just a feature of our data, the crosses were simulated on the NAM genetic map (F1 → BC1 → BC2 → BC2S1 → BC2S2, crossovers placed at random along the map, 400 lines per chromosome, no selection), and the lengths of the introgressed tracts (SEG and DONOR joined) were compared with our calls (1,266 pools):
 
 | Introgressed tracts | Median length | < 0.5 Mb | < 1 Mb | < 2 Mb | < 5 Mb |
 |---|---|---|---|---|---|
 | Simulated BC2S2 mothers (3,506 tracts) | 11.3 Mb | 4.4% | 8.4% | 15.3% | 30.8% |
-| Our pools, k-mer HMM (12,662 tracts) | 9.8 Mb | 2.6% | 6.5% | 13.7% | 33.2% |
+| Our pools, k-mer HMM (12,668 tracts) | 9.6 Mb | 2.6% | 6.7% | 13.8% | 33.7% |
 
 - **Short tracts are expected from the crossing scheme alone**, not only in our data: about 1 in 12 introgressed tracts should be under 1 Mb.
 - We find slightly fewer under 1 Mb than the simulation. That fits the HMM's detection limit: a piece needs about 4 windows (400 kb) to be called ([Transitions](#262-transitions-how-often-can-the-state-change)), so the shortest tracts are missed.
-- **Any single short tract can still be an error**, e.g. a window run where our donor plant differs from the assemblies, or a structural variant. They are a small part of the genome: tracts under 1 Mb hold 0.16% of the introgressed sequence (0.11% in the simulation). See [Limitations](#213-limitations-and-future-work) for how they can be checked.
+- **Any single short tract can still be an error**, e.g. a window run where our donor plant differs from the assemblies, or a structural variant. They are a small part of the genome: tracts under 1 Mb hold 0.18% of the introgressed sequence (0.11% in the simulation). The current model has slightly more of them than the first one (1.6 instead of 1.3 tracts under 1 Mb per pool; section 2.6.6). See [Limitations](#213-limitations-and-future-work) for how they can be checked.
 
-The simulation does not include crossover interference (which makes two crossovers close together in one meiosis rarer) or selection, so it is a rough guide, not an exact expectation. Script: `final_script/tract_length_sim.py` (seed 1).
+The simulation does not include crossover interference (which makes two crossovers close together in one meiosis rarer) or selection, so it is a rough guide, not an exact expectation. Script: `final_script/tract_length_sim.py` (seed 1); output `data/introgression_fix1/checks/tract_length_sim.txt`.
+
+#### 2.6.6 The current model: informative k-mers and DONOR levels from our pools
+
+The first model took each window's DONOR level d_w from teosinte assemblies of *other* plants and counted all B73 single-copy k-mers. The targeted sequencing (section 2.9.1) found one systematic error with it: in *parviglumis* and *mexicana*, a SEG tract between two DONOR tracts was really DONOR (BB) in about half of the cases, and these errors recurred at the same places in many pools (chr6 21–23 Mb in 48 pools, chr1 297 Mb in 28, chr7 54–65 Mb in 28, chr3 75–78 Mb in 19). There were two causes, and the current model changes one input for each. The HMM itself is unchanged.
+
+**1. A wrong DONOR level (chr6, chr1).** Where our donor plants keep more of the B73 k-mers than the assembly plants, a DONOR window reads too high and looks like SEG. Fix: learn d_w from **all pools of the taxon at once**, without using any calls (`new_model/20c_pool_levels.py`). In each window the scores of a taxon's 60–570 pools are a mixture of three groups that share the window's level: B73 (r ≈ 1), SEG (r = d + (1 − d)·g(f), f from Binomial(12, ½)) and DONOR (r ≈ d). d is fitted by maximum likelihood (the group sizes by EM), then shrunk towards the assembly level by how many pools carry teosinte there, so windows with little evidence keep the assembly level. This is the idea of RTIGER's shared emission fit (one set of emission parameters learned from all samples; Campos-Martin et al. 2023), applied to the parameter that was wrong. On simulated pools the fitted level was within 0.02 of the truth in a hotspot where the assembly level was 0.18 off, and unchanged elsewhere.
+
+**2. Too little contrast (chr7, chr3).** Where the teosinte keeps most of B73's k-mers (d_w ≈ 0.7–0.9), DONOR and SEG score almost the same: the shared k-mers are present in every pool whatever its state, so they add counting noise and no signal. *parviglumis* chr7 54–65 Mb had a contrast (gap between the SEG and DONOR levels ÷ noise) of 1.2, i.e. the two states were about one noise unit apart. Fix: count only the **informative** k-mers there, the B73 single-copy k-mers found in **none** of the taxon's assemblies (`new_model/fix1/`):
+
+![How fix 1 works](new_model/fix1/fix1_method.svg)
+
+- Every pool was recounted against its taxon's informative k-mers (the 10 B73 controls against all five taxa's), with the same KMC + KCFtools steps as step 17.
+- Per taxon and window, the scores of all pools were computed both ways, and a window **switches** to the informative k-mers only if B73 has at least 200 of them there and they raise the contrast at least 1.2-fold (contrast measured from the pools called DONOR and the B73 controls). Elsewhere, the old counts and the learned levels of point 1 are kept.
+- The assemblies have none of the informative k-mers by construction, so in switched windows the DONOR level, and its spread between our donors (τ_w), come from our pools called DONOR there.
+- 33% (*diploperennis*) to 53% (*huehuetenangensis*) of the windows where both contrasts could be measured switched. At *parviglumis* chr7 54–65 Mb, 95% of windows switched and the contrast rose from 1.2 to 2.6. (Contrasts after switching are somewhat optimistic, because windows were chosen where the measured new contrast was higher; the targeted sequencing below is the unbiased check.)
+
+**Result.** The two fixes were tested one by one and together, each time with the whole pipeline (HMM, calls) and the targeted sequencing (section 2.9.1, the three bad samples of its point 6 left out), which is independent of our calls:
+
+| Check | First model | Learned levels only | Informative k-mers only | **Both (current)** |
+|---|---|---|---|---|
+| SEG tracts that are AA / AB / BB in the plant | 17.9 / 74.3 / 7.8% | 6.2 / 81.8 / 12.1% | 5.7 / 86.4 / 7.9% | **5.7 / 85.8 / 8.5%** |
+| DONOR tracts that are BB | 90.7% | 93.7% | 95.5% | **95.2%** |
+| B73 tracts that are AA | 97.1% | 96.2% | 97.0% | **96.6%** |
+| SEG between two DONOR tracts that is BB | 38 tracts, 47% | 38 tracts, 71% | 28 tracts, 54% | **30 tracts, 57%** |
+| Pools with a SEG tract between two DONOR tracts at chr6 21–23 / chr1 297 / chr7 54–65 / chr3 75–78 Mb | 48 / 28 / 28 / 19 | 11 / 14 / 23 / 16 | 48 / 28 / 7 / 8 | **9 / 11 / 14 / 8** |
+| Genome share SEG / DONOR | 6.22 / 4.94% | 6.22 / 4.88% | 6.26 / 4.93% | **6.23 / 4.94%** |
+| Switch rate ρ chosen | 1.5 | 1.5 | 1.5 | **1.5** |
+
+- **Better:** SEG calls where the plant carries no teosinte fell from 18% to 6%, DONOR calls that are BB rose to 95%, and the hotspot errors fell from 123 to 42 pools. B73 calls are as good as before (the 0.5-point drop is within the noise of about 1,000 tracts).
+- **Unchanged:** the genome shares (so the donor deficit of 2.8.1 does not depend on how the DONOR level is set) and the switch rate.
+- **Costs:** about 0.3 more short tracts (< 1 Mb) per pool (1.31 → 1.62), spread over the genome rather than in switched windows; the targeted sequencing compared only tracts of 1 Mb or more, so whether they are right is not known. And 26 more pools pass the noise cut-off σ > 0.15 (119 instead of 93 left out): 25 *parviglumis* pools that sat just under it (e.g. 0.149 → 0.157, as switched windows have fewer k-mers) and PN17_SID1585 (*mexicana*, 0.077 → 0.226, to be checked).
+- **Not fixed:** SEG between two DONOR tracts is less common (0.38% → 0.30% of the genome), but 57% of the remaining ones are BB; *parviglumis* chr3 75–78 Mb is unchanged (its islands read between DONOR and SEG in every count, so they are not a contrast problem).
+
+Details, simulations and all intermediate runs: [`new_model/README.md`](new_model/README.md), [`new_model/pilot_fix1/README.md`](new_model/pilot_fix1/README.md), [`new_model/fix1/README.md`](new_model/fix1/README.md).
 
 ### 2.7 How k-mers solve mapping bias, low depth and pooling
 
@@ -491,14 +531,14 @@ Back to the three problems of the SNP route ([above](#22-the-problem-mapping-rea
 | **2. Too few reads per site** | No per-site calls. Each 100-kb window adds up ~32,000 k-mers, so its score r is measured precisely from thousands of positions at once. |
 | **3. Pools aren't diploid** | The model is built for pools: DONOR = d, SEG = d + (1 − d)·g(f), averaged over the donor fractions a 6-plant family can have (Binomial(12, ½)). |
 
-**Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in the Zd example above, DONOR ≈ 0.27 and SEG ≈ 0.66, with B73 = 1. The DONOR level is measured from teosinte genomes, not guessed.
+**Telling DONOR from SEG.** It no longer depends on allele ratios at single sites, which reference bias distorts. It depends on the window's **level**: in the Zd example above, DONOR ≈ 0.27 and SEG ≈ 0.66, with B73 = 1. The DONOR level is measured from teosinte genomes and then from our own pools (2.6.6), not guessed.
 
 #### 2.7.1 Why not a SNP-based AA/AB/BB HMM (e.g. RTIGER)?
 
 A common alternative is to call SNPs and run a three-state HMM whose states are plant genotypes, AA, AB and BB: for example RTIGER (Campos-Martin et al. 2023) or a basic three-state HMM. These are sound tools for what they were built for: **single plants** from a cross between **two known, sequenced parents**, where **every marker separates the two parents** (RTIGER was developed on segregants of two *Arabidopsis* accessions, and its markers are "differences between the two genotypes"). Our data break each of these assumptions:
 
 1. **Pools are not plants.** AA/AB/BB describe one diploid plant. A pool from an AB mother carries k of 12 donor copies. With the donor share of 0.46 measured here (2.8.1), 84% of SEG pools sit at 4–8 of 12 copies, close enough to an "AB" level, but 12% sit at ≤ 3/12 and look like AA, and 4% sit at ≥ 9/12 and look like BB. More importantly, k changes **along** a SEG region, at every crossover of any of the six plants. A plant-genotype HMM reads each step as a possible state change, so one SEG region breaks into AB, AA and BB pieces: extra short tracts and breakpoints, less SEG, and false B73 inside SEG. Even where it is right, its "AB" means "the mother was AB" (our SEG), not heterozygous plants, so it cannot be read as plant heterozygosity.
-2. **The markers do not separate the parents.** These models treat each SNP as diagnostic: reference allele = B73, alternative allele = donor. Our donors are outbred teosinte plants that were never sequenced. At many SNPs the donor carries the B73 allele or is heterozygous, and plants of one accession carry different haplotypes. Inside a real DONOR region these SNPs show B73 reads, which the model takes as AA or AB evidence, so DONOR is pulled towards AB. The targeted sequencing shows how common this is: even inside our DONOR tracts and at high depth, only about 1 real SNP in 4 carries a donor allele (25.5 per 100 SNPs; [2.9.1](#291-independent-check-targeted-sequencing-of-85-plots)). The k-mer model expects this: a DONOR window keeps a share d_w of its B73 k-mers, measured from teosinte assemblies (2.6.1).
+2. **The markers do not separate the parents.** These models treat each SNP as diagnostic: reference allele = B73, alternative allele = donor. Our donors are outbred teosinte plants that were never sequenced. At many SNPs the donor carries the B73 allele or is heterozygous, and plants of one accession carry different haplotypes. Inside a real DONOR region these SNPs show B73 reads, which the model takes as AA or AB evidence, so DONOR is pulled towards AB. The targeted sequencing shows how common this is: even inside our DONOR tracts and at high depth, only about 1 real SNP in 4 carries a donor allele (25.5 per 100 SNPs; [2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)). The k-mer model expects this: a DONOR window keeps a share d_w of its B73 k-mers, measured from teosinte assemblies (2.6.1).
 3. **One read per site, and donor reads lost.** At 0.8x most SNPs have 0 or 1 read, so a single site cannot tell AB from AA or BB. The calls then rest on how "sticky" the HMM is (in RTIGER, the rigidity: the minimum number of consecutive markers that must support a change of state) and change when it is tuned. On top of that, mapping and its filters remove donor reads first: in a known DONOR tract only ~11% of the expected donor bases survive ([2.2](#22-the-problem-mapping-reads-and-calling-snps-at-08x-in-pools)), which pushes DONOR towards AB and AB towards AA.
 4. **Priors and transitions of another population.** Unless they are set to BC2S3 expectations, the starting frequencies and switch rates are those of the population type the tool assumes (three states for an F2-like outcross, or two states for a backcross), not those of BC2S3 families.
 
@@ -508,61 +548,61 @@ A common alternative is to call SNPs and run a three-state HMM whose states are 
 
 ### 2.8 Results
 
-1,292 donor pools (the 93 low-depth pools are left out; see [Noisy pools](#211-noisy-pools-and-resequencing)).
+1,266 donor pools (the 119 noisy pools are left out; see [Noisy pools](#211-noisy-pools-and-resequencing)).
 
 | Taxon | Pools | Donor alleles | SEG (pool) | DONOR (pool) | AB (plant) | BB (plant) | AB/(AB+BB) |
 |---|---|---|---|---|---|---|---|
-| Zd | 227 | 5.6% | 5.1% | 3.0% | 2.6% | 4.3% | 37% |
-| Zh | 61 | 8.2% | 5.7% | 5.3% | 2.9% | 6.7% | 30% |
-| Zl | 98 | 7.2% | 6.8% | 3.8% | 3.4% | 5.5% | 38% |
-| Zv | 333 | 8.4% | 6.5% | 5.1% | 3.2% | 6.8% | 32% |
-| Zx | 573 | 9.0% | 6.5% | 5.8% | 3.2% | 7.4% | 30% |
-| **All** | **1,292** | **8.1%** | **6.2%** | **5.0%** | **3.1%** | **6.5%** | **32%** |
+| Zd | 227 | 5.6% | 5.1% | 3.1% | 2.5% | 4.3% | 37% |
+| Zh | 61 | 8.1% | 5.9% | 5.2% | 2.9% | 6.6% | 31% |
+| Zl | 98 | 7.1% | 6.8% | 3.7% | 3.4% | 5.4% | 39% |
+| Zv | 308 | 8.5% | 6.5% | 5.2% | 3.2% | 6.9% | 32% |
+| Zx | 572 | 8.9% | 6.5% | 5.7% | 3.2% | 7.3% | 31% |
+| **All** | **1,266** | **8.0%** | **6.2%** | **4.9%** | **3.1%** | **6.5%** | **32%** |
 | *Expected BC2S3* | | *12.5%* | *6.25%* | *9.4%* | *3.1%* | *10.9%* | *22%* |
 
 > **What AB/(AB+BB) means.** Take only the plants that carry at least one teosinte allele at a locus: these are the AB plants and the BB plants. AB/(AB+BB) is the fraction of them that are **AB** (heterozygous). The rest, BB/(AB+BB), are homozygous teosinte. Example: out of 100 plants that carry teosinte at a locus, how many are AB.
 > - **Expected for BC2S3:** AB = 3.13% and BB = 10.94% of the genome, so AB/(AB+BB) = 3.13 / (3.13 + 10.94) = **22%**: about 22 AB and 78 BB plants out of 100.
-> - **Observed:** AB = 3.12% and BB = 6.51%, so AB/(AB+BB) = 3.12 / (3.12 + 6.51) = **32%**: about 32 AB and 68 BB out of 100.
+> - **Observed:** AB = 3.12% and BB = 6.49%, so AB/(AB+BB) = 3.12 / (3.12 + 6.49) = **32%**: about 32 AB and 68 BB out of 100.
 > - **Why it's useful:** it doesn't depend on how much teosinte there is in total. If lines lost teosinte at random (drift, or segments lost before BC2), AB and BB would drop by the same factor and the ratio would stay at 22%. It goes up only if BB plants are lost more than AB plants.
 
-![Observed vs expected, all taxa](final_script/figures/results_spread/fig1_overall.png)
+![Observed vs expected, all taxa](data/introgression_fix1/figures/fig1_overall.png)
 
 The figure has three groups, because these numbers are different kinds of measures:
 - **Pool states (SEG, DONOR):** what the HMM calls, per pool and window.
 - **Plant genotypes (AB, BB):** what the pool states mean for single plants. They are **not measured** directly: a pool can't say which plant is AB. They are computed from the pool states using Mendel: a SEG region holds ¼ AA, ½ AB and ¼ BB plants, so **AB = SEG/2** and **BB = DONOR + SEG/4**. So AB lives inside SEG.
 - **Donor alleles:** the total share of teosinte alleles, = DONOR + SEG/2.
 
-![Observed vs expected by taxon](final_script/figures/results_spread/fig2_by_taxon.png)
+![Observed vs expected by taxon](data/introgression_fix1/figures/fig2_by_taxon.png)
 
-![Per family](final_script/figures/results_spread/fig3_by_family.png)
+![Per family](data/introgression_fix1/figures/fig3_by_family.png)
 
-![Per chromosome](final_script/figures/results_spread/fig4_by_chromosome.png)
+![Per chromosome](data/introgression_fix1/figures/fig4_by_chromosome.png)
 
-![Donor share per pool](final_script/figures/results_spread/fig5_pool_share.png)
+![Donor share per pool](data/introgression_fix1/figures/fig5_pool_share.png)
 
-Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `final_script/figures/results_spread/family_values.tsv`.
+Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `data/introgression_fix1/figures/family_values.tsv`. The same figures for the first model are in `final_script/figures/results_spread/` (`old_model_README.md`).
 
 **What this shows:**
-- **SEG is as expected:** the HMM calls 6.23% of the genome SEG, against 6.25% expected for BC2S3; the F1-family bootstrap finds no difference (p = 0.93). The AB estimate (3.12%) is half of SEG by construction, so it is the same result, not a second one.
-- **DONOR is about half of the expectation** (4.95% vs 9.38% of the genome; estimated BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That deficit is the whole shortfall in donor alleles (8.1% vs 12.5%).
+- **SEG is as expected:** the HMM calls 6.24% of the genome SEG, against 6.25% expected for BC2S3; the F1-family bootstrap finds no difference (p = 0.94). The AB estimate (3.12%) is half of SEG by construction, so it is the same result, not a second one.
+- **DONOR is about half of the expectation** (4.93% vs 9.38% of the genome; estimated BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That deficit is the whole shortfall in donor alleles (8.0% vs 12.5%). The first model gave the same (SEG 6.23%, DONOR 4.95%), so this does not depend on how the DONOR level is set.
 - **So a larger share of the remaining donor is estimated to be het:** 32% of donor-carrying plants are AB, against 22% expected. This is not extra het: SEG, and so AB, is as expected. The share goes up only because DONOR went down, so AB is a bigger part of a smaller total. This holds on every chromosome (29–35%).
 - **Why is DONOR low?** See [Why is there less donor DNA than expected?](#281-why-is-there-less-donor-dna-than-expected) below.
-- **F1 families:** only 2 of 98 F1 families reach the expected 12.5% donor alleles (Zx.0390_P2, Zx.0130_P1); most sit between 5% and 11%. AB/(AB+BB) is above 22% in most F1 families of every taxon.
-- **Small taxa:** Zd (6 F1 families), Zl (5) and Zh (2) have few F1 families, so their intervals are less reliable. Zd's SEG (5.1%) is somewhat below the expectation (p = 0.0004).
+- **F1 families:** only 2 of 98 F1 families reach the expected 12.5% donor alleles (Zx.0390_P2, Zx.0130_P1); 86% sit between 5% and 11%. AB/(AB+BB) is above 22% in 87 of the 98 F1 families, and in all F1 families of Zd, Zh and Zl.
+- **Small taxa:** Zd (6 F1 families), Zl (5) and Zh (2) have few F1 families, so their intervals are less reliable. Zd's SEG (5.1%) is somewhat below the expectation (p = 0.0004), and Zh's (5.9%, p = 0.0002) and Zl's (6.8%, p = 0.03) differ from it too, Zh's because its two families give a very narrow interval.
 
-**Where in the genome the introgressions are.** Each pool's calls were put on a 100-kb grid (B73 = 0, SEG = 0.5, DONOR = 1: the share of donor alleles among the pool's plants), then averaged over all 1,292 donor pools and over 1-Mb bins. Each row is a chromosome; the colour is the share of donor alleles in that bin (8.1% on average, 12.5% expected for BC2S3):
+**Where in the genome the introgressions are.** Each pool's calls were put on a 100-kb grid (B73 = 0, SEG = 0.5, DONOR = 1: the share of donor alleles among the pool's plants), then averaged over all 1,266 donor pools and over 1-Mb bins. Each row is a chromosome; the colour is the share of donor alleles in that bin (8.0% on average, 12.5% expected for BC2S3):
 
-![Donor allele share along the genome, all pools](final_script/figures/results_spread/introgression_landscape.png)
+![Donor allele share along the genome, all pools](figures/fix1/results/introgression_landscape.png)
 
-- **Most of the genome carries a similar amount of teosinte:** the median 1-Mb bin has 7.7% donor alleles, and 90% of bins lie between 5.3% and 11.6%. Only 13 of the 2,138 bins reach the BC2S3 expectation of 12.5% (12 on chr2, one on chr7).
-- **More teosinte:** chr2 (11.3% on average over the chromosome) and chr9 (10.8%). The most is at the start of chr2 (0–8 Mb: 13.8%), and it is high there in every large taxon (*diploperennis*, *parviglumis* and *mexicana* 14.3–14.5%).
-- **Less teosinte:** chr5 (6.1%), chr4 and chr6 (6.5% each). The least is near the end of chr5 (185–193 Mb: 4.0%, down to 3.6% in single bins) and in the middle of chr4 (100–120 Mb: 4.8%).
+- **Most of the genome carries a similar amount of teosinte:** the median 1-Mb bin has 7.7% donor alleles, and 90% of bins lie between 5.4% and 11.5%. Only 11 of the 2,138 bins reach the BC2S3 expectation of 12.5% (9 on chr2, 2 on chr7).
+- **More teosinte:** chr2 (11.2% on average over the chromosome) and chr9 (10.8%). The most is at the start of chr2 (0–8 Mb: 13.9%), and it is high there in every large taxon (*diploperennis*, *parviglumis* and *mexicana* 14.2–14.9%).
+- **Less teosinte:** chr5 (6.1%), chr4 (6.5%) and chr6 (6.6%). The least is near the end of chr5 (185–193 Mb: 4.1%, down to 3.8% in single bins) and in the middle of chr4 (100–120 Mb: 5.0%).
 
 The same per taxon, in 5-Mb bins along the whole genome:
 
-![Donor allele share along the genome, per taxon](final_script/figures/results_spread/introgression_landscape_by_taxon.png)
+![Donor allele share along the genome, per taxon](figures/fix1/results/introgression_landscape_by_taxon.png)
 
-- The taxa differ in where they carry teosinte. For example, *luxurians* has much more than average on chr9 (10–40 Mb: 16.2%), *huehuetenangensis* on chr3 (14.5% over the chromosome, against 8.8% in all pools), while *diploperennis* has almost none in chr5 185–193 Mb (0.3%) and chr4 100–120 Mb (0.5%), two regions where *parviglumis* still has about 7%.
+- The taxa differ in where they carry teosinte. For example, *luxurians* has much more than average on chr9 (10–40 Mb: 16.2%), *huehuetenangensis* on chr3 (14.5% over the chromosome, against 8.7% in all pools), while *diploperennis* has almost none in chr5 185–193 Mb (0.3%) and chr4 100–120 Mb (0.5%), two regions where *parviglumis* still has about 7.7%.
 - The small taxa come from few F1 families (*huehuetenangensis* 2, *luxurians* 5, *diploperennis* 6), so a block of colour in their rows can be one family's tract carried by many pools, not a property of the taxon.
 - A region with little teosinte in every taxon could mean selection or distortion against teosinte alleles there, or a region where DONOR is hard to call; we have not tested this.
 
@@ -570,41 +610,41 @@ The same per taxon, in 5-Mb bins along the whole genome:
 
 | Taxon | Pools | SEG tracts (per pool) | SEG median length | DONOR tracts (per pool) | DONOR median length | Introgressed tracts per pool | Introgressed median length |
 |---|---|---|---|---|---|---|---|
-| Zd | 227 | 1,122 (4.9) | 7.2 Mb | 788 (3.5) | 7.7 Mb | 6.2 | 10.3 Mb |
-| Zh | 61 | 323 (5.3) | 7.9 Mb | 288 (4.7) | 8.4 Mb | 6.8 | 12.7 Mb |
-| Zl | 98 | 588 (6.0) | 8.5 Mb | 370 (3.8) | 9.4 Mb | 7.2 | 12.2 Mb |
-| Zv | 333 | 3,090 (9.3) | 5.6 Mb | 2,456 (7.4) | 7.9 Mb | 11.3 | 9.4 Mb |
-| Zx | 573 | 5,311 (9.3) | 4.6 Mb | 4,538 (7.9) | 7.4 Mb | 11.1 | 9.4 Mb |
-| **All** | **1,292** | **10,434 (8.1)** | **5.4 Mb** | **8,440 (6.5)** | **7.7 Mb** | **9.8** | **9.8 Mb** |
+| Zd | 227 | 1,117 (4.9) | 7.5 Mb | 788 (3.5) | 8.0 Mb | 6.2 | 10.9 Mb |
+| Zh | 61 | 358 (5.9) | 6.5 Mb | 300 (4.9) | 8.8 Mb | 6.9 | 12.1 Mb |
+| Zl | 98 | 589 (6.0) | 8.5 Mb | 355 (3.6) | 9.8 Mb | 7.2 | 12.2 Mb |
+| Zv | 308 | 2,905 (9.4) | 4.9 Mb | 2,379 (7.7) | 7.8 Mb | 11.5 | 9.3 Mb |
+| Zx | 572 | 5,594 (9.8) | 4.2 Mb | 4,759 (8.3) | 6.8 Mb | 11.5 | 9.2 Mb |
+| **All** | **1,266** | **10,563 (8.3)** | **4.9 Mb** | **8,581 (6.8)** | **7.4 Mb** | **10.0** | **9.6 Mb** |
 
 - A pool carries about 10 pieces of donor DNA, with a median length of about 10 Mb.
-- *parviglumis* and *mexicana* pools carry nearly twice as many tracts as *diploperennis*, *huehuetenangensis* and *luxurians* pools (about 11 vs 6–7 introgressed tracts), and their SEG tracts are shorter (4.6–5.6 vs 7.2–8.5 Mb). Their donor allele share is not twice as high (table above), so they carry more, shorter pieces. We have not yet looked into why.
+- *parviglumis* and *mexicana* pools carry nearly twice as many tracts as *diploperennis*, *huehuetenangensis* and *luxurians* pools (about 11.5 vs 6–7 introgressed tracts), and their SEG tracts are shorter (4.2–4.9 vs 6.5–8.5 Mb). Their donor allele share is not twice as high (table above), so they carry more, shorter pieces. We have not yet looked into why.
 
-Figures and tables from `final_script/24b_introgression_landscape.py` (`introgression_landscape_bins.tsv`, `tract_stats_by_taxon.tsv` in `final_script/figures/results_spread/`). Single samples can be browsed in the [interactive viewer](#212-interactive-figures-step-23).
+Figures and tables from `final_script/24b_introgression_landscape.py` (`introgression_landscape_bins.tsv`, `tract_stats_by_taxon.tsv` in `figures/fix1/results/`). Single samples can be browsed in the [interactive viewer](#212-interactive-figures-step-23).
 
 The full statistics, F1 family results and the method history are in [`final_script/README.md`](final_script/README.md).
 
 #### 2.8.1 Why is there less donor DNA than expected?
 
-The lines carry 8.1% donor alleles instead of 12.5%. All of the shortfall is in DONOR (4.95% of the genome vs 9.38% expected), while SEG is as expected (6.23% vs 6.25%). Three things can lower the donor share, and the data can tell them apart in part:
+The lines carry 8.0% donor alleles instead of 12.5%. All of the shortfall is in DONOR (4.93% of the genome vs 9.38% expected), while SEG is as expected (6.24% vs 6.25%). Three things can lower the donor share, and the data can tell them apart in part:
 - **Selection.** At every selfing step one plant per row was advanced (ear to row), and the plants with the best-looking ears were kept. The 6 plants pooled for sequencing were also the best-looking plants of their plot.
 - **Segregation distortion or lower survival** of seeds and seedlings carrying teosinte alleles.
-- **Errors in the calls.** The DONOR level comes from assemblies of other teosinte plants (section 2.13), so DONOR windows could be called B73 where the donor keeps most of B73's k-mers (d_w close to 1). This would lower DONOR without changing SEG.
+- **Errors in the calls.** If DONOR windows were called B73 (e.g. where the donor keeps most of B73's k-mers, d_w close to 1), DONOR would fall without SEG changing.
 
-**Check 1: how many donor copies do SEG pools carry?** A SEG pool comes from an AB mother. Under Mendel, half of its plants' 12 gene copies are teosinte (donor allele share p = ½). The SEG level of r depends on p: more donor copies means fewer B73 k-mers (r = d_w + (1 − d_w) g(f), section 2.6.1). For each pool, p was found so that the mean r expected over its SEG windows matches the mean r observed (method of moments, with the pool's own d_w, scale a and k-mer coverage). Three checks come with it: a simulation of SEG windows at p = ½ with each pool's noise (the method should return ½), the mean r in DONOR windows against a·d_w, and the mean r in B73 windows against 1.
+**Check 1: how many donor copies do SEG pools carry?** A SEG pool comes from an AB mother. Under Mendel, half of its plants' 12 gene copies are teosinte (donor allele share p = ½). The SEG level of r depends on p: more donor copies means fewer B73 k-mers (r = d_w + (1 − d_w) g(f), section 2.6.1). For each pool, p was found so that the mean r expected over its SEG windows matches the mean r observed (method of moments, with the pool's own d_w as used by the HMM (2.6.6), scale a and k-mer coverage). Three checks come with it: a simulation of SEG windows at p = ½ with each pool's noise (the method should return ½), the mean r in DONOR windows against a·d_w, and the mean r in B73 windows against 1.
 
 | Taxon | Pools | Donor allele share in SEG pools, median (95% CI) | DONOR level: r − a·d_w | B73 level: r − 1 | Simulation at p = ½ |
 |---|---|---|---|---|---|
-| Zd | 223 | 0.461 (0.449–0.476) | −0.005 | 0.000 | 0.500 |
-| Zh | 61 | 0.478 (0.445–0.495) | +0.005 | +0.002 | 0.501 |
-| Zl | 96 | 0.453 (0.439–0.466) | −0.006 | +0.002 | 0.500 |
-| Zv | 333 | 0.455 (0.444–0.462) | +0.019 | +0.003 | 0.499 |
-| Zx | 565 | 0.461 (0.453–0.466) | +0.010 | 0.000 | 0.499 |
-| **All** | **1,278** | **0.459 (0.454–0.463)** | **+0.008** | **+0.001** | **0.500** |
+| Zd | 222 | 0.464 (0.455–0.472) | +0.007 | −0.001 | 0.500 |
+| Zh | 61 | 0.484 (0.456–0.523) | +0.002 | +0.001 | 0.502 |
+| Zl | 96 | 0.453 (0.443–0.472) | +0.002 | +0.001 | 0.501 |
+| Zv | 308 | 0.451 (0.443–0.457) | +0.038 | +0.002 | 0.500 |
+| Zx | 562 | 0.453 (0.446–0.458) | +0.033 | 0.000 | 0.500 |
+| **All** | **1,249** | **0.455 (0.451–0.458)** | **+0.029** | **0.000** | **0.500** |
 
-- **The method works:** the simulation returns ½, and the B73 and DONOR levels are where the model puts them (offsets ≤ 0.02).
-- **It is not an edge effect.** Near the ends of a SEG tract, stretches with 10–11 donor copies could be called DONOR and stretches with 1–2 copies B73, which would move the estimate. Rerun on the middle of long SEG tracts only (tracts ≥ 5 Mb, 1 Mb trimmed at each end; 1,239 pools, 1.36 million windows; `--core_mb 5`), it is unchanged: 0.460 (0.455–0.464) overall and 0.453–0.481 per taxon.
-- **SEG pools carry 46% donor alleles, not 50%,** alike in all five taxa. A small part of this can come from the DONOR offset (a DONOR r slightly above a·d_w pulls the estimate down by about 0.01 overall, 0.03 in Zv), but Zd and Zl have negative offsets and are still at 0.45–0.46.
+- **The method works:** the simulation returns ½, and the B73 level is where the model puts it. The DONOR level is close (offsets ≤ 0.04); in *parviglumis* and *mexicana*, DONOR windows read about 0.03–0.04 above a·d_w.
+- **It is not an edge effect.** Near the ends of a SEG tract, stretches with 10–11 donor copies could be called DONOR and stretches with 1–2 copies B73, which would move the estimate. Rerun on the middle of long SEG tracts only (tracts ≥ 5 Mb, 1 Mb trimmed at each end; 1,207 pools, 1.36 million windows; `--core_mb 5`), it is unchanged: 0.454 (0.450–0.460) overall and 0.448–0.493 per taxon.
+- **SEG pools carry 45–46% donor alleles, not 50%,** alike in all five taxa (the first model gave 0.459). Part of this can come from the DONOR offset (a DONOR r above a·d_w pulls the estimate down, by up to about 0.03–0.04 in *parviglumis* and *mexicana*), but *diploperennis* and *luxurians*, with offsets of 0.002–0.007, are still at 0.45–0.46.
 - **This fits the choice of the best-looking plants.** Within a SEG plot the plants are AA, AB and BB; choosing the best-looking ones for the pool favours plants without the teosinte form of a trait, i.e. fewer BB, so fewer donor copies. Seeds or seedlings with teosinte alleles doing worse would give the same result; the two can't be told apart here.
 
 **Check 2: what would a loss like this do over the whole crossing scheme?** If every generation passed on teosinte alleles at 0.46 instead of 0.5 (F1 → BC1 → BC2 → two selfings to the BC2S2 mother):
@@ -613,9 +653,9 @@ The lines carry 8.1% donor alleles instead of 12.5%. All of the shortfall is in 
 |---|---|---|---|
 | Mendel (0.5) | 6.25% | 9.38% | 12.5% |
 | Transmission 0.46 in every generation | 5.22% | 6.70% | 9.10% |
-| **Observed** | **6.23%** | **4.95%** | **8.1%** |
+| **Observed** | **6.24%** | **4.93%** | **8.0%** |
 
-- A loss of this size explains most of the missing donor alleles (about 3.4 of the 4.4 points).
+- A loss of this size explains most of the missing donor alleles (about 3.4 of the 4.5 points).
 - But it gets the split wrong: it should lower SEG too (to about 5.2%), while SEG is on expectation and DONOR is even lower. So something acts **against BB more than against AB**.
 - That is what choosing the best-looking plant to advance does, if teosinte effects are mostly recessive:
   - **Selecting against teosinte.** A BB plant shows the teosinte form of the traits its segment controls (e.g. smaller or harder ears), with no B73 copy to mask it, so it is less often chosen. An AB plant still has a B73 copy, which often hides the teosinte effect.
@@ -642,7 +682,7 @@ Two observed values cannot set three numbers, so one is kept at 0.5 in turn. Thi
 | Mendel | 9.38% | 6.25% | 12.5% | 0.500 |
 | From TeoNAM, selection during selfing | 5.4% | 10.0% | 9.8% | 0.447 |
 | From TeoNAM, selection at the backcross | 3.9% | 6.6% | 7.2% | 0.500 |
-| **Observed** | **4.95%** | **6.23%** | **8.1%** | **0.459** |
+| **Observed** | **4.93%** | **6.24%** | **8.0%** | **0.455** |
 
 - DONOR and the donor allele share fall inside the range from TeoNAM.
 - The SEG range rests almost entirely on TeoNAM's 8.1% heterozygous figure, the least certain of its numbers. If their true heterozygosity were lower, the range would move down to ours:
@@ -652,40 +692,40 @@ Two observed values cannot set three numbers, so one is kept at 0.5 in turn. Thi
   | 8% (as reported) | 6.6–10.0% |
   | 6% | 5.3–8.7% |
   | 5% | 4.6–7.9% |
-  | **Observed** | **6.23%** |
+  | **Observed** | **6.24%** |
 
-- The donor share inside SEG pools (0.459) is closer to the "selection during selfing" case (0.447) than to the "selection at the backcross" case (0.500). The model uses one average for the whole genome; the truth is probably a mix of the two cases.
+- The donor share inside SEG pools (0.455) is closer to the "selection during selfing" case (0.447) than to the "selection at the backcross" case (0.500). The model uses one average for the whole genome; the truth is probably a mix of the two cases.
 
-**Check 4: are the calls right?** Independent data say yes. 85 of our plots were also genotyped by high-depth targeted sequencing, and every tract of ours (≥ 1 Mb) was compared with it (details in [2.9.1](#291-independent-check-targeted-sequencing-of-85-plots)). **96.5% of our B73 tracts carry no teosinte, and only 0.6% are homozygous teosinte**; 86% of our DONOR tracts are homozygous teosinte. So the low DONOR share is not DONOR called as B73: the teosinte really is missing. Inside our SEG tracts the targeted sequencing gives a median donor allele fraction of 0.45, close to the 0.46 of Check 1.
+**Check 4: are the calls right?** Independent data say yes. 83 of our plots were also genotyped by high-depth targeted sequencing, and every tract of ours (≥ 1 Mb) was compared with it (details in [2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)). **95.9% of our B73 tracts carry no teosinte (97.5% of their length), and only 0.8% are homozygous teosinte**; 89% of our DONOR tracts are homozygous teosinte. So the low DONOR share is not DONOR called as B73: the teosinte really is missing. Inside our SEG tracts the targeted sequencing gives a median donor allele fraction of 0.45, close to the 0.46 of Check 1.
 
-**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.46). TeoNAM's authors explained their excess of heterozygous and maize genome the same way, and the targeted sequencing (Check 4) rules out calling errors as the cause. Lower survival of teosinte-carrying seeds and seedlings may add to it.
+**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.45–0.46). TeoNAM's authors explained their excess of heterozygous and maize genome the same way, and the targeted sequencing (Check 4) rules out calling errors as the cause. Lower survival of teosinte-carrying seeds and seedlings may add to it.
 
 **Caveats.**
 - The transmission calculation assumes the same loss in every generation and in both sexes; it is a rough guide.
 - Call errors (DONOR called B73) are ruled out for tracts of 1 Mb or more (Check 4); shorter tracts were not checked.
-- Because the pooled plants were chosen, a SEG pool's donor copies are not exactly Binomial(12, ½) as the HMM assumes. The shift (0.46 vs 0.5) is small compared with the spread the SEG emission already allows.
+- Because the pooled plants were chosen, a SEG pool's donor copies are not exactly Binomial(12, ½) as the HMM assumes. The shift (0.455 vs 0.5) is small compared with the spread the SEG emission already allows.
 
-Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`; per-pool and per-taxon tables in `data/introgression_spread/seg_donor_copies/`).
+Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`, which passes the model's DONOR levels with `MODEL=fix1`; per-pool and per-taxon tables: `data/introgression_fix1/seg_donor_copies*.tsv`).
 
 ### 2.9 Validation
 
 - **B73 controls are clean:** all 10 have ≤ 0.56% non-B73 windows (donor share ≤ 0.28%). This is a fair test, because the k-mer route never used the controls to filter sites.
-- **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
+- **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26 (first model).
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
-- **A second k-mer measure (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa). It uses other k-mers (teosinte k-mers present, not B73 k-mers missing) but the same reads, so it is complementary, not fully independent. It checks the total donor share, not the SEG/DONOR split.
+- **A second k-mer measure (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa, in both models). It uses other k-mers (teosinte k-mers present, not B73 k-mers missing) but the same reads, so it is complementary, not fully independent. It checks the total donor share, not the SEG/DONOR split.
 
-- **Targeted sequencing of 85 plots (section 2.9.1):** an independent, high-depth genotype for the same plots agrees with our calls: 96.5% of our B73 tracts carry no teosinte, 86% of our DONOR tracts are homozygous teosinte, and our SEG tracts are intermediate.
+- **Targeted sequencing of 83 plots (section 2.9.1):** an independent, high-depth genotype for the same plots agrees with our calls: 95.9% of our B73 tracts carry no teosinte, 89% of our DONOR tracts are homozygous teosinte, and 83% of our SEG tracts are heterozygous.
 
-#### 2.9.1 Independent check: targeted sequencing of 85 plots
+#### 2.9.1 Independent check: targeted sequencing of 83 plots
 
-**Data.** 96 of our plots were also genotyped by targeted sequencing: a fixed panel of SNP regions, sequenced at high depth (paired-end reads; median 23 reads per SNP in our comparison). The samples are named after the plot (e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`), and all 96 match a plot of ours. 95 samples had both read files, 94 aligned, 88 belong to a pool with k-mer calls, and **85** had enough SNPs to compare. The DNA is thought to come from one plant of each plot, but this is not yet confirmed (see "One plant or a bulk?" below).
+**Data.** 96 of our plots were also genotyped by targeted sequencing: a fixed panel of SNP regions, sequenced at high depth (paired-end reads; median 23 reads per SNP in our comparison). The samples are named after the plot (e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`), and all 96 match a plot of ours. 95 samples had both read files, 94 aligned, 86 belong to a pool with k-mer calls in the current model (88 in the first; two pools are now among the noisy pools), and **83** had enough SNPs to compare. The DNA is thought to come from one plant of each plot, but this is not yet confirmed (see "One plant or a bulk?" below).
 
 **Methods.**
 1. **Reads to SNPs** (steps 34, 34b). Adapters trimmed (fastp), reads aligned to B73 v5 (bwa mem; duplicates kept, since the panel may be amplicon-based), and variable sites found in all samples together (bcftools mpileup with mapping and base quality ≥ 20, multi-sample call, biallelic SNPs with QUAL ≥ 30): 656,483 SNPs. Kept: sites with ≥ 10 reads in ≥ 20 samples, and not carrying the alternative allele in more than half of the samples (at any one place most pools are B73, so such sites are paralogs or places where our B73 differs from the reference): **84,813 sites**.
 2. **Donor allele fraction.** At each site, a sample's donor allele fraction is alt reads / all reads; the reference is B73, so the alternative allele is the non-B73 one. The donor genotypes are not needed. A site counts as **carrying donor alleles** if it has ≥ 3 alt reads and a fraction ≥ 0.2.
-3. **Real SNPs only.** Most of the 84,813 sites are not real SNPs (see Results 1). A site is used for a sample only if it is homozygous for the alternative allele (fraction ≥ 0.9, ≥ 10 reads) in at least one *other* sample. Leaving the sample out means its own reads do not decide which of its sites are used. **7,666 real SNPs** remain.
+3. **Real SNPs only.** Most of the 84,813 sites are not real SNPs (see Results 1). A site is used for a sample only if it is homozygous for the alternative allele (fraction ≥ 0.9, ≥ 10 reads) in at least one *other* sample. Leaving the sample out means its own reads do not decide which of its sites are used. **7,269 real SNPs** remain (7,666 with the 85 samples of the first model).
 4. **Our call at each site** (step 34c): the k-mer state (B73 / SEG / DONOR) of the sample's pool at that position.
-5. **Tract comparison** (step 34d). Each tract of ours of 1 Mb or more is compared with the targeted-sequencing reads inside it. The sample's own noise (sites carrying donor alleles inside our B73 tracts; median 0.41 per 100 real SNPs) sets what counts as signal:
+5. **Tract comparison** (step 34d). Each tract of ours of 1 Mb or more is compared with the targeted-sequencing reads inside it. The sample's own noise (sites carrying donor alleles inside our B73 tracts; median 0.4 per 100 real SNPs) sets what counts as signal:
    - **carrier:** at least 2 sites carry donor alleles, and more than the noise allows (Poisson, p < 0.001); then **BB** if their median fraction is ≥ 0.8, **AB** if it is 0.25–0.75;
    - **AA:** not a carrier, with at least 15 sites covered;
    - **unclear:** otherwise (too few sites).
@@ -695,50 +735,44 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 
 **Results.**
 
-![Targeted sequencing against the k-mer calls](figures/targseq_validation.png)
+![Targeted sequencing against the k-mer calls](figures/fix1/targseq_validation.png)
 
 *a: sites carrying donor alleles per 100 SNPs, inside our B73, SEG and DONOR calls, for all sites and for real SNPs only. b: genotype of our tracts in the targeted sequencing. c: median donor allele fraction of each tract that carries donor alleles.*
 
 | Our call | Tracts ≥ 1 Mb | Clearly called | AA (no teosinte) | AB (intermediate) | BB (homozygous teosinte) |
 |---|---|---|---|---|---|
-| **B73** | 1,503 | 1,142 | **96.5%** (97.7% of Mb) | 2.9% | 0.6% |
-| **SEG** | 733 | 391 | 21.2% | **71.1%** | 7.7% |
-| **DONOR** | 749 | 397 | 9.1% | 5.0% | **85.9%** (89.2% of Mb) |
+| **B73** | 1,471 | 1,013 | **95.9%** (97.5% of Mb) | 3.4% | 0.8% |
+| **SEG** | 736 | 329 | 8.8% | **82.7%** (92.6% of Mb) | 8.5% |
+| **DONOR** | 761 | 377 | 7.2% | 4.0% | **88.9%** (90.4% of Mb) |
 
-1. **91% of the targeted-sequencing "SNPs" were amplification errors.** Of the 84,813 sites, only 7,666 are homozygous for the alternative allele in any sample. The others carry the alternative allele at a fraction of about 0.3, at random sites, in single samples; they are not shared by relatives and do not come from another sample in the batch. This fits errors made early in the amplification, which are then copied. On all sites, about 1 in 100 sites inside our B73 tracts looked like donor alleles, and a first comparison called 74% of our B73 tracts "AB". On real SNPs the contrast is clean: donor alleles at 0.6 per 100 SNPs in our B73 tracts, 16.2 in SEG and 25.5 in DONOR (figure, a).
-2. **Our B73 calls are right.** 96.5% of our B73 tracts (97.7% of their length) show no teosinte, and 0.6% are homozygous teosinte. So DONOR is not being called B73, and the low DONOR share (section 2.8.1) is real.
-3. **Our DONOR calls are right.** 86% of our DONOR tracts (89% of their length) are homozygous teosinte, with a median donor allele fraction of **1.00** in the carrier tracts (figure, c); the targeted sequencing has no bias towards the B73 allele. The 9% that look AA are mostly regions where the teosinte carries the B73 allele at the panel SNPs; half of them (18 of 36) come from the two swapped samples in point 6.
-4. **Our SEG calls are intermediate.** 71% of our SEG tracts are AB, with a median donor allele fraction of **0.45** (308 carrier tracts; figure, c). This is close to the 0.46 measured from the k-mers inside SEG pools (Check 1 in 2.8.1), so two independent methods give the same number.
-5. **Missed introgressions are rare.** Inside our B73 tracts, 195 of 22,505 windows of 2 Mb (in 61 samples) carry more donor alleles than noise allows, against about 23 expected by chance. That is under 1% of the B73-called genome. Their median donor allele fraction is 0.36, so they are short intermediate (SEG-like) pieces at most, not missed DONOR.
+All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71.1** / 7.7%, DONOR 9.1 / 5.0 / **85.9%**. Without the three bad samples of point 6, the current model gives B73 96.6 / 3.0 / 0.4%, SEG 5.7 / 85.8 / 8.5%, DONOR 1.7 / 3.1 / 95.2% (the comparison of the models in 2.6.6 uses this set).
+
+1. **91% of the targeted-sequencing "SNPs" were amplification errors.** Of the 84,813 sites, only 7,666 are homozygous for the alternative allele in any sample. The others carry the alternative allele at a fraction of about 0.3, at random sites, in single samples; they are not shared by relatives and do not come from another sample in the batch. This fits errors made early in the amplification, which are then copied. On all sites, about 1 in 100 sites inside our B73 tracts looked like donor alleles, and a first comparison called 74% of our B73 tracts "AB". On real SNPs the contrast is clean: donor alleles at 0.6 per 100 SNPs in our B73 tracts, 16.5 in SEG and 25.3 in DONOR (figure, a).
+2. **Our B73 calls are right.** 95.9% of our B73 tracts (97.5% of their length) show no teosinte, and 0.8% are homozygous teosinte. So DONOR is not being called B73, and the low DONOR share (section 2.8.1) is real.
+3. **Our DONOR calls are right.** 89% of our DONOR tracts (90% of their length) are homozygous teosinte (86% in the first model), with a median donor allele fraction of **1.00** in the carrier tracts (figure, c); the targeted sequencing has no bias towards the B73 allele. Most of the 7% that look AA (21 of 27) come from the three bad samples in point 6; without them, 95% of DONOR tracts are BB.
+4. **Our SEG calls are heterozygous.** 83% of our SEG tracts are AB (71% in the first model), with a median donor allele fraction of **0.45** (300 carrier tracts; figure, c). SEG tracts where the plant carries no teosinte fell from 21% to 9%. This is close to the 0.455 measured from the k-mers inside SEG pools (Check 1 in 2.8.1), so two independent methods give the same number.
+5. **Missed introgressions are rare.** Inside our B73 tracts, 176 of 20,730 windows of 2 Mb (in 55 samples) carry more donor alleles than noise allows, against about 21 expected by chance. That is under 1% of the B73-called genome. Their median donor allele fraction is 0.37, so they are short intermediate (SEG-like) pieces at most, not missed DONOR.
 6. **Three samples are bad and explain most mismatches:**
-   - `Zv0480_P3_P2_P1211` is **contaminated**: 53% of its stray donor alleles (inside our B73 tracts) are homozygous-donor sites of `Zx0550_P4_P3_P5311`, a *mexicana* sample. This explains why its DONOR regions show intermediate fractions (mean 0.33).
+   - `Zv0480_P3_P2_P1211` is **contaminated**: 53% of its stray donor alleles (inside our B73 tracts) are homozygous-donor sites of `Zx0550_P4_P3_P5311`, a *mexicana* sample. This explains why its DONOR regions show intermediate fractions (mean 0.44).
    - `Zx0090_P2_P5_P1111` and `Zx0160_P2_P4_P1111` look like **sample swaps or wrong plants**: 8 and 10 of their DONOR tracts show no teosinte at all. Their targeted-sequencing DNA does not seem to come from the pool we sequenced.
-7. **An error of our HMM: short SEG tracts between two DONOR tracts are often DONOR.** In the targeted sequencing, SEG tracts that lie between two DONOR tracts are BB in **47%** of cases (18 of 38 clearly called), against 6.7% for SEG tracts next to one DONOR tract and **1.4%** for SEG tracts with no DONOR neighbour (3 of 216). This happens almost only in *parviglumis* (45%) and *mexicana* (54%); for *diploperennis*, *huehuetenangensis* and *luxurians* none of these tracts is BB. The likely cause is the DONOR level (d_w): where our donor plant keeps more of the B73 k-mers than the assemblies used for d_w, a DONOR window reads too high and looks SEG. These are the two taxa that already switch between SEG and DONOR most often (2.13). **The errors sit at the same places in many pools.** Counting, for every 1-Mb bin, the pools whose SEG tract between two DONOR tracts covers it: the median bin has 5 such pools, but chr6 21–23 Mb has 48, chr1 297 Mb 28, chr7 54–65 Mb 26–28 and chr3 75–78 Mb 19 (14 of them *mexicana*). In the targeted sequencing, chr3 70.6–81 Mb is BB in five samples of both taxa (panel 2) and chr1 297–299 Mb in two (panel 4). So the error comes from specific windows where the assemblies' DONOR level does not fit our donors, not from the HMM at random; these windows can be flagged, or their DONOR level re-estimated from our own DONOR pools. None of the QTL that hold in the joint model lies in these regions.
+7. **The remaining error: some SEG tracts between two DONOR tracts are DONOR.** In the targeted sequencing (three bad samples left out), SEG tracts that lie between two DONOR tracts are BB in **57%** of cases (17 of 30 clearly called), against 6.5% for SEG tracts next to one DONOR tract and 2.1% for SEG tracts with no DONOR neighbour (4 of 195). This happens only in *parviglumis* (4 of 8) and *mexicana* (13 of 19); for *diploperennis*, *huehuetenangensis* and *luxurians* none of these tracts is BB. In the first model the same check gave 47% (18 of 38): the current model removed 8 of these tracts, but mostly correct ones, so the share of errors among the rest went up. These tracts are now 0.30% of the genome (4.8% of all SEG; median 1.6 Mb), against 0.38% before. If about half of them are DONOR, DONOR rises from 4.93% to about 5.1% and SEG falls from 6.24% to about 6.1%, which does not change the DONOR deficit in 2.8.1.
 
-   **Why some of these errors can be fixed and others cannot: contrast.** The HMM separates DONOR from SEG by the gap between their expected scores, about (1 − d_w) × g(½), where d_w is the share of B73 k-mers the teosinte keeps in the window. Divided by the window's noise, this gives the **contrast**: how many noise units apart DONOR and SEG are in a single window. Where the teosinte keeps few B73 k-mers, the gap is wide and the call is easy; where it keeps most of them, DONOR and SEG overlap. To test the level explanation, the DONOR level was also learned from our own pools instead of the assemblies, per taxon and per accession (folder `new_model/`, script `contrast_check.py`), and the HMM rerun:
+   **The errors sit at the same places in many pools.** Counting, for every 1-Mb bin, the pools whose SEG tract between two DONOR tracts covers it, the first model had four hotspots: chr6 21–23 Mb (48 pools), chr1 297 Mb (28), chr7 54–65 Mb (28) and chr3 75–78 Mb (19). This is what led to the current model (2.6.6), which brings them to 9, 11, 14 and 8 pools:
+   - **chr6 and chr1: the DONOR level was wrong.** There, our donors keep more of the B73 k-mers than the assembly plants, so a DONOR window read like SEG. The DONOR level learned from all our pools removes most of these errors.
+   - **chr7 and chr3: too little contrast.** There, the teosinte keeps 61–78% of the B73 k-mers, so with all B73 k-mers counted a DONOR window scores almost like a SEG window (about one noise unit apart in *parviglumis* chr7). Counting only the informative k-mers raised the contrast (*parviglumis* chr7: 1.2 → 2.6) and turned most chr7 islands into DONOR (example 3 below). ***parviglumis* chr3 75–78 Mb is not fixed:** its islands read halfway between DONOR and SEG in every count, all B73 k-mers or informative only, so the problem there is not contrast; it may be family-specific teosinte haplotypes that share these k-mers with B73. The targeted sequencing at chr3 70–81 Mb is mixed (BB in some plots, AA or AB in others; most of them *mexicana*).
+   - None of the QTL that hold in the joint model lies in these four regions.
 
-   | Hotspot | Contrast, *parviglumis* / *mexicana* | DONOR level (B73 k-mers kept) | Pools with the error: current → learned levels |
-   |---|---|---|---|
-   | chr6 21–23 Mb | 3.3 / 6.0 | 0.10–0.11 | 48 → 7 |
-   | chr1 297 Mb | 2.2 / 2.6 | 0.34 | 28 → 10 |
-   | chr7 54–65 Mb | **1.1 / 1.7** | **0.74–0.78** | 28 → 26 |
-   | chr3 75–78 Mb | **1.6 / 2.4** | **0.61–0.68** | 19 → 21 |
+   **Contrast: how far apart DONOR and SEG are in one window.** The HMM separates DONOR from SEG by the gap between their expected scores, about (1 − d_w) × g(½), where d_w is the share of B73 k-mers the teosinte keeps in the window. Divided by the window's noise, this gives the contrast: how many noise units apart the two states are. Measured from our pools (windows with at least 5 pools called DONOR; median, and share of windows below 3):
 
-   - **chr6 and chr1 have enough contrast**: the error there was a wrong DONOR level, and learning the level from our pools removes most of it.
-   - **chr7 and chr3 have very low contrast**: the teosinte keeps 61–78% of the B73 k-mers there, so a DONOR window scores almost like a SEG window (1–2 noise units apart). No DONOR level or transition setting can separate them with 0.8x pools; only deeper sequencing or the donors' own genomes could.
-   - **The learned levels were not adopted.** Over all checks they were not better than the current model (the SEG-between-DONOR error stayed at 48% BB with accession levels), and they move the genome shares only slightly (DONOR 4.9–5.2%, SEG 6.1–6.2% across the three versions), so the DONOR deficit (2.8.1) does not depend on how the DONOR level is set.
-
-   **Contrast over the whole genome, per taxon** (median single-window contrast; share of windows below 3):
-
-   | Taxon | Median contrast | Windows below 3 |
+   | Taxon | All B73 k-mers | Current model (switched windows: informative k-mers) |
    |---|---|---|
-   | *diploperennis* | 4.1 | 11% |
-   | *luxurians* | 4.1 | 17% |
-   | *mexicana* | 3.9 | 22% |
-   | *huehuetenangensis* | 3.0 | 48% |
-   | *parviglumis* | 2.9 | 55% |
+   | *diploperennis* | 4.2 (9% below 3) | 4.7 (3%) |
+   | *luxurians* | 4.3 (15%) | 4.8 (7%) |
+   | *mexicana* | 4.1 (19%) | 4.7 (5%) |
+   | *huehuetenangensis* | 3.3 (41%) | 4.0 (15%) |
+   | *parviglumis* | 3.3 (41%) | 3.8 (21%) |
 
-   *Parviglumis*, the closest relative of maize, shares the most k-mers with B73, so its DONOR and SEG are the hardest to tell apart; this is why *parviglumis* (and in places *mexicana*) switches between SEG and DONOR more often. The contrast is per window: the HMM pools the evidence of a whole stretch, so low contrast makes DONOR vs SEG harder, not impossible. **B73 vs introgressed is not affected**, and with it the ancestry dosage used in the GWAS except for the ½-vs-1 step. **Size:** such sandwiched SEG tracts are 0.38% of the genome (6.2% of all SEG; median 2.3 Mb). If about half of them are DONOR, DONOR rises from 4.94% to about 5.1% and SEG falls from 6.22% to about 6.0%, which does not change the DONOR deficit in 2.8.1 (expected 9.38%).
+   *parviglumis*, the closest relative of maize, shares the most k-mers with B73, so its DONOR and SEG are still the hardest to tell apart (the "current" column is somewhat optimistic, since windows switched where the measured new contrast was higher). The contrast is per window: the HMM pools the evidence of a whole stretch, so low contrast makes DONOR vs SEG harder, not impossible. **B73 vs introgressed is not affected**, and with it the ancestry dosage used in the GWAS except for the ½-vs-1 step.
 
 **Examples: our calls against the targeted sequencing.** Each panel is one sample and one chromosome, in three rows:
 - **k-mer call (pool):** our HMM call of the 6-plant pool, from the 0.8x skim-seq;
@@ -747,23 +781,113 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 
 The outlined tract is the one in the title.
 
-![Our k-mer calls against the targeted sequencing, four examples](figures/targseq_examples.png)
+![Our k-mer calls against the targeted sequencing, four examples](figures/fix1/targseq_examples.png)
 
-1. **We call SEG; the targeted sequencing says AB. They agree** (`Zd0010_P3_P3_P3411`, chr10 81–152 Mb; 32 SNPs at 0.3–0.7, none at 0.8 or above).
-2. **The whole chromosome agrees, except one tract** (`Zx0030_P2_P2_P2111`, *mexicana*, chr3). Where we call SEG (0–45 and 175–210 Mb) the targeted sequencing shows AB, with some BB; where we call DONOR (45–175 Mb) it shows BB; where we call B73 it shows no donor allele. The exception is the outlined **SEG tract between two DONOR tracts** (71–81 Mb): the targeted sequencing says BB, like the DONOR on both sides, so 45–175 Mb is one DONOR block and the SEG island inside it is **our error** (point 7).
-3. **We call SEG; the targeted sequencing says AB with a BB stretch at 192–200 Mb** (`Zx0510_P1_P3_P2111`, chr4). A plant of a segregating family can be AB in one part and BB in another, where it recombined, so this agrees with SEG.
-4. **The same error in *parviglumis*** (`Zv0030_P1_P3_P1111`, chr1, zoomed to 280–309 Mb). We call a 2.2-Mb SEG tract between two DONOR tracts; the targeted sequencing has 28 SNPs at about 1 there (BB), like the DONOR beside it.
+1. **We call SEG; the targeted sequencing says AB. They agree** (`Zv0370_P3_P4_P1111`, chr5 29–117 Mb): the SNPs that carry donor alleles sit at 0.3–0.7, none at 0.8 or above.
+2. **We call DONOR; the targeted sequencing says BB. They agree** (`Zv0420_P3_P1_P1111`, chr5 41–97 Mb): the SNPs that carry donor alleles sit at about 1.
+3. **An error of the first model, fixed** (`Zv0210_P1_P5_P1111`, *parviglumis*, chr7). The first model called a SEG island at 54–66 Mb (outlined), inside a DONOR block, at the chr7 hotspot (point 7). The targeted sequencing has SNPs at about 1 there (BB), and the current model, with the informative k-mers, calls one DONOR tract from 41 to 115 Mb.
+4. **The remaining error** (`Zv0030_P1_P3_P1111`, *parviglumis*, chr1, zoomed to 280–309 Mb). We still call a 2.2-Mb SEG tract between two DONOR tracts at the chr1 297 Mb hotspot; the targeted sequencing has SNPs at about 1 there (BB), like the DONOR beside it.
+
+<details><summary>All 83 samples: every chromosome with an introgression (one figure per sample)</summary>
+
+Same three rows as above, for every chromosome where we call SEG or DONOR or the targeted sequencing finds donor alleles. Above the k-mer row, each tract of ours that the targeted sequencing calls clearly is labelled with the plant's genotype there (AA, AB or BB; 34d). The three bad samples of point 6 are included: `Zv0480_P3_P2_P1211` (contaminated), `Zx0090_P2_P5_P1111` and `Zx0160_P2_P4_P1111` (swapped). Made with `final_script/34f_targseq_examples.py --gallery_dir`.
+
+![Zd0010_P3_P3_P3211](figures/fix1/targseq_all/Zd0010_P3_P3_P3211.png)
+![Zd0010_P3_P3_P3411](figures/fix1/targseq_all/Zd0010_P3_P3_P3411.png)
+![Zd0010_P3_P4_P2311](figures/fix1/targseq_all/Zd0010_P3_P4_P2311.png)
+![Zd0020_P3_P4_P2111](figures/fix1/targseq_all/Zd0020_P3_P4_P2111.png)
+![Zd0020_P3_P4_P3211](figures/fix1/targseq_all/Zd0020_P3_P4_P3211.png)
+![Zd0030_P2_P5_P5211](figures/fix1/targseq_all/Zd0030_P2_P5_P5211.png)
+![Zd0040_P1_P4_P3111](figures/fix1/targseq_all/Zd0040_P1_P4_P3111.png)
+![Zh0020_P3_P5_P1211](figures/fix1/targseq_all/Zh0020_P3_P5_P1211.png)
+![Zh0030_P4_P1_P2211](figures/fix1/targseq_all/Zh0030_P4_P1_P2211.png)
+![Zh0030_P4_P3_P1111](figures/fix1/targseq_all/Zh0030_P4_P3_P1111.png)
+![Zl0010_P1_P2_P1411](figures/fix1/targseq_all/Zl0010_P1_P2_P1411.png)
+![Zl0010_P1_P4_P1411](figures/fix1/targseq_all/Zl0010_P1_P4_P1411.png)
+![Zl0020_P3_P1_P1411](figures/fix1/targseq_all/Zl0020_P3_P1_P1411.png)
+![Zl0020_P3_P4_P3511](figures/fix1/targseq_all/Zl0020_P3_P4_P3511.png)
+![Zl0040_P4_P4_P2411](figures/fix1/targseq_all/Zl0040_P4_P4_P2411.png)
+![Zl0050_P1_P5_P1211](figures/fix1/targseq_all/Zl0050_P1_P5_P1211.png)
+![Zv0030_P1_P3_P1111](figures/fix1/targseq_all/Zv0030_P1_P3_P1111.png)
+![Zv0080_P2_P1_P1211](figures/fix1/targseq_all/Zv0080_P2_P1_P1211.png)
+![Zv0120_P2_P3_P2111](figures/fix1/targseq_all/Zv0120_P2_P3_P2111.png)
+![Zv0150_P4_P1_P1111](figures/fix1/targseq_all/Zv0150_P4_P1_P1111.png)
+![Zv0190_P3_P4_P1111](figures/fix1/targseq_all/Zv0190_P3_P4_P1111.png)
+![Zv0200_P3_P2_P1111](figures/fix1/targseq_all/Zv0200_P3_P2_P1111.png)
+![Zv0210_P1_P4_P2211](figures/fix1/targseq_all/Zv0210_P1_P4_P2211.png)
+![Zv0210_P1_P5_P1111](figures/fix1/targseq_all/Zv0210_P1_P5_P1111.png)
+![Zv0220_P3_P1_P2211](figures/fix1/targseq_all/Zv0220_P3_P1_P2211.png)
+![Zv0220_P3_P2_P1111](figures/fix1/targseq_all/Zv0220_P3_P2_P1111.png)
+![Zv0250_P3_P2_P1311](figures/fix1/targseq_all/Zv0250_P3_P2_P1311.png)
+![Zv0260_P2_P2_P1111](figures/fix1/targseq_all/Zv0260_P2_P2_P1111.png)
+![Zv0310_P3_P2_P1311](figures/fix1/targseq_all/Zv0310_P3_P2_P1311.png)
+![Zv0310_P3_P3_P1211](figures/fix1/targseq_all/Zv0310_P3_P3_P1211.png)
+![Zv0370_P3_P4_P1111](figures/fix1/targseq_all/Zv0370_P3_P4_P1111.png)
+![Zv0410_P2_P3_P2111](figures/fix1/targseq_all/Zv0410_P2_P3_P2111.png)
+![Zv0420_P3_P1_P1111](figures/fix1/targseq_all/Zv0420_P3_P1_P1111.png)
+![Zv0420_P3_P3_P1211](figures/fix1/targseq_all/Zv0420_P3_P3_P1211.png)
+![Zv0440_P4_P4_P1111](figures/fix1/targseq_all/Zv0440_P4_P4_P1111.png)
+![Zv0470_P2_P5_P1211](figures/fix1/targseq_all/Zv0470_P2_P5_P1211.png)
+![Zv0480_P3_P1_P1211](figures/fix1/targseq_all/Zv0480_P3_P1_P1211.png)
+![Zv0480_P3_P2_P1211](figures/fix1/targseq_all/Zv0480_P3_P2_P1211.png)
+![Zx0030_P2_P1_P2111](figures/fix1/targseq_all/Zx0030_P2_P1_P2111.png)
+![Zx0030_P2_P2_P1211](figures/fix1/targseq_all/Zx0030_P2_P2_P1211.png)
+![Zx0030_P2_P2_P2111](figures/fix1/targseq_all/Zx0030_P2_P2_P2111.png)
+![Zx0090_P2_P5_P1111](figures/fix1/targseq_all/Zx0090_P2_P5_P1111.png)
+![Zx0140_P2_P4_P1211](figures/fix1/targseq_all/Zx0140_P2_P4_P1211.png)
+![Zx0160_P2_P4_P1111](figures/fix1/targseq_all/Zx0160_P2_P4_P1111.png)
+![Zx0160_P2_P5_P1211](figures/fix1/targseq_all/Zx0160_P2_P5_P1211.png)
+![Zx0190_P2_P4_P1111](figures/fix1/targseq_all/Zx0190_P2_P4_P1111.png)
+![Zx0190_P2_P5_P1211](figures/fix1/targseq_all/Zx0190_P2_P5_P1211.png)
+![Zx0220_P2_P4_P1111](figures/fix1/targseq_all/Zx0220_P2_P4_P1111.png)
+![Zx0340_P2_P4_P2111](figures/fix1/targseq_all/Zx0340_P2_P4_P2111.png)
+![Zx0350_P1_P4_P2211](figures/fix1/targseq_all/Zx0350_P1_P4_P2211.png)
+![Zx0360_P2_P2_P1311](figures/fix1/targseq_all/Zx0360_P2_P2_P1311.png)
+![Zx0360_P2_P5_P1211](figures/fix1/targseq_all/Zx0360_P2_P5_P1211.png)
+![Zx0370_P2_P4_P1311](figures/fix1/targseq_all/Zx0370_P2_P4_P1311.png)
+![Zx0380_P2_P4_P1111](figures/fix1/targseq_all/Zx0380_P2_P4_P1111.png)
+![Zx0390_P2_P2_P1111](figures/fix1/targseq_all/Zx0390_P2_P2_P1111.png)
+![Zx0390_P2_P3_P2211](figures/fix1/targseq_all/Zx0390_P2_P3_P2211.png)
+![Zx0400_P1_P4_P2211](figures/fix1/targseq_all/Zx0400_P1_P4_P2211.png)
+![Zx0430_P1_P5_P1211](figures/fix1/targseq_all/Zx0430_P1_P5_P1211.png)
+![Zx0440_P1_P5_P1211](figures/fix1/targseq_all/Zx0440_P1_P5_P1211.png)
+![Zx0440_P2_P5_P1211](figures/fix1/targseq_all/Zx0440_P2_P5_P1211.png)
+![Zx0450_P1_P5_P2111](figures/fix1/targseq_all/Zx0450_P1_P5_P2111.png)
+![Zx0470_P2_P3_P1211](figures/fix1/targseq_all/Zx0470_P2_P3_P1211.png)
+![Zx0490_P4_P2_P1211](figures/fix1/targseq_all/Zx0490_P4_P2_P1211.png)
+![Zx0490_P4_P3_P1211](figures/fix1/targseq_all/Zx0490_P4_P3_P1211.png)
+![Zx0500_P2_P2_P1111](figures/fix1/targseq_all/Zx0500_P2_P2_P1111.png)
+![Zx0500_P2_P3_P1111](figures/fix1/targseq_all/Zx0500_P2_P3_P1111.png)
+![Zx0500_P2_P5_P1211](figures/fix1/targseq_all/Zx0500_P2_P5_P1211.png)
+![Zx0510_P1_P3_P1211](figures/fix1/targseq_all/Zx0510_P1_P3_P1211.png)
+![Zx0510_P1_P3_P2111](figures/fix1/targseq_all/Zx0510_P1_P3_P2111.png)
+![Zx0520_P2_P4_P1111](figures/fix1/targseq_all/Zx0520_P2_P4_P1111.png)
+![Zx0540_P3_P5_P1111](figures/fix1/targseq_all/Zx0540_P3_P5_P1111.png)
+![Zx0540_P3_P5_P3211](figures/fix1/targseq_all/Zx0540_P3_P5_P3211.png)
+![Zx0540_P3_P5_P6111](figures/fix1/targseq_all/Zx0540_P3_P5_P6111.png)
+![Zx0550_P4_P2_P2511](figures/fix1/targseq_all/Zx0550_P4_P2_P2511.png)
+![Zx0550_P4_P2_P4211](figures/fix1/targseq_all/Zx0550_P4_P2_P4211.png)
+![Zx0550_P4_P3_P5311](figures/fix1/targseq_all/Zx0550_P4_P3_P5311.png)
+![Zx0560_P2_P3_P2111](figures/fix1/targseq_all/Zx0560_P2_P3_P2111.png)
+![Zx0560_P4_P3_P5111](figures/fix1/targseq_all/Zx0560_P4_P3_P5111.png)
+![Zx0570_P2_P2_P1311](figures/fix1/targseq_all/Zx0570_P2_P2_P1311.png)
+![Zx0570_P2_P3_P1311](figures/fix1/targseq_all/Zx0570_P2_P3_P1311.png)
+![Zx0580_P2_P5_P2411](figures/fix1/targseq_all/Zx0580_P2_P5_P2411.png)
+![Zx0580_P2_P5_P5111](figures/fix1/targseq_all/Zx0580_P2_P5_P5111.png)
+![Zx0580_P3_P5_P1211](figures/fix1/targseq_all/Zx0580_P3_P5_P1211.png)
+
+</details>
 
 **How to read the SNPs:** they come in clusters (one targeted region each, often 5–30 SNPs), so points stack at one position; and SNPs of one region can differ (for example 0.3 and 0.95 at chr4 186.9 Mb), probably from amplification bias. So a region is read from all its SNPs together, and a tract from its median (as in the table).
 
 **One plant or a bulk?** This matters only for the SEG row, and it waits for confirmation of what DNA was sequenced:
-- **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 21 : 71 : 8 among the clearly called tracts, which would mean BB plants are strongly depleted, as in the selection we infer in 2.8.1. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.37–0.51).
-- **If it is a bulk of several plants,** the SEG fraction should be about 0.46, which is what we see, and most SEG tracts would look intermediate (AB), which is also what we see.
+- **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 9 : 83 : 9 among the clearly called tracts (21 : 71 : 8 in the first model), which would mean both homozygotes are strongly depleted. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.36–0.52).
+- **If it is a bulk of several plants,** the SEG fraction should be about 0.46, which is what we see, and nearly all SEG tracts would look intermediate (AB), which is also what we see.
 - The data lean towards a bulk, but the B73 and DONOR rows hold either way: they are the validation.
 
-**Limits.** Only tracts of 1 Mb or more were compared, so short tracts are still unchecked; many tracts had too few panel SNPs for a clear call (24–47% unclear); and two samples were not aligned (one had only an R2 file, one job ran out of time) and were not rerun.
+**Limits.** Only tracts of 1 Mb or more were compared, so short tracts are still unchecked; many tracts had too few panel SNPs for a clear call (31–55% unclear); and two samples were not aligned (one had only an R2 file, one job ran out of time) and were not rerun.
 
-Scripts: `final_script/34_targseq_align.sh`, `34b_targseq_call.sh`, `34c_targseq_compare.py` (site-level comparison), `34d_targseq_tracts.py` (tracts), `34e_targseq_figure.py` (summary figure), `34f_targseq_examples.py` (example panels). Results: `data/introgression_spread/targseq/` (`tract_summary.tsv`, `tracts_targseq.tsv`, `hidden_b73_windows.tsv`, `per_sample.tsv`, `sites_used.tsv.gz`).
+Scripts: `final_script/34_targseq_align.sh`, `34b_targseq_call.sh`, `34c_targseq_compare.py` (site-level comparison), `34d_targseq_tracts.py` (tracts), `34e_targseq_figure.py` (summary figure), `34f_targseq_examples.py` (example panels; `--gallery_dir` for all samples). Results: `data/introgression_fix1/targseq/` (`tracts_targseq.tsv`, `hidden_b73_windows.tsv`, `per_sample.tsv`, `sites_used.tsv.gz`); the comparison of the models: `data/introgression_fix1/model/compare_old_new.txt`.
 
 ### 2.10 Population structure from k-mers (step 32)
 
@@ -777,7 +901,7 @@ To see which teosinte each pool carries, we used the k-mers that the donor DNA b
 
 The results below are for the 1,385 teosinte donor pools; the 29 landrace pools are left out.
 
-![PCA of the teosinte k-mer profiles](data/introgression_spread/sourmash/pca/kmer_pca.png)
+![PCA of the teosinte k-mer profiles](data/introgression_fix1/sourmash/pca/kmer_pca.png)
 
 - **The k-mer content separates the taxa.** PC1 and PC2 (79% of the variance) pull *diploperennis* and *luxurians* apart from the rest; PC3 separates *huehuetenangensis*; PC4 separates *parviglumis* from *mexicana*, which overlap most, as expected for the two closest subspecies.
 - **The k-mer taxon matches the pedigree taxon in 1,300 of 1,385 pools (93.9%).**
@@ -810,7 +934,7 @@ The results below are for the 1,385 teosinte donor pools; the 29 landrace pools 
   > One other explanation should be ruled out first. The taxon-specific k-mers come from only two assemblies per taxon. If the two *parviglumis* assemblies (TIL01, TIL11) were collected far from these accessions, these accessions would share fewer of their specific k-mers and look relatively more *mexicana*-like even without gene flow. Where TIL01, TIL11, TIL18 and TIL25 were collected should be checked.
 - **In *diploperennis*,** the mismatches come mostly from Zd.0030 and Zd.0040 (both from Milpillas, 1,390 m, listed as race "Zea-diploperennis-Na"): their assignments are weaker (median ratio 1.8 and 1.5, against 3.0 and 3.5 for Zd.0010 and Zd.0020), so they are less like the two Zd assemblies.
 
-![Per accession: pools whose k-mer taxon differs from the pedigree taxon, by elevation](data/introgression_spread/sourmash/pca/kmer_mismatch_elevation.png)
+![Per accession: pools whose k-mer taxon differs from the pedigree taxon, by elevation](data/introgression_fix1/sourmash/pca/kmer_mismatch_elevation.png)
 
 Next, we asked whether this *mexicana*-like signal follows elevation across all *parviglumis* accessions, not only in the pools that were assigned to the wrong taxon. For this, each pool got a ***mexicana* index**: of the taxon-specific k-mers it shares with either *mexicana* or *parviglumis*, the fraction that are *mexicana*, f_Zx / (f_Zx + f_Zv). An index near 0 means the pool looks like *parviglumis*, near 1 like *mexicana*. We took the median over the pools of each accession and plotted it against the accession's elevation (right panel below; the left and middle panels are the PCA coloured by elevation).
 - **Within *parviglumis*, the index rises with elevation** (Spearman ρ = 0.49, 36 accessions, p = 0.003), and the highest accessions reach the values of *mexicana*. So the two subspecies form a continuous gradient, not two separate groups.
@@ -818,7 +942,7 @@ Next, we asked whether this *mexicana*-like signal follows elevation across all 
 - **Within *mexicana*, the index does not change with elevation** (ρ = 0.12, 37 accessions).
 - **How much teosinte DNA a pool carries does not depend on its donor's elevation** (HMM donor share, ρ = 0.00), so the gradient is about *which* teosinte, not how much.
 
-![k-mer PCA coloured by elevation, and the mexicana index along elevation](data/introgression_spread/sourmash/pca/kmer_pca_elevation.png)
+![k-mer PCA coloured by elevation, and the mexicana index along elevation](data/introgression_fix1/sourmash/pca/kmer_pca_elevation.png)
 
 We then looked within *mexicana*, at its four races: Chalco, Mesa Central, Durango and Nobogame (section 2.1). The taxon-level profile cannot separate them, since all four are *mexicana*. Instead, we used each pool's share of the k-mers of each of the 8 assemblies separately, and compared the two *mexicana* assemblies, TIL18 and TIL25 (figure below; collection sites from `data/metadata_BZea.csv`, where 75 of the 126 teosinte longitudes lack the minus sign; the scripts correct this, since all sites are in Mexico and Guatemala):
 - **A, collection sites:** Chalco comes from the Valley of Mexico in the southeast of the range, Mesa Central from the central plateau to its west, and Durango and Nobogame from the north.
@@ -830,48 +954,50 @@ So Chalco differs from the other three races in its k-mer content, as expected f
 
 ![The four mexicana races](data/introgression_spread/sourmash/pca/mexicana_races.png)
 
-Finally, the k-mer profile gives a second measure of the HMM's donor share. The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads, so the check is complementary rather than fully independent. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.98 (Zh), 0.97 (Zl), 0.94 (Zv) and 0.97 (Zx) (1,292 pools, NOISY pools left out).
+Finally, the k-mer profile gives a second measure of the HMM's donor share. The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads, so the check is complementary rather than fully independent. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.97 (Zh), 0.97 (Zl), 0.93 (Zv) and 0.98 (Zx) (1,266 pools, NOISY pools left out; the first model gave 0.91–0.98).
 
-![Teosinte k-mers vs the HMM donor share](data/introgression_spread/sourmash/pca/kmer_vs_hmm.png)
+![Teosinte k-mers vs the HMM donor share](data/introgression_fix1/sourmash/pca/kmer_vs_hmm.png)
 
-Per-pool shares of each taxon's k-mers: `data/introgression_spread/sourmash/pca/kmer_taxon_shares.png`. Tables: `kmer_taxon_profile.tsv` (per pool), `pca/kmer_taxon_agreement.tsv`, `pca/kmer_accession_agreement.tsv` (per accession, with elevation), `pca/kmer_vs_hmm.tsv`, `pca/kmer_pca_scores.tsv`.
+Per-pool shares of each taxon's k-mers: `data/introgression_fix1/sourmash/pca/kmer_taxon_shares.png`. Tables: `kmer_taxon_profile.tsv` (per pool), `pca/kmer_taxon_agreement.tsv`, `pca/kmer_accession_agreement.tsv` (per accession, with elevation), `pca/kmer_vs_hmm.tsv`, `pca/kmer_pca_scores.tsv`.
 
 ```bash
 N=$(awk -F'\t' 'NR>1 && ($2=="control"||$2=="donor")' ${D11}/pools.tsv | wc -l)
 J=$(sbatch --parsable --array=1-$(( 9 + (N + 9) / 10 ))%60 32a_sourmash_sketch.sh)   # needs: pip install sourmash
 sbatch --dependency=afterok:$J 32b_kmer_taxon_profile.sh
 ```
-Output in `${D32}` (copied to `data/introgression_spread/sourmash/`): `kmer_taxon_profile.tsv` (per pool: f per taxon, f_teo, containment per assembly, k-mer taxon, agreement) and `pca/`. The PCA step alone, on a laptop: `POOL_SUMMARY=<pool_summary.tsv> Rscript final_script/32c_kmer_pca.R kmer_taxon_profile.tsv pca data/metadata_BZea.csv` (needs R with data.table, ggplot2, patchwork).
+Output in `${D32}` (copied to `data/introgression_fix1/sourmash/`): `kmer_taxon_profile.tsv` (per pool: f per taxon, f_teo, containment per assembly, k-mer taxon, agreement) and `pca/`. The PCA step alone, on a laptop: `POOL_SUMMARY=<pool_summary.tsv> Rscript final_script/32c_kmer_pca.R kmer_taxon_profile.tsv pca data/metadata_BZea.csv` (needs R with data.table, ggplot2, patchwork).
 
 ### 2.11 Noisy pools and resequencing
 
-93 of the 1,385 donor pools are flagged **NOISY** (σ > 0.15). They are left out of the results above. Almost all of them are on three plates with low sequencing depth:
+119 of the 1,385 donor pools are flagged **NOISY** (σ > 0.15; 93 in the first model). They are left out of the results above. Almost all of them are on three plates with low sequencing depth:
 
 | Plate | Pools | NOISY | Median σ | Mean single-copy k-mers per pool | NOISY by taxon |
 |---|---|---|---|---|---|
-| PN2 | 3 | 0 | 0.118 | 189 M | — (rest of PN2 is Zm, skipped) |
-| PN3 | 87 | 3 | 0.089 | 192 M | Zx 3 |
-| PN4 | 93 | 0 | 0.081 | 211 M | — |
-| PN5 | 92 | 0 | 0.097 | 170 M | — |
-| PN6 | 94 | 2 | 0.112 | 145 M | Zx 1, Zd 1 |
-| PN7 | 91 | 0 | 0.081 | 213 M | — |
-| PN8 | 92 | 0 | 0.087 | 199 M | — |
-| PN9 | 95 | 2 | 0.112 | 162 M | Zl 2 |
-| PN10 | 94 | 0 | 0.086 | 245 M | — |
-| **PN11** | **93** | **34** | **0.130** | **150 M** | **Zl 18, Zv 16** |
-| PN12 | 95 | 4 | 0.095 | 211 M | Zv 4 |
-| **PN13** | **88** | **23** | **0.140** | **115 M** | **Zd 18, Zv 5** |
-| PN14 | 94 | 1 | 0.090 | 207 M | Zd 1 |
-| **PN15** | **93** | **24** | **0.138** | **109 M** | **Zv 22, Zd 2** |
-| PN16 | 95 | 0 | 0.084 | 214 M | — |
-| PN17 | 96 | 0 | 0.082 | 217 M | — |
+| PN2 | 3 | 0 | 0.123 | 189 M | — (rest of PN2 is Zm, skipped) |
+| PN3 | 85 | 3 | 0.092 | 192 M | Zx 3 |
+| PN4 | 93 | 0 | 0.084 | 211 M | — |
+| PN5 | 92 | 0 | 0.100 | 170 M | — |
+| PN6 | 93 | 2 | 0.112 | 145 M | Zx 1, Zd 1 |
+| PN7 | 91 | 0 | 0.083 | 213 M | — |
+| PN8 | 92 | 0 | 0.090 | 199 M | — |
+| PN9 | 94 | 2 | 0.111 | 162 M | Zl 2 |
+| PN10 | 93 | 1 | 0.086 | 245 M | Zv 1 |
+| **PN11** | **93** | **36** | **0.133** | **150 M** | **Zl 18, Zv 18** |
+| PN12 | 95 | 5 | 0.098 | 211 M | Zv 5 |
+| **PN13** | **88** | **32** | **0.143** | **115 M** | **Zd 18, Zv 14** |
+| PN14 | 94 | 1 | 0.091 | 207 M | Zd 1 |
+| **PN15** | **93** | **36** | **0.145** | **109 M** | **Zv 34, Zd 2** |
+| PN16 | 95 | 0 | 0.088 | 214 M | — |
+| PN17 | 96 | 1 | 0.085 | 217 M | Zx 1 (PN17_SID1585; see below) |
+
+**Why 26 more than in the first model.** In the windows that switch to informative k-mers (2.6.6) there are fewer k-mers, so a pool's σ rises a little. 25 *parviglumis* pools that sat just under the cut-off (σ 0.140–0.150) moved just over it (0.150–0.160). One *mexicana* pool, PN17_SID1585, rose from 0.077 to 0.226, which points to a problem with its recount rather than its reads; it is to be checked.
 
 **Recommendation: resequence PN11, PN13 and PN15.**
-- **Depth:** PN13 and PN15 have about half the k-mers of a typical plate (109–115 M vs ~200 M), and PN11 about 75%. On PN11, 37% of pools are NOISY.
+- **Depth:** PN13 and PN15 have about half the k-mers of a typical plate (109–115 M vs ~200 M), and PN11 about 75%. On PN11, 39% of pools are NOISY, on PN15 39% and on PN13 36%.
 - **Taxa:** the noisy pools are concentrated in a few taxa, so leaving them out takes a large bite out of those taxa:
   - Zl: 18 of its 20 noisy pools are on PN11.
   - Zd: 18 of 22 are on PN13.
-  - Zv: 43 of 47 are on PN11, PN13 and PN15.
+  - Zv: 66 of 72 are on PN11, PN13 and PN15; *parviglumis* loses 72 of its 380 pools.
 
 **Other samples to check.** Besides depth, a few samples look wrong for other reasons. They are kept in the results but flagged; together they change the main numbers by less than 0.1 percentage point.
 - **Donor pools with almost no donor.** 5 pools are as clean as the B73 controls (donor share ≤ 0.11%): PN4_SID334 and PN4_SID335 (both from BC2 plant `Zx.0020_P3_P1_P2`), PN14_SID1313 and PN14_SID1314 (both from `Zd.0010_P2_P5_P4`), and PN7_SID649. Losing every donor segment by chance is very unlikely, and the two pairs each come from one BC2 plant. So these BC2 plants may have been B73 (an outcross or a seed mix-up), or the samples may be mislabelled B73 or check plants. Worth checking against the field and seed records.
@@ -881,7 +1007,7 @@ The full statistics and the per-plate table are in [`final_script/README.md`](fi
 
 ### 2.12 Interactive figures (step 23)
 
-[`final_script/figures/introgression_viewer_spread.html`](final_script/figures/introgression_viewer_spread.html) is one self-contained page with every pool's chromosome plot ([download it](https://raw.githubusercontent.com/nirwan1265/BZea_genotyping/main/final_script/figures/introgression_viewer_spread.html) and open it in a browser).
+[`data/introgression_fix1/introgression_viewer.html`](data/introgression_fix1/introgression_viewer.html) is one self-contained page with every pool's chromosome plot from the current model ([download it](https://raw.githubusercontent.com/nirwan1265/BZea_genotyping/main/data/introgression_fix1/introgression_viewer.html) and open it in a browser). The first model's page is `final_script/figures/introgression_viewer_spread.html`.
 - **Drop-down menus:** taxon → F1 family → "All pools" or one pool. There is also a search box for a pool ID.
 - **Family view:** each chromosome shows one track per pool of the F1 family, so the segments the pools share line up.
 - **Pool view:** the 10 chromosomes of one pool.
@@ -895,11 +1021,13 @@ To view it, download the file and open it in a browser. GitHub shows HTML files 
 
 **Short tracts aren't proven yet.** The k-mer HMM calls tracts down to about 400 kb. Short tracts are expected from the crossing scheme ([Tract lengths](#265-how-long-are-the-tracts)), and they are shared by relatives as often as long tracts (below), but single short calls haven't been checked with independent data.
 
-**SEG vs DONOR is now checked with targeted sequencing** ([2.9.1](#291-independent-check-targeted-sequencing-of-85-plots)): our DONOR tracts are homozygous teosinte (86%), our SEG tracts intermediate (71% AB, donor allele fraction 0.45) and our B73 tracts clean (96.5%). What is still open is whether the targeted-sequencing DNA is one plant or a bulk, which decides how the SEG row is read, and tracts shorter than 1 Mb, which were not compared. The check also found one systematic error: in *parviglumis* and *mexicana*, short SEG tracts between two DONOR tracts are often DONOR (2.9.1, point 7), probably from the assembly-based DONOR level. The errors recur at a few places. At chr6 21–23 and chr1 297 Mb they come from a wrong DONOR level and are largely removed by learning the level from our own pools; at chr7 54–65 and chr3 75–78 Mb the teosinte keeps most B73 k-mers, so DONOR and SEG are too close to separate with 0.8x pools (contrast, 2.9.1). Learned levels were tested (folder `new_model/`) but not adopted, since they were not better overall and leave the genome shares nearly unchanged.
+**SEG vs DONOR is checked with targeted sequencing** ([2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)): our DONOR tracts are homozygous teosinte (89%; 95% without the three bad samples), our SEG tracts heterozygous (83% AB, donor allele fraction 0.45) and our B73 tracts clean (96%). What is still open is whether the targeted-sequencing DNA is one plant or a bulk, which decides how the SEG row is read, and tracts shorter than 1 Mb, which were not compared. The check found one systematic error of the first model, SEG tracts between two DONOR tracts that are really DONOR, recurring at four places; the current model (2.6.6) removes most of it, but 57% of the remaining SEG tracts between two DONOR tracts are still BB, and *parviglumis* chr3 75–78 Mb is not fixed. The current model also has slightly more short tracts (1.6 instead of 1.3 tracts under 1 Mb per pool), which are not checked.
 
-**The DONOR level depends on the assemblies.** The model needs to know how much of each window's B73 k-mers a teosinte genome keeps (d_w). The best source would have been **the actual donor parents** of our lines, sequenced. We don't have them, so we use teosinte assemblies from MaizeGDB (PanAnd). Those are other plants of the same taxa, so in diverse taxa they can differ from our donors:
-- Zv and Zx still switch between SEG and DONOR about twice as often as the other taxa, even after allowing for this uncertainty.
-- Zh and Zl have one assembly each, so the uncertainty can't be measured for them.
+**The DONOR level still starts from the assemblies.** The model needs to know how much of each window's B73 k-mers a teosinte genome keeps (d_w). The best source would have been **the actual donor parents** of our lines, sequenced. We don't have them, so d_w starts from teosinte assemblies from MaizeGDB (PanAnd), other plants of the same taxa, and is then learned from our pools (2.6.6). Limits that remain:
+- One level per taxon and window: within a taxon, families carry different teosinte haplotypes (the per-accession levels tried in `new_model/` did not do better, and *parviglumis* chr3 75–78 Mb may be such a case).
+- The informative k-mers are defined by the assemblies (missing from all of them); k-mers that our donors lack but an assembly carries are not used.
+- In switched windows, the DONOR level is learned from pools the current model's first steps called DONOR, so it is partly circular; the targeted sequencing, which is independent, says the result is better.
+- Zv and Zx still switch between SEG and DONOR about twice as often as the other taxa.
 - Zm (landraces) can't be done yet, because it needs a maize-based donor level (e.g. from NAM founder assemblies).
 
 A first check of whether the short tracts are real uses **relatives**. A real introgression is inherited: pools that descend from the same plant received their donor segments from that plant, so a real tract in one pool should often be found at the same place in its relatives. A false tract (noise) appears at random places, so it should be found in relatives no more often than in unrelated pools.
@@ -911,7 +1039,7 @@ The relatives are read from the pedigree name. For example, in `Zv.0200_P3_P2_P1
 
 So `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200_P3_P2_P1.2.1.1` and `Zv.0200_P3_P2_P1.3.1.1` all descend from the same BC2 plant, `Zv.0200_P3_P2_P1`, through different selfed lines.
 
-The check works like this (1,292 pools; SEG and DONOR counted together as "introgression"):
+The check works like this (done on the first model's calls, 1,292 pools; not yet repeated on the current model; SEG and DONOR counted together as "introgression"):
 1. Take one tract in one pool.
 2. Take a group of other pools with a given relationship to it, e.g. all pools from the same BC2 plant.
 3. Count how many of those pools also have an introgression at the position of the tract.
@@ -945,8 +1073,9 @@ The table gives the result as a percentage: for example, 31.4% means that for a 
    - **SEG tract:** plants should be AA, AB and BB in about 1:2:1.
    - **DONOR tract:** all plants BB.
    - **B73 region:** all plants AA.
-4. **Donor plants.** If seed or tissue of the donor parents (or of the same accessions) can be found, 10–20x short-read sequencing gives their own d_w directly. No assembly is needed.
-5. **Noisy plates.** Resequence PN11, PN13 and PN15.
+4. **Donor plants.** If seed or tissue of the donor parents (or of the same accessions) can be found, 10–20x short-read sequencing gives their own d_w directly, and their own informative k-mers. No assembly is needed.
+5. **Teosinte-side k-mers.** Counting k-mers present in the teosinte but missing from B73 (placed on B73 by alignment) would add signal on the DONOR side, where the current model only sees B73 k-mers going missing; this could help where contrast is still low (e.g. *parviglumis* chr3).
+6. **Noisy plates.** Resequence PN11, PN13 and PN15.
 
 ---
 
@@ -1019,7 +1148,7 @@ A kinship matrix that includes the tested region already "contains" the QTL: lin
 
 In a backcross population this matters a lot, because tracts are long and few loci carry most of the donor relatedness.
 
-The table compares the two choices of K on the same data (DTS, 1,284 plots, taxon fixed), using **λ_GC** (the genomic inflation factor; Devlin & Roeder 1999). λ_GC is the median test statistic over all windows divided by the median expected if no window had any effect. λ_GC = 1 means the test statistics look as expected under no effect; above 1, they are larger than expected (inflated); below 1, smaller (deflated, the model is too conservative). In most GWAS a λ_GC well above 1 is read as a warning of uncorrected population structure.
+The table compares the two choices of K on the same data (first model's calls: DTS, 1,284 plots, taxon fixed), using **λ_GC** (the genomic inflation factor; Devlin & Roeder 1999). λ_GC is the median test statistic over all windows divided by the median expected if no window had any effect. λ_GC = 1 means the test statistics look as expected under no effect; above 1, they are larger than expected (inflated); below 1, smaller (deflated, the model is too conservative). In most GWAS a λ_GC well above 1 is read as a warning of uncorrected population structure.
 
 | K | λ_GC | Best window chr10 (ZmCCT10 region, 94–98 Mb) | Best window chr5 (~221.7 Mb) |
 |---|---|---|---|
@@ -1038,9 +1167,9 @@ GridLMM (Runcie & Crawford 2019), maximum likelihood, one chromosome at a time w
 
 - b = effect per teosinte copy (trait units, e.g. days); likelihood-ratio test for b (1 df).
 - Dominance: the same model plus c · SEG_w; likelihood-ratio test for c.
-- GridLMM fits the variance proportion on a grid instead of re-optimising it for every window, which makes ~21,000 tests with a 1,284 × 1,284 K fast (~3 min per trait on 4 cores). The code started from `scripts/Analyze_QTL_Founder2.R`.
+- GridLMM fits the variance proportion on a grid instead of re-optimising it for every window, which makes ~21,000 tests with a 1,258 × 1,258 K fast (~3 min per trait on 4 cores). The code started from `scripts/Analyze_QTL_Founder2.R`.
 
-We used **taxon** (5 levels: Zd, Zh, Zl, Zv, Zx) as the fixed effect, not the **F1 family**. An F1 family is all the plots that descend from one F1 plant (one teosinte plant × B73); the 1,284 plots come from 95 F1 families of 82 accessions. Plots of the same F1 family share many of their tracts (relatives check, Section 2, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
+We used **taxon** (5 levels: Zd, Zh, Zl, Zv, Zx) as the fixed effect, not the **F1 family**. An F1 family is all the plots that descend from one F1 plant (one teosinte plant × B73); the plots come from about 95 F1 families of 82 accessions. Plots of the same F1 family share many of their tracts (relatives check, Section 2, Limitations). With F1 family (95 levels) as a fixed effect, a tract carried by a whole family is confounded with the family mean and absorbed, and 94 extra parameters raise the threshold. Family relatedness is already in K. For DTS (829 plots, one year): the peaks on chr7, chr8/9 and chr10 were similar either way, but the 5% threshold rose from 3.8 to 5.0 and the chr3 peak (4.4) was lost. F1 family as a fixed effect is kept as a check (`FIXED_COL=F1FAMILY`).
 
 #### 3.3.4 Significance: permutations
 
@@ -1050,7 +1179,7 @@ For each trait, phenotypes are shuffled **within taxon** (keeping the taxon mean
 
 #### 3.3.5 Regions and genes
 
-Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one region per locus, and gives each a support interval: the windows within 1.5 −log10 p of the top window. This is a drop in −log10 p, not in LOD, so it is not the usual 1.5-LOD interval, and how often it contains the causal gene has not been calibrated. Every B73 v5 gene overlapping the interval is listed from the GFF3. Output: `genes/regions_genes_<TRAIT>_ALL.tsv` (one row per gene, with the region's position, top −log10 p and effect). Step 30 (`final_script/30_genes_go.R`) adds each gene's window −log10 p and effect and its GO terms: `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv`.
+Step 27 joins windows above the threshold into regions (gap < 5 Mb), keeps one region per locus, and gives each a support interval: the windows within 1.5 −log10 p of the top window. This is a drop in −log10 p, not in LOD, so it is not the usual 1.5-LOD interval, and how often it contains the causal gene has not been calibrated. Every B73 v5 gene overlapping the interval is listed from the GFF3. Output: `genes/regions_genes_<TRAIT>_ALL.tsv` (one row per gene, with the region's position, top −log10 p and effect). Step 30 (`final_script/30_genes_go.R`) adds each gene's window −log10 p and effect and its GO terms: `data/introgression_fix1/GO/genes_GO_all_<TRAIT>.tsv`.
 
 ### 3.4 Analysis 2: joint QTL model with per-taxon effects
 
@@ -1088,11 +1217,11 @@ Every statistical step is an R/qtl2 function; the script only converts the k-mer
 
 #### 3.4.1 Why the joint model starts from the peaks, and not from all windows at once
 
-A joint model needs a short list of QTL to fit together. It cannot take all 21,309 windows: that is far more predictors than the 1,284 plots, and neighbouring windows are nearly identical (one tract covers dozens of them), so their effects cannot be separated. The genome scan is the step that picks the list: one window per peak (the top window), with its support interval. The joint model then asks, for those few QTL together, which ones still matter once the others are in the model, how large each is, and in which taxa. This two-step design (scan, then fit the selected QTL jointly) is how QTL mapping is usually done; TeoNAM's joint linkage mapping chooses its QTL by stepwise selection instead (Chen et al. 2019). Using the scan's peaks keeps the two analyses on exactly the same QTL.
+A joint model needs a short list of QTL to fit together. It cannot take all 21,309 windows: that is far more predictors than the 1,258 plots, and neighbouring windows are nearly identical (one tract covers dozens of them), so their effects cannot be separated. The genome scan is the step that picks the list: one window per peak (the top window), with its support interval. The joint model then asks, for those few QTL together, which ones still matter once the others are in the model, how large each is, and in which taxa. This two-step design (scan, then fit the selected QTL jointly) is how QTL mapping is usually done; TeoNAM's joint linkage mapping chooses its QTL by stepwise selection instead (Chen et al. 2019). Using the scan's peaks keeps the two analyses on exactly the same QTL.
 
 #### 3.4.2 Why some QTL show fewer taxa
 
-A per-taxon effect needs carriers: plots of that taxon with the teosinte allele at the QTL. Taxa with fewer than 5 carrier plots at a QTL get no estimate. For example, DTS Q2 (chr10) has carriers from Zd (23), Zv (22) and Zx (62) but only 4 from *huehuetenangensis* and 2 from *luxurians*, so those two are not shown. Which taxa carry a tract depends on where the backcrosses happened to keep donor segments.
+A per-taxon effect needs carriers: plots of that taxon with the teosinte allele at the QTL. Taxa with fewer than 5 carrier plots at a QTL get no estimate. For example, DTS Q2 (chr10) has carriers from Zd (23), Zv (24) and Zx (66) but only 4 from *huehuetenangensis* and 2 from *luxurians*, so those two are not shown. Which taxa carry a tract depends on where the backcrosses happened to keep donor segments.
 
 This is the mixed-model counterpart of TeoNAM's joint linkage mapping (Chen et al. 2019). Effects are estimated per taxon, not per accession: a typical window has ~90 carrier plots across 82 accessions, about one per accession. Details: `final_script/README.md`, section 12.
 
@@ -1107,31 +1236,36 @@ The support interval (the windows within 1.5 −log10 p of the peak) says where 
 
 **What limits the resolution.** Windows that lie inside the same tract in every pool have the same dosage in every pool, so no method can split them: they share the probability equally. The resolution is set by where the tracts of different pools end inside the interval, not by the 100-kb window size. Calling SNPs instead of counting k-mers would not change this, because every SNP inside a tract carries the same information as its window.
 
-**Result for the 78 QTL that hold in the joint model** (medians):
+**Result for the 81 QTL that hold in the joint model** (medians; first model, 78 QTL: 4.65 Mb / 120 genes, 3.65 Mb / 101 genes, 1.2 Mb / 30 genes):
 
 | | Width | Genes |
 |---|---|---|
-| Support interval | 4.65 Mb | 120 |
-| 95% credible set | 3.65 Mb | 101 |
-| Top windows (half of the probability) | 1.2 Mb | 30 |
+| Support interval | 4.5 Mb | 119 |
+| 95% credible set | 3.3 Mb | 95 |
+| Top windows (half of the probability) | 0.9 Mb | 27 |
 
 - **The credible sets are only a little narrower than the support intervals.** The intervals were not too wide: for most QTL, neighbouring windows really cannot be told apart in this population.
-- **One QTL per interval.** 76 of the 78 QTL have one credible set. Prolif Q5 (chr2, 29.1-Mb interval) has two, and the second one is Prolif Q6, whose peak lies inside Q5's interval. BL Q1 (chr2 9.5 Mb) has none: its probability is spread over the whole interval.
+- **One QTL per interval.** 77 of the 81 QTL have one credible set. Four have none, i.e. their probability is spread over the whole interval: BL Q1 (chr2 9.3 Mb; 9.1-Mb interval), PH Q14 (chr10 6.5 Mb; 10.2 Mb), Prolif Q5 (chr2 34.4 Mb; 29.7 Mb) and SL Q11 (chr9 157.3 Mb; 4.6 Mb).
 - **For some QTL the probability falls on a few windows** (held QTL whose top windows hold 10 genes or fewer):
 
 | QTL | Support interval (genes) | Top windows (genes) | Best window PIP | Candidate named in 3.6, and where it falls |
 |---|---|---|---|---|
-| Prolif Q8 | chr3 10.9–11.7 Mb (13) | 11.1–11.4 Mb (1) | 0.25 | Zm00001eb122680 (CYP734A6) |
-| SL Q6 | chr5 91.8–92.5 Mb (6) | 91.9–92.4 Mb (3) | 0.17 | — |
-| PH Q3 | chr3 12.4–13.7 Mb (41) | 12.6–13.0 Mb (3) | 0.16 | Zm00001eb123060 (*ra2*) |
-| Prolif Q1 | chr1 22.9–23.3 Mb (12) | 23.1–23.3 Mb (4) | 0.45 | — |
-| ASI Q12 | chr7 164.8–166.1 Mb (42) | 165.5–165.7 Mb (4) | 0.29 | Zm00001eb323880 (*bhlh90*): outside the top windows (PIP 0.08) |
-| SL Q9 | chr7 139.6–141.9 Mb (38) | 141.6–141.8 Mb (7) | 0.33 | — |
-| DTS Q1 | chr5 221.7–222.0 Mb (16) | 221.7–221.8 Mb (8) | 0.65 | Zm00001eb257680 (HDR1-like) |
-| SL Q1 | chr1 67.6–71.1 Mb (74) | 69.6–70.4 Mb (9) | 0.10 | — |
-| EH Q9 | chr7 122.7–127.4 Mb (97) | 123.8–125.1 Mb (9) | 0.10 | — |
-| DTA Q1 | chr5 221.7–222.3 Mb (26) | 221.7–221.9 Mb (10) | 0.41 | Zm00001eb257680 (HDR1-like) |
-| EN Q1 | chr1 22.6–23.6 Mb (33) | 22.9–23.2 Mb (10) | 0.20 | Zm00001eb007670 (*ZmD14*): outside the top windows (PIP 0.06) |
+| BW Q10 | chr9 0.7–1.8 Mb (5) | 0.7–0.9 Mb (0) | 0.26 | — |
+| EN Q8 | chr4 119.2–121.3 Mb (12) | 119.2–119.5 Mb (1) | 0.19 | — |
+| Prolif Q1 | chr1 22.6–23.3 Mb (24) | 23.2–23.3 Mb (2) | 0.57 | — |
+| ASI Q9 | chr5 217.4–218.8 Mb (56) | 217.8–218.0 Mb (4) | 0.27 | — |
+| ASI Q10 | chr7 165.2–166.1 Mb (26) | 165.5–165.7 Mb (4) | 0.30 | Zm00001eb323880 (*bhlh90*): outside the top windows (PIP 0.08) |
+| Prolif Q7 | chr3 11.0–11.7 Mb (11) | 11.2–11.5 Mb (4) | 0.26 | Zm00001eb122680 (CYP734A6): in the top windows (PIP 0.16) |
+| PH Q13 | chr9 139.0–141.0 Mb (61) | 139.6–139.9 Mb (5) | 0.21 | — |
+| EN Q18 | chr10 148.2–149.3 Mb (60) | 148.5–148.7 Mb (7) | 0.34 | — |
+| EN Q12 | chr7 165.1–166.6 Mb (56) | 165.2–165.5 Mb (7) | 0.19 | — |
+| ASI Q7 | chr4 65.0–71.3 Mb (91) | 66.9–68.0 Mb (8) | 0.05 | — |
+| DTS Q1 | chr5 221.7–222.0 Mb (16) | 221.7–221.8 Mb (8) | 0.64 | Zm00001eb257680 (HDR1-like): in the top windows (PIP 0.64) |
+| EN Q1 | chr1 22.6–23.7 Mb (34) | 22.9–23.1 Mb (8) | 0.30 | Zm00001eb007670 (*ZmD14*): outside the top windows (PIP 0.01) |
+| BL Q2 | chr2 34.7–36.0 Mb (26) | 35.0–35.3 Mb (9) | 0.20 | — |
+| DTA Q2 | chr5 221.7–222.3 Mb (26) | 221.7–221.9 Mb (10) | 0.43 | Zm00001eb257680 (HDR1-like): in the top windows (PIP 0.43) |
+| Prolif Q15 | chr9 25.4–32.7 Mb (156) | 31.6–32.5 Mb (10) | 0.07 | — |
+| SL Q1 | chr1 67.6–71.1 Mb (74) | 69.6–70.4 Mb (10) | 0.12 | — |
 
 - **How to use it.** A gene in the top windows is better supported by our data than a gene elsewhere in the interval, but PIP ranks windows, it does not identify the gene: most top windows still hold several genes.
 - **A low PIP does not make a gene a poor candidate.** It means our data do not single out its window, for several reasons:
@@ -1140,87 +1274,87 @@ The support interval (the windows within 1.5 −log10 p of the peak) says where 
   - 5% of the probability lies outside the 95% credible set by definition, and when the probability is spread thinly (highest window ≤ 0.03), fine-mapping says nothing about which gene it is.
   - Evidence on what a gene does (mutants, expression, other mapping studies) is independent of PIP. A gene with a known role and a low PIP can still be the better candidate than an unknown gene with a high one.
 
-  So in the write-ups below, PIP is given for each named candidate as one more piece of evidence, next to the biology, not as a verdict. Each gene's PIP is in the gene tables (`qtl_genes/<TRAIT>_qtl_genes.tsv`: `window_pip`, `in_credible_set`, `in_top_windows`), and the trait tables in 3.6 give the top windows of every QTL.
+  So in the write-ups below, PIP is given for each named candidate as one more piece of evidence, next to the biology, not as a verdict. Each gene's PIP is in the gene tables (`data/introgression_fix1/qtl_genes/<TRAIT>_qtl_genes.tsv`: `window_pip`, `in_credible_set`, `in_top_windows`), and the trait tables in 3.6 give the top windows of every QTL.
 
-Scripts: `final_script/33_susie_finemap.R` (per trait, ~15 s on a laptop) and `33b_pip_to_gene_tables.py`; results in `data/introgression_spread/finemap_susie/` (`susie_<TRAIT>_{qtl,cs,pip,genes}.tsv`).
+Scripts: `final_script/33a_qtl_gene_tables.py` (genes per QTL), `33_susie_finemap.R` (per trait, ~15 s on a laptop) and `33b_pip_to_gene_tables.py`; results in `data/introgression_fix1/finemap_susie/` (`susie_<TRAIT>_{qtl,cs,pip,genes}.tsv`).
 
 ### 3.5 How to run
 
+The current model's calls are made by `new_model/fix1/` (steps fx1_1 to fx1_6; see its README). Everything downstream reads them when `MODEL=fix1` is set (`final_script/config.sh`); without it, the first model's calls are used. No script activates an environment: jobs use the env that is active when you submit.
+
 ```bash
-# Cluster: everything at once (inputs, scan, 1,000 permutations, peaks + genes, joint QTL),
-# for taxon and for mexicana split by race; from final_script/, with the GWAS conda env active
-bash submit_assoc_all.sh
-# Laptop alternative for Analysis 1: one terminal per trait (scan + first 100 permutations), then up to 1,000
-bash final_script/run_assoc_local.sh DTS
-TOTAL=1000 bash final_script/run_perm_local.sh DTS
-# Check: the same analysis on each year's BLUEs separately (default DTS; folders *_y2023, *_y2025)
-bash submit_year_check.sh
-python final_script/31b_year_compare.py --trait DTS --out figures/DTS_by_year.png   # laptop, after copying
-# genes + GO, and the side-by-side figures (laptop)
-D=data/introgression_spread
-Rscript final_script/30_genes_go.R $D/assoc_gridlmm_spats/genes $D/GO/GO_terms_all_candidates.txt $D/GO
-Rscript final_script/31_joint_qtl_figures.R $D/assoc_gridlmm_spats $D/joint_qtl/noperm $D/joint_qtl/noperm/figures
-# fine-mapping inside each support interval (SuSiE; needs the step-25 inputs), then the PIPs into the gene tables
-for T in DTS DTA ASI NBR SPAD2 PH EH EN Prolif SL BL BW; do
-  Rscript final_script/33_susie_finemap.R <step-25 dir> $T $D/joint_qtl/noperm/qtl2_${T}_qtl.tsv $D/finemap_susie qtl_genes/${T}_qtl_genes.tsv
-done
-python final_script/33b_pip_to_gene_tables.py --susie $D/finemap_susie --genes qtl_genes
+# Cluster, from new_model/fix1/ (login node):
+bash fx1_7a_stats.sh     # python env active (numpy, scipy, pandas, matplotlib): shares (22), SEG donor copies (22b), viewer (23), figures (24)
+bash fx1_7b_gwas.sh      # GWAS env active (GridLMM, qtl2): inputs, scan, 1,000 permutations, peaks + genes, joint QTL,
+                         # for taxon and for mexicana split by race (submit_assoc_all.sh), per year and for leaf N 2025
+# per year for every trait (from final_script/, GWAS env):
+MODEL=fix1 TRAITS="DTS DTA ASI PH EH EN BW BL SL SPAD SPAD2 Prolif Kinki NBR LAE StPu StPi" bash submit_year_check.sh
+# Laptop, from the repo root, after copying the outputs to data/introgression_fix1 (rsync commands in new_model/fix1/README.md):
+bash new_model/fix1/fx1_8_laptop.sh
+#   genes + GO (30), genes per QTL (33a), SuSiE fine-mapping (33) and PIPs into the gene tables (33b),
+#   side-by-side figures (31), DTS by year (31b), landscape (24b), targeted sequencing (34e), k-mer PCA (32c), checks
+python final_script/34f_targseq_examples.py --sites data/introgression_fix1/targseq/sites_used.tsv.gz \
+  --tracts data/introgression_fix1/tracts_all.tsv.gz --gallery_dir figures/fix1/targseq_all \
+  --targseq_tracts data/introgression_fix1/targseq/tracts_targseq.tsv          # all targeted-sequencing samples
+python final_script/35_trait_tables.py --base data/introgression_fix1 --out <dir>  # the trait tables of 3.6
 ```
-All results are in `data/introgression_spread/`:
+All results are in `data/introgression_fix1/` (figures in `figures/fix1/`):
 - `assoc_gridlmm_spats/`: scans, summaries, 1,000 permutations (`perm_<TRAIT>_seed<N>.tsv`), Manhattan plots, `genes/` (peaks and every gene in each region)
-- `joint_qtl/noperm/`: joint QTL tables, per-taxon effects, genes per QTL, and the figures
+- `joint_qtl/noperm/`: joint QTL tables, per-taxon effects, genes per QTL
 - `finemap_susie/`: SuSiE fine-mapping per QTL (credible sets, PIP per window, top windows and their genes)
+- `qtl_genes/`: every gene in each QTL interval, with GO terms, its window's −log10 p and its window's PIP
 - `GO/`: every gene in the regions with GO terms and its window's −log10 p (`genes_GO_all_<TRAIT>.tsv`)
 - `assoc_gridlmm_spats_subtaxon/`, `joint_qtl/noperm_subtaxon/`, `GO_subtaxon/`: the same with *mexicana* split by race
+- `*_y2023`, `*_y2025`: each year on its own; `*_N2025`: predicted leaf nitrogen (2025)
 
 ### 3.6 Results
 
-**Overview (1,196–1,286 plots per trait; thresholds from 1,000 permutations):**
+**Overview (1,098–1,260 plots per trait; thresholds from 1,000 permutations):**
 
 | Trait | Plots | 5% threshold (−log10 p) | QTL | Hold in joint model | Strongest QTL |
 |---|---|---|---|---|---|
-| DTS | 1284 | 5.25 | 2 | 2 | chr5 221.8 Mb (−log10 p 9.7, +1.00 d per copy) |
-| DTA | 1284 | 5.14 | 3 | 3 | chr10 94.5 Mb (−log10 p 9.3, +0.92 d per copy) |
-| ASI | 1284 | 4.35 | 12 | 6 | chr7 165.6 Mb (−log10 p 13.7, -0.36 d per copy) |
-| NBR | 1274 | 4.21 | 8 | 4 | chr10 98.2 Mb (−log10 p 10.3, +0.17 per copy) |
-| SPAD | 1124 | 4.32 | 6 | 4 | chr1 148.6 Mb (−log10 p 6.0, -2.51 per copy) |
-| PH | 1283 | 4.19 | 16 | 8 | chr10 97.0 Mb (−log10 p 10.8, +5.64 cm per copy) |
-| EH | 1282 | 4.27 | 18 | 7 | chr4 198.4 Mb (−log10 p 7.6, +3.00 cm per copy) |
-| EN | 1282 | 4.57 | 20 | 11 | chr2 22.4 Mb (−log10 p 18.6, +0.17 per copy) |
-| Prolif | 1286 | 4.55 | 15 | 10 | chr1 23.2 Mb (−log10 p 20.3, +0.20 per copy) |
-| SL | 1196 | 4.06 | 13 | 12 | chr7 141.7 Mb (−log10 p 9.2, -0.32 per copy) |
-| BL | 1197 | 4.14 | 6 | 5 | chr2 39.8 Mb (−log10 p 12.0, -1.58 per copy) |
-| BW | 1197 | 4.22 | 7 | 6 | chr6 146.4 Mb (−log10 p 9.2, -0.29 per copy) |
+| DTS | 1258 | 5.50 | 2 | 2 | chr5 221.8 Mb (−log10 p 9.4, +1.00 d per copy) |
+| DTA | 1258 | 5.00 | 6 | 3 | chr10 101.2 Mb (−log10 p 9.4, +0.93 d per copy) |
+| ASI | 1258 | 4.42 | 10 | 6 | chr7 165.6 Mb (−log10 p 13.1, -0.37 d per copy) |
+| NBR | 1248 | 4.04 | 8 | 3 | chr10 98.2 Mb (−log10 p 9.3, +0.18 per copy) |
+| SPAD | 1098 | 4.22 | 8 | 3 | chr1 57.9 Mb (−log10 p 6.2, -3.68 per copy) |
+| PH | 1257 | 4.17 | 15 | 10 | chr10 99.5 Mb (−log10 p 11.0, +6.18 cm per copy) |
+| EH | 1256 | 4.11 | 16 | 9 | chr4 196.6 Mb (−log10 p 7.2, +3.03 cm per copy) |
+| EN | 1256 | 4.49 | 18 | 12 | chr2 18.9 Mb (−log10 p 18.3, +0.19 per copy) |
+| Prolif | 1260 | 4.72 | 15 | 9 | chr1 23.2 Mb (−log10 p 19.4, +0.21 per copy) |
+| SL | 1170 | 4.20 | 13 | 11 | chr7 141.7 Mb (−log10 p 9.2, -0.33 per copy) |
+| BL | 1171 | 4.15 | 7 | 6 | chr2 35.1 Mb (−log10 p 10.7, -1.82 per copy) |
+| BW | 1171 | 4.21 | 12 | 7 | chr5 41.2 Mb (−log10 p 9.4, -0.32 per copy) |
 
 "Hold in joint model" = QTL whose joint −log10 p passes Bonferroni over that trait's QTL. The other five traits are in [3.6.15](#3615-other-traits).
 
-**Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position; an open triangle marks a QTL added by the conditional scans (a second QTL inside a significant region, section 3.4). Middle: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon (taxa with ≥ 5 carrier plots). Right: two columns of **−log10 p** (not effects): "Joint test" = is the QTL still significant with all other QTL in the model; "Taxa differ" = does its effect differ between taxa. For example, DTS Q1 "9.7 | 14.1" means p = 10⁻⁹·⁷ for the QTL and p = 10⁻¹⁴·¹ for the difference between taxa. Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering). **Fine-mapping PIP** (section 3.4.3): the probability of the window holding each known gene, in the order the genes are listed; **top** = in the top windows (the fewest windows holding half of the QTL's probability), CS = in the 95% credible set but outside the top windows, outside CS = outside the 95% credible set, flat = the probability is spread over the whole interval (highest window ≤ 0.03), so fine-mapping does not separate its genes. A low PIP does not rule a gene out (3.4.3).
+**Reading the figures.** Left: the k-mer ancestry GWAS; −log10 p per 100-kb window, dotted line = 5% permutation threshold, QTL numbered Q1, Q2 … by position; an open triangle marks a QTL added by the conditional scans (a second QTL inside a significant region, section 3.4). Middle: the same QTL in the joint model; effect per teosinte copy (trait units) with 95% CI, black = joint model across all taxa, colours = within each taxon (taxa with ≥ 5 carrier plots). Right: two columns of **−log10 p** (not effects): "Joint test" = is the QTL still significant with all other QTL in the model; "Taxa differ" = does its effect differ between taxa. For example, DTS Q1 "9.5 | 13.9" means p = 10⁻⁹·⁵ for the QTL and p = 10⁻¹³·⁹ for the difference between taxa. Positive effect = the teosinte allele increases the trait (for DTS/DTA: later flowering). **Fine-mapping PIP** (section 3.4.3): the probability of the window holding each known gene, in the order the genes are listed; **top** = in the top windows (the fewest windows holding half of the QTL's probability), CS = in the 95% credible set but outside the top windows, outside CS = outside the 95% credible set, flat = the probability is spread over the whole interval (highest window ≤ 0.03), so fine-mapping does not separate its genes. A low PIP does not rule a gene out (3.4.3).
 
 #### 3.6.1 Days to silking (DTS)
 
-![DTS: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_DTS.png)
+![DTS: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_DTS.png)
 
-Two QTL pass the 1,000-permutation threshold (−log10 p > 5.25), and both hold in the joint model (Bonferroni over 2 QTL: −log10 p > 1.60).
+Two QTL pass the 1,000-permutation threshold (−log10 p > 5.50), and both hold in the joint model (Bonferroni over 2 QTL: −log10 p > 1.60). They are the same two QTL as in the first model.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.646 (**top**) | +1.00 d | 9.7 | 14.1 (yes) | Differs between taxa (Zd +1.94, Zl +4.77, Zv +0.46, Zx +0.48). Strong, but mostly *luxurians* and *diploperennis*; Zv and Zx only about +0.5 d. |
-| **Q2 chr10 94.5 Mb** | Zm00001eb418700 (ZmCCT10) | 0.010 (flat) | +1.01 d | 8.9 | 1.0 (no) | No significant difference between taxa (Zd +1.19, Zv +0.84, Zx +0.94). The ZmCCT10 (Zm00001eb418700) region: teosinte alleles delay flowering everywhere. |
+| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.644 (**top**) | +1.00 d | 9.5 | 13.9 (yes) | Differs between taxa (Zd +1.95, Zl +4.77, Zv +0.41, Zx +0.50). Strong, but mostly *luxurians* and *diploperennis*; Zv and Zx only about +0.5 d. |
+| **Q2 chr10 97.8 Mb** | Zm00001eb418700 (ZmCCT10) | 0.019 (**top**) | +1.01 d | 9.0 | 1.0 (no) | No significant difference between taxa (Zd +1.18, Zv +0.78, Zx +0.94). The ZmCCT10 (Zm00001eb418700) region: teosinte alleles delay flowering everywhere. |
 
-**Suggestive peaks** (above −log10 p 4.5 but below the 5.25 threshold): chr1 85.8 Mb (5.1; mostly *luxurians*), chr9 10.9 Mb (4.9), chr5 206.4 Mb (4.9; holds Zm00001eb250710, *ZAG3*/*bde1*) and chr9 41.4 Mb (4.6). chr9 10.9 Mb is significant for DTA (below).
+**Suggestive peaks** (above −log10 p 4.5 but below the 5.50 threshold, outside the two QTL): chr5 217.2 Mb (5.5), chr1 84.5 Mb (5.3; the DTA Q1 peak), chr10 81.8 Mb (5.3), chr9 10.9 Mb and chr9 1.4 Mb (5.0 each; both DTA QTL, teosinte earlier), chr10 69.2 Mb (4.8), chr10 125.0 Mb (4.6).
 
 **Candidate genes:**
-- **Q2, chr10:** *ZmCCT10* (**Zm00001eb418700**, annotated "GHD7_2"; 96.18 Mb), the main teosinte photoperiod gene; teosinte alleles delay flowering under long days (Hung et al. 2012; Yang et al. 2013). *Fine-mapping (3.4.3): PIP 0.010; the probability is flat over the interval (highest window 0.03), so fine-mapping does not separate its genes.*
-- **Q1, chr5:** **Zm00001eb257680**, annotated as **Protein HEADING DATE REPRESSOR 1** (SnRK1-interacting protein; GO "regulation of flower development"), in the top window (221.7–221.8 Mb, 8 genes). Its functional ortholog in rice, *HDR1* (*Heading Date Repressor 1*), is a nuclear protein that suppresses flowering under long days: it upregulates *Hd1* and downregulates *Ehd1*, which lowers the florigens *Hd3a* and *RFT1*; it interacts with the kinase OsK4, another long-day repressor (Sun et al. 2016). The *hdr1* mutant flowers early in long days only, i.e. HDR1 acts through the photoperiod pathway, which fits a teosinte allele that delays silking. Not characterised for flowering in maize. Orthology still to be confirmed with a gene tree. The same window is the DTA Q1 peak. *Fine-mapping (3.4.3): PIP 0.646 (the highest in the interval); in the top windows (8 genes).*
+- **Q2, chr10:** *ZmCCT10* (**Zm00001eb418700**, annotated "GHD7_2"; 96.18 Mb), the main teosinte photoperiod gene; teosinte alleles delay flowering under long days (Hung et al. 2012; Yang et al. 2013). *Fine-mapping (3.4.3): PIP 0.019; in the top windows, but these are wide (93.3–97.8 Mb, 43 genes), so fine-mapping does not single it out.*
+- **Q1, chr5:** **Zm00001eb257680**, annotated as **Protein HEADING DATE REPRESSOR 1** (SnRK1-interacting protein; GO "regulation of flower development"), in the top window (221.7–221.8 Mb, 8 genes). Its functional ortholog in rice, *HDR1* (*Heading Date Repressor 1*), is a nuclear protein that suppresses flowering under long days: it upregulates *Hd1* and downregulates *Ehd1*, which lowers the florigens *Hd3a* and *RFT1*; it interacts with the kinase OsK4, another long-day repressor (Sun et al. 2016). The *hdr1* mutant flowers early in long days only, i.e. HDR1 acts through the photoperiod pathway, which fits a teosinte allele that delays silking. Not characterised for flowering in maize. Orthology still to be confirmed with a gene tree. The same window is the DTA Q2 peak. *Fine-mapping (3.4.3): PIP 0.644 (the highest in the interval); in the top windows (8 genes).*
 
 <details><summary>All DTS QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr5 221.8 Mb | 221.7–222.0 | 9.7 | +1.00 d ± 0.16 | **9.7** | **14.1** | Zd +1.94 (10), Zl +4.77 (13), Zv +0.46 (49), Zx +0.48 (50) | [16 genes](qtl_genes/DTS_qtl_genes.tsv) | 221.7–221.8 (8) | 0.65 |
-| Q2 | chr10 94.5 Mb | 92.8–102.3 | 9.1 | +1.01 d ± 0.17 | **8.9** | 1.0 | Zd +1.19 (23), Zv +0.84 (22), Zx +0.94 (62) | [145 genes](qtl_genes/DTS_qtl_genes.tsv) | 93.0–100.5 (33) | 0.03 |
+| Q1 | chr5 221.8 Mb | 221.7–222.0 | 9.4 | +1.00 d ± 0.16 | **9.5** | **13.9** | Zd +1.95 (10), Zl +4.77 (13), Zv +0.41 (46), Zx +0.50 (51) | [16 genes](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv) | 221.7–221.8 (8) | 0.64 |
+| Q2 | chr10 97.8 Mb | 92.9–105.9 | 9.1 | +1.01 d ± 0.17 | **9.0** | 1.0 | Zd +1.18 (23), Zv +0.78 (24), Zx +0.94 (66) | [197 genes](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv) | 93.3–97.8 (43) | 0.02 |
 
-Bonferroni over the 2 QTL: −log10 p > 1.60 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/DTS_qtl_genes.tsv`](qtl_genes/DTS_qtl_genes.tsv).
+Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv).
 
 </details>
 
@@ -1228,491 +1362,514 @@ Bonferroni over the 2 QTL: −log10 p > 1.60 (bold). Top windows: the fewest win
 
 To see whether the DTS QTL hold up in each year, the whole analysis (inputs, LOCO GridLMM scan, 1,000 permutations, joint QTL model) was rerun on each year's SpATS BLUEs alone (`submit_year_check.sh`). The DTS BLUEs of the two years correlate at r = 0.69.
 
-![DTS: k-mer ancestry GWAS on the combined BLUEs and on each year](figures/DTS_by_year.png)
+![DTS: k-mer ancestry GWAS on the combined BLUEs and on each year](figures/fix1/DTS_by_year.png)
 
-GridLMM −log10 p of the window (effect per teosinte copy, days); \* = above that run's threshold within 2 Mb. The joint-model column says where the locus holds (Bonferroni over that run's QTL).
+GridLMM −log10 p of the window (effect per teosinte copy, days); \* = above that run's threshold within 2 Mb (thresholds 5.50 both years, 5.12 in 2023, 4.33 in 2025). The joint-model column says where the locus holds (Bonferroni over that run's QTL).
 
 | Locus | Both years | 2023 only | 2025 only | Holds in the joint model |
 |---|---|---|---|---|
-| **chr10 94.5–97.8 Mb (*ZmCCT10*)** | 9.1 (+1.02)\* | 11.8 (+1.37)\* | 12.7 (+0.84)\* | both years, 2023, 2025 |
-| **chr5 221.8 Mb** | 9.7 (+1.00)\* | 9.4 (+1.15)\* | 4.9 (+0.47)\* | both years, 2023; 2025 at 225.4 Mb |
-| chr9 7.3 Mb | 4.4 (−0.52) | 3.9 (−0.59) | 10.3 (−0.56)\* | 2025 |
-| chr8 129.2 Mb | 2.5 (+0.47) | 1.0 (+0.32) | 7.7 (+0.61)\* | 2025 |
-| chr7 184.6 Mb (*dlf1*) | 2.4 (+0.37) | 2.6 (+0.45) | 4.8 (+0.37)\* | 2025 (taxa differ, −log10 p 3.1) |
-| chr1 3.8 Mb | 2.4 (+0.41) | 2.4 (+0.49) | 5.2 (+0.43)\* | 2025 |
-| chr1 289.6 Mb | 1.6 (−0.30) | 0.9 (−0.25) | 4.6 (−0.38)\* | 2025 |
-| chr2 226.8 Mb | 3.6 (+0.49) | 6.5 (+0.80)\* | 0.0 (+0.01) | 2023 |
-| chr5 205.8 Mb | 4.8 (+0.83) | 5.7 (+1.08)\* | 1.3 (+0.26) | 2023 |
+| **chr10 94.6–97.8 Mb (*ZmCCT10*)** | 9.1 (+1.03)\* | 12.4 (+1.41)\* | 12.5 (+0.83)\* | both years, 2023, 2025 (at 95.6 Mb) |
+| **chr5 221.8 Mb** | 9.4 (+1.00)\* | 9.2 (+1.15)\* | 4.8 (+0.47)\* | both years, 2023; 2025 at 225.4 Mb |
+| chr5 225.4 Mb | 6.6 (+0.82)\* | 5.7 (+0.89)\* | 5.5 (+0.50)\* | 2025 |
+| chr9 7.3 Mb | 3.7 (−0.49) | 2.9 (−0.50) | 9.4 (−0.55)\* | 2025 |
+| chr8 133.8 Mb | 2.2 (+0.44) | 0.7 (+0.23) | 6.8 (+0.57)\* | 2025 |
+| chr7 184.7 Mb (*dlf1*) | 2.4 (+0.37) | 2.4 (+0.45) | 4.8 (+0.38)\* | 2025 (taxa differ, −log10 p 4.8) |
+| chr1 3.8 Mb | 2.2 (+0.40) | 2.1 (+0.46) | 5.0 (+0.43)\* | 2025 |
+| chr7 163.1 Mb | 3.0 (−0.49) | 3.4 (−0.61) | 4.3 (−0.40)\* | 2025 |
+| chr4 184.6 Mb | 2.5 (−0.44) | 1.2 (−0.34) | 4.5 (−0.42)\* | 2025 |
+| chr2 226.8 Mb | 3.3 (+0.47) | 5.9 (+0.76)\* | 0.0 (−0.01) | 2023 |
 
-- **Both QTL of the combined analysis are found in each year.** *ZmCCT10* is significant in both years, with the teosinte allele flowering later in both (+1.37 d in 2023, +0.84 d in 2025). The chr5 221.8 Mb QTL is strong in 2023 and above the threshold in 2025, but its effect is smaller in 2025 (+0.47 vs +1.15 d), and the 2025 joint model places the chr5 QTL 3.6 Mb away, at 225.4 Mb, where the taxa no longer differ.
-- **Other QTL are found in one year only.** The strongest, chr9 7.3 Mb (2025), has the same direction in 2023 (teosinte earlier by about half a day) but is not significant there. The 2025 QTL at chr7 184.6 Mb holds *dlf1* (*delayed flowering1*, Zm00001eb331880, 184.53 Mb), and the one at chr8 129.2 Mb lies 2.5 Mb from the florigen gene *ZCN8* (Zm00001eb353250, 126.68 Mb; outside the interval 127.8–135.1 Mb).
-- **Why single years find more QTL than the combined BLUEs:** each run has its own threshold, and 2025's is lower (4.35, against 5.05 and 5.25). The 2025 scan is also more inflated (λ_GC 6.7, against 3.8 in 2023 and 4.0 combined). Effects that differ between years (genotype × year) partly cancel in the combined BLUEs. So QTL seen in one year only are weaker evidence than the two seen in every run.
+- **Both QTL of the combined analysis are found in each year.** *ZmCCT10* is significant in both years, with the teosinte allele flowering later in both (+1.41 d in 2023, +0.83 d in 2025). The chr5 221.8 Mb QTL is strong in 2023 and above the threshold in 2025, but its effect is smaller in 2025 (+0.47 vs +1.15 d), and the 2025 joint model places the chr5 QTL 3.6 Mb away, at 225.4 Mb, where the taxa do not differ.
+- **Other QTL are found in one year only.** The strongest, chr9 7.3 Mb (2025), has the same direction in 2023 (teosinte earlier by about half a day) but is not significant there. The 2025 QTL at chr7 184.7 Mb holds *dlf1* (*delayed flowering1*, Zm00001eb331880, 184.53 Mb). The 2025 QTL at chr8 133.8 Mb (interval 127.9–136.1 Mb) is 7 Mb from the florigen gene *ZCN8* (Zm00001eb353250, 126.68 Mb), outside its interval.
+- **Why single years find more QTL than the combined BLUEs:** each run has its own threshold, and 2025's is lower (4.33, against 5.12 and 5.50). The 2025 scan is also more inflated (λ_GC 7.1, against 3.8 in 2023 and 4.1 combined). Effects that differ between years (genotype × year) partly cancel in the combined BLUEs. So QTL seen in one year only are weaker evidence than the two seen in every run.
 
-Results: `data/introgression_spread/assoc_gridlmm_spats_y2023`, `_y2025` and `joint_qtl/noperm_y2023`, `_y2025`. Figure: `final_script/31b_year_compare.py`.
+Results: `data/introgression_fix1/assoc_gridlmm_spats_y2023`, `_y2025` and `joint_qtl/noperm_y2023`, `_y2025` (all traits). Figure: `final_script/31b_year_compare.py`.
 
 </details>
 
 #### 3.6.2 Days to anthesis (DTA)
 
-![DTA: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_DTA.png)
+![DTA: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_DTA.png)
 
-Three QTL, all hold in the joint model (Bonferroni over 3: −log10 p > 1.78).
+Six QTL pass the threshold (−log10 p > 5.00); three hold in the joint model (Bonferroni over 6: −log10 p > 2.08). The first model had three, all holding; two of them are the same here (chr5 221.8 Mb and *ZmCCT10*), and the third (chr9 10.9 Mb, *MADS74*) is still above the scan threshold but no longer holds once the new chr9 1.4 Mb QTL is in the model.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q3 chr10 94.5 Mb** | Zm00001eb418700 (ZmCCT10) | 0.008 (flat) | +0.92 d | 9.1 | 1.4 (no) | No significant difference between taxa (Zd +1.27, Zv +0.72, Zx +0.74). Same QTL as DTS Q2 (ZmCCT10, Zm00001eb418700), the strongest DTA QTL; all taxa delay. |
-| **Q2 chr9 10.9 Mb** | Zm00001eb372960 (MADS74) | 0.006 (CS) | -0.54 d | 5.6 | 0.6 (no) | No significant difference between taxa (Zd -0.69, Zh -0.39, Zl -1.51, Zv -0.34, Zx -0.48). Teosinte flowers earlier. Suggestive for DTS (−log10 p 4.9). |
-| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.409 (**top**) | +0.65 d | 5.5 | 11.2 (yes) | Differs between taxa (Zd +1.47, Zl +3.67, Zv +0.21, Zx +0.19). Same QTL as DTS Q1 (Zm00001eb257680), mostly *luxurians* and *diploperennis*. It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
+| **Q6 chr10 101.2 Mb** | Zm00001eb418700 (ZmCCT10) | 0.009 (**top**) | +0.77 d | 4.4 | 1.9 (no) | No significant difference between taxa (Zd +1.07, Zv +0.44, Zx +0.54). Same region as DTS Q2 (ZmCCT10 at 96.2 Mb is inside the interval, 93.0–106.0 Mb); the strongest DTA scan peak (9.4). |
+| **Q1 chr1 84.5 Mb** | — | 0.03 (best window; top windows 75.3–85.8 Mb, 55 genes) | +0.71 d | 5.3 | 17.2 (yes) | New in this model. Differs strongly between taxa: almost all *luxurians* (Zl +3.47; Zh +0.96, Zv +0.59, Zx +0.16, Zd −0.09). Suggestive for DTS (5.3). |
+| **Q2 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.429 (**top**) | +0.62 d | 5.0 | 11.2 (yes) | Differs between taxa (Zd +1.48, Zl +2.95, Zv +0.14, Zx +0.20). Same QTL as DTS Q1 (Zm00001eb257680), mostly *luxurians* and *diploperennis*. It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
+| Q4 chr9 10.9 Mb | Zm00001eb372960 (MADS74) | 0.011 (CS) | −0.32 d | 1.3 | 0.5 (no) | Teosinte flowers earlier in every taxon (Zd −0.67, Zh −0.27, Zl −1.40, Zv −0.38, Zx −0.13). Above the scan threshold (5.5) but does not hold in the joint model; it shares tracts with Q3 (chr9 1.4 Mb, also earlier, also not holding). |
 
 **Candidate genes:**
-- **Q1, chr5 221.8 Mb, shared with DTS Q1:** Zm00001eb257680, the ortholog of rice *HEADING DATE REPRESSOR 1* (see DTS). *Fine-mapping (3.4.3): PIP 0.409 (the highest in the interval); in the top windows (10 genes).*
-- **Q3, chr10 94.5 Mb, shared with DTS Q2:** Zm00001eb418700, *ZmCCT10* (see DTS). *Fine-mapping (3.4.3): PIP 0.008; the probability is flat over the interval (highest window 0.02), so fine-mapping does not separate its genes.*
-- **Q2, chr9 10.9 Mb (significant for DTA, suggestive for DTS):** Zm00001eb372960 (*MADS74*; 8.36 Mb, inside the support interval 6.1–13.7 Mb). Here the teosinte allele makes plants shed pollen earlier (−0.54 d per copy), alike in every taxon. *MADS74* is an *SVP*-like MADS-box transcription factor: its Arabidopsis relative in the Gramene gene tree is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540), and its annotation names the rice SVP-like MADS-box transcription factors 22 and 55. *SVP* is a flowering repressor, so an earlier-flowering teosinte allele fits a weaker repressor: *Fine-mapping (3.4.3): PIP 0.006 (highest window 0.05); in the 95% credible set, but outside the top windows (9.50–11.10 Mb, 32 genes).*
+- **Q2, chr5 221.8 Mb, shared with DTS Q1:** Zm00001eb257680, the ortholog of rice *HEADING DATE REPRESSOR 1* (see DTS). *Fine-mapping (3.4.3): PIP 0.429 (the highest in the interval); in the top windows (10 genes).*
+- **Q6, chr10 101.2 Mb, the DTS Q2 region:** Zm00001eb418700, *ZmCCT10* (see DTS). *Fine-mapping (3.4.3): PIP 0.009; in the top windows, but they are wide (94.1–104.6 Mb, 78 genes), so fine-mapping does not separate its genes.*
+- **Q4, chr9 10.9 Mb (above the scan threshold for DTA, suggestive for DTS; does not hold in the joint model):** Zm00001eb372960 (*MADS74*; 8.36 Mb, inside the support interval 6.1–13.7 Mb). The teosinte allele makes plants shed pollen earlier, alike in every taxon. *MADS74* is an *SVP*-like MADS-box transcription factor: its Arabidopsis relative in the Gramene gene tree is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540), and its annotation names the rice SVP-like MADS-box transcription factors 22 and 55. *SVP* is a flowering repressor, so an earlier-flowering teosinte allele fits a weaker repressor. In the first model this QTL held (joint −log10 p 5.6); here it does not (1.3), so it is a weaker candidate than before. *Fine-mapping (3.4.3): PIP 0.011; in the 95% credible set, but outside the top windows (9.5–13.7 Mb, 102 genes).*
   - SVP delays flowering by repressing the florigen gene *FT*, binding directly to the CArG motifs in its sequence. It also links flowering to temperature: plants flower later at 16 °C than at 23 °C, but *svp* mutants flower at almost the same time at both (Lee et al. 2007). At 16 °C, SVP switches on a second repressor, *TEMPRANILLO2*, which also represses *FT* and *TWIN SISTER OF FT* (Marín-González et al. 2015).
   - Natural alleles of *SVP* change flowering time: the Arabidopsis flowering QTL *FAQ1* is *SVP*, where one amino-acid change makes a loss-of-function, early-flowering allele, and how large its effect is depends on the genetic background (Méndez-Vigo et al. 2013).
-  - *mads73* (ASI Q11, chr5 218.3 Mb) is a second *SVP*-like gene among our QTL.
+  - *mads73* (ASI Q9, chr5 217.8 Mb) is a second *SVP*-like gene among our QTL.
 
 <details><summary>All DTA QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr5 221.8 Mb | 221.7–222.3 | 5.5 | +0.65 d ± 0.14 | **5.5** | **11.2** | Zd +1.47 (10), Zl +3.67 (13), Zv +0.21 (50), Zx +0.19 (50) | [26 genes](qtl_genes/DTA_qtl_genes.tsv) | 221.7–221.9 (10) | 0.41 |
-| Q2 | chr9 10.9 Mb | 6.1–13.7 | 5.5 | -0.54 d ± 0.11 | **5.6** | 0.6 | Zd -0.69 (25), Zh -0.39 (8), Zl -1.51 (22), Zv -0.34 (57), Zx -0.48 (97) | [203 genes](qtl_genes/DTA_qtl_genes.tsv) | 9.5–11.1 (32) | 0.05 |
-| Q3 | chr10 94.5 Mb | 92.8–105.9 | 9.3 | +0.92 d ± 0.15 | **9.1** | 1.4 | Zd +1.27 (23), Zv +0.72 (22), Zx +0.74 (62) | [197 genes](qtl_genes/DTA_qtl_genes.tsv) | 93.0–101.3 (40) | 0.02 |
+| Q1 | chr1 84.5 Mb | 73.8–85.9 | 5.3 | +0.71 d ± 0.15 | **5.3** | **17.2** | Zd -0.09 (14), Zh +0.96 (6), Zl +3.47 (10), Zv +0.59 (19), Zx +0.16 (59) | [233 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 75.3–85.8 (55) | 0.03 |
+| Q2 | chr5 221.8 Mb | 221.7–222.3 | 5.4 | +0.62 d ± 0.14 | **5.0** | **11.2** | Zd +1.48 (10), Zl +2.95 (13), Zv +0.14 (47), Zx +0.20 (51) | [26 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 221.7–221.9 (10) | 0.43 |
+| Q3 | chr9 1.4 Mb | 0.9–2.2 | 5.6 | -0.37 d ± 0.17 | 1.5 | 0.5 | Zd -0.69 (21), Zh -0.27 (10), Zl -1.40 (22), Zv -0.09 (35), Zx -0.47 (84) | [12 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 0.9–1.5 (1) | 0.11 |
+| Q4 | chr9 10.9 Mb | 6.1–13.7 | 5.5 | -0.32 d ± 0.16 | 1.3 | 0.5 | Zd -0.67 (24), Zh -0.27 (8), Zl -1.40 (22), Zv -0.38 (56), Zx -0.13 (94) | [203 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 9.5–13.7 (102) | 0.02 |
+| Q5 | chr10 69.2 Mb | 67.3–75.6 | 6.0 | +0.24 d ± 0.20 | 0.7 | 0.5 | Zd +0.47 (25), Zv +0.17 (20), Zx +0.32 (52) | [115 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr10 101.2 Mb | 93.0–106.0 | 9.4 | +0.77 d ± 0.19 | **4.4** | 1.9 | Zd +1.07 (24), Zv +0.44 (24), Zx +0.54 (64) | [194 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 94.1–104.6 (78) | 0.02 |
 
-Bonferroni over the 3 QTL: −log10 p > 1.78 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/DTA_qtl_genes.tsv`](qtl_genes/DTA_qtl_genes.tsv).
+Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.3 Anthesis–silking interval (ASI)
 
-![ASI: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_ASI.png)
+![ASI: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_ASI.png)
 
-ASI = anthesis–silking interval, DTS − DTA. 12 regions, 6 hold in the joint model (Bonferroni over 12: −log10 p > 2.38). Many other chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts.
+ASI = anthesis–silking interval, DTS − DTA. 10 regions, 6 hold in the joint model (Bonferroni over 10: −log10 p > 2.30). Many other chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. Five of the six are the QTL of the first model; the sixth, chr4 67.0 Mb, replaces the first model's chr4 52.0 Mb QTL (*tga1*), as the lead of the same long chr4 region (below).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q12 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | 0.080 (CS) | -0.36 d | 14.0 | 0.3 (no) | No significant difference between taxa (Zd -0.46, Zl -0.53, Zv -0.35, Zx -0.31). The strongest ASI QTL: teosinte shortens the interval. |
-| **Q11 chr5 218.3 Mb** | Zm00001eb255670 (mads73) | 0.136 (**top**) | +0.35 d | 8.8 | 4.1 (yes) | Differs between taxa (Zl +1.08, Zv +0.24, Zx +0.28). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
-| **Q1 chr1 4.5 Mb** | Zm00001eb001510 (remorin) | 0.102 (**top**) | +0.24 d | 6.6 | 0.0 (no) | No significant difference between taxa (Zd +0.19, Zh +0.21, Zl +0.14, Zv +0.26, Zx +0.24). Lengthens ASI. |
-| **Q10 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | 0.007 (flat) | -0.21 d | 4.7 | 0.3 (no) | No significant difference between taxa (Zd -0.41, Zh -0.38, Zl +0.47, Zv -0.26, Zx -0.15). Shortens ASI. |
-| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.019 (CS); 0.018 (CS) | -0.16 d | 3.6 | 0.1 (no) | No significant difference between taxa (Zd -0.19, Zh -0.46, Zl -0.20, Zv -0.19, Zx -0.13). Shortens ASI. |
-| **Q9 chr4 52.0 Mb** | Zm00001eb175150 (tga1) | 0.019 (CS) | -0.24 d | 3.0 | 0.1 (no) | No significant difference between taxa (Zd -0.08, Zh -0.54, Zl -0.67, Zv -0.20, Zx -0.18). Shortens ASI. |
+| **Q10 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | 0.083 (CS) | -0.36 d | 13.5 | 0.3 (no) | No significant difference between taxa (Zd -0.47, Zl -0.57, Zv -0.36, Zx -0.30). The strongest ASI QTL: teosinte shortens the interval. |
+| **Q9 chr5 217.8 Mb** | Zm00001eb255670 (mads73) | 0.273 (**top**) | +0.34 d | 9.1 | 3.4 (yes) | Differs between taxa (Zl +1.03, Zv +0.24, Zx +0.26). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
+| **Q1 chr1 4.8 Mb** | Zm00001eb001510 (remorin) | 0.050 (CS) | +0.25 d | 6.5 | 0.0 (no) | No significant difference between taxa (Zd +0.18, Zh +0.22, Zl +0.14, Zv +0.32, Zx +0.23). Lengthens ASI. |
+| **Q7 chr4 67.0 Mb** | — | 0.049 (best window; top windows 66.9–68.0 Mb, 8 genes) | -0.29 d | 5.2 | 0.2 (no) | No significant difference between taxa (Zh -0.52, Zl -0.96, Zv -0.37, Zx -0.23; Zd +0.03). Shortens ASI. The lead of the long chr4 region that held *tga1* in the first model. |
+| **Q8 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | 0.004 (CS) | -0.21 d | 4.8 | 0.3 (no) | No significant difference between taxa (Zd -0.36, Zl +0.52, Zv -0.28, Zx -0.15). Shortens ASI. |
+| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.012 (CS); 0.015 (CS) | -0.16 d | 3.7 | 0.1 (no) | No significant difference between taxa (Zd -0.17, Zh -0.51, Zl -0.16, Zv -0.20, Zx -0.13). Shortens ASI. |
 
 **Candidate genes:**
-- **Q12, chr7 165.6 Mb (the strongest ASI QTL):** Zm00001eb323880 (*bhlh90*, bHLH transcription factor 90; 165.74 Mb, in a window with −log10 p 13.2 next to the top window). MaizeGDB annotates it as the ortholog of Arabidopsis *FLOWERING BHLH 4* (Neupane et al. 2025); Gramene lists Arabidopsis *FBH3* (AT1G51140) as its closest homolog and rice *OsFBH1* / *POH1* (Os08g0506700) as its closest rice gene. In Arabidopsis the four FBH proteins bind E-boxes in the *CONSTANS* promoter and activate *CO*: their overexpression causes early flowering regardless of photoperiod, and *CO* levels drop in the *fbh* quadruple mutant (Ito et al. 2012). In rice, POH1 forms a dimer with HBP1, both bind the *Hd1* promoter and activate *Hd1*; their overexpression delays flowering by suppressing *Ehd1*, *Hd3a* and *RFT1* (Yin et al. 2023). *Fine-mapping (3.4.3): PIP 0.080 (highest window 0.29); in the 95% credible set, but outside the top windows (165.50–165.70 Mb, 4 genes).*
-- **Q11, chr5 218.3 Mb:** Zm00001eb255670 (*mads73*, MADS-box transcription factor; 217.89 Mb, in a window with −log10 p 9.4). In its Gramene gene tree, the Arabidopsis gene is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540; also *AGL22*), a MADS-box repressor of flowering: *Fine-mapping (3.4.3): PIP 0.136 (highest window 0.19); in the top windows (16 genes).*
+- **Q10, chr7 165.6 Mb (the strongest ASI QTL):** Zm00001eb323880 (*bhlh90*, bHLH transcription factor 90; 165.74 Mb, in a window with −log10 p 12.6 next to the top window). MaizeGDB annotates it as the ortholog of Arabidopsis *FLOWERING BHLH 4* (Neupane et al. 2025); Gramene lists Arabidopsis *FBH3* (AT1G51140) as its closest homolog and rice *OsFBH1* / *POH1* (Os08g0506700) as its closest rice gene. In Arabidopsis the four FBH proteins bind E-boxes in the *CONSTANS* promoter and activate *CO*: their overexpression causes early flowering regardless of photoperiod, and *CO* levels drop in the *fbh* quadruple mutant (Ito et al. 2012). In rice, POH1 forms a dimer with HBP1, both bind the *Hd1* promoter and activate *Hd1*; their overexpression delays flowering by suppressing *Ehd1*, *Hd3a* and *RFT1* (Yin et al. 2023). *Fine-mapping (3.4.3): PIP 0.083 (highest window 0.30); in the 95% credible set, but outside the top windows (165.5–165.7 Mb, 4 genes).*
+- **Q9, chr5 217.8 Mb:** Zm00001eb255670 (*mads73*, MADS-box transcription factor; 217.89 Mb, in a window with −log10 p 9.5). In its Gramene gene tree, the Arabidopsis gene is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540; also *AGL22*), a MADS-box repressor of flowering: *Fine-mapping (3.4.3): PIP 0.273 (the highest in the interval); in the top windows (217.8–218.0 Mb, 4 genes), so the fine-mapping now points to it more clearly than in the first model (0.136, 16 genes).*
   - SVP represses the florigen gene *FT* by binding the CArG motifs in its sequence. It mediates the response of flowering to ambient temperature: plants flower later at 16 °C than at 23 °C, but *svp* mutants flower at almost the same time at both temperatures (Lee et al. 2007).
   - At low temperature (16 °C), SVP also switches on another floral repressor, *TEMPRANILLO2* (*TEM2*), which represses *FT* and *TWIN SISTER OF FT* (Marín-González et al. 2015).
   - Natural variation in *SVP* changes flowering time: the Arabidopsis flowering QTL *FAQ1* is *SVP*, where a single amino-acid change makes an early-flowering allele, and its effect depends on the genetic background (Méndez-Vigo et al. 2013).
-- **Q1, chr1 4.5 Mb:** Zm00001eb001510 (remorin family protein; Zm00001d027403 in B73 v4; 4.45 Mb, in a window with −log10 p 6.3). In a maize panel, Wang et al. (2026) found a chr1 segment (v4 4,418,001–4,420,000 bp) both by GWAS for days to silking and days to tasseling and by a genetic-differentiation scan between subpopulations (Fst 0.53), and listed its seven genes, including this one, among 41 flowering-time candidates (their Table 2). In the same segment they point to a NAC transcription factor (*NAC78*, Zm00001d027395) and a histone H4 gene (Zm00001d027394). *Fine-mapping (3.4.3): PIP 0.102 (highest window 0.104); in the top windows (31 genes).*
-- **Q10, chr4 206.2 Mb:** Zm00001eb201580 (*ZmFKF1b*, *FLAVIN-BINDING, KELCH REPEAT, F-BOX 1b*; Zm00001d053091 in B73 v4; 216.2 Mb, in a window with −log10 p 4.7). The gene is 10 Mb from the top window but inside the support interval (202.3–225.3 Mb). FKF1 is a blue-light receptor whose expression follows the circadian clock. It has a light-sensing LOV domain, an F-box (which lets it tag proteins for breakdown) and Kelch repeats. In *Arabidopsis* it stabilizes CONSTANS (CO) and raises its expression, and CO switches on the florigen gene *FT*. Chen et al. (2024) showed that the maize copy works in the same pathway: *Fine-mapping (3.4.3): PIP 0.007; the probability is flat over the interval (highest window 0.01), so fine-mapping does not separate its genes.*
+- **Q1, chr1 4.8 Mb:** Zm00001eb001510 (remorin family protein; Zm00001d027403 in B73 v4; 4.45 Mb, in a window with −log10 p 5.8). In a maize panel, Wang et al. (2026) found a chr1 segment (v4 4,418,001–4,420,000 bp) both by GWAS for days to silking and days to tasseling and by a genetic-differentiation scan between subpopulations (Fst 0.53), and listed its seven genes, including this one, among 41 flowering-time candidates (their Table 2). In the same segment they point to a NAC transcription factor (*NAC78*, Zm00001d027395) and a histone H4 gene (Zm00001d027394). *Fine-mapping (3.4.3): PIP 0.050 (highest window 0.09); in the 95% credible set, but outside the top windows (3.9–4.8 Mb, 29 genes; in the first model it was in them).*
+- **Q8, chr4 206.2 Mb:** Zm00001eb201580 (*ZmFKF1b*, *FLAVIN-BINDING, KELCH REPEAT, F-BOX 1b*; Zm00001d053091 in B73 v4; 216.2 Mb, in a window with −log10 p 4.2). The gene is 10 Mb from the top window but inside the support interval (202.3–226.0 Mb). FKF1 is a blue-light receptor whose expression follows the circadian clock. It has a light-sensing LOV domain, an F-box (which lets it tag proteins for breakdown) and Kelch repeats. In *Arabidopsis* it stabilizes CONSTANS (CO) and raises its expression, and CO switches on the florigen gene *FT*. Chen et al. (2024) showed that the maize copy works in the same pathway: *Fine-mapping (3.4.3): PIP 0.004 (highest window 0.02); in the 95% credible set, but outside the top windows (206.2–218.4 Mb, 82 genes).*
   - CRISPR knockouts of *ZmFKF1b*, and of its paralog *ZmFKF1a* (Zm00001d007445 in v4), each flowered significantly later than the wild type under short days, both for anthesis and for silking.
   - Both proteins bind ZmCONZ1 (the maize CO homolog) and ZmGI1 (GIGANTEA1), and both raise the expression of *ZmCONZ1* and of the maize florigen gene *ZCN8*.
   - *ZmFKF1b* lies in a known flowering-time QTL and in regions earlier found to be under selection, and its allele frequencies shifted during Chinese maize breeding from the 1960s–70s to the 1980s–90s.
   - **The link to geography:** the coding sequence has three main haplotypes. Hap_Z58 (as in the inbred Zheng58) is found mostly in temperate maize, at up to 92%. Hap_C7 (as in Chang7-2) is spread evenly over temperate and tropical maize. In an F2 population, plants with Hap_C7 flowered earlier, and Hap_C7 raised *ZmCONZ1* expression more. The authors propose that Hap_C7 suits a wider range of climate zones and could help adapt tropical maize to temperate regions.
 
-  In our lines the teosinte allele shortens ASI by 0.21 d per copy, and the taxa do not differ significantly (from −0.15 d in *mexicana* to −0.41 d in *diploperennis*; *luxurians* goes the other way, +0.47 d, but with only 6 carrier lines). At the *ZmFKF1b* window itself the signal is for ASI (−log10 p 4.7), not for DTS (0.6) or DTA (0.1). Our donors were collected from 80 to 2,713 m, in very different climates, and we asked whether the Q10 effect changes with the donor's environment: it does not change with elevation, annual mean temperature, minimum temperature of the coldest month, rainfall, rainfall seasonality, aridity or soil pH (all p ≥ 0.20; `old_scripts/34_env_tests.R`, results in `data/env/tests/B_qtl_effect_x_env.tsv`). So in our population the teosinte allele acts the same way wherever the donor came from. The k-mer data can't tell which *ZmFKF1b* haplotype each donor carries, so the haplotype–climate link of Chen et al. (2024) can't be tested here.
-- **Q2, chr2 26.1 Mb:** Zm00001eb076990 (*ckx12*, cytokinin oxidase/dehydrogenase 12; Zm00001d002989 in B73 v4; 29.06 Mb, in a window with −log10 p 6.6). CKX enzymes break down cytokinin, the hormone that keeps meristem cells dividing; in rice, lower expression of the homolog *OsCKX2* (*Gn1a*) lets cytokinin build up in the inflorescence meristem and increases grain number (Ashikari et al. 2005). Ni et al. (2024) mapped kernel row number in an advanced backcross of a two-rowed *mexicana* teosinte (MT1, donor) into the inbred Mo17: *Fine-mapping (3.4.3): PIP 0.019 (highest window 0.05); in the 95% credible set, but outside the top windows (25.30–27.90 Mb, 33 genes).*
+  In our lines the teosinte allele shortens ASI by 0.21 d per copy, and the taxa do not differ significantly (from −0.15 d in *mexicana* to −0.36 d in *diploperennis*; *luxurians* goes the other way, +0.52 d, but with only 6 carrier lines). At the *ZmFKF1b* window itself the signal is for ASI (−log10 p 4.2), not for DTS (0.5) or DTA (0.0). Our donors were collected from 80 to 2,713 m, in very different climates, and we asked (first model) whether this QTL's effect changes with the donor's environment: it does not change with elevation, annual mean temperature, minimum temperature of the coldest month, rainfall, rainfall seasonality, aridity or soil pH (all p ≥ 0.20; `old_scripts/34_env_tests.R`, results in `data/env/tests/B_qtl_effect_x_env.tsv`). So in our population the teosinte allele acts the same way wherever the donor came from. The k-mer data can't tell which *ZmFKF1b* haplotype each donor carries, so the haplotype–climate link of Chen et al. (2024) can't be tested here.
+- **Q2, chr2 26.1 Mb:** Zm00001eb076990 (*ckx12*, cytokinin oxidase/dehydrogenase 12; Zm00001d002989 in B73 v4; 29.06 Mb, in a window with −log10 p 6.3). CKX enzymes break down cytokinin, the hormone that keeps meristem cells dividing; in rice, lower expression of the homolog *OsCKX2* (*Gn1a*) lets cytokinin build up in the inflorescence meristem and increases grain number (Ashikari et al. 2005). Ni et al. (2024) mapped kernel row number in an advanced backcross of a two-rowed *mexicana* teosinte (MT1, donor) into the inbred Mo17: *Fine-mapping (3.4.3): PIP 0.012 (highest window 0.05); in the 95% credible set, but outside the top windows (25.3–28.2 Mb, 33 genes).*
   - The chr2 short-arm QTL *qKRN2* split into two closely linked QTL, *qKRN2-1* (fine-mapped to 272 kb) and *qKRN2-2* (775 kb), which explain 33.5% and 35.3% of the variance in kernel row number in their populations. The Mo17 alleles add about 1.4 and 1.2 rows.
   - Of the genes in the *qKRN2-1* interval, Zm00001d002989 (this gene) was expressed 3.7 times more in young ears (3–4 mm) of the line carrying the teosinte allele than in the line carrying the Mo17 allele. RNA in situ hybridization placed its expression in the primordia of the inflorescence meristem and of the spikelet-pair meristems, which set the number of kernel rows. They propose it as the causal gene: more CKX means less cytokinin, fewer spikelet-pair meristems and fewer rows.
 
-  In our lines the teosinte allele at Q2 shortens ASI by 0.16 d per copy, and the taxa do not differ significantly. Why a gene acting in the developing ear would change ASI isn't known; we did not score kernel row number. The same interval also holds EH Q1 (+1.96 cm) and Prolif Q5–Q6 (see [Regions shared between traits](#3613-regions-shared-between-traits)).
-- **Q9, chr4 52.0 Mb:** Zm00001eb175150 (*tga1*, *teosinte glume architecture1*; 46.65 Mb, in a window with −log10 p 7.0, near the left end of the interval 46.5–52.4 Mb). *tga1* is a classic maize domestication gene: it is the reason maize kernels are naked, while teosinte kernels are sealed inside a hard fruitcase made of a hardened glume and the rachis. *Fine-mapping (3.4.3): PIP 0.019 (highest window 0.03); in the 95% credible set, but outside the top windows (46.70–52.20 Mb, 22 genes).*
+  In our lines the teosinte allele at Q2 shortens ASI by 0.16 d per copy, and the taxa do not differ significantly. Why a gene acting in the developing ear would change ASI isn't known; we did not score kernel row number. The same interval also holds EH Q1 (+2.06 cm), and Prolif Q4–Q5 lie on either side of it (see [Regions shared between traits](#3613-regions-shared-between-traits)).
+- **No longer a QTL of its own: chr4 52.0 Mb, Zm00001eb175150 (*tga1*, *teosinte glume architecture1*; 46.65 Mb).** In the first model this was ASI Q9 (joint −log10 p 3.0). The scan signal is still there (−log10 p 6.1 at *tga1*'s window and at 52.0 Mb), but chr4 is significant over a long stretch, and its lead is now at 67.0 Mb (Q7, interval 65.0–71.3 Mb), which does not include *tga1*; the conditional scan does not add a second QTL at 52 Mb. *tga1* is a classic maize domestication gene: it is the reason maize kernels are naked, while teosinte kernels are sealed inside a hard fruitcase made of a hardened glume and the rachis.
   - *tga1* encodes an SBP-box transcription factor. Maize and teosinte differ at a single fixed site in the gene, which changes one amino acid (Lys in teosinte, Asn in maize). This change turns maize TGA1 into a transcriptional repressor. Both forms bind the same GTAC motif in DNA, but the maize form makes more stable dimers. Because it is the only fixed difference, it is most likely the change that made naked kernels (Wang H et al. 2015).
   - TGA1 sits in a gene network with the other big domestication gene, *teosinte branched1* (*tb1*): TB1 binds the *tga1* promoter and activates it. TGA1 in turn regulates MADS-box genes, a family that sets the identity of floral and inflorescence organs: of eight tested, five were expressed more in immature ears with the teosinte allele of *tga1*, and TGA1 bound the promoters of five. One of them is *zmm19*, the *Tunicate* locus, whose overexpression makes the glumes grow around each kernel. Several genes in the network show signatures of selection during domestication (Studer et al. 2017).
 
-  Since the Lys/Asn difference is fixed between maize and teosinte, every donor tract at *tga1* should carry the teosinte allele. In our lines the teosinte segment shortens ASI by 0.24 d per copy, and the taxa do not differ significantly (from −0.08 d in *diploperennis* to −0.67 d in *luxurians*). How *tga1* would change ASI isn't known: it acts in the developing ear, so the effect could come through ear development. *tga1* is 5 Mb from the top window, so another gene in the interval may also be the cause.
-- **Not held in the joint model:** Zm00001eb132420 (*LNK2*, a circadian clock gene) is in Q6 (chr3 69.5 Mb), which does not hold.
+  Since the Lys/Asn difference is fixed between maize and teosinte, every donor tract at *tga1* should carry the teosinte allele. In the first model, the teosinte segment shortened ASI by 0.24 d per copy. How *tga1* would change ASI isn't known: it acts in the developing ear, so the effect could come through ear development. Whether the chr4 signal is one QTL (at 67 Mb) or two (also near *tga1*) is not resolved by our data.
+- **Not in a QTL interval in this model:** Zm00001eb132420 (*LNK2*, a circadian clock gene) was in a chr3 QTL of the first model that did not hold.
 
-The chr3 95.8 Mb peak (−log10 p 5.0) lies inside the chr3 108.3 Mb region (88.5–129.4 Mb), and the conditional scan does not add it.
+The chr3 95.8 Mb peak (−log10 p 4.9) lies inside the chr3 108.3 Mb region (93.8–121.6 Mb), and the conditional scan does not add it.
 
 <details><summary>All ASI QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 4.5 Mb | 3.7–5.4 | 6.4 | +0.24 d ± 0.05 | **6.6** | 0.0 | Zd +0.19 (15), Zh +0.21 (10), Zl +0.14 (12), Zv +0.26 (42), Zx +0.24 (68) | [73 genes](qtl_genes/ASI_qtl_genes.tsv) | 3.9–4.6 (31) | 0.10 |
-| Q2 | chr2 26.1 Mb | 24.8–29.4 | 7.4 | -0.16 d ± 0.04 | **3.6** | 0.1 | Zd -0.19 (35), Zh -0.46 (5), Zl -0.20 (21), Zv -0.19 (55), Zx -0.13 (105) | [147 genes](qtl_genes/ASI_qtl_genes.tsv) | 25.3–27.9 (33) | 0.05 |
-| Q3 | chr2 68.2 Mb | 60.7–77.1 | 5.3 | -0.12 d ± 0.07 | 1.0 | 0.0 | Zd -0.28 (33), Zh -0.14 (7), Zl -0.12 (15), Zv -0.05 (50), Zx -0.09 (87) | [172 genes](qtl_genes/ASI_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q4 | chr2 146.7 Mb | 100.9–150.2 | 4.7 | +0.04 d ± 0.07 | 0.2 | 0.0 | Zd +0.17 (24), Zh -0.14 (6), Zl -0.18 (14), Zv -0.02 (55), Zx +0.04 (111) | [547 genes](qtl_genes/ASI_qtl_genes.tsv) | 100.9–150.2 (249) | 0.00 |
-| Q5 | chr2 191.2 Mb | 185.7–193.2 | 5.2 | -0.14 d ± 0.05 | 2.2 | 0.2 | Zd -0.11 (17), Zh -0.22 (6), Zl -0.38 (16), Zv -0.16 (51), Zx -0.13 (112) | [179 genes](qtl_genes/ASI_qtl_genes.tsv) | 190.9–193.2 (52) | 0.04 |
-| Q6 | chr3 69.5 Mb | 61.9–91.1 | 5.0 | -0.06 d ± 0.13 | 0.2 | 0.5 | Zd -0.42 (25), Zh -0.19 (13), Zl -0.50 (7), Zv -0.30 (29), Zx -0.01 (68) | [159 genes](qtl_genes/ASI_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q7 | chr3 108.3 Mb | 106.5–121.4 | 5.2 | -0.17 d ± 0.13 | 0.7 | 0.5 | Zd -0.42 (24), Zh -0.17 (13), Zl -0.45 (8), Zv -0.32 (30), Zx -0.13 (73) | [175 genes](qtl_genes/ASI_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q8 | chr4 19.8 Mb | 15.2–24.3 | 4.6 | -0.10 d ± 0.07 | 0.9 | 0.5 | Zd +0.15 (11), Zh +0.09 (7), Zl -0.03 (7), Zv -0.32 (32), Zx -0.09 (53) | [163 genes](qtl_genes/ASI_qtl_genes.tsv) | 15.2–20.0 (64) | 0.01 |
-| Q9 | chr4 52.0 Mb | 46.5–52.4 | 7.5 | -0.24 d ± 0.07 | **3.0** | 0.1 | Zd -0.08 (6), Zh -0.54 (8), Zl -0.67 (6), Zv -0.20 (36), Zx -0.18 (48) | [70 genes](qtl_genes/ASI_qtl_genes.tsv) | 46.7–52.2 (22) | 0.03 |
-| Q10 | chr4 206.2 Mb | 202.3–225.3 | 5.4 | -0.21 d ± 0.05 | **4.7** | 0.3 | Zd -0.41 (17), Zh -0.38 (5), Zl +0.47 (6), Zv -0.26 (36), Zx -0.15 (77) | [409 genes](qtl_genes/ASI_qtl_genes.tsv) | 206.2–221.4 (100) | 0.01 |
-| Q11 | chr5 218.3 Mb | 217.4–218.6 | 9.4 | +0.35 d ± 0.06 | **8.8** | **4.1** | Zl +1.08 (11), Zv +0.24 (44), Zx +0.28 (40) | [47 genes](qtl_genes/ASI_qtl_genes.tsv) | 217.8–218.5 (16) | 0.19 |
-| Q12 | chr7 165.6 Mb | 164.8–166.1 | 13.7 | -0.36 d ± 0.05 | **14.0** | 0.3 | Zd -0.46 (18), Zl -0.53 (14), Zv -0.35 (50), Zx -0.31 (78) | [42 genes](qtl_genes/ASI_qtl_genes.tsv) | 165.5–165.7 (4) | 0.29 |
+| Q1 | chr1 4.8 Mb | 3.6–5.6 | 6.1 | +0.25 d ± 0.05 | **6.5** | 0.0 | Zd +0.18 (15), Zh +0.22 (10), Zl +0.14 (12), Zv +0.32 (36), Zx +0.23 (64) | [85 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 3.9–4.8 (29) | 0.09 |
+| Q2 | chr2 26.1 Mb | 25.3–29.5 | 7.1 | -0.16 d ± 0.04 | **3.7** | 0.1 | Zd -0.17 (35), Zh -0.51 (5), Zl -0.16 (21), Zv -0.20 (48), Zx -0.13 (107) | [126 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 25.3–28.2 (33) | 0.05 |
+| Q3 | chr2 68.2 Mb | 60.7–78.5 | 5.0 | -0.09 d ± 0.05 | 1.2 | 0.0 | Zd -0.21 (33), Zh -0.12 (7), Zl -0.10 (15), Zv -0.06 (43), Zx -0.07 (88) | [178 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 62.1–75.7 (72) | 0.01 |
+| Q4 | chr2 191.2 Mb | 184.6–193.2 | 4.7 | -0.12 d ± 0.05 | 1.9 | 0.2 | Zd +0.01 (17), Zh -0.14 (6), Zl -0.40 (16), Zv -0.13 (47), Zx -0.12 (112) | [200 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 190.8–193.2 (53) | 0.03 |
+| Q5 | chr3 70.7 Mb | 61.9–75.4 | 4.9 | -0.02 d ± 0.15 | 0.1 | 0.5 | Zd -0.41 (25), Zh -0.17 (13), Zl -0.41 (8), Zv -0.33 (25), Zx -0.14 (67) | [88 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr3 108.3 Mb | 93.8–121.6 | 5.2 | -0.20 d ± 0.15 | 0.8 | 0.6 | Zd -0.37 (25), Zh -0.17 (13), Zl -0.41 (8), Zv -0.38 (28), Zx -0.14 (72) | [285 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | – | 0.00 |
+| Q7 | chr4 67.0 Mb | 65.0–71.3 | 6.6 | -0.29 d ± 0.07 | **5.2** | 0.2 | Zd +0.03 (5), Zh -0.52 (8), Zl -0.96 (5), Zv -0.37 (29), Zx -0.23 (42) | [91 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 66.9–68.0 (8) | 0.05 |
+| Q8 | chr4 206.2 Mb | 202.3–226.0 | 5.2 | -0.21 d ± 0.05 | **4.8** | 0.3 | Zd -0.36 (17), Zl +0.52 (6), Zv -0.28 (32), Zx -0.15 (77) | [420 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 206.2–218.4 (82) | 0.02 |
+| Q9 | chr5 217.8 Mb | 217.4–218.8 | 9.4 | +0.34 d ± 0.06 | **9.1** | **3.4** | Zl +1.03 (13), Zv +0.24 (43), Zx +0.26 (42) | [56 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 217.8–218.0 (4) | 0.27 |
+| Q10 | chr7 165.6 Mb | 165.2–166.1 | 13.1 | -0.36 d ± 0.05 | **13.5** | 0.3 | Zd -0.47 (17), Zl -0.57 (14), Zv -0.36 (45), Zx -0.30 (78) | [26 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 165.5–165.7 (4) | 0.30 |
 
-Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/ASI_qtl_genes.tsv`](qtl_genes/ASI_qtl_genes.tsv).
+Bonferroni over the 10 QTL: −log10 p > 2.30 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.4 Nodes with brace roots (NBR)
 
-![NBR: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_NBR.png)
+![NBR: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_NBR.png)
 
-Number of stem nodes that carry brace roots. 8 regions, 4 hold (Bonferroni over 8: −log10 p > 2.20).
+Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20). The first model had 4 holding; chr10 98.2 Mb and chr8 126.2 Mb are the same, chr9 4.2 Mb is new, and chr1 260.8 Mb (2.1) and chr9 140 Mb no longer hold.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.005 (outside CS) | +0.17 | 5.7 | 3.1 (yes) | Differs between taxa (Zd +0.05, Zv +0.26, Zx +0.09). The strongest NBR QTL; largest in *parviglumis*. |
+| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.003 (outside CS) | +0.18 | 9.4 | 2.7 (yes) | Differs between taxa (Zd +0.29, Zv +0.23, Zx +0.08). The strongest NBR QTL; smallest in *mexicana*. |
+| **Q6 chr8 126.2 Mb** | — | 0.15 (best window; top windows 126.2–126.7 Mb, 14 genes) | +0.12 | 4.4 | 1.1 (no) | No significant difference between taxa (Zd +0.10, Zh +0.33, Zl +0.15, Zv +0.09, Zx +0.09). |
+| **Q7 chr9 4.2 Mb** | — | 0.07 (best window; top windows 4.0–9.5 Mb, 49 genes) | −0.09 | 4.4 | 3.2 (yes) | Fewer brace-root nodes; differs between taxa, mostly *diploperennis* (Zd −0.39; Zh −0.09, Zl −0.07, Zv −0.06, Zx −0.07). |
 
 **Candidate gene:**
-- **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (GRMZM2G174736 in B73 v3; 97.41 Mb, in a window with −log10 p 9.0; the top window has 10.3). Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). Their significant chr10 SNP for brace root diameter (chr10.S_95437751, in older B73 coordinates) explains 13.95% of the variance, and GRMZM2G174736 is one of their candidate genes for brace root diameter:
+- **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (GRMZM2G174736 in B73 v3; 97.41 Mb, in a window with −log10 p 8.0; the top window has 9.3). Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). Their significant chr10 SNP for brace root diameter (chr10.S_95437751, in older B73 coordinates) explains 13.95% of the variance, and GRMZM2G174736 is one of their candidate genes for brace root diameter:
   - They annotate it as a hydroxyproline-rich glycoprotein (HRGP, also called extensin), a structural protein of the cell wall. HRGPs help assemble the cell wall, are expressed in specific tissues and stages, and some act in root development.
   - It is one of three cell-wall candidates they highlight for brace root diameter, with an expansin (GRMZM2G445169, which loosens the cell wall) and a homolog of the *Arabidopsis* receptor kinase FEI (GRMZM2G479243). They propose that these genes shape brace roots through the cell wall.
   - In public RNA-seq of 13 tissues, including brace roots, it is expressed at moderate to high levels, but not only in brace roots. Its function has not been tested.
 
   The current B73 v5 annotation lists the gene as uncharacterized (protein family: SICKLE).
 
-  In our lines the teosinte allele adds 0.17 brace-root nodes per copy (joint −log10 p 5.7), and the effect differs between taxa: it is largest in *parviglumis* (+0.26), smaller in *mexicana* (+0.09) and *diploperennis* (+0.05).
+  In our lines the teosinte allele adds 0.18 brace-root nodes per copy (joint −log10 p 9.4), and the effect differs between taxa: +0.29 in *diploperennis*, +0.23 in *parviglumis* and +0.08 in *mexicana* (in the first model *diploperennis* was the smallest, +0.05).
 
-  **Is this just flowering time?** The QTL is 1.2 Mb from *ZmCCT10* (Zm00001eb418700), whose teosinte allele delays flowering (DTS Q2, DTA Q3), and a later-flowering plant can make more nodes. Three results argue against that:
-  - NBR is hardly correlated with flowering time in our lines (r = 0.10 with DTS, 0.11 with DTA). In a linear model with taxon (1,269 pools), adding DTS as a covariate barely changes the Q8 effect (+0.18 → +0.17 nodes per copy, p = 10⁻⁸). Adding DTS, DTA and plant height together lowers it to +0.11 (p = 5 × 10⁻⁵), mostly because of plant height (r = 0.33 with NBR), which has its own QTL in this region (PH Q16).
-  - The flowering effect of this region is the same in all taxa (DTS Q2: taxa differ −log10 p 1.0), but the NBR effect differs between taxa (3.1).
-  - The NBR peak (98.2 Mb) is 3.7 Mb from the flowering peak (94.5 Mb).
-  - **Fine-mapping does not favour this gene.** Its window has PIP 0.005 and lies outside the 95% credible set; the QTL's probability sits at 97.9–98.7 Mb (highest window 0.09; 15 genes in the top windows, Zm00001eb419010–Zm00001eb419150, listed with `in_top_windows = yes` in `qtl_genes/NBR_qtl_genes.tsv`). This lowers the support from our own data, but does not remove the gene: the case for it comes from the brace-root GWAS of Sun et al. (2022), not from the position of our peak, and a low PIP does not rule a gene out (section 3.4.3). The genes in the top windows are equally worth a look.
+  **Is this just flowering time?** The QTL is 2 Mb from *ZmCCT10* (Zm00001eb418700, 96.18 Mb), whose teosinte allele delays flowering (DTS Q2, DTA Q6), and a later-flowering plant can make more nodes. Two results argue against that:
+  - NBR is hardly correlated with flowering time in our lines (r = 0.10 with DTS, 0.11 with DTA). In a linear model with taxon (1,243 pools), adding DTS as a covariate barely changes the Q8 effect (+0.18 → +0.16 nodes per copy, p = 5 × 10⁻⁸). Adding DTS, DTA and plant height together lowers it to +0.11 (p = 2 × 10⁻⁴), mostly because of plant height (r = 0.34 with NBR), which has its own QTL in this region (PH Q15).
+  - The flowering effect of this region is the same in all taxa (DTS Q2: taxa differ −log10 p 1.0), but the NBR effect differs between taxa (2.7).
+  - The position no longer helps: in this model the DTS peak is at 97.8 Mb, 0.5 Mb from the NBR peak (3.7 Mb in the first model).
+  - **Fine-mapping does not favour this gene.** Its window has PIP 0.003 and lies outside the 95% credible set; the QTL's probability is spread over 98.0–99.4 Mb (highest window 0.05; 27 genes in the top windows, listed with `in_top_windows = yes` in `data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv`). This lowers the support from our own data, but does not remove the gene: the case for it comes from the brace-root GWAS of Sun et al. (2022), not from the position of our peak, and a low PIP does not rule a gene out (section 3.4.3). The genes in the top windows are equally worth a look.
 
-  So the brace-root effect is not explained by flowering time. Our tracts are too long to separate Zm00001eb418930 from *ZmCCT10*, though: only 4 of the 1,269 pools have a different state at the two genes. Script: `final_script/nbr_q8_flowering_check.py`.
+  So the brace-root effect is not explained by flowering time. Our tracts are too long to separate Zm00001eb418930 from *ZmCCT10*, though: only 1 of the 1,243 pools has a different state at the two genes (117 carry a donor segment there). Script: `final_script/nbr_q8_flowering_check.py`; output `data/introgression_fix1/checks/nbr_q8.txt`.
 
-The other chr1 peaks (negative effects) share their signal and do not hold individually. Two QTL have no overall effect but differ between taxa: **Q7 chr10 25.4 Mb** (joint −log10 p 0.2, taxa differ 6.1: only *diploperennis* carriers add brace-root nodes, +0.40) and **Q2 chr1 23.4 Mb** (taxa differ 2.6; *ZmD14*, Zm00001eb007670, is in the interval).
+The five chr1 peaks (all with negative effects) share their signal and do not hold individually. **Q4 chr1 219.8 Mb** has no overall effect but differs between taxa (joint −log10 p 0.2, taxa differ 2.5: *luxurians* carriers have fewer brace-root nodes, −0.86). *ZmD14* (Zm00001eb007670) is in the interval of Q2 (chr1 23.9 Mb; joint 1.8, taxa differ 1.9), which does not hold. The first model's chr10 25.4 Mb QTL (only *diploperennis* carriers, taxa differ 6.1) is not among this model's peaks.
 
 <details><summary>All NBR QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 11.1 Mb | 9.3–13.0 | 4.7 | -0.08 ± 0.03 | 2.0 | 0.5 | Zd -0.06 (17), Zh +0.02 (11), Zl -0.03 (6), Zv -0.04 (37), Zx -0.08 (64) | [125 genes](qtl_genes/NBR_qtl_genes.tsv) | 10.1–12.3 (54) | 0.05 |
-| Q2 | chr1 23.4 Mb | 21.9–25.6 | 4.4 | -0.07 ± 0.03 | 1.6 | **2.6** | Zd +0.10 (14), Zh -0.37 (10), Zl -0.08 (13), Zv -0.14 (33), Zx -0.04 (58) | [97 genes](qtl_genes/NBR_qtl_genes.tsv) | 23.1–24.9 (37) | 0.05 |
-| Q3 | chr1 205.3 Mb | 199.0–211.1 | 4.4 | -0.07 ± 0.03 | 2.2 | 1.4 | Zd -0.28 (8), Zh -0.28 (5), Zl +0.00 (8), Zv -0.00 (33), Zx -0.07 (78) | [323 genes](qtl_genes/NBR_qtl_genes.tsv) | 200.7–210.5 (112) | 0.02 |
-| Q4 | chr1 262.4 Mb | 257.2–264.5 | 5.0 | -0.09 ± 0.03 | **3.1** | 1.7 | Zd -0.21 (13), Zh +0.01 (6), Zl -0.17 (8), Zv -0.16 (34), Zx -0.04 (77) | [184 genes](qtl_genes/NBR_qtl_genes.tsv) | 260.6–262.7 (51) | 0.03 |
-| Q5 | chr8 126.2 Mb | 125.0–127.6 | 4.4 | +0.12 ± 0.03 | **4.6** | 1.1 | Zd +0.08 (23), Zh +0.33 (10), Zl +0.14 (9), Zv +0.09 (36), Zx +0.10 (61) | [66 genes](qtl_genes/NBR_qtl_genes.tsv) | 126.2–126.7 (14) | 0.15 |
-| Q6 | chr9 139.9 Mb | 131.3–145.4 | 4.3 | +0.09 ± 0.02 | **4.6** | 0.1 | Zd +0.01 (26), Zl +0.14 (25), Zv +0.07 (43), Zx +0.12 (88) | [386 genes](qtl_genes/NBR_qtl_genes.tsv) | 133.7–143.2 (84) | 0.04 |
-| Q7 | chr10 25.4 Mb | 25.0–26.9 | 5.2 | +0.02 ± 0.04 | 0.2 | **6.1** | Zd +0.40 (22), Zv +0.00 (24), Zx -0.02 (57) | [34 genes](qtl_genes/NBR_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q8 | chr10 98.2 Mb | 96.9–99.6 | 10.3 | +0.17 ± 0.04 | **5.7** | **3.1** | Zd +0.05 (23), Zv +0.26 (25), Zx +0.09 (64) | [50 genes](qtl_genes/NBR_qtl_genes.tsv) | 97.9–98.7 (15) | 0.09 |
+| Q1 | chr1 12.2 Mb | 8.7–12.4 | 4.3 | -0.07 ± 0.03 | 1.9 | 1.2 | Zd -0.04 (16), Zh -0.14 (10), Zl +0.06 (6), Zv -0.03 (36), Zx -0.07 (59) | [127 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 8.9–12.3 (63) | 0.04 |
+| Q2 | chr1 23.9 Mb | 21.9–25.7 | 4.0 | -0.07 ± 0.03 | 1.8 | 1.9 | Zd +0.10 (14), Zh -0.18 (9), Zl -0.10 (12), Zv -0.15 (28), Zx -0.06 (56) | [102 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 23.3–24.9 (30) | 0.05 |
+| Q3 | chr1 210.3 Mb | 198.3–216.0 | 4.3 | -0.06 ± 0.04 | 1.1 | 1.3 | Zd -0.22 (8), Zh -0.26 (5), Zl +0.12 (8), Zv -0.01 (30), Zx -0.08 (78) | [444 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | – | 0.01 |
+| Q4 | chr1 219.8 Mb | 216.2–222.5 | 4.5 | -0.02 ± 0.04 | 0.2 | **2.5** | Zd -0.18 (9), Zh -0.14 (5), Zl -0.86 (7), Zv -0.00 (33), Zx +0.04 (72) | [116 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | – | 0.00 |
+| Q5 | chr1 260.8 Mb | 259.3–264.4 | 5.3 | -0.09 ± 0.04 | 2.1 | 1.5 | Zd -0.11 (13), Zh +0.17 (6), Zl +0.46 (9), Zv -0.16 (34), Zx -0.07 (77) | [134 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 260.4–262.7 (42) | 0.03 |
+| Q6 | chr8 126.2 Mb | 125.7–127.6 | 4.2 | +0.12 ± 0.03 | **4.4** | 1.1 | Zd +0.10 (23), Zh +0.33 (10), Zl +0.15 (9), Zv +0.09 (32), Zx +0.09 (61) | [54 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 126.2–126.7 (14) | 0.15 |
+| Q7 | chr9 4.2 Mb | 2.1–9.7 | 4.1 | -0.09 ± 0.02 | **4.4** | **3.2** | Zd -0.39 (26), Zh -0.09 (10), Zl -0.07 (21), Zv -0.06 (46), Zx -0.07 (88) | [185 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 4.0–9.5 (49) | 0.07 |
+| Q8 | chr10 98.2 Mb | 93.0–99.6 | 9.3 | +0.18 ± 0.03 | **9.4** | **2.7** | Zd +0.29 (23), Zv +0.23 (23), Zx +0.08 (64) | [107 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 98.0–99.4 (27) | 0.05 |
 
-Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/NBR_qtl_genes.tsv`](qtl_genes/NBR_qtl_genes.tsv).
+Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.5 Leaf greenness after silking (SPAD; 2023 only)
 
-![SPAD: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_SPAD2.png)
+![SPAD: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_SPAD2.png)
 
-SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The meter reads how green the leaf is, a proxy for its chlorophyll; at this stage the leaves begin to senesce, so a high value means the leaf keeps its chlorophyll longer (stay-green), and nitrogen moving out of the leaf to the grain lowers it. 6 regions, 4 hold (Bonferroni over 6: −log10 p > 2.08).
+SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The meter reads how green the leaf is, a proxy for its chlorophyll; at this stage the leaves begin to senesce, so a high value means the leaf keeps its chlorophyll longer (stay-green), and nitrogen moving out of the leaf to the grain lowers it. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20). The first model had 4: chr10 148 Mb, chr7 123 Mb and chr9 (now at 96.8 Mb) are the same; chr1 148.6 Mb no longer holds (below).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q6 chr10 148.3 Mb** | Zm00001eb432440 (FRS6-like); Zm00001eb432850 (chlorophyll a/b-binding protein) | 0.144 (**top**); 0.055 (CS) | +2.39 | 4.9 | 0.3 (no) | No significant difference between taxa (Zd +1.83, Zh +2.80, Zl +3.56, Zv +1.16, Zx +3.25). Same region as the second-best PredN region. |
-| **Q4 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | 0.041 (**top**) | -2.81 | 4.4 | 0.4 (no) | No significant difference between taxa (Zd -1.39, Zl -0.90, Zv -1.07, Zx -3.80). The gene is next to the top window. |
-| **Q3 chr1 148.6 Mb** | Zm00001eb027950 (rccr1); Zm00001eb029690 (bsd2); Zm00001eb028550 (ppd1) | 0.003 (flat); 0.005 (flat); 0.004 (flat) | -2.51 | 2.4 | 0.2 (no) | No significant difference between taxa (Zd -2.86, Zh -6.07, Zl -3.27, Zv -2.98, Zx -1.95). Chlorophyll breakdown (*rccr1*), Rubisco (*bsd2*) and photosystem I assembly (*ppd1*) genes in a 19-Mb interval. |
+| **Q6 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | 0.039 (**top**) | −2.98 | 4.7 | 0.2 (no) | No significant difference between taxa (Zd −1.08, Zl −1.00, Zv −1.70, Zx −3.53). The gene is next to the top window. |
+| **Q7 chr9 96.8 Mb** | — | 0.01 (best window) | +2.59 | 4.7 | 1.8 (no) | Greener leaves (Zd +2.35, Zl +3.16, Zv +0.58, Zx +3.54). The interval spans 30.7 Mb and 505 genes, too wide to point to one gene. |
+| **Q8 chr10 148.2 Mb** | Zm00001eb432440 (FRS6-like); Zm00001eb432850 (chlorophyll a/b-binding protein) | 0.088 (**top**); 0.040 (**top**) | +2.15 | 4.1 | 0.3 (no) | No significant difference between taxa (Zd +1.73, Zh +2.43, Zl +3.37, Zv +0.82, Zx +2.99). Same region as the best PredN region. |
 
 **Candidate genes:**
-- **Q6, chr10 148.3 Mb:** Zm00001eb432440 (FAR1-RELATED SEQUENCE 6-like; 148.33 Mb). It lies in the top window of the QTL (−log10 p 5.0; the windows of the interval range from 3.7 to 5.0), next to a second FAR1-related gene (Zm00001eb432450). FAR1 and FHY3 are light-signalling transcription factors; in *Arabidopsis* they switch on *HEMB1*, an enzyme of chlorophyll synthesis, when seedlings first turn green (Tang et al. 2012). This maize gene is not characterized; the ATP-synthase GO terms it carries in MaizeGDB are automatic predictions and do not fit a FAR1 protein. The teosinte allele makes leaves greener (+2.39 SPAD units per copy, alike across taxa). *Fine-mapping (3.4.3): PIP 0.144 (the highest in the interval); in the top windows (26 genes).*
-  - Second candidate: Zm00001eb432850 (chlorophyll a/b-binding protein, chloroplastic; 148.97 Mb, window 4.5). Chlorophyll a/b-binding (light-harvesting) proteins hold most of the leaf's chlorophyll in the antenna of photosystem II, so more of them means more chlorophyll per leaf area, which is what the SPAD meter reads. *Fine-mapping (3.4.3): PIP 0.055 (highest window 0.14); in the 95% credible set, but outside the top windows (148.20–149.40 Mb, 26 genes).*
-- **The same region in predicted leaf nitrogen.** The end of chr10 is also the second-best region for leaf nitrogen predicted from leaf spectra (PredN, 2025, top window 147.55 Mb, inside the Q6 interval; −log10 p 2.7, below its threshold; see [Other traits](#3615-other-traits)). As for SPAD, the teosinte allele goes up there.
-- **Q3, chr1 148.6 Mb** (the teosinte allele makes leaves less green 36 days after silking, −2.51 per copy; joint −log10 p 2.4, just above the cut of 2.08). The whole interval (144.5–163.4 Mb, 184 genes) is above the scan threshold: its windows range from −log10 p 4.2 to 6.0 (median 5.1). The genes below sit at 4.9–5.1, in the middle of that signal rather than at the top window (148.55 Mb, 6.0), and our tracts are too long to rank genes by position. Four of them act on chlorophyll, photosynthesis or amino-acid recycling:
-  - Zm00001eb027950 (*rccr1*, *red chlorophyll catabolite reductase1*; 144.52 Mb, window −log10 p 4.9), an enzyme of the pathway that breaks chlorophyll down during senescence. In the maize NAM population it is the candidate gene at a locus for the first principal component of leaf metabolites, a trait that correlates most with glutamate, chlorophyll a and malate (r = 0.74, 0.62 and 0.61); in a predicted protein-interaction network its cluster is enriched for chlorophyll breakdown (Poretsky et al. 2024). *Fine-mapping (3.4.3): PIP 0.003; the probability is flat over the interval (highest window 0.01), so fine-mapping does not separate its genes.*
-  - Zm00001eb029690 (*bsd2*, *bundle sheath defective2*; 162.00 Mb, window 5.1), a chloroplast protein with a DnaJ-like zinc-finger domain that is needed for Rubisco. *bsd2* mutants have no detectable Rubisco although the *rbcL* mRNA is abundant and on polysomes, so BSD2 acts after translation; the mutant plants are pale green and their bundle-sheath chloroplasts are abnormal (Brutnell et al. 1999). Without Rubisco the mutant fixes no carbon, yet PEPC kinase and PEPC in the mesophyll are still activated by light, so that signal does not need a working Calvin cycle (Smith et al. 1998). *Fine-mapping (3.4.3): PIP 0.005; the probability is flat over the interval (highest window 0.01), so fine-mapping does not separate its genes.*
-  - Zm00001eb028550 (*ppd1*, PsbP domain-containing protein1; 152.01 Mb, window 5.1). In *Arabidopsis*, PPD1 is a protein of the thylakoid lumen that is essential for photosynthetic growth: it helps assemble photosystem I, and RNAi lines lose assembled photosystem I in step with the loss of PPD1 (Roose et al. 2014). It is one of the known photosystem I assembly factors, with Ycf3, Ycf4, PYG7 and Y3IP1 (Li M et al. 2026). *Fine-mapping (3.4.3): PIP 0.004; the probability is flat over the interval (highest window 0.01), so fine-mapping does not separate its genes.*
-  - Zm00001eb028540 (cytosol aminopeptidase domain-containing protein, similar to *Arabidopsis* LAP2, AT4G30920; 151.94 Mb, window 5.1). In *Arabidopsis*, loss of the leucine aminopeptidase LAP2 slows growth, makes leaves senesce early and makes plants more sensitive to stress; the mutants keep free leucine by making more of it, which shifts glutamate metabolism and lowers GABA, both nitrogen-rich compounds (Waditee-Sirisattha et al. 2011a, b). LAP2 is also one of the chloroplast aminopeptidases of the peptide-degradation cascade that turns the targeting peptides cut off imported proteins back into free amino acids (Teixeira et al. 2016). Early senescence when it is lost fits a trait measured during senescence. *Fine-mapping (3.4.3): PIP 0.004; the probability is flat over the interval (highest window 0.01), so fine-mapping does not separate its genes.*
+- **Q8, chr10 148.2 Mb:** Zm00001eb432440 (FAR1-RELATED SEQUENCE 6-like; 148.33 Mb). It lies in the top windows of the QTL (window −log10 p 4.3; the windows of the interval range from 2.9 to 4.4), next to a second FAR1-related gene (Zm00001eb432450). FAR1 and FHY3 are light-signalling transcription factors; in *Arabidopsis* they switch on *HEMB1*, an enzyme of chlorophyll synthesis, when seedlings first turn green (Tang et al. 2012). This maize gene is not characterized; the ATP-synthase GO terms it carries in MaizeGDB are automatic predictions and do not fit a FAR1 protein. The teosinte allele makes leaves greener (+2.15 SPAD units per copy, alike across taxa). *Fine-mapping (3.4.3): PIP 0.088; in the top windows (148.2–149.5 Mb, 52 genes).*
+  - Second candidate: Zm00001eb432850 (chlorophyll a/b-binding protein, chloroplastic; 148.97 Mb, window 4.0). Chlorophyll a/b-binding (light-harvesting) proteins hold most of the leaf's chlorophyll in the antenna of photosystem II, so more of them means more chlorophyll per leaf area, which is what the SPAD meter reads. *Fine-mapping (3.4.3): PIP 0.040; in the top windows (148.2–149.5 Mb, 52 genes).*
+- **The same region in predicted leaf nitrogen.** The end of chr10 is also the best region for leaf nitrogen predicted from leaf spectra (PredN, 2025; top window 146.85 Mb, inside the Q8 interval; −log10 p 2.8, below its threshold of 4.23; see [Other traits](#3615-other-traits)). As for SPAD, the teosinte allele goes up there.
+- **Q6, chr7 123.3 Mb:** Zm00001eb313460 (senescence-associated protein; 123.47 Mb, −log10 p 4.5, next to the top window). The teosinte allele makes leaves less green (−2.98 per copy). *Fine-mapping (3.4.3): PIP 0.039; in the top windows (122.2–126.2 Mb, 56 genes).*
+- **chr1: strong in the scan, but no QTL holds.** Much of chr1 from 35 to 164 Mb is above the scan threshold, all with the teosinte allele making leaves less green (−1.5 to −3.7 per copy). The joint model splits it into five QTL (Q1–Q5) that share tracts, and none holds on its own (joint −log10 p 0.0–1.4). In the first model, one of them (chr1 148.6 Mb, interval 144.5–163.4 Mb) held just above its cut (2.4 against 2.08); here that stretch is outside every QTL interval (its windows are at −log10 p 4.4–5.7, median 4.8). Four genes there act on chlorophyll, photosynthesis or amino-acid recycling; they are candidates for the chr1 signal as a whole, not for a QTL that holds:
+  - Zm00001eb027950 (*rccr1*, *red chlorophyll catabolite reductase1*; 144.52 Mb, window −log10 p 4.5), an enzyme of the pathway that breaks chlorophyll down during senescence. In the maize NAM population it is the candidate gene at a locus for the first principal component of leaf metabolites, a trait that correlates most with glutamate, chlorophyll a and malate (r = 0.74, 0.62 and 0.61); in a predicted protein-interaction network its cluster is enriched for chlorophyll breakdown (Poretsky et al. 2024).
+  - Zm00001eb029690 (*bsd2*, *bundle sheath defective2*; 162.00 Mb, window 5.0), a chloroplast protein with a DnaJ-like zinc-finger domain that is needed for Rubisco. *bsd2* mutants have no detectable Rubisco although the *rbcL* mRNA is abundant and on polysomes, so BSD2 acts after translation; the mutant plants are pale green and their bundle-sheath chloroplasts are abnormal (Brutnell et al. 1999). Without Rubisco the mutant fixes no carbon, yet PEPC kinase and PEPC in the mesophyll are still activated by light, so that signal does not need a working Calvin cycle (Smith et al. 1998).
+  - Zm00001eb028550 (*ppd1*, PsbP domain-containing protein1; 152.01 Mb, window 4.8). In *Arabidopsis*, PPD1 is a protein of the thylakoid lumen that is essential for photosynthetic growth: it helps assemble photosystem I, and RNAi lines lose assembled photosystem I in step with the loss of PPD1 (Roose et al. 2014). It is one of the known photosystem I assembly factors, with Ycf3, Ycf4, PYG7 and Y3IP1 (Li M et al. 2026).
+  - Zm00001eb028540 (cytosol aminopeptidase domain-containing protein, similar to *Arabidopsis* LAP2, AT4G30920; 151.94 Mb, window 4.8). In *Arabidopsis*, loss of the leucine aminopeptidase LAP2 slows growth, makes leaves senesce early and makes plants more sensitive to stress; the mutants keep free leucine by making more of it, which shifts glutamate metabolism and lowers GABA, both nitrogen-rich compounds (Waditee-Sirisattha et al. 2011a, b). LAP2 is also one of the chloroplast aminopeptidases of the peptide-degradation cascade that turns the targeting peptides cut off imported proteins back into free amino acids (Teixeira et al. 2016). Early senescence when it is lost fits a trait measured during senescence.
 
-- **Q4, chr7 123.3 Mb:** Zm00001eb313460 (senescence-associated protein; 123.47 Mb, −log10 p 4.7, next to the top window). The teosinte allele makes leaves less green (−2.81 per copy). *Fine-mapping (3.4.3): PIP 0.041 (the highest in the interval); in the top windows (46 genes).*
-- Q5 chr9 112.6 Mb (+2.66 per copy) spans 28.5 Mb and 506 genes, too wide to point to one gene.
-
-These candidates come from the gene annotation only; none has been tested for SPAD in maize, and SPAD was measured once, in one year. Every gene in each interval, with its GO terms: [`qtl_genes/SPAD2_qtl_genes.tsv`](qtl_genes/SPAD2_qtl_genes.tsv).
+These candidates come from the gene annotation only; none has been tested for SPAD in maize, and SPAD was measured once, in one year. Every gene in each interval, with its GO terms: [`data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv).
 
 <details><summary>All SPAD QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 39.9 Mb | 36.1–41.1 | 5.2 | -1.76 ± 0.75 | 1.7 | 0.3 | Zd +0.64 (23), Zh +1.01 (8), Zl -4.44 (9), Zv -1.07 (28), Zx -3.19 (52) | [131 genes](qtl_genes/SPAD2_qtl_genes.tsv) | 36.2–40.2 (46) | 0.04 |
-| Q2 | chr1 58.5 Mb | 57.5–60.1 | 5.8 | -1.01 ± 0.89 | 0.6 | 0.1 | Zd -3.27 (19), Zh -1.38 (9), Zl -0.91 (7), Zv -1.15 (24), Zx +0.40 (50) | [42 genes](qtl_genes/SPAD2_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q3 | chr1 148.6 Mb | 144.5–163.4 | 6.0 | -2.51 ± 0.88 | **2.4** | 0.2 | Zd -2.86 (12), Zh -6.07 (5), Zl -3.27 (7), Zv -2.98 (18), Zx -1.95 (45) | [184 genes](qtl_genes/SPAD2_qtl_genes.tsv) | 146.9–162.0 (59) | 0.01 |
-| Q4 | chr7 123.3 Mb | 119.8–129.1 | 4.7 | -2.81 ± 0.69 | **4.4** | 0.4 | Zd -1.39 (7), Zl -0.90 (5), Zv -1.07 (43), Zx -3.80 (54) | [173 genes](qtl_genes/SPAD2_qtl_genes.tsv) | 120.7–126.2 (46) | 0.04 |
-| Q5 | chr9 112.5 Mb | 90.6–119.1 | 4.7 | +2.66 ± 0.60 | **5.0** | 0.2 | Zd +3.28 (15), Zl +3.17 (15), Zv +1.65 (43), Zx +3.04 (78) | [506 genes](qtl_genes/SPAD2_qtl_genes.tsv) | 93.2–113.5 (115) | 0.01 |
-| Q6 | chr10 148.3 Mb | 147.5–149.8 | 5.0 | +2.39 ± 0.55 | **4.9** | 0.3 | Zd +1.83 (41), Zh +2.80 (5), Zl +3.56 (13), Zv +1.16 (33), Zx +3.25 (71) | [128 genes](qtl_genes/SPAD2_qtl_genes.tsv) | 148.2–149.4 (26) | 0.14 |
+| Q1 | chr1 40.0 Mb | 34.8–40.5 | 5.1 | -1.53 ± 0.76 | 1.4 | 0.2 | Zd +0.91 (23), Zh +2.74 (8), Zl -4.55 (9), Zv -1.70 (24), Zx -2.55 (53) | [149 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 34.8–40.0 (59) | 0.03 |
+| Q2 | chr1 57.9 Mb | 56.8–60.1 | 6.2 | -1.66 ± 1.02 | 1.0 | 0.1 | Zd -2.94 (19), Zh -0.04 (9), Zl -0.78 (7), Zv -0.27 (18), Zx -0.21 (45) | [62 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | – | 0.00 |
+| Q3 | chr1 78.0 Mb | 76.3–105.0 | 4.7 | +0.27 ± 1.19 | 0.1 | 0.1 | Zd -0.30 (11), Zh -1.29 (5), Zl +0.76 (8), Zv -3.00 (14), Zx +0.26 (52) | [448 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | – | 0.02 |
+| Q4 | chr1 106.2 Mb | 105.1–108.9 | 4.9 | -0.03 ± 1.50 | 0.0 | 0.1 | Zd +0.53 (12), Zh +3.27 (6), Zl +0.34 (6), Zv -1.24 (16), Zx -1.82 (45) | [48 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 105.1–108.9 (24) | 0.03 |
+| Q5 | chr1 128.8 Mb | 114.5–143.8 | 6.1 | -2.95 ± 1.44 | 1.4 | 0.2 | Zd -3.83 (13), Zh -7.69 (5), Zl -4.19 (7), Zv -2.55 (11), Zx -0.73 (44) | [197 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 128.7–141.5 (64) | 0.01 |
+| Q6 | chr7 123.3 Mb | 119.8–130.7 | 4.5 | -2.98 ± 0.70 | **4.7** | 0.2 | Zd -1.08 (7), Zl -1.00 (5), Zv -1.70 (37), Zx -3.53 (53) | [198 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 122.2–126.2 (56) | 0.04 |
+| Q7 | chr9 96.8 Mb | 86.3–117.0 | 4.6 | +2.59 ± 0.61 | **4.7** | 1.8 | Zd +2.35 (18), Zh -6.69 (5), Zl +3.16 (11), Zv +0.58 (43), Zx +3.54 (80) | [505 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 93.2–112.9 (129) | 0.01 |
+| Q8 | chr10 148.2 Mb | 146.7–150.2 | 4.4 | +2.15 ± 0.55 | **4.1** | 0.3 | Zd +1.73 (38), Zh +2.43 (5), Zl +3.37 (13), Zv +0.82 (32), Zx +2.99 (75) | [182 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 148.2–149.5 (52) | 0.10 |
 
-Bonferroni over the 6 QTL: −log10 p > 2.08 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/SPAD2_qtl_genes.tsv`](qtl_genes/SPAD2_qtl_genes.tsv).
+Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.6 Plant height (PH)
 
-![PH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_PH.png)
+![PH: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_PH.png)
 
-16 regions, 8 hold in the joint model (Bonferroni over 16: −log10 p > 2.51). Effects are in cm per teosinte copy and alike across taxa (no "taxa differ" test passes).
+15 regions, 10 hold in the joint model (Bonferroni over 15: −log10 p > 2.48). Effects are in cm per teosinte copy and alike across taxa (no "taxa differ" test passes). Seven of the first model's eight held QTL are found again (chr2, chr3, chr4, chr5 118 Mb, chr7, chr9, chr10 *ZmCCT10*); chr1 201.8 Mb is replaced by chr1 184.1 Mb (Q1, −3.83 cm), and two QTL are new: chr5 2.6 Mb (Q6, +3.05 cm; just below the threshold in the first model) and chr10 6.5 Mb (Q14, +3.27 cm, added by the conditional scan). The strongest are Q13 chr9 139.8 Mb (+4.64 cm, joint −log10 p 10.5) and Q12 chr7 137.8 Mb (below).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q16 chr10 97.0 Mb** | Zm00001eb418700 (ZmCCT10) | 0.022 (flat) | +5.64 cm | 10.1 | 0.6 (no) | No significant difference between taxa (Zd +4.49, Zv +8.29, Zx +5.11). The ZmCCT10 region: later flowering, taller plants. |
-| **Q14 chr7 139.1 Mb** | Zm00001eb316740 (tsh4) | 0.017 (CS) | -4.97 cm | 9.8 | 0.1 (no) | No significant difference between taxa (Zd -5.08, Zh -6.45, Zl -0.91, Zv -4.47, Zx -5.73). Same region as SL Q9. |
-| **Q3 chr3 12.8 Mb** | Zm00001eb123060 (ra2) | 0.117 (**top**) | -3.77 cm | 7.2 | 0.8 (no) | No significant difference between taxa (Zd -5.16, Zh +5.38, Zl +0.26, Zv -3.20, Zx -4.30). Same window as EH Q4. |
-| **Q4 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.035 (**top**) | +4.11 cm | 2.9 | 0.1 (no) | No significant difference between taxa (Zd +7.56, Zh +10.21, Zl +14.45, Zv +5.63, Zx +3.49). Same region as EH Q5 and SL Q3. |
+| **Q12 chr7 137.8 Mb** | Zm00001eb316740 (tsh4) | 0.017 (CS) | -5.10 cm | 10.2 | 0.3 (no) | No significant difference between taxa (Zd -5.01, Zh -5.94, Zl +0.38, Zv -4.58, Zx -5.78). Same region as SL Q10. |
+| **Q3 chr3 13.2 Mb** | Zm00001eb123060 (ra2) | 0.057 (**top**) | -3.73 cm | 6.8 | 0.7 (no) | No significant difference between taxa (Zd -4.92, Zh +5.69, Zl -0.23, Zv -3.63, Zx -4.42). Same window as EH Q3. |
+| **Q15 chr10 99.5 Mb** | Zm00001eb418700 (ZmCCT10) | 0.014 (CS) | +4.70 cm | 6.3 | 0.1 (no) | No significant difference between taxa (Zd +2.46, Zv +7.09, Zx +4.06). The ZmCCT10 region: later flowering, taller plants. |
+| **Q4 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.027 (**top**) | +4.05 cm | 2.8 | 0.1 (no) | No significant difference between taxa (Zd +6.75, Zh +4.71, Zl +11.94, Zv +5.04, Zx +3.72). Same region as EH Q4, BL Q5 and SL Q3. |
 
 **Candidate genes:**
-- **Q14, chr7 139.1 Mb:** Zm00001eb316740 (*tsh4*, *tassel sheath4*; 138.54 Mb, in a window with −log10 p 9.9; the top window is at 139.05 Mb, −log10 p 10.4). *tsh4* encodes an SBP-box (SPL) transcription factor and is one of the genes that miR156 represses (the dominant *Corngrass1* mutant overexpresses miR156). It works in the developing tassel and ear: *Fine-mapping (3.4.3): PIP 0.017 (highest window 0.06); in the 95% credible set, but outside the top windows (137.40–141.70 Mb, 26 genes).*
+- **Q12, chr7 137.8 Mb:** Zm00001eb316740 (*tsh4*, *tassel sheath4*; 138.54 Mb, in a window with −log10 p 9.9; the top window is at 137.75 Mb, −log10 p 10.5; in the first model it was at 139.05 Mb). *tsh4* encodes an SBP-box (SPL) transcription factor and is one of the genes that miR156 represses (the dominant *Corngrass1* mutant overexpresses miR156). It works in the developing tassel and ear: *Fine-mapping (3.4.3): PIP 0.017 (highest window 0.08); in the 95% credible set, but outside the top windows (137.5–139.1 Mb, 26 genes).*
   - **It suppresses the bract and promotes branching.** In the maize inflorescence, each branch forms with a small leaf (the bract) below it, and that leaf normally stays tiny. In *tsh4* mutants the bracts grow out into leaves and the tassel has fewer branches. TSH4 binds the promoters of *tsh1* (a GATA zinc-finger gene) and *liguleless2* and keeps them on in the suppressed bract; *tsh1*, *tsh4* and *lg2* act together to keep bracts small and branch meristems indeterminate, i.e. growing into long branches (Xiao et al. 2022).
   - **It works with its two closest relatives.** *unbranched2* and *unbranched3* act redundantly with *tsh4*: the triple mutant makes very few tassel branches, more tillers, and up to twice as many leaves above the top ear, yet flowers at the same time as the wild type. The three genes slow the rate at which new side primordia form, so the meristem has time to renew its stem cells (Chuck et al. 2014).
   - **It responds to shade.** UB2, UB3 and TSH4 are hubs of a network of over 2,400 genes during early tassel development. Simulated shade makes tassels and ears develop early, but the *ub2 ub3* double mutant and the *tsh4* single mutant hardly respond; the three proteins directly regulate *barren inflorescence2* (*BIF2*, auxin signaling) and *ZmTCP30* (Kong et al. 2023).
   - **It is the target of RA2.** RA2 (our Q3 candidate) binds the *tsh4* promoter and represses it; ZmELF3.1 makes this repression stronger (Xie et al. 2023). *tsh4* acts against the *ramosa* genes in branch determinacy and is epistatic to them: the *ra2 tsh4* double mutant has as few tassel branches as *tsh4* alone (Xie et al. 2023; Xiao et al. 2022).
 
-  In our lines the teosinte allele at Q14 makes plants 4.97 cm shorter per copy, alike across taxa (−4.5 to −6.5 cm in four taxa; *luxurians* −0.9 cm with 9 carriers). Our plant height is measured from the ground to the tip of the tassel, so the tassel is part of it. None of these papers measured plant height or tassel length in *tsh4* mutants, so the link to PH is not shown; the leaves above the top ear (LAE), which the triple mutant has more of, show no signal at *tsh4* in our lines (−log10 p 0.7). Two other genes sit at the peak and can't be separated from *tsh4* with our tract lengths (all three are within 0.5 Mb of the top window, −log10 p 9.9–10.4):
-  - Zm00001eb316780 (138.64 Mb), a leucine-rich repeat protein that may be the maize homolog of *Arabidopsis FLOR1*, an LRR protein that binds MADS-box transcription factors and promotes flowering (Torti et al. 2012, as cited in Zhang et al. 2025). In a maize shoot transcriptome atlas, the maize *FLOR1* homolog rises in expression while the ear elongates fast (Zhang et al. 2025); its effect on plant height is not known. *Fine-mapping (3.4.3): PIP 0.047 (highest window 0.06); in the top windows (26 genes).*
-  - Zm00001eb316880 (*wakl38*, wall-associated receptor kinase-like 38; 138.94 Mb). It is one of 13 candidate genes for ear shank length from BSA-seq and RNA-seq in a cross of a long-shank (L135) and a short-shank (WL134) inbred: it lies in their chr7 QTL *qESL10* and is expressed more in the long-shank parent (An et al. 2026). The two parents also differ in plant height, but the gene's function has not been tested. *Fine-mapping (3.4.3): PIP 0.045 (highest window 0.06); in the top windows (26 genes).*
+  In our lines the teosinte allele at Q12 makes plants 5.10 cm shorter per copy, alike across taxa (−4.6 to −5.9 cm in four taxa; *luxurians* +0.4 cm with 9 carriers). Our plant height is measured from the ground to the tip of the tassel, so the tassel is part of it. None of these papers measured plant height or tassel length in *tsh4* mutants, so the link to PH is not shown; the leaves above the top ear (LAE), which the triple mutant has more of, show no signal at *tsh4* in our lines (−log10 p 1.0). Two other genes sit at the peak and can't be separated from *tsh4* with our tract lengths (all three are within 1.2 Mb of the top window, −log10 p 9.9–10.4), and in this model the fine-mapping favours them slightly over *tsh4*:
+  - Zm00001eb316780 (138.64 Mb), a leucine-rich repeat protein that may be the maize homolog of *Arabidopsis FLOR1*, an LRR protein that binds MADS-box transcription factors and promotes flowering (Torti et al. 2012, as cited in Zhang et al. 2025). In a maize shoot transcriptome atlas, the maize *FLOR1* homolog rises in expression while the ear elongates fast (Zhang et al. 2025); its effect on plant height is not known. *Fine-mapping (3.4.3): PIP 0.061 (highest window 0.08); in the top windows (26 genes).*
+  - Zm00001eb316880 (*wakl38*, wall-associated receptor kinase-like 38; 138.94 Mb). It is one of 13 candidate genes for ear shank length from BSA-seq and RNA-seq in a cross of a long-shank (L135) and a short-shank (WL134) inbred: it lies in their chr7 QTL *qESL10* and is expressed more in the long-shank parent (An et al. 2026). The two parents also differ in plant height, but the gene's function has not been tested. *Fine-mapping (3.4.3): PIP 0.084 (the highest in the interval); in the top windows (26 genes).*
 
-  **Does *tsh4* interact with *ra2* in our lines?** Since RA2 represses *tsh4*, we tested whether the teosinte segments at the two genes (PH Q3 and Q14) interact for plant height. With the pool state at each gene (B73 = 0, SEG = 0.5, DONOR = 1) and taxon as covariates, in an ordinary linear model on the PH BLUEs of 1,283 pools, each segment shortens plants on its own (*ra2* −3.6 cm and *tsh4* −4.7 cm per copy, both p < 10⁻⁴), and the interaction is not significant (p = 0.38). The 27 pools that carry both segments are 14.8 cm shorter than the 986 pools that carry neither, a bit more than the two single effects added up (5.5 + 5.0 cm), but not significantly. So the two segments add up for plant height; with only 27 double carriers, the test can't rule out a modest interaction. Script: `final_script/ra2_tsh4_interaction.py`.
-- **Q3, chr3 12.8 Mb:** Zm00001eb123060 (*ra2*, *ramosa2*; 12.83 Mb, in the window next to the top window, −log10 p 6.9). *ra2* encodes a LATERAL ORGAN BOUNDARY (LOB) domain transcription factor. It is one of the three *ramosa* genes that keep the short branches of the maize inflorescence (the spikelet pairs) short: *Fine-mapping (3.4.3): PIP 0.117 (highest window 0.16); in the top windows (3 genes).*
+  **Does *tsh4* interact with *ra2* in our lines?** Since RA2 represses *tsh4*, we tested whether the teosinte segments at the two genes (PH Q3 and Q12) interact for plant height. With the pool state at each gene (B73 = 0, SEG = 0.5, DONOR = 1) and taxon as covariates, in an ordinary linear model on the PH BLUEs of 1,257 pools, each segment shortens plants on its own (*ra2* −3.4 cm and *tsh4* −4.9 cm per copy, both p < 10⁻⁴), and the interaction is not significant (p = 0.27). The 24 pools that carry both segments are 15.9 cm shorter than the 971 pools that carry neither, more than the two single effects added up (5.3 + 5.3 cm), but not significantly. So the two segments add up for plant height; with only 24 double carriers, the test can't rule out a modest interaction. Script: `final_script/ra2_tsh4_interaction.py`; output `data/introgression_fix1/checks/ra2_tsh4.txt`.
+- **Q3, chr3 13.2 Mb:** Zm00001eb123060 (*ra2*, *ramosa2*; 12.83 Mb, in a window with −log10 p 6.3; the top window is 0.4 Mb away). *ra2* encodes a LATERAL ORGAN BOUNDARY (LOB) domain transcription factor. It is one of the three *ramosa* genes that keep the short branches of the maize inflorescence (the spikelet pairs) short: *Fine-mapping (3.4.3): PIP 0.057 (highest window 0.09); in the top windows (12.8–13.5 Mb, 19 genes; 3 genes in the first model).*
   - In *ra2* mutants, spikelet pairs are replaced by longer branches that carry single spikelets or groups of several spikelets, the tassel has more secondary branches, the branches stand more upright, and the ears branch. *ra2* is switched on briefly in the small group of cells that will become each new branch meristem of the tassel and the ear (long branches, spikelet pairs and spikelets), but not in the vegetative shoot meristem. It acts upstream of the other branching genes and is needed for normal expression of *ra1* (Bortiri et al. 2006).
   - Xie et al. (2023) showed how RA2 limits tassel branching: it binds the promoter of *tassel sheath4* (*TSH4*, Zm00001eb316740), an SBP-box gene that promotes branching, and represses it. CRISPR *ra2* knockouts had about four times as many tassel branches as the wild type, and plants overexpressing RA2 about half as many. The circadian clock protein ZmELF3.1 (Zm00001eb159890) binds both RA2 and ZmELF4.2 (Zm00001eb311850) and makes RA2 bind and repress *TSH4* more strongly; *Zmelf3.1* mutants flower later and have 28–57% more tassel branches. This links the flowering clock to tassel branching.
 
-  Neither paper reports an effect of *ra2* on plant height; the mutants were described for their inflorescences. In our lines the teosinte allele at Q3 makes plants 3.77 cm shorter per copy, alike across taxa, and the same window lowers the ear (EH Q4, −2.06 cm per copy). We did not score tassel branching, so we cannot check whether this segment changes the tassel the way *ra2* mutants do. *ra2* is the best-known gene in the interval (12.4–13.7 Mb, 41 genes), not a proven cause of the height effect.
-- **Q4, chr4 198.4 Mb:** Zm00001eb197430 (*ns2*, *narrow sheath2*; Zm00001d052598 in B73 v4; 196.23 Mb, in a window with −log10 p 7.4). *ns2* encodes a WUSCHEL-related homeobox protein (WOX3); its *Arabidopsis* ortholog is *PRESSED FLOWER*, which is needed for the lateral sepals to form. *ns2* and its duplicate *ns1* together give the classic *narrow sheath* mutant (Nardmann et al. 2004). *Fine-mapping (3.4.3): PIP 0.035 (the highest in the interval); in the top windows (34 genes).*
+  Neither paper reports an effect of *ra2* on plant height; the mutants were described for their inflorescences. In our lines the teosinte allele at Q3 makes plants 3.73 cm shorter per copy, alike across taxa, and the same window lowers the ear (EH Q3, −2.15 cm per copy). We did not score tassel branching, so we cannot check whether this segment changes the tassel the way *ra2* mutants do. *ra2* is the best-known gene in the interval (12.4–18.7 Mb), not a proven cause of the height effect.
+- **Q4, chr4 198.4 Mb:** Zm00001eb197430 (*ns2*, *narrow sheath2*; Zm00001d052598 in B73 v4; 196.23 Mb, in a window with −log10 p 6.8). *ns2* encodes a WUSCHEL-related homeobox protein (WOX3); its *Arabidopsis* ortholog is *PRESSED FLOWER*, which is needed for the lateral sepals to form. *ns2* and its duplicate *ns1* together give the classic *narrow sheath* mutant (Nardmann et al. 2004). *Fine-mapping (3.4.3): PIP 0.027 (highest window 0.033); in the top windows (195.5–198.7 Mb, 40 genes).*
   - Wang X et al. (2023) took 12 tassel branch number (TBN) QTL mapped in 10 RIL populations from 14 elite inbreds, and ranked the genes in each interval with QTG-Miner: expression differences in young tassels between pairs of RILs that differ only at the QTL, sequence variants that change the protein, and a multi-omics gene network. They then tested the top genes with EMS or CRISPR mutants and confirmed seven genes for seven QTL.
   - *ns2* is the gene of *qTBN4-2*: *ns2* mutants had significantly more tassel branches than their wild-type siblings. The authors note that *ns2* mutants are short (brachytic), with narrow sheaths and shorter internodes, and propose that NS2, like *lrs1* (the *lg2* paralog behind *qTBN8-2*), affects tassel branching by marking the boundaries between organs.
 
-  In our lines the teosinte allele at Q4 makes plants taller (+4.11 cm per copy; joint −log10 p 2.9; +3.5 to +14.5 cm in the five taxa). The same segment raises the ear (EH Q5, +3.00 cm, the strongest EH QTL), shortens the leaf blade (BL Q5, −1.74 cm) and lengthens the sheath (SL Q3). Loss of *ns2* shortens internodes, so a teosinte allele with more NS2 activity would fit taller plants, but we have no expression data to test this. *ns2* is 2.2 Mb from the PH top window, and the interval (194.5–201.4 Mb) holds 164 genes.
+  In our lines the teosinte allele at Q4 makes plants taller (+4.05 cm per copy; joint −log10 p 2.8; +3.7 to +11.9 cm in the five taxa). The same segment raises the ear (EH Q4, +3.15 cm, the strongest EH QTL), shortens the leaf blade (BL Q5, −1.20 cm) and lengthens the sheath (SL Q3). Loss of *ns2* shortens internodes, so a teosinte allele with more NS2 activity would fit taller plants, but we have no expression data to test this. *ns2* is 2.2 Mb from the PH top window, and the interval (194.5–201.4 Mb) holds 164 genes.
 
-The chr6 peaks (Q8–Q13), Q5 chr4 218.7 Mb and Q6 chr5 64.2 Mb (*td1*, Zm00001eb228140) lose their signal in the joint model. A chr5 2.6 Mb peak (shared with EH and SL) is just below the threshold (−log10 p 4.18 vs 4.19).
+The chr6 peaks (Q9–Q11), Q5 chr4 218.6 Mb and Q7 chr5 64.0 Mb (*td1*, Zm00001eb228140) lose their signal in the joint model. The chr5 2.6 Mb QTL (Q6), shared with EH (Q5) and SL (Q4), now holds, and its probability is concentrated: its best window (2.6–2.7 Mb) has PIP 0.53.
 
 <details><summary>All PH QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 201.8 Mb | 200.4–203.8 | 6.0 | -4.17 cm ± 0.85 | **6.1** | 0.1 | Zd -4.82 (12), Zl -1.55 (8), Zv -5.08 (26), Zx -3.29 (78) | [89 genes](qtl_genes/PH_qtl_genes.tsv) | 201.4–202.5 (18) | 0.12 |
-| Q2 | chr2 2.5 Mb | 0.0–3.6 | 4.7 | -2.59 cm ± 0.59 | **4.9** | 0.3 | Zd -3.78 (42), Zh -6.14 (8), Zl +0.01 (14), Zv -2.51 (67), Zx -2.04 (109) | [171 genes](qtl_genes/PH_qtl_genes.tsv) | 1.8–2.7 (45) | 0.15 |
-| Q3 | chr3 12.8 Mb | 12.4–13.7 | 7.0 | -3.77 cm ± 0.70 | **7.2** | 0.8 | Zd -5.16 (29), Zh +5.38 (14), Zl +0.26 (10), Zv -3.20 (32), Zx -4.30 (90) | [41 genes](qtl_genes/PH_qtl_genes.tsv) | 12.6–13.0 (3) | 0.16 |
-| Q4 | chr4 198.4 Mb | 194.5–201.4 | 7.6 | +4.11 cm ± 1.29 | **2.9** | 0.1 | Zd +7.56 (17), Zh +10.21 (7), Zl +14.45 (6), Zv +5.63 (35), Zx +3.49 (75) | [164 genes](qtl_genes/PH_qtl_genes.tsv) | 195.5–198.8 (34) | 0.04 |
-| Q5 | chr4 218.7 Mb | 215.2–223.0 | 5.1 | +0.25 cm ± 1.38 | 0.1 | 0.1 | Zd -4.03 (15), Zl +14.45 (6), Zv -2.08 (34), Zx +0.93 (69) | [128 genes](qtl_genes/PH_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q6 | chr5 64.2 Mb | 60.6–69.1 | 5.3 | -2.15 cm ± 1.17 | 1.2 | 0.1 | Zd -2.76 (9), Zl -4.58 (12), Zv -0.90 (39), Zx -3.41 (52) | [201 genes](qtl_genes/PH_qtl_genes.tsv) | 62.1–66.5 (73) | 0.02 |
-| Q7 | chr5 117.8 Mb | 113.8–122.7 | 6.8 | -3.60 cm ± 1.17 | **2.7** | 0.0 | Zd +0.14 (8), Zl -3.22 (8), Zv -5.14 (31), Zx -2.69 (51) | [68 genes](qtl_genes/PH_qtl_genes.tsv) | 114.2–120.7 (32) | 0.03 |
-| Q8 | chr6 19.9 Mb | 15.8–21.1 | 5.1 | +2.02 cm ± 1.47 | 0.8 | 0.0 | Zd -0.97 (15), Zh +14.39 (7), Zl +2.35 (24), Zv -1.19 (26), Zx +1.56 (51) | [132 genes](qtl_genes/PH_qtl_genes.tsv) | — (no credible set) | 0.02 |
-| Q9 | chr6 34.0 Mb | 33.0–48.4 | 4.6 | +0.03 cm ± 1.62 | 0.0 | 0.6 | Zd +1.11 (15), Zh -10.16 (8), Zl -7.55 (12), Zv +3.54 (29), Zx +1.52 (54) | [218 genes](qtl_genes/PH_qtl_genes.tsv) | — (no credible set) | 0.08 |
-| Q10 | chr6 50.5 Mb | 49.3–51.2 | 5.5 | +3.51 cm ± 2.13 | 1.0 | 0.4 | Zd +5.36 (14), Zh -11.57 (6), Zl +4.68 (10), Zv -5.38 (30), Zx +6.50 (42) | [16 genes](qtl_genes/PH_qtl_genes.tsv) | 49.5–50.8 (11) | 0.07 |
-| Q11 | chr6 67.2 Mb | 64.1–69.1 | 4.6 | -5.71 cm ± 2.57 | 1.6 | 0.5 | Zd +9.21 (13), Zh -10.79 (6), Zl +10.37 (10), Zv -2.67 (31), Zx -11.41 (51) | [70 genes](qtl_genes/PH_qtl_genes.tsv) | — (no credible set) | 0.19 |
-| Q12 | chr6 77.7 Mb | 76.9–78.0 | 5.7 | +4.06 cm ± 1.97 | 1.4 | 0.9 | Zd -9.49 (13), Zh +8.02 (6), Zl +10.37 (10), Zv +2.52 (22), Zx +7.65 (49) | [11 genes](qtl_genes/PH_qtl_genes.tsv) | — (no credible set) | 0.18 |
-| Q13 | chr6 101.8 Mb | 100.2–106.5 | 5.8 | +2.71 cm ± 1.23 | 1.6 | 2.0 | Zd +4.84 (11), Zh -6.28 (7), Zl -4.14 (7), Zv +7.75 (30), Zx +2.16 (46) | [145 genes](qtl_genes/PH_qtl_genes.tsv) | 101.7–106.1 (37) | 0.04 |
-| Q14 | chr7 139.1 Mb | 137.1–142.0 | 10.4 | -4.97 cm ± 0.78 | **9.8** | 0.1 | Zd -5.08 (13), Zh -6.45 (8), Zl -0.91 (9), Zv -4.47 (51), Zx -5.73 (69) | [110 genes](qtl_genes/PH_qtl_genes.tsv) | 137.4–141.7 (26) | 0.06 |
-| Q15 | chr9 139.8 Mb | 132.7–143.5 | 10.3 | +4.73 cm ± 0.70 | **10.9** | 0.6 | Zd +3.87 (26), Zl +1.83 (25), Zv +6.73 (43), Zx +4.18 (88) | [285 genes](qtl_genes/PH_qtl_genes.tsv) | 133.3–140.4 (45) | 0.05 |
-| Q16 | chr10 97.0 Mb | 91.8–100.0 | 10.8 | +5.64 cm ± 0.87 | **10.1** | 0.6 | Zd +4.49 (23), Zv +8.29 (26), Zx +5.11 (64) | [136 genes](qtl_genes/PH_qtl_genes.tsv) | 93.9–99.6 (45) | 0.03 |
+| Q1 | chr1 184.1 Mb | 183.6–186.1 | 5.3 | -3.83 cm ± 0.86 | **5.1** | 0.4 | Zd -3.37 (18), Zh -0.07 (6), Zl +0.24 (9), Zv -4.46 (21), Zx -4.17 (72) | [63 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 184.0–185.7 (30) | 0.07 |
+| Q2 | chr2 2.2 Mb | 0.0–3.4 | 4.9 | -2.64 cm ± 0.59 | **5.1** | 0.2 | Zd -4.00 (43), Zh -2.98 (9), Zl -1.91 (15), Zv -2.31 (63), Zx -2.21 (111) | [165 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 1.8–2.7 (45) | 0.14 |
+| Q3 | chr3 13.2 Mb | 12.4–18.7 | 6.5 | -3.73 cm ± 0.71 | **6.8** | 0.7 | Zd -4.92 (28), Zh +5.69 (14), Zl -0.23 (10), Zv -3.63 (27), Zx -4.42 (87) | [169 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 12.8–13.5 (19) | 0.09 |
+| Q4 | chr4 198.4 Mb | 194.5–201.4 | 7.0 | +4.05 cm ± 1.28 | **2.8** | 0.1 | Zd +6.75 (16), Zh +4.71 (7), Zl +11.94 (6), Zv +5.04 (33), Zx +3.72 (75) | [164 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 195.5–198.7 (40) | 0.03 |
+| Q5 | chr4 218.6 Mb | 215.2–223.7 | 4.9 | +0.23 cm ± 1.38 | 0.1 | 0.1 | Zd -4.68 (15), Zl +11.94 (6), Zv -1.92 (32), Zx +0.68 (69) | [142 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr5 2.6 Mb | 2.4–3.4 | 4.2 | +3.05 cm ± 0.74 | **4.5** | 0.5 | Zd +4.69 (32), Zh +3.90 (5), Zl +0.75 (11), Zv +1.75 (44), Zx +3.07 (73) | [81 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 2.6–2.7 (11) | 0.53 |
+| Q7 | chr5 64.0 Mb | 60.0–69.1 | 4.7 | -2.24 cm ± 1.13 | 1.3 | 0.1 | Zd -8.03 (8), Zl -4.07 (12), Zv -1.93 (37), Zx -3.66 (51) | [217 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 60.8–68.5 (113) | 0.02 |
+| Q8 | chr5 118.0 Mb | 102.1–121.4 | 6.2 | -3.46 cm ± 1.15 | **2.6** | 0.0 | Zd +3.98 (8), Zl -3.08 (8), Zv -3.82 (28), Zx -2.53 (50) | [115 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 113.0–120.7 (44) | 0.02 |
+| Q9 | chr6 50.6 Mb | 49.4–51.3 | 6.4 | +5.94 cm ± 2.15 | 2.3 | 0.2 | Zd +2.06 (14), Zh +6.06 (6), Zl +3.00 (10), Zv -1.84 (29), Zx +8.40 (41) | [17 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 49.4–51.2 (5) | 0.12 |
+| Q10 | chr6 67.2 Mb | 64.2–68.7 | 5.0 | -3.16 cm ± 2.12 | 0.9 | 0.3 | Zd +1.86 (13), Zh +4.59 (6), Zl +4.14 (10), Zv -1.01 (30), Zx -4.34 (50) | [65 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 64.2–68.2 (14) | 0.10 |
+| Q11 | chr6 105.0 Mb | 102.9–106.2 | 6.5 | +3.26 cm ± 1.14 | 2.4 | 2.3 | Zd +3.34 (10), Zh -2.93 (7), Zl -1.10 (8), Zv +9.56 (28), Zx +2.04 (45) | [84 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 104.6–105.6 (27) | 0.08 |
+| Q12 | chr7 137.8 Mb | 136.3–140.5 | 10.5 | -5.10 cm ± 0.78 | **10.2** | 0.3 | Zd -5.01 (12), Zh -5.94 (8), Zl +0.38 (9), Zv -4.58 (45), Zx -5.78 (69) | [103 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 137.5–139.1 (26) | 0.08 |
+| Q13 | chr9 139.8 Mb | 139.0–141.0 | 10.1 | +4.64 cm ± 0.70 | **10.5** | 0.5 | Zd +3.88 (26), Zl +2.08 (25), Zv +6.23 (41), Zx +4.19 (87) | [61 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 139.6–139.9 (5) | 0.21 |
+| Q14 (cond.) | chr10 6.5 Mb | 5.0–15.2 | 8.3 | +3.27 cm ± 0.82 | **4.2** | 2.4 | Zd +7.74 (25), Zh -13.61 (5), Zl +5.96 (11), Zv +2.98 (34), Zx +2.64 (60) | [234 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | – | 0.07 |
+| Q15 | chr10 99.5 Mb | 93.0–99.9 | 11.0 | +4.70 cm ± 0.94 | **6.3** | 0.1 | Zd +2.46 (24), Zv +7.09 (23), Zx +4.06 (66) | [111 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 97.9–99.6 (33) | 0.04 |
 
-Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/PH_qtl_genes.tsv`](qtl_genes/PH_qtl_genes.tsv).
+Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.7 Ear height (EH)
 
-![EH: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EH.png)
+![EH: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_EH.png)
 
-18 regions, 7 hold (Bonferroni over 18: −log10 p > 2.56). Ear height follows flowering: several QTL hold known flowering genes in their intervals.
+16 regions, 9 hold (Bonferroni over 16: −log10 p > 2.51). Ear height follows flowering: several QTL hold known flowering genes in their intervals. Six of the first model's seven held QTL are found again (chr2 25 Mb, chr3 13 Mb, chr4 197 Mb, chr5 2.6 Mb, chr7 184 Mb, chr8 126–129 Mb); chr7 124 Mb (Q8) no longer holds, and chr2 83.5 Mb, chr6 105 Mb and chr10 99.5 Mb (*ZmEMF1a*, just below the cut before) now hold.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q5 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.044 (**top**) | +3.00 cm | 8.1 | 0.1 (no) | No significant difference between taxa (Zd +2.11, Zh -1.06, Zl +6.50, Zv +2.52, Zx +3.82). The strongest EH QTL; shared with PH and SL. |
-| **Q10 chr7 184.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.028 (CS); 0.061 (**top**) | +2.03 cm | 5.3 | 0.5 (no) | No significant difference between taxa (Zd +2.90, Zl -0.78, Zv +1.39, Zx +2.34). Same region as BL Q6. |
-| **Q4 chr3 12.8 Mb** | Zm00001eb122520 (BZR1-like); Zm00001eb122680 (CYP734A6); Zm00001eb123060 (ra2) | 0.003 (outside CS); 0.009 (CS); 0.060 (**top**) | -2.06 cm | 5.0 | 2.0 (no) | No significant difference between taxa (Zd -5.48, Zh +0.41, Zl +0.67, Zv -2.95, Zx -1.25). Same window as PH Q3; *ra2*, a BZR1 homolog and CYP734A6 (brassinosteroids) are in the interval. |
-| **Q1 chr2 25.8 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | <0.001 (flat); <0.001 (flat) | +1.96 cm | 4.6 | 1.1 (no) | No significant difference between taxa (Zd -0.83, Zh +2.58, Zl +0.83, Zv +1.93, Zx +2.63). *GA2ox2* inactivates gibberellin. |
-| **Q11 chr8 126.2 Mb** | Zm00001eb353250 (ZCN8) | 0.053 (**top**) | +2.36 cm | 3.2 | 0.1 (no) | No significant difference between taxa (Zd -1.30, Zh +4.32, Zl +1.80, Zv +1.03, Zx +2.48). *ZCN8* is the maize florigen. |
+| **Q4 chr4 196.6 Mb** | Zm00001eb197430 (ns2) | 0.026 (**top**) | +3.15 cm | 8.1 | 0.1 (no) | No significant difference between taxa (Zd +2.88, Zh +0.18, Zl +6.76, Zv +2.49, Zx +3.62). The strongest EH QTL; shared with PH Q4, BL Q5 and SL Q3. |
+| **Q11 chr8 129.2 Mb** | Zm00001eb353250 (ZCN8) | 0.016 (**top**) | +2.82 cm | 6.0 | 0.3 (no) | No significant difference between taxa (Zd +2.22, Zh +5.38, Zl +1.48, Zv +2.98, Zx +2.41). *ZCN8* is the maize florigen (126.68 Mb, inside the interval 125.7–133.7 Mb). |
+| **Q10 chr7 184.4 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.018 (outside CS); 0.076 (**top**) | +2.15 cm | 5.7 | 0.4 (no) | No significant difference between taxa (Zd +2.95, Zl −0.62, Zv +1.63, Zx +2.13). Same region as BL Q7. |
+| **Q3 chr3 13.2 Mb** | Zm00001eb123060 (ra2) | 0.047 (**top**) | −2.15 cm | 5.1 | 1.8 (no) | No significant difference between taxa (Zd −5.33, Zh +0.25, Zl +0.11, Zv −3.38, Zx −1.22). Same window as PH Q3. |
+| **Q1 chr2 25.4 Mb** | — | 0.024 (best window) | +2.06 cm | 5.0 | 1.3 (no) | Higher ears (Zh +2.15, Zv +2.18, Zx +2.73; Zd −1.09). *ckx12* and *GA2ox2* (29.1–29.3 Mb), in this QTL's interval in the first model, are now just outside it (16.2–28.7 Mb). |
+| **Q5 chr5 2.6 Mb** | — | 0.244 (best window) | +2.06 cm | 4.5 | 0.6 (no) | Higher ears in every taxon. Same region as PH Q6 and SL Q4. |
+| **Q2 chr2 83.5 Mb** | — | 0.010 (best window) | +1.55 cm | 2.7 | 0.6 (no) | Wide interval (79.6–98.4 Mb). |
+| **Q7 chr6 105.0 Mb** | — | 0.078 (best window) | +2.26 cm | 2.6 | 3.2 (yes) | The only QTL where taxa differ: *parviglumis* +6.64 cm and *diploperennis* +3.61 cm, *luxurians* −2.81 cm. |
+| **Q16 chr10 99.5 Mb** | Zm00001eb417870 (ZmEMF1a); Zm00001eb418700 (ZmCCT10) | 0.006 (CS); 0.008 (CS) | +2.41 cm | 2.6 | 0.0 (no) | Holds just above the cut (Zd −2.13, Zv +3.19, Zx +3.29). |
 
-Just below the cut: Q13 chr9 116.8 Mb (+1.63 cm, joint −log10 p 2.4; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q18 chr10 97.0 Mb (+2.40 cm, 2.5; *ZmEMF1a*, below). Q8 chr6 105 Mb is the only QTL where taxa differ (Zv +6.5 cm, Zd +4.2, others ≈ 0 or negative), but its joint test does not pass.
+Not held: Q12 chr9 116.8 Mb (+1.57 cm, joint −log10 p 2.1; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q8 chr7 124.0 Mb (−1.64 cm, 1.8).
 
-**Candidate gene in Q18 (chr10 97.0 Mb, just below the cut):** Zm00001eb417870 (*ZmEMF1a*; Zm00001d024813 in B73 v4; 90.88 Mb, window −log10 p 6.3; interval 88.8–100.5 Mb). It is an EMBRYONIC FLOWER1 (EMF1)-like Polycomb protein; EMF1 is named after the *Arabidopsis* mutant that flowers right after germination. Li et al. (2026) cloned it as the gene behind the maize small-kernel mutant *sks1* (three EMS alleles): *Fine-mapping (3.4.3): PIP 0.006; the probability is flat over the interval (highest window 0.02), so fine-mapping does not separate its genes.*
+**Candidate gene in Q16 (chr10 99.5 Mb):** Zm00001eb417870 (*ZmEMF1a*; Zm00001d024813 in B73 v4; 90.88 Mb, window −log10 p 6.6; interval 88.8–99.6 Mb). It is an EMBRYONIC FLOWER1 (EMF1)-like Polycomb protein; EMF1 is named after the *Arabidopsis* mutant that flowers right after germination. Li et al. (2026) cloned it as the gene behind the maize small-kernel mutant *sks1* (three EMS alleles): *Fine-mapping (3.4.3): PIP 0.006 (highest window 0.03); in the 95% credible set, but outside the top windows (93.3–99.6 Mb, 52 genes).*
 - ZmEMF1a binds subunits of both Polycomb complexes (PRC1 and PRC2) and places the repressive histone marks H3K27me3 (at 6 days after pollination) and H2Aub1 (at 10 days) on its targets in the endosperm. Without it, endosperm cells keep dividing and fail to expand and differentiate, so the kernels are small.
 - Its main targets are MADS-box genes: 25 MADS genes lose H3K27me3 and are switched on in the mutant.
 - **The link to ear height:** besides small kernels, *sks1* plants are significantly shorter, with **lower ears**, shorter internodes and a shorter tassel spindle.
 - Its paralog *ZmEMF1b* (Zm00001d010894, on chr8) is expressed mostly in tassels.
 
-In our lines the teosinte segment raises the ear by 2.40 cm per copy at Q18, but the joint test (−log10 p 2.5) is just below the cut, and every window from 89 to 100 Mb is significant for EH (−log10 p 5.9–6.9), so genes in the interval can't be told apart with our tract lengths. The interval also holds *ZmCCT10* (Zm00001eb418700, 96.18 Mb), the flowering gene behind DTS Q2, DTA Q3 and PH Q16, so later flowering may add to the ear-height effect; and two less-known genes: another EMF1-like protein (Zm00001eb418530, 95.20 Mb) and *mads85* (Zm00001eb417540, 89.03 Mb), related to rice *OsMADS87*, which controls seed size and heat sensitivity in young endosperm (Chen C et al. 2016).
+In our lines the teosinte segment raises the ear by 2.41 cm per copy at Q16 (joint −log10 p 2.6, just above the cut of 2.51; in the first model 2.5, just below), and every window from 89 to 100 Mb is significant for EH (−log10 p 6.0–7.2), so genes in the interval can't be told apart with our tract lengths. The interval also holds *ZmCCT10* (Zm00001eb418700, 96.18 Mb), the flowering gene behind DTS Q2, DTA Q6 and PH Q15, so later flowering may add to the ear-height effect; and two less-known genes: another EMF1-like protein (Zm00001eb418530, 95.20 Mb) and *mads85* (Zm00001eb417540, 89.03 Mb), related to rice *OsMADS87*, which controls seed size and heat sensitivity in young endosperm (Chen C et al. 2016).
 
 <details><summary>All EH QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr2 25.8 Mb | 17.9–30.1 | 6.4 | +1.96 cm ± 0.47 | **4.6** | 1.1 | Zd -0.83 (33), Zh +2.58 (5), Zl +0.83 (21), Zv +1.93 (55), Zx +2.63 (106) | [367 genes](qtl_genes/EH_qtl_genes.tsv) | 18.0–23.6 (73) | 0.03 |
-| Q2 | chr2 83.2 Mb | 79.5–94.5 | 5.0 | +0.60 cm ± 1.01 | 0.3 | 0.4 | Zd +0.94 (31), Zh +4.97 (7), Zl +3.65 (14), Zv +1.74 (48), Zx -0.21 (101) | [123 genes](qtl_genes/EH_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q3 | chr2 135.8 Mb | 130.9–148.8 | 5.1 | +1.00 cm ± 0.99 | 0.5 | 0.3 | Zd -0.48 (27), Zh +5.14 (6), Zl +3.60 (13), Zv +1.22 (50), Zx +1.18 (108) | [198 genes](qtl_genes/EH_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q4 | chr3 12.8 Mb | 10.5–19.8 | 5.0 | -2.06 cm ± 0.47 | **5.0** | 2.0 | Zd -5.48 (29), Zh +0.41 (14), Zl +0.67 (10), Zv -2.95 (32), Zx -1.25 (90) | [227 genes](qtl_genes/EH_qtl_genes.tsv) | 12.4–17.1 (45) | 0.07 |
-| Q5 | chr4 198.4 Mb | 194.4–201.4 | 7.6 | +3.00 cm ± 0.52 | **8.1** | 0.1 | Zd +2.11 (17), Zh -1.06 (7), Zl +6.50 (6), Zv +2.52 (35), Zx +3.82 (75) | [168 genes](qtl_genes/EH_qtl_genes.tsv) | 195.5–198.7 (27) | 0.06 |
-| Q6 | chr5 2.5 Mb | 1.8–2.9 | 4.8 | +2.17 cm ± 0.50 | **5.0** | 0.6 | Zd +4.04 (33), Zh +3.01 (5), Zl +3.85 (11), Zv +1.05 (47), Zx +1.86 (75) | [90 genes](qtl_genes/EH_qtl_genes.tsv) | 2.4–2.7 (34) | 0.25 |
-| Q7 | chr6 77.7 Mb | 77.6–99.2 | 4.3 | +1.40 cm ± 0.73 | 1.3 | 0.7 | Zd -1.06 (13), Zh +1.17 (6), Zl +1.75 (10), Zv -0.92 (22), Zx +2.64 (49) | [358 genes](qtl_genes/EH_qtl_genes.tsv) | 77.6–88.4 (137) | 0.01 |
-| Q8 | chr6 105.0 Mb | 102.9–106.8 | 4.9 | +1.96 cm ± 0.75 | 2.0 | **3.5** | Zd +4.20 (10), Zh -0.54 (7), Zl -3.05 (8), Zv +6.52 (28), Zx -0.14 (44) | [101 genes](qtl_genes/EH_qtl_genes.tsv) | 104.9–106.8 (29) | 0.05 |
-| Q9 | chr7 124.0 Mb | 122.7–127.4 | 4.7 | -2.39 cm ± 0.56 | **4.8** | 0.5 | Zd -0.22 (11), Zh -6.32 (6), Zl -0.22 (6), Zv -1.35 (50), Zx -3.07 (60) | [97 genes](qtl_genes/EH_qtl_genes.tsv) | 123.8–125.1 (9) | 0.10 |
-| Q10 | chr7 184.2 Mb | 183.4–185.8 | 5.7 | +2.03 cm ± 0.45 | **5.3** | 0.5 | Zd +2.90 (32), Zl -0.78 (9), Zv +1.39 (53), Zx +2.34 (94) | [82 genes](qtl_genes/EH_qtl_genes.tsv) | 184.2–185.1 (27) | 0.08 |
-| Q11 | chr8 126.2 Mb | 125.7–133.5 | 6.7 | +2.36 cm ± 0.69 | **3.2** | 0.1 | Zd -1.30 (24), Zh +4.32 (11), Zl +1.80 (9), Zv +1.03 (37), Zx +2.48 (61) | [177 genes](qtl_genes/EH_qtl_genes.tsv) | 126.1–130.6 (55) | 0.05 |
-| Q12 | chr8 153.6 Mb | 148.8–166.1 | 4.4 | +0.94 cm ± 0.62 | 0.9 | 0.1 | Zd +4.67 (23), Zh +2.84 (7), Zl -0.91 (7), Zv +1.21 (45), Zx +0.83 (61) | [505 genes](qtl_genes/EH_qtl_genes.tsv) | 149.7–166.1 (268) | 0.01 |
-| Q13 | chr9 116.8 Mb | 114.8–122.2 | 5.3 | +1.63 cm ± 0.58 | 2.4 | 1.1 | Zd +3.11 (22), Zl -2.89 (21), Zv +1.79 (47), Zx +2.12 (89) | [171 genes](qtl_genes/EH_qtl_genes.tsv) | 116.5–120.1 (49) | 0.04 |
-| Q14 | chr9 142.1 Mb | 131.3–145.8 | 4.7 | +1.21 cm ± 0.56 | 1.5 | 0.0 | Zd +2.51 (25), Zl +3.37 (27), Zv +0.34 (42), Zx +0.94 (82) | [400 genes](qtl_genes/EH_qtl_genes.tsv) | 139.6–145.8 (173) | 0.01 |
-| Q15 | chr10 6.8 Mb | 5.0–10.2 | 5.3 | +1.73 cm ± 0.64 | 2.2 | 1.8 | Zd +4.24 (23), Zh -4.77 (6), Zl +3.98 (11), Zv +2.07 (34), Zx +1.06 (61) | [142 genes](qtl_genes/EH_qtl_genes.tsv) | 5.0–7.0 (49) | 0.05 |
-| Q16 | chr10 31.4 Mb | 25.0–33.3 | 4.7 | +1.38 cm ± 1.62 | 0.4 | 0.6 | Zd +0.42 (22), Zl -1.04 (5), Zv +1.01 (23), Zx -1.09 (63) | [86 genes](qtl_genes/EH_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q17 | chr10 63.5 Mb | 55.1–67.9 | 4.5 | -1.70 cm ± 1.74 | 0.5 | 0.4 | Zd +1.11 (24), Zl -1.04 (5), Zv -1.76 (25), Zx -0.32 (56) | [126 genes](qtl_genes/EH_qtl_genes.tsv) | — (no credible set) | 0.04 |
-| Q18 | chr10 97.0 Mb | 88.8–100.5 | 6.9 | +2.40 cm ± 0.81 | 2.5 | 0.8 | Zd -1.05 (23), Zv +3.96 (26), Zx +3.13 (65) | [197 genes](qtl_genes/EH_qtl_genes.tsv) | 93.9–99.6 (65) | 0.02 |
+| Q1 | chr2 25.4 Mb | 16.2–28.7 | 6.5 | +2.06 cm ± 0.47 | **5.0** | 1.3 | Zd -1.09 (31), Zh +2.15 (5), Zl +0.64 (21), Zv +2.18 (48), Zx +2.73 (107) | [373 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 18.1–26.3 (86) | 0.02 |
+| Q2 | chr2 83.5 Mb | 79.6–98.4 | 5.4 | +1.55 cm ± 0.51 | **2.7** | 0.6 | Zd +0.61 (31), Zh +3.86 (7), Zl +3.66 (14), Zv +3.37 (41), Zx +0.83 (101) | [145 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 81.3–95.6 (52) | 0.01 |
+| Q3 | chr3 13.2 Mb | 12.4–19.7 | 5.0 | -2.15 cm ± 0.48 | **5.1** | 1.8 | Zd -5.33 (28), Zh +0.25 (14), Zl +0.11 (10), Zv -3.38 (27), Zx -1.22 (87) | [182 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 12.6–17.0 (32) | 0.07 |
+| Q4 | chr4 196.6 Mb | 194.7–201.4 | 7.2 | +3.15 cm ± 0.55 | **8.1** | 0.1 | Zd +2.88 (16), Zh +0.18 (7), Zl +6.76 (6), Zv +2.49 (38), Zx +3.62 (75) | [161 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 195.5–198.7 (25) | 0.07 |
+| Q5 | chr5 2.6 Mb | 1.0–2.9 | 4.5 | +2.06 cm ± 0.50 | **4.5** | 0.6 | Zd +3.45 (32), Zh +3.28 (5), Zl +3.77 (11), Zv +1.09 (44), Zx +1.62 (73) | [146 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 2.4–2.7 (34) | 0.24 |
+| Q6 | chr6 50.6 Mb | 48.6–51.9 | 4.1 | +1.17 cm ± 0.70 | 1.0 | 0.3 | Zd -0.05 (14), Zh +0.69 (6), Zl +0.89 (10), Zv -1.14 (29), Zx +1.70 (41) | [27 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 49.3–51.3 (17) | 0.04 |
+| Q7 | chr6 105.0 Mb | 102.9–106.5 | 5.5 | +2.26 cm ± 0.75 | **2.6** | **3.2** | Zd +3.61 (10), Zh -0.10 (7), Zl -2.81 (8), Zv +6.64 (28), Zx +0.91 (45) | [91 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 104.6–105.6 (27) | 0.08 |
+| Q8 | chr7 124.0 Mb | 122.6–131.5 | 4.6 | -1.64 cm ± 0.68 | 1.8 | 0.5 | Zd +0.30 (11), Zh -5.22 (6), Zl -2.44 (7), Zv -1.08 (45), Zx -1.85 (58) | [169 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 122.9–126.0 (48) | 0.03 |
+| Q9 | chr7 136.3 Mb | 135.2–140.5 | 4.2 | -1.11 cm ± 0.64 | 1.1 | 0.4 | Zd -2.70 (13), Zh -1.73 (8), Zl +3.20 (9), Zv -0.20 (46), Zx -1.77 (65) | [137 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 136.3–139.4 (73) | 0.03 |
+| Q10 | chr7 184.4 Mb | 183.4–185.8 | 6.0 | +2.15 cm ± 0.45 | **5.7** | 0.4 | Zd +2.95 (32), Zl -0.62 (9), Zv +1.63 (48), Zx +2.13 (95) | [82 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 184.2–185.2 (26) | 0.08 |
+| Q11 | chr8 129.2 Mb | 125.7–133.7 | 6.3 | +2.82 cm ± 0.58 | **6.0** | 0.3 | Zd +2.22 (23), Zh +5.38 (11), Zl +1.48 (8), Zv +2.98 (30), Zx +2.41 (62) | [179 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 126.2–130.1 (43) | 0.05 |
+| Q12 | chr9 116.8 Mb | 115.2–122.2 | 5.3 | +1.57 cm ± 0.60 | 2.1 | 1.1 | Zd +3.13 (22), Zl -3.26 (21), Zv +1.61 (47), Zx +2.11 (89) | [166 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 116.5–120.2 (42) | 0.03 |
+| Q13 | chr9 139.8 Mb | 127.8–146.1 | 4.6 | +1.19 cm ± 0.58 | 1.4 | 0.1 | Zd +1.66 (26), Zl +2.77 (24), Zv +0.45 (41), Zx +0.99 (87) | [493 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | – | 0.01 |
+| Q14 | chr10 6.8 Mb | 5.0–9.5 | 5.4 | +1.79 cm ± 0.65 | 2.3 | 1.4 | Zd +3.79 (23), Zh -4.75 (5), Zl +4.76 (11), Zv +0.99 (31), Zx +1.12 (63) | [122 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 5.0–7.9 (56) | 0.05 |
+| Q15 | chr10 66.8 Mb | 63.0–67.8 | 5.0 | +0.00 cm ± 0.93 | 0.0 | 0.2 | Zd +2.76 (24), Zv +0.62 (22), Zx -0.47 (55) | [49 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | – | 0.00 |
+| Q16 | chr10 99.5 Mb | 88.8–99.6 | 7.2 | +2.41 cm ± 0.80 | **2.6** | 0.0 | Zd -2.13 (24), Zv +3.19 (23), Zx +3.29 (66) | [187 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 93.3–99.6 (52) | 0.03 |
 
-Bonferroni over the 18 QTL: −log10 p > 2.56 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/EH_qtl_genes.tsv`](qtl_genes/EH_qtl_genes.tsv).
+Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.8 Ear number (EN; number of nodes with ears)
 
-![EN: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_EN.png)
+![EN: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_EN.png)
 
-19 regions plus one QTL added by the conditional scans (Q8 chr4 120.2 Mb, open triangle); 11 of the 20 hold (Bonferroni over 20: −log10 p > 2.60). EN counts the stem nodes that bear an ear. **Every QTL that holds is positive: teosinte alleles add ear-bearing nodes**, as expected from teosinte, which bears ears at many nodes.
+17 regions plus one QTL added by the conditional scans (Q9 chr4 183.6 Mb, open triangle); 12 of the 18 hold (Bonferroni over 18: −log10 p > 2.56). EN counts the stem nodes that bear an ear. **Every QTL that holds is positive: teosinte alleles add ear-bearing nodes**, as expected from teosinte, which bears ears at many nodes.
+
+The scan is almost the same as in the first model, but chr2, chr4 and chr7 are significant over long stretches, and within such a stretch the lead window can move between two nearly equal peaks. So several QTL sit at a different place than before: chr2 19.0 Mb (Q2; −log10 p 18.3, against 17.9 at the first model's 22.4 Mb), chr2 205.3 Mb (Q3; first model 202.4 Mb), chr4 119.3 Mb and 183.6 Mb (Q8, Q9; first model 120.2 and 167.0 Mb, which still has −log10 p 14.6 in the scan) and chr7 165.3 Mb (Q12; first model 143.6 Mb, still 10.1 in the scan). The QTL at chr1 22.9 Mb (Q1), chr6 96 and 173 Mb (Q10, Q11), chr8 36.7 Mb (Q13) and chr10 148.6 Mb (Q18; first model 144.0 Mb) are the same or close.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q1 chr1 22.9 Mb** | Zm00001eb007670 (ZmD14) | 0.062 (CS) | +0.19 | 14.9 | 2.2 (no) | No significant difference between taxa (Zd +0.19, Zh +0.15, Zl -0.12, Zv +0.26, Zx +0.20). *ZmD14* is the strigolactone receptor (shoot branching). |
-| **Q2 chr1 81.3 Mb** | Zm00001eb020350 (clock-coupling ZGT) | 0.002 (flat) | +0.09 | 3.3 | 2.0 (no) | No significant difference between taxa (Zd +0.01, Zh -0.03, Zl -0.04, Zv +0.14, Zx +0.11). |
+| **Q1 chr1 22.9 Mb** | Zm00001eb007670 (ZmD14) | 0.012 (outside CS) | +0.20 | 16.3 | 2.1 (no) | No significant difference between taxa (Zd +0.21, Zh +0.15, Zl −0.12, Zv +0.24, Zx +0.22). *ZmD14* is the strigolactone receptor (shoot branching). |
+| **Q2 chr2 19.0 Mb** | — | 0.14 (best window) | +0.16 | 15.5 | 0.5 (no) | The strongest EN scan peak (18.3); alike in the taxa (Zd +0.07 to Zh, Zx +0.19). |
+| **Q3 chr2 205.3 Mb** | — | 0.23 (best window) | +0.16 | 15.1 | 3.5 (yes) | Differs between taxa: *parviglumis* +0.22 and *mexicana* +0.19, *diploperennis* −0.09, *luxurians* +0.02. Same window as Prolif Q6. |
+| **Q12 chr7 165.3 Mb** | — | 0.19 (best window) | +0.15 | 11.2 | 0.5 (no) | Alike in the taxa (Zd +0.11, Zv +0.16, Zx +0.16). Next to the ASI Q10 peak (165.6 Mb). |
 
-Q5 chr3 12.4 Mb (+0.07) holds *ra2* (Zm00001eb123060) and Q15 chr8 133.6 Mb holds *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880); neither holds in the joint model.
+Not holding: Q4 chr3 12.4 Mb (+0.07, joint 1.4) holds *ra2* (Zm00001eb123060). *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880), in a chr8 QTL of the first model that did not hold, and the clock-coupling gene *ZGT* (Zm00001eb020350; first model's chr1 81.3 Mb QTL) are not in any QTL interval in this model.
 
 <details><summary>All EN QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 22.9 Mb | 22.6–23.6 | 16.6 | +0.19 ± 0.02 | **14.9** | 2.2 | Zd +0.19 (15), Zh +0.15 (10), Zl -0.12 (13), Zv +0.26 (35), Zx +0.20 (59) | [33 genes](qtl_genes/EN_qtl_genes.tsv) | 22.9–23.2 (10) | 0.20 |
-| Q2 | chr1 81.3 Mb | 58.0–85.9 | 5.1 | +0.09 ± 0.03 | **3.3** | 2.0 | Zd +0.01 (13), Zh -0.03 (6), Zl -0.04 (9), Zv +0.14 (22), Zx +0.11 (63) | [585 genes](qtl_genes/EN_qtl_genes.tsv) | 61.8–81.7 (107) | 0.03 |
-| Q3 | chr2 22.4 Mb | 22.1–23.0 | 18.6 | +0.17 ± 0.02 | **16.6** | 1.1 | Zd +0.06 (27), Zh +0.20 (5), Zl +0.14 (20), Zv +0.18 (49), Zx +0.20 (102) | [28 genes](qtl_genes/EN_qtl_genes.tsv) | 22.3–23.0 (21) | 0.28 |
-| Q4 | chr2 202.3 Mb | 201.6–205.0 | 14.4 | +0.14 ± 0.02 | **12.3** | **2.7** | Zd -0.08 (26), Zl +0.05 (11), Zv +0.17 (53), Zx +0.16 (106) | [123 genes](qtl_genes/EN_qtl_genes.tsv) | 202.3–205.0 (26) | 0.08 |
-| Q5 | chr3 12.4 Mb | 10.9–14.0 | 6.4 | +0.07 ± 0.03 | 2.5 | 0.1 | Zd +0.08 (29), Zh +0.09 (13), Zl +0.11 (10), Zv +0.07 (32), Zx +0.04 (93) | [74 genes](qtl_genes/EN_qtl_genes.tsv) | 11.0–14.0 (25) | 0.08 |
-| Q6 | chr3 37.0 Mb | 24.4–43.4 | 5.3 | +0.04 ± 0.03 | 0.8 | 0.8 | Zd -0.02 (24), Zh -0.04 (11), Zl -0.15 (8), Zv +0.04 (27), Zx +0.09 (74) | [314 genes](qtl_genes/EN_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q7 | chr3 175.2 Mb | 171.4–176.8 | 4.9 | +0.07 ± 0.02 | 2.5 | 2.1 | Zd -0.07 (24), Zh +0.00 (10), Zl +0.07 (14), Zv +0.02 (39), Zx +0.14 (76) | [131 genes](qtl_genes/EN_qtl_genes.tsv) | 171.8–175.4 (42) | 0.04 |
-| Q8 (added) | chr4 120.2 Mb | 89.8–128.3 | 14.4 | +0.16 ± 0.03 | **6.1** | 0.6 | Zh +0.05 (6), Zv +0.20 (33), Zx +0.12 (51) | [272 genes](qtl_genes/EN_qtl_genes.tsv) | 119.2–124.9 (19) | 0.03 |
-| Q9 | chr4 166.9 Mb | 166.2–168.9 | 14.8 | +0.14 ± 0.03 | **6.4** | 0.3 | Zd +0.19 (7), Zh +0.07 (5), Zl -0.13 (5), Zv +0.08 (38), Zx +0.19 (68) | [79 genes](qtl_genes/EN_qtl_genes.tsv) | 166.4–167.1 (20) | 0.10 |
-| Q10 | chr6 97.0 Mb | 95.0–99.2 | 5.5 | +0.10 ± 0.03 | **3.7** | 0.2 | Zd +0.10 (10), Zh +0.13 (7), Zl +0.16 (7), Zv +0.07 (32), Zx +0.12 (45) | [100 genes](qtl_genes/EN_qtl_genes.tsv) | 96.1–98.5 (31) | 0.04 |
-| Q11 | chr6 160.8 Mb | 153.6–163.5 | 4.6 | +0.07 ± 0.03 | 2.1 | 0.2 | Zd +0.03 (17), Zh +0.14 (5), Zl -0.04 (6), Zv +0.14 (34), Zx +0.04 (57) | [314 genes](qtl_genes/EN_qtl_genes.tsv) | 155.1–161.1 (96) | 0.02 |
-| Q12 | chr6 173.2 Mb | 171.6–175.2 | 5.9 | +0.09 ± 0.03 | **3.8** | 0.3 | Zd +0.04 (16), Zl +0.07 (8), Zv +0.06 (43), Zx +0.13 (56) | [186 genes](qtl_genes/EN_qtl_genes.tsv) | 172.0–175.1 (65) | 0.07 |
-| Q13 | chr7 143.6 Mb | 142.8–144.4 | 10.8 | +0.16 ± 0.02 | **11.1** | 0.1 | Zd +0.09 (16), Zh +0.02 (8), Zl +0.06 (13), Zv +0.19 (49), Zx +0.14 (77) | [43 genes](qtl_genes/EN_qtl_genes.tsv) | 143.5–143.8 (12) | 0.18 |
-| Q14 | chr8 33.8 Mb | 29.5–37.7 | 8.4 | +0.12 ± 0.03 | **5.4** | 1.1 | Zd +0.03 (28), Zh -0.01 (11), Zl +0.05 (6), Zv +0.12 (54), Zx +0.17 (61) | [103 genes](qtl_genes/EN_qtl_genes.tsv) | 32.5–36.8 (24) | 0.04 |
-| Q15 | chr8 133.6 Mb | 127.8–139.6 | 4.6 | +0.06 ± 0.03 | 1.6 | 0.3 | Zd +0.00 (21), Zh +0.09 (11), Zl +0.07 (8), Zv +0.06 (34), Zx +0.04 (64) | [287 genes](qtl_genes/EN_qtl_genes.tsv) | 130.5–138.8 (165) | 0.01 |
-| Q16 | chr9 32.4 Mb | 31.5–32.5 | 7.5 | +0.11 ± 0.04 | 2.2 | 0.5 | Zd +0.13 (24), Zh +0.18 (8), Zl -0.03 (22), Zv +0.11 (48), Zx +0.16 (94) | [10 genes](qtl_genes/EN_qtl_genes.tsv) | 32.1–32.5 (8) | 0.17 |
-| Q17 | chr9 70.0 Mb | 68.2–70.4 | 5.6 | +0.00 ± 0.07 | 0.0 | 0.5 | Zd +0.11 (23), Zh -0.27 (7), Zl +0.05 (21), Zv -0.04 (47), Zx +0.06 (92) | [24 genes](qtl_genes/EN_qtl_genes.tsv) | 68.3–70.4 (10) | 0.10 |
-| Q18 | chr9 80.0 Mb | 75.1–86.1 | 5.4 | +0.01 ± 0.07 | 0.0 | 1.1 | Zd +0.04 (26), Zh -0.35 (7), Zl +0.23 (21), Zv -0.09 (50), Zx +0.13 (84) | [99 genes](qtl_genes/EN_qtl_genes.tsv) | — (no credible set) | 0.07 |
-| Q19 | chr9 92.5 Mb | 90.3–101.5 | 4.9 | -0.01 ± 0.05 | 0.1 | 0.8 | Zd -0.17 (21), Zh +0.04 (6), Zl +0.14 (19), Zv +0.07 (49), Zx -0.14 (98) | [162 genes](qtl_genes/EN_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q20 | chr10 143.9 Mb | 143.5–146.2 | 5.8 | +0.09 ± 0.02 | **4.9** | 0.4 | Zd +0.05 (42), Zh +0.16 (8), Zl +0.10 (12), Zv +0.08 (43), Zx +0.11 (79) | [115 genes](qtl_genes/EN_qtl_genes.tsv) | 143.9–144.7 (32) | 0.12 |
+| Q1 | chr1 22.9 Mb | 22.6–23.7 | 15.6 | +0.20 ± 0.02 | **16.3** | 2.1 | Zd +0.21 (15), Zh +0.15 (10), Zl -0.12 (13), Zv +0.24 (30), Zx +0.22 (58) | [34 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 22.9–23.1 (8) | 0.30 |
+| Q2 | chr2 18.9 Mb | 18.1–19.7 | 18.3 | +0.16 ± 0.02 | **15.5** | 0.5 | Zd +0.07 (24), Zh +0.19 (5), Zl +0.16 (19), Zv +0.13 (46), Zx +0.19 (108) | [54 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 18.5–19.0 (15) | 0.14 |
+| Q3 | chr2 205.2 Mb | 204.4–205.5 | 16.2 | +0.16 ± 0.02 | **15.1** | **3.5** | Zd -0.09 (26), Zl +0.02 (11), Zv +0.22 (50), Zx +0.19 (107) | [39 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 205.0–205.3 (16) | 0.23 |
+| Q4 | chr3 12.4 Mb | 10.9–13.9 | 5.8 | +0.07 ± 0.03 | 1.4 | 0.0 | Zd +0.03 (29), Zh +0.09 (13), Zl +0.15 (10), Zv +0.13 (29), Zx +0.01 (92) | [73 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 11.0–13.2 (25) | 0.05 |
+| Q5 | chr3 20.9 Mb | 17.5–22.8 | 5.2 | +0.02 ± 0.04 | 0.2 | 0.1 | Zd +0.10 (23), Zh -0.04 (12), Zl -0.09 (10), Zv +0.00 (25), Zx +0.02 (86) | [99 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr3 37.0 Mb | 27.9–43.4 | 4.6 | +0.02 ± 0.03 | 0.2 | 0.6 | Zd -0.06 (24), Zh -0.04 (11), Zl -0.10 (8), Zv -0.01 (25), Zx +0.08 (73) | [261 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
+| Q7 | chr3 175.1 Mb | 171.4–176.8 | 5.1 | +0.07 ± 0.02 | **2.8** | 2.1 | Zd -0.06 (24), Zh +0.04 (10), Zl +0.10 (14), Zv +0.03 (36), Zx +0.13 (77) | [131 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 173.8–175.4 (42) | 0.05 |
+| Q8 | chr4 119.2 Mb | 119.2–121.3 | 14.8 | +0.18 ± 0.03 | **8.7** | 0.6 | Zh -0.00 (6), Zv +0.21 (32), Zx +0.17 (50) | [12 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 119.2–119.5 (1) | 0.19 |
+| Q9 (cond.) | chr4 183.6 Mb | 179.8–212.2 | 13.0 | +0.14 ± 0.02 | **7.6** | 0.1 | Zd +0.05 (14), Zh +0.00 (9), Zl +0.04 (6), Zv +0.12 (40), Zx +0.16 (76) | [852 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 180.3–212.2 (97) | 0.08 |
+| Q10 | chr6 96.2 Mb | 94.2–99.2 | 5.2 | +0.11 ± 0.03 | **4.7** | 0.1 | Zd +0.10 (10), Zh +0.16 (7), Zl +0.12 (7), Zv +0.10 (30), Zx +0.12 (43) | [119 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 95.6–96.9 (25) | 0.06 |
+| Q11 | chr6 173.2 Mb | 171.5–175.3 | 4.7 | +0.10 ± 0.02 | **4.4** | 0.6 | Zd +0.04 (16), Zl +0.10 (9), Zv +0.06 (35), Zx +0.15 (55) | [192 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 171.8–173.3 (42) | 0.06 |
+| Q12 | chr7 165.2 Mb | 165.1–166.6 | 11.0 | +0.15 ± 0.02 | **11.2** | 0.5 | Zd +0.11 (17), Zl +0.01 (13), Zv +0.16 (44), Zx +0.16 (77) | [56 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 165.2–165.5 (7) | 0.19 |
+| Q13 | chr8 36.6 Mb | 29.3–41.0 | 7.7 | +0.12 ± 0.03 | **3.7** | 1.2 | Zd +0.01 (28), Zh -0.00 (11), Zl -0.04 (6), Zv +0.20 (46), Zx +0.19 (60) | [140 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 32.6–37.1 (26) | 0.04 |
+| Q14 | chr8 98.2 Mb | 95.0–106.9 | 5.1 | +0.04 ± 0.03 | 0.7 | 0.0 | Zd +0.03 (19), Zh +0.05 (8), Zl +0.10 (5), Zv -0.04 (38), Zx +0.01 (74) | [207 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
+| Q15 | chr9 19.4 Mb | 18.2–20.1 | 7.5 | +0.10 ± 0.03 | **3.8** | 0.4 | Zd +0.08 (26), Zh +0.34 (8), Zl +0.08 (22), Zv +0.15 (51), Zx +0.06 (94) | [86 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 18.8–19.5 (21) | 0.13 |
+| Q16 | chr9 70.0 Mb | 67.8–70.3 | 5.5 | -0.05 ± 0.07 | 0.3 | 0.5 | Zd +0.08 (25), Zh -0.47 (7), Zl +0.04 (21), Zv +0.01 (45), Zx +0.07 (90) | [29 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 67.8–70.3 (5) | 0.15 |
+| Q17 | chr9 81.0 Mb | 78.8–82.9 | 5.8 | +0.07 ± 0.06 | 0.6 | 0.8 | Zd +0.07 (27), Zh +0.07 (6), Zl +0.13 (21), Zv +0.01 (51), Zx +0.06 (84) | [41 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.23 |
+| Q18 | chr10 148.6 Mb | 148.2–149.3 | 5.5 | +0.10 ± 0.02 | **6.1** | 0.2 | Zd +0.10 (39), Zh +0.10 (7), Zl +0.05 (14), Zv +0.11 (40), Zx +0.09 (85) | [60 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 148.5–148.7 (7) | 0.34 |
 
-Bonferroni over the 20 QTL: −log10 p > 2.60 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/EN_qtl_genes.tsv`](qtl_genes/EN_qtl_genes.tsv).
+Bonferroni over the 18 QTL: −log10 p > 2.56 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.9 Prolificacy (Prolif; most ears on one node)
 
-![Prolif: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_Prolif.png)
+![Prolif: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_Prolif.png)
 
-12 regions plus three QTL added by the conditional scans (Q5 chr2 9.3 Mb, Q6 chr2 34.4 Mb and Q12 chr4 120.5 Mb, open triangles); 10 of the 15 hold (Bonferroni over 15: −log10 p > 2.48). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN, all positive** (teosinte adds ears per node): the same loci raise both the number of ear-bearing nodes and the number of ears per node.
+13 regions plus two QTL added by the conditional scans (Q5 chr2 34.4 Mb and Q11 chr4 114.3 Mb, open triangles); 9 of the 15 hold (Bonferroni over 15: −log10 p > 2.48). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN, all positive** (teosinte adds ears per node): the same loci raise both the number of ear-bearing nodes and the number of ears per node. Eight of the first model's ten held QTL are found again; chr7 142.3 Mb no longer holds (1.4), and the first model's chr2 191.3 Mb QTL is now at chr2 205.2 Mb (Q6), the same window as EN Q3 (chr2 is significant from 101 to 220 Mb, and the lead moved between two nearly equal peaks; 191.3 Mb still has −log10 p 11.3 in the scan).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q8 chr3 11.4 Mb** | Zm00001eb122680 (CYP734A6) | 0.206 (**top**) | +0.16 | 13.3 | 0.5 (no) | No significant difference between taxa (Zd +0.19, Zh +0.12, Zl +0.08, Zv +0.21, Zx +0.13). |
-| **Q5 chr2 9.3 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 5.2 | 0.8 (no) | No significant difference between taxa (Zd +0.13, Zh +0.14, Zl +0.11, Zv +0.02, Zx +0.07). Added by the conditional scan: a second QTL on chr2 short arm. |
-| **Q6 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 4.7 | 0.7 (no) | No significant difference between taxa (Zd +0.07, Zl +0.01, Zv +0.13, Zx +0.09). Added by the conditional scan: a third chr2 QTL. |
-| **Q4 chr1 213.9 Mb** | Zm00001eb040280 (CKX10) | 0.005 (outside CS) | +0.10 | 3.1 | 0.7 (no) | No significant difference between taxa (Zd +0.18, Zh +0.11, Zl -0.03, Zv +0.10, Zx +0.10). *CKX10* is a cytokinin oxidase. |
+| **Q1 chr1 23.2 Mb** | — | 0.57 (best window; top windows 23.2–23.3 Mb, 2 genes) | +0.20 | 16.2 | 1.0 (no) | The strongest QTL (scan 19.4); the same peak as EN Q1. Fine-mapping puts more than half of the probability on one window. |
+| **Q7 chr3 11.4 Mb** | Zm00001eb122680 (CYP734A6) | 0.158 (**top**) | +0.15 | 12.0 | 0.4 (no) | No significant difference between taxa (Zd +0.18, Zh +0.12, Zl +0.08, Zv +0.23, Zx +0.12). |
+| **Q4 chr2 9.2 Mb** | — | 0.07 (best window) | +0.08 | 5.4 | 0.7 (no) | No significant difference between taxa (Zd +0.11, Zh +0.13, Zl +0.12, Zv +0.03, Zx +0.06). Its interval (6.5–9.8 Mb) no longer reaches *ckx12* and *GA2ox2*. |
+| **Q5 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 5.0 | 0.7 (no) | No significant difference between taxa (Zd +0.06, Zl +0.01, Zv +0.13, Zx +0.10). Added by the conditional scan: a second QTL on the chr2 short arm; its 29.7-Mb interval has no credible set. |
+| **Q3 chr1 214.1 Mb** | Zm00001eb040280 (CKX10) | 0.010 (CS) | +0.12 | 6.2 | 0.6 (no) | No significant difference between taxa (Zd +0.05, Zh −0.09, Zl +0.02, Zv +0.13, Zx +0.15). *CKX10* is a cytokinin oxidase. Stronger than in the first model (joint 3.1). |
+
+The other held QTL are Q6 chr2 205.2 Mb (+0.12; taxa differ 3.5: mostly *mexicana*), Q11 chr4 114.3 Mb (+0.14, added by the conditional scan), Q12 chr4 171.3 Mb (+0.15) and Q15 chr9 32.0 Mb (+0.09).
 
 <details><summary>All Prolif QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 23.2 Mb | 22.9–23.3 | 20.3 | +0.20 ± 0.02 | **18.0** | 0.9 | Zd +0.17 (15), Zh +0.08 (10), Zl -0.03 (13), Zv +0.25 (33), Zx +0.22 (58) | [12 genes](qtl_genes/Prolif_qtl_genes.tsv) | 23.1–23.3 (4) | 0.45 |
-| Q2 | chr1 61.9 Mb | 56.1–64.5 | 4.6 | +0.04 ± 0.02 | 1.0 | 0.8 | Zd +0.00 (19), Zh +0.11 (10), Zl +0.01 (14), Zv +0.01 (27), Zx +0.02 (65) | [206 genes](qtl_genes/Prolif_qtl_genes.tsv) | 56.9–62.1 (66) | 0.02 |
-| Q3 | chr1 205.3 Mb | 203.8–206.6 | 4.7 | +0.02 ± 0.03 | 0.4 | 1.1 | Zd -0.18 (8), Zh -0.30 (5), Zl +0.05 (8), Zv +0.06 (33), Zx +0.05 (79) | [69 genes](qtl_genes/Prolif_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q4 | chr1 213.9 Mb | 211.3–218.3 | 5.8 | +0.10 ± 0.03 | **3.1** | 0.7 | Zd +0.18 (7), Zh +0.11 (7), Zl -0.03 (7), Zv +0.10 (33), Zx +0.10 (74) | [142 genes](qtl_genes/Prolif_qtl_genes.tsv) | 213.8–216.3 (41) | 0.05 |
-| Q5 (added) | chr2 9.3 Mb | 6.2–35.4 | 6.7 | +0.08 ± 0.02 | **5.2** | 0.8 | Zd +0.13 (35), Zh +0.14 (10), Zl +0.11 (17), Zv +0.02 (55), Zx +0.07 (98) | [1004 genes](qtl_genes/Prolif_qtl_genes.tsv) | 7.8–34.5 (82) | 0.08 |
-| Q6 (added) | chr2 34.4 Mb | 22.1–38.2 | 9.6 | +0.08 ± 0.02 | **4.7** | 0.7 | Zd +0.07 (33), Zl +0.01 (18), Zv +0.13 (51), Zx +0.09 (93) | [438 genes](qtl_genes/Prolif_qtl_genes.tsv) | 33.0–34.5 (33) | 0.04 |
-| Q7 | chr2 191.2 Mb | 185.7–192.0 | 12.2 | +0.12 ± 0.02 | **10.3** | 1.3 | Zd -0.02 (17), Zh +0.20 (6), Zl +0.02 (16), Zv +0.09 (51), Zx +0.16 (112) | [149 genes](qtl_genes/Prolif_qtl_genes.tsv) | 190.9–191.4 (13) | 0.17 |
-| Q8 | chr3 11.4 Mb | 10.9–11.7 | 19.0 | +0.16 ± 0.02 | **13.3** | 0.5 | Zd +0.19 (29), Zh +0.12 (13), Zl +0.08 (10), Zv +0.21 (36), Zx +0.13 (91) | [13 genes](qtl_genes/Prolif_qtl_genes.tsv) | 11.1–11.4 (1) | 0.25 |
-| Q9 | chr3 118.8 Mb | 113.5–121.7 | 6.8 | +0.03 ± 0.03 | 0.4 | 0.9 | Zd +0.13 (26), Zh -0.09 (13), Zl -0.16 (8), Zv -0.10 (28), Zx +0.07 (75) | [96 genes](qtl_genes/Prolif_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q10 | chr3 148.7 Mb | 146.7–154.3 | 5.0 | -0.01 ± 0.03 | 0.2 | 0.1 | Zd -0.12 (27), Zh +0.04 (13), Zl +0.12 (11), Zv +0.13 (29), Zx -0.06 (91) | [174 genes](qtl_genes/Prolif_qtl_genes.tsv) | 146.7–154.3 (69) | 0.02 |
-| Q11 | chr3 172.4 Mb | 166.7–177.1 | 5.3 | +0.07 ± 0.02 | 2.1 | 1.4 | Zd +0.04 (24), Zh +0.06 (12), Zl -0.03 (11), Zv -0.04 (36), Zx +0.14 (83) | [218 genes](qtl_genes/Prolif_qtl_genes.tsv) | 171.7–175.5 (66) | 0.03 |
-| Q12 (added) | chr4 120.5 Mb | 75.0–140.2 | 13.1 | +0.13 ± 0.03 | **4.9** | 0.1 | Zh +0.09 (6), Zv +0.13 (32), Zx +0.13 (51) | [590 genes](qtl_genes/Prolif_qtl_genes.tsv) | 77.6–125.1 (83) | 0.01 |
-| Q13 | chr4 171.3 Mb | 167.6–171.9 | 16.5 | +0.14 ± 0.03 | **7.8** | 1.4 | Zd +0.21 (11), Zh -0.04 (5), Zl +0.10 (6), Zv +0.13 (31), Zx +0.17 (66) | [111 genes](qtl_genes/Prolif_qtl_genes.tsv) | 170.6–171.8 (29) | 0.07 |
-| Q14 | chr7 142.2 Mb | 141.6–147.9 | 5.0 | +0.08 ± 0.02 | **4.4** | 1.3 | Zd +0.00 (15), Zh +0.33 (8), Zl +0.01 (10), Zv +0.06 (48), Zx +0.09 (73) | [172 genes](qtl_genes/Prolif_qtl_genes.tsv) | 142.2–145.2 (47) | 0.05 |
-| Q15 | chr9 32.1 Mb | 25.4–32.7 | 5.4 | +0.09 ± 0.02 | **5.8** | 0.1 | Zd +0.08 (24), Zh -0.02 (8), Zl +0.13 (22), Zv +0.07 (48), Zx +0.10 (95) | [156 genes](qtl_genes/Prolif_qtl_genes.tsv) | 25.9–32.5 (13) | 0.06 |
+| Q1 | chr1 23.2 Mb | 22.6–23.3 | 19.4 | +0.20 ± 0.02 | **16.2** | 1.0 | Zd +0.14 (15), Zh +0.07 (10), Zl -0.07 (13), Zv +0.26 (28), Zx +0.22 (57) | [24 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 23.2–23.3 (2) | 0.57 |
+| Q2 | chr1 51.4 Mb | 48.5–54.0 | 4.8 | +0.03 ± 0.02 | 0.7 | 1.8 | Zd +0.05 (25), Zh +0.12 (11), Zl +0.08 (14), Zv -0.02 (24), Zx -0.03 (64) | [118 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.00 |
+| Q3 | chr1 214.1 Mb | 211.4–216.5 | 5.6 | +0.12 ± 0.02 | **6.2** | 0.6 | Zd +0.05 (7), Zh -0.09 (7), Zl +0.02 (6), Zv +0.13 (31), Zx +0.15 (73) | [114 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 213.9–216.1 (38) | 0.08 |
+| Q4 | chr2 9.2 Mb | 6.5–9.8 | 7.0 | +0.08 ± 0.02 | **5.4** | 0.7 | Zd +0.11 (37), Zh +0.13 (10), Zl +0.12 (17), Zv +0.03 (52), Zx +0.06 (98) | [151 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 6.5–9.4 (39) | 0.07 |
+| Q5 (cond.) | chr2 34.4 Mb | 22.9–52.6 | 9.1 | +0.08 ± 0.02 | **5.0** | 0.7 | Zd +0.06 (33), Zl +0.01 (18), Zv +0.13 (46), Zx +0.10 (93) | [754 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.04 |
+| Q6 | chr2 205.2 Mb | 202.3–205.8 | 12.6 | +0.12 ± 0.02 | **10.7** | **3.5** | Zd -0.03 (26), Zl +0.01 (12), Zv +0.08 (50), Zx +0.18 (107) | [135 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 205.0–205.4 (20) | 0.15 |
+| Q7 | chr3 11.4 Mb | 11.0–11.7 | 17.2 | +0.15 ± 0.02 | **12.0** | 0.4 | Zd +0.18 (29), Zh +0.12 (13), Zl +0.08 (10), Zv +0.23 (31), Zx +0.12 (90) | [11 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 11.2–11.5 (4) | 0.26 |
+| Q8 | chr3 73.5 Mb | 63.7–81.3 | 5.4 | -0.08 ± 0.06 | 0.7 | 0.6 | Zd +0.00 (25), Zh -0.04 (13), Zl -0.09 (8), Zv -0.07 (20), Zx +0.02 (65) | [107 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.03 |
+| Q9 | chr3 119.8 Mb | 113.5–137.3 | 6.3 | +0.08 ± 0.06 | 0.9 | 0.8 | Zd +0.07 (26), Zh -0.04 (13), Zl -0.09 (8), Zv +0.01 (26), Zx +0.03 (74) | [341 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.00 |
+| Q10 | chr3 172.3 Mb | 170.1–181.1 | 5.3 | +0.06 ± 0.02 | 2.4 | 1.5 | Zd +0.03 (24), Zh +0.04 (12), Zl +0.03 (12), Zv +0.00 (35), Zx +0.11 (83) | [278 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 171.7–180.2 (96) | 0.02 |
+| Q11 (cond.) | chr4 114.3 Mb | 77.3–135.6 | 12.2 | +0.14 ± 0.03 | **5.2** | 0.1 | Zh +0.04 (6), Zv +0.16 (32), Zx +0.15 (50) | [503 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 100.6–121.7 (56) | 0.02 |
+| Q12 | chr4 171.3 Mb | 168.5–172.1 | 16.5 | +0.15 ± 0.03 | **8.9** | 1.6 | Zd +0.23 (11), Zh -0.05 (5), Zl +0.08 (6), Zv +0.14 (28), Zx +0.17 (67) | [106 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 171.1–171.9 (13) | 0.07 |
+| Q13 | chr7 136.2 Mb | 135.6–139.1 | 4.9 | +0.05 ± 0.03 | 1.3 | **4.2** | Zd -0.15 (14), Zh +0.36 (9), Zl -0.04 (8), Zv +0.08 (46), Zx +0.05 (64) | [98 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.03 |
+| Q14 | chr7 142.2 Mb | 141.8–146.0 | 5.4 | +0.06 ± 0.03 | 1.4 | 1.3 | Zd +0.09 (16), Zh -0.05 (8), Zl +0.04 (10), Zv +0.02 (42), Zx +0.05 (73) | [111 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 142.2–145.4 (50) | 0.04 |
+| Q15 | chr9 32.0 Mb | 25.4–32.7 | 5.0 | +0.09 ± 0.02 | **5.4** | 0.1 | Zd +0.11 (24), Zh -0.01 (8), Zl +0.14 (22), Zv +0.07 (46), Zx +0.09 (93) | [156 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 31.6–32.5 (10) | 0.07 |
 
-Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/Prolif_qtl_genes.tsv`](qtl_genes/Prolif_qtl_genes.tsv).
+Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.10 Sheath length (SL; 2023 only)
 
-![SL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_SL.png)
+![SL: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_SL.png)
 
-13 regions, 12 hold (Bonferroni over 13: −log10 p > 2.41). Sheath length shares several regions with plant height, as expected: the sheath wraps the internode, and longer internodes make both taller plants and longer sheaths.
+13 regions, 11 hold (Bonferroni over 13: −log10 p > 2.41; 12 in the first model, where chr5 92 Mb and chr10 151 Mb held; chr5 161.8 Mb is new here). Sheath length shares several regions with plant height, as expected: the sheath wraps the internode, and longer internodes make both taller plants and longer sheaths.
 
 <details><summary>All SL QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 69.7 Mb | 67.6–71.1 | 5.2 | +0.28 ± 0.06 | **5.5** | 0.1 | Zd +0.26 (18), Zh +0.53 (10), Zl -0.22 (7), Zv +0.36 (19), Zx +0.24 (50) | [74 genes](qtl_genes/SL_qtl_genes.tsv) | 69.6–70.4 (9) | 0.10 |
-| Q2 | chr2 6.2 Mb | 5.8–7.4 | 7.4 | -0.24 ± 0.04 | **8.1** | 0.8 | Zd -0.40 (41), Zh -0.17 (11), Zl -0.55 (13), Zv -0.16 (56), Zx -0.17 (93) | [92 genes](qtl_genes/SL_qtl_genes.tsv) | 5.9–6.2 (13) | 0.23 |
-| Q3 | chr4 200.6 Mb | 197.7–207.2 | 6.5 | +0.28 ± 0.05 | **6.6** | 0.3 | Zd +0.12 (16), Zl +0.14 (5), Zv +0.19 (36), Zx +0.37 (66) | [234 genes](qtl_genes/SL_qtl_genes.tsv) | 198.7–202.9 (50) | 0.04 |
-| Q4 | chr5 2.5 Mb | 1.8–2.7 | 6.1 | +0.26 ± 0.05 | **6.8** | 1.1 | Zd +0.19 (31), Zh +0.88 (5), Zl -0.06 (11), Zv +0.20 (45), Zx +0.27 (70) | [76 genes](qtl_genes/SL_qtl_genes.tsv) | 2.5–2.7 (22) | 0.31 |
-| Q5 | chr5 48.6 Mb | 47.9–50.4 | 5.7 | -0.18 ± 0.08 | 1.7 | 1.7 | Zd -0.34 (10), Zl -0.20 (13), Zv -0.48 (33), Zx +0.03 (40) | [40 genes](qtl_genes/SL_qtl_genes.tsv) | 48.4–49.3 (9) | 0.07 |
-| Q6 | chr5 92.0 Mb | 91.8–92.5 | 8.0 | -0.26 ± 0.07 | **3.3** | 0.4 | Zd -0.38 (8), Zl -0.03 (9), Zv -0.04 (32), Zx -0.34 (46) | [6 genes](qtl_genes/SL_qtl_genes.tsv) | 91.9–92.4 (3) | 0.17 |
-| Q7 | chr6 116.0 Mb | 113.6–118.1 | 5.0 | -0.25 ± 0.06 | **4.8** | 0.7 | Zd -0.31 (12), Zh -0.53 (7), Zl -0.09 (9), Zv -0.19 (23), Zx -0.12 (39) | [117 genes](qtl_genes/SL_qtl_genes.tsv) | 115.1–116.6 (37) | 0.05 |
-| Q8 | chr6 167.2 Mb | 165.6–171.7 | 4.6 | -0.22 ± 0.06 | **4.0** | 0.2 | Zd -0.26 (17), Zh -0.47 (8), Zl -0.32 (8), Zv -0.17 (35), Zx -0.24 (45) | [286 genes](qtl_genes/SL_qtl_genes.tsv) | 167.0–171.1 (84) | 0.07 |
-| Q9 | chr7 141.7 Mb | 139.6–141.9 | 9.2 | -0.32 ± 0.05 | **9.6** | 0.9 | Zd -0.26 (12), Zh +0.07 (8), Zl -0.58 (9), Zv -0.30 (44), Zx -0.37 (70) | [38 genes](qtl_genes/SL_qtl_genes.tsv) | 141.6–141.8 (7) | 0.33 |
-| Q10 | chr9 157.2 Mb | 156.7–157.6 | 8.0 | -0.25 ± 0.04 | **8.0** | 2.2 | Zd -0.66 (21), Zh -0.13 (10), Zl -0.32 (14), Zv -0.29 (49), Zx -0.13 (93) | [45 genes](qtl_genes/SL_qtl_genes.tsv) | 157.2–157.6 (21) | 0.25 |
-| Q11 | chr10 25.6 Mb | 25.1–28.9 | 7.2 | +0.26 ± 0.07 | **3.8** | 1.7 | Zd +0.57 (22), Zv +0.18 (23), Zx +0.15 (53) | [52 genes](qtl_genes/SL_qtl_genes.tsv) | 25.1–28.8 (22) | 0.10 |
-| Q12 | chr10 129.7 Mb | 125.9–131.9 | 7.2 | +0.20 ± 0.06 | **3.2** | 0.2 | Zd +0.23 (32), Zh +0.43 (8), Zl -0.10 (5), Zv +0.18 (35), Zx +0.29 (61) | [182 genes](qtl_genes/SL_qtl_genes.tsv) | 127.9–129.9 (59) | 0.04 |
-| Q13 | chr10 151.3 Mb | 149.5–151.8 | 4.5 | -0.24 ± 0.05 | **6.3** | 0.9 | Zd -0.05 (31), Zl -0.23 (12), Zv -0.14 (43), Zx -0.36 (78) | [133 genes](qtl_genes/SL_qtl_genes.tsv) | 149.8–151.4 (33) | 0.14 |
+| Q1 | chr1 69.7 Mb | 67.6–71.1 | 5.2 | +0.29 ± 0.06 | **5.7** | 0.1 | Zd +0.25 (18), Zh +0.58 (10), Zl -0.25 (7), Zv +0.40 (15), Zx +0.25 (49) | [74 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 69.6–70.4 (10) | 0.12 |
+| Q2 | chr2 6.0 Mb | 5.8–7.4 | 7.0 | -0.23 ± 0.04 | **7.2** | 1.3 | Zd -0.43 (41), Zh -0.17 (11), Zl -0.66 (13), Zv -0.16 (54), Zx -0.14 (94) | [92 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 5.9–6.5 (26) | 0.16 |
+| Q3 | chr4 198.8 Mb | 183.0–205.5 | 5.6 | +0.26 ± 0.05 | **6.0** | 0.4 | Zd +0.14 (15), Zl +0.10 (5), Zv +0.14 (31), Zx +0.36 (68) | [641 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 183.4–199.7 (158) | 0.02 |
+| Q4 | chr5 2.5 Mb | 1.8–2.7 | 5.8 | +0.25 ± 0.05 | **6.5** | 1.3 | Zd +0.15 (30), Zh +0.91 (5), Zl -0.18 (12), Zv +0.20 (42), Zx +0.29 (70) | [76 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 2.5–2.7 (22) | 0.39 |
+| Q5 | chr5 49.4 Mb | 47.9–52.0 | 5.2 | -0.18 ± 0.10 | 1.2 | 1.4 | Zd -0.28 (10), Zl -0.20 (12), Zv -0.34 (29), Zx +0.03 (41) | [72 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 48.2–49.9 (18) | 0.04 |
+| Q6 | chr5 64.2 Mb | 63.3–67.4 | 5.0 | -0.03 ± 0.11 | 0.1 | 0.2 | Zd +0.12 (8), Zl -0.15 (11), Zv -0.17 (34), Zx -0.12 (41) | [96 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | – | 0.00 |
+| Q7 | chr5 161.8 Mb | 157.2–164.8 | 7.0 | -0.27 ± 0.07 | **3.8** | 0.8 | Zd -0.59 (7), Zl +0.01 (8), Zv -0.16 (35), Zx -0.25 (49) | [129 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 157.6–161.8 (27) | 0.04 |
+| Q8 | chr6 116.2 Mb | 113.6–118.1 | 4.9 | -0.26 ± 0.06 | **4.7** | 0.6 | Zd -0.28 (12), Zh -0.51 (7), Zl -0.04 (9), Zv -0.21 (22), Zx -0.17 (38) | [117 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 115.1–116.5 (41) | 0.05 |
+| Q9 | chr6 167.8 Mb | 166.6–171.7 | 4.5 | -0.22 ± 0.06 | **3.6** | 0.1 | Zd -0.32 (17), Zh -0.45 (8), Zl -0.33 (8), Zv -0.23 (29), Zx -0.16 (43) | [256 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 167.4–171.0 (77) | 0.05 |
+| Q10 | chr7 141.7 Mb | 139.6–141.9 | 9.2 | -0.34 ± 0.05 | **9.9** | 0.8 | Zd -0.26 (12), Zh +0.03 (7), Zl -0.60 (9), Zv -0.39 (38), Zx -0.35 (70) | [38 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 140.6–141.8 (20) | 0.15 |
+| Q11 | chr9 157.2 Mb | 155.9–160.5 | 7.5 | -0.24 ± 0.04 | **7.3** | 2.2 | Zd -0.63 (20), Zh -0.17 (10), Zl -0.32 (13), Zv -0.27 (44), Zx -0.15 (94) | [263 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | – | 0.10 |
+| Q12 | chr10 25.6 Mb | 25.0–30.7 | 7.1 | +0.23 ± 0.07 | **3.1** | 2.0 | Zd +0.58 (22), Zv +0.10 (21), Zx +0.11 (56) | [71 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 25.3–30.0 (26) | 0.04 |
+| Q13 | chr10 129.7 Mb | 125.9–131.1 | 7.2 | +0.20 ± 0.06 | **3.2** | 0.1 | Zd +0.21 (31), Zh +0.43 (8), Zl -0.12 (5), Zv +0.23 (33), Zx +0.28 (61) | [158 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 127.7–129.9 (55) | 0.05 |
 
-Bonferroni over the 13 QTL: −log10 p > 2.41 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/SL_qtl_genes.tsv`](qtl_genes/SL_qtl_genes.tsv).
+Bonferroni over the 13 QTL: −log10 p > 2.41 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.11 Blade length (BL; 2023 only)
 
-![BL: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BL.png)
+![BL: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_BL.png)
 
-5 regions plus one QTL added by the conditional scans (Q1 chr2 9.4 Mb, open triangle); 5 of the 6 hold (Bonferroni over 6: −log10 p > 2.08). **chr2 has two QTL** (Q1 and Q2), which were one region in the scan.
+6 regions plus one QTL added by the conditional scans (Q1 chr2 9.2 Mb, open triangle); 6 of the 7 hold (Bonferroni over 7: −log10 p > 2.15). **chr2 has two QTL** (Q1 and Q2), which were one region in the scan. The six held QTL are those of the first model plus chr3 184.4 Mb (Q3, just below the cut before), with chr4 238.3 Mb not holding (1.3).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q2 chr2 39.8 Mb** | Zm00001eb079900 (FTIP1) | 0.045 (**top**) | -1.58 | 8.8 | 1.8 (no) | No significant difference between taxa (Zd -0.83, Zl +1.52, Zv -1.67, Zx -1.92). Not in *luxurians*; *FT-INTERACTING PROTEIN 1* is in the interval. |
-| **Q5 chr4 197.1 Mb** | Zm00001eb197430 (ns2) | 0.034 (**top**) | -1.74 | 7.8 | 0.0 (no) | No significant difference between taxa (Zd -0.57, Zh -2.69, Zl -3.47, Zv -1.91, Zx -1.75). The PH/EH/SL chr4 region. |
-| **Q6 chr7 185.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.021 (CS); 0.065 (**top**) | -1.16 | 5.0 | 1.1 (no) | No significant difference between taxa (Zd +0.19, Zl +0.60, Zv -1.25, Zx -1.71). Same region as EH Q10. |
-| **Q4 chr3 203.2 Mb** | Zm00001eb153000 (CCD8); Zm00001eb153190 (ZCN12) | 0.013 (flat); 0.021 (flat) | +0.86 | 2.1 | 0.3 (no) | No significant difference between taxa (Zd +0.30, Zh +0.54, Zl +0.87, Zv +0.60, Zx +1.42). |
+| **Q2 chr2 35.1 Mb** | — | 0.20 (best window; top windows 35.0–35.3 Mb, 9 genes) | −1.52 | 7.8 | 2.0 (no) | No significant difference between taxa (Zd −0.71, Zl +1.59, Zv −1.57, Zx −1.93). Not in *luxurians*. The peak moved from 39.8 Mb (first model; still −log10 p 10.4 in the scan), so *FT-INTERACTING PROTEIN 1* (Zm00001eb079900, 40.14 Mb) is no longer in the interval (34.7–36.0 Mb). |
+| **Q1 chr2 9.2 Mb** (added) | — | 0.07 (best window; no credible set) | −1.35 | 6.8 | 0.0 (no) | Shorter blades in every taxon (Zd −1.76, Zh −1.31, Zl −2.90, Zv −1.40, Zx −1.04). |
+| **Q7 chr7 185.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.021 (CS); 0.066 (**top**) | −1.19 | 4.9 | 1.0 (no) | No significant difference between taxa (Zd −0.05, Zl +0.51, Zv −1.49, Zx −1.62). Same region as EH Q10. |
+| **Q5 chr4 198.1 Mb** | Zm00001eb197430 (ns2) | 0.019 (**top**) | −1.20 | 2.8 | 0.1 (no) | The PH/EH/SL chr4 region (Zd +2.12, Zh −2.91, Zl +0.93, Zv −0.03, Zx −1.80). |
+| **Q4 chr3 204.2 Mb** | Zm00001eb153000 (CCD8); Zm00001eb153190 (ZCN12) | 0.011 (CS); 0.015 (**top**) | +0.92 | 2.2 | 0.4 (no) | No significant difference between taxa (Zd +0.78, Zh +0.39, Zl +0.04, Zv +0.90, Zx +1.22). |
+| **Q3 chr3 184.4 Mb** | — | 0.06 (best window) | +0.94 | 2.1 | 0.7 (no) | Longer blades; holds just above the cut. *liguleless2* (Zm00001eb147220), named here in the first model, is outside this model's interval (182.9–185.8 Mb). |
 
-Q3 chr3 184.4 Mb (+0.91; *liguleless2*, Zm00001eb147220) is just below the cut (2.0). The chr4 238.3 Mb peak (−log10 p 5.5) lies inside the chr4 197 Mb region and the conditional scan does not add it: given chr4 197 Mb and the other QTL, it is not an independent QTL.
+The chr4 238.3 Mb peak (Q6, −log10 p 4.9 in the scan) does not hold in the joint model (1.3): given chr4 198 Mb and the other QTL, it is not an independent QTL.
 
 <details><summary>All BL QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 (added) | chr2 9.4 Mb | 2.9–11.2 | 9.9 | -1.37 ± 0.25 | **7.3** | 0.0 | Zd -1.68 (32), Zh -1.58 (11), Zl -2.07 (16), Zv -1.61 (54), Zx -1.01 (92) | [438 genes](qtl_genes/BL_qtl_genes.tsv) | — (no credible set) | 0.05 |
-| Q2 | chr2 39.8 Mb | 37.6–41.0 | 12.0 | -1.58 ± 0.26 | **8.8** | 1.8 | Zd -0.83 (30), Zl +1.52 (14), Zv -1.67 (50), Zx -1.92 (91) | [91 genes](qtl_genes/BL_qtl_genes.tsv) | 38.4–40.5 (30) | 0.08 |
-| Q3 | chr3 184.4 Mb | 181.1–187.0 | 4.7 | +0.91 ± 0.35 | 2.0 | 0.6 | Zd +1.05 (12), Zh -1.46 (6), Zl +0.09 (15), Zv +1.97 (29), Zx +0.71 (65) | [182 genes](qtl_genes/BL_qtl_genes.tsv) | 181.3–185.3 (74) | 0.04 |
-| Q4 | chr3 203.2 Mb | 195.9–206.5 | 4.5 | +0.86 ± 0.33 | **2.1** | 0.3 | Zd +0.30 (20), Zh +0.54 (9), Zl +0.87 (15), Zv +0.60 (40), Zx +1.42 (55) | [294 genes](qtl_genes/BL_qtl_genes.tsv) | 201.6–204.4 (71) | 0.03 |
-| Q5 | chr4 197.1 Mb | 193.9–198.7 | 7.5 | -1.74 ± 0.31 | **7.8** | 0.0 | Zd -0.57 (16), Zh -2.69 (6), Zl -3.47 (5), Zv -1.91 (36), Zx -1.75 (69) | [113 genes](qtl_genes/BL_qtl_genes.tsv) | 195.5–197.4 (36) | 0.05 |
-| Q6 | chr7 185.2 Mb | 183.5–185.8 | 5.2 | -1.16 ± 0.27 | **5.0** | 1.1 | Zd +0.19 (30), Zl +0.60 (8), Zv -1.25 (44), Zx -1.71 (83) | [80 genes](qtl_genes/BL_qtl_genes.tsv) | 184.3–185.4 (26) | 0.10 |
+| Q1 (cond.) | chr2 9.2 Mb | 2.1–11.2 | 9.2 | -1.35 ± 0.26 | **6.8** | 0.0 | Zd -1.76 (35), Zh -1.31 (10), Zl -2.90 (15), Zv -1.40 (51), Zx -1.04 (90) | [484 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | – | 0.07 |
+| Q2 | chr2 35.1 Mb | 34.7–36.0 | 10.7 | -1.52 ± 0.27 | **7.8** | 2.0 | Zd -0.71 (32), Zl +1.59 (16), Zv -1.57 (50), Zx -1.93 (91) | [26 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 35.0–35.3 (9) | 0.20 |
+| Q3 | chr3 184.4 Mb | 182.9–185.8 | 4.7 | +0.94 ± 0.35 | **2.1** | 0.7 | Zd +0.80 (12), Zh -1.24 (6), Zl +1.11 (15), Zv +2.03 (28), Zx +0.88 (67) | [85 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 183.0–184.5 (40) | 0.06 |
+| Q4 | chr3 204.2 Mb | 195.5–206.5 | 4.8 | +0.92 ± 0.33 | **2.2** | 0.4 | Zd +0.78 (19), Zh +0.39 (9), Zl +0.04 (14), Zv +0.90 (40), Zx +1.22 (58) | [307 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 202.4–205.9 (84) | 0.03 |
+| Q5 | chr4 198.1 Mb | 193.8–207.2 | 6.7 | -1.20 ± 0.38 | **2.8** | 0.1 | Zd +2.12 (15), Zh -2.91 (6), Zl +0.93 (5), Zv -0.03 (30), Zx -1.80 (66) | [339 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 194.0–198.4 (69) | 0.02 |
+| Q6 | chr4 238.3 Mb | 236.9–240.2 | 4.9 | -0.78 ± 0.39 | 1.3 | 0.7 | Zd -3.58 (17), Zl -4.61 (6), Zv -1.89 (32), Zx -0.19 (62) | [68 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 237.7–239.6 (27) | 0.04 |
+| Q7 | chr7 185.2 Mb | 183.5–185.8 | 5.5 | -1.19 ± 0.27 | **4.9** | 1.0 | Zd -0.05 (30), Zl +0.51 (8), Zv -1.49 (39), Zx -1.62 (87) | [80 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 184.3–185.4 (27) | 0.09 |
 
-Bonferroni over the 6 QTL: −log10 p > 2.08 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/BL_qtl_genes.tsv`](qtl_genes/BL_qtl_genes.tsv).
+Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv).
 
 </details>
 
 #### 3.6.12 Blade width (BW; 2023 only)
 
-![BW: k-mer ancestry GWAS and joint QTL model](figures/kmerGWAS_joint_qtl_BW.png)
+![BW: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_BW.png)
 
-7 regions, 6 hold (Bonferroni over 7: −log10 p > 2.15). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves.
+12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves. Five of the first model's six held QTL are found again (chr4 237.6 Mb, chr5 39–41 Mb, chr6 146.4 Mb, chr7 136 Mb, chr9 0.8–1.8 Mb); chr4 166.3 Mb does not hold (1.9, as before), and chr9 159.8 Mb and chr10 149.7 Mb are new.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q6 chr7 136.2 Mb** | Zm00001eb316740 (tsh4) | 0.004 (outside CS) | -0.17 | 4.3 | 0.3 (no) | No significant difference between taxa (Zd -0.11, Zh -0.16, Zl -0.06, Zv -0.26, Zx -0.14). |
+| **Q4 chr5 41.2 Mb** | — | 0.07 (best window) | −0.33 | 10.7 | 2.3 (no) | The strongest BW QTL; mostly *mexicana* (Zx −0.51, Zl −0.25, Zv −0.16, Zd +0.06). |
+| **Q5 chr6 146.4 Mb** | — | 0.06 (best window) | −0.28 | 7.8 | 0.0 (no) | Alike in the taxa (Zd −0.25, Zv −0.28, Zx −0.31). |
+| **Q10 chr9 0.8 Mb** | — | 0.26 (best window, 0.7–0.9 Mb, no gene) | −0.24 | 6.9 | 1.3 (no) | Mostly *mexicana* (Zx −0.34, Zd −0.15, Zv −0.06). |
+| **Q3 chr4 237.6 Mb** | — | 0.12 (best window) | −0.24 | 6.6 | 0.0 (no) | Alike in the taxa (Zd −0.22, Zl −0.31, Zv −0.34, Zx −0.21). |
+| **Q6 chr7 135.7 Mb** | — | 0.07 (best window) | −0.18 | 4.7 | 0.3 (no) | Alike in the taxa (Zd −0.10, Zh −0.20, Zl −0.09, Zv −0.28, Zx −0.15). Its interval (130.7–136.3 Mb) no longer reaches *tsh4* (Zm00001eb316740, 138.54 Mb), which was in it in the first model. |
 
-The chr6 133.1 Mb peak (*fea4*, Zm00001eb280500; −log10 p 4.85) lies inside the chr6 146 Mb region (131.8–160.5 Mb), and the conditional scan does not add it: it is not independent of chr6 146 Mb.
+The other held QTL are Q11 chr9 159.8 Mb (−0.15) and Q12 chr10 149.7 Mb (−0.16); both have their probability on a few windows (best window PIP 0.28 and 0.30). The chr6 133.1 Mb peak (*fea4*, Zm00001eb280500; −log10 p 4.86) is above the threshold, but the scan puts it in the same significant region as chr6 146.4 Mb and does not make it a QTL of its own.
 
 <details><summary>All BW QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr4 166.3 Mb | 165.1–167.9 | 5.9 | -0.17 ± 0.06 | **2.2** | 0.2 | Zd +0.02 (7), Zv -0.12 (34), Zx -0.18 (64) | [70 genes](qtl_genes/BW_qtl_genes.tsv) | 165.4–166.4 (24) | 0.08 |
-| Q2 | chr4 182.7 Mb | 178.9–183.7 | 4.7 | -0.01 ± 0.06 | 0.1 | 0.6 | Zd -0.07 (13), Zh +0.27 (8), Zl +0.17 (5), Zv +0.05 (38), Zx -0.07 (68) | [137 genes](qtl_genes/BW_qtl_genes.tsv) | — (no credible set) | 0.00 |
-| Q3 | chr4 237.6 Mb | 237.0–238.4 | 8.7 | -0.22 ± 0.05 | **5.8** | 0.0 | Zd -0.22 (19), Zl -0.23 (6), Zv -0.28 (31), Zx -0.20 (63) | [28 genes](qtl_genes/BW_qtl_genes.tsv) | 237.1–237.7 (11) | 0.12 |
-| Q4 | chr5 39.2 Mb | 34.9–44.1 | 9.1 | -0.31 ± 0.05 | **9.4** | 2.0 | Zd +0.09 (12), Zl -0.16 (13), Zv -0.18 (30), Zx -0.45 (50) | [180 genes](qtl_genes/BW_qtl_genes.tsv) | 36.4–41.4 (59) | 0.03 |
-| Q5 | chr6 146.4 Mb | 144.6–148.7 | 9.2 | -0.29 ± 0.05 | **8.3** | 0.1 | Zd -0.25 (12), Zv -0.23 (29), Zx -0.33 (50) | [112 genes](qtl_genes/BW_qtl_genes.tsv) | 146.4–147.7 (24) | 0.07 |
-| Q6 | chr7 136.2 Mb | 130.9–138.6 | 4.5 | -0.17 ± 0.04 | **4.3** | 0.3 | Zd -0.11 (11), Zh -0.16 (8), Zl -0.06 (7), Zv -0.26 (50), Zx -0.14 (62) | [191 genes](qtl_genes/BW_qtl_genes.tsv) | 131.2–136.3 (47) | 0.06 |
-| Q7 | chr9 1.8 Mb | 0.9–7.1 | 4.5 | -0.17 ± 0.04 | **5.3** | 1.1 | Zd -0.14 (19), Zh -0.23 (9), Zl +0.08 (17), Zv -0.08 (43), Zx -0.29 (82) | [127 genes](qtl_genes/BW_qtl_genes.tsv) | 0.9–4.7 (17) | 0.05 |
+| Q1 | chr4 166.3 Mb | 165.1–167.6 | 5.6 | -0.16 ± 0.06 | 1.9 | 0.2 | Zd -0.00 (7), Zv -0.07 (30), Zx -0.18 (64) | [64 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 165.5–166.4 (18) | 0.09 |
+| Q2 | chr4 182.7 Mb | 180.3–183.4 | 4.9 | -0.04 ± 0.06 | 0.3 | 0.4 | Zd -0.08 (13), Zh +1.01 (8), Zl +0.91 (5), Zv -0.03 (31), Zx -0.07 (68) | [83 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
+| Q3 | chr4 237.6 Mb | 237.0–238.7 | 8.7 | -0.24 ± 0.05 | **6.6** | 0.0 | Zd -0.22 (19), Zl -0.31 (6), Zv -0.34 (29), Zx -0.21 (62) | [32 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 237.1–237.7 (11) | 0.12 |
+| Q4 | chr5 41.2 Mb | 33.3–43.8 | 9.4 | -0.33 ± 0.05 | **10.7** | 2.3 | Zd +0.06 (12), Zl -0.25 (12), Zv -0.16 (29), Zx -0.51 (46) | [216 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 36.8–42.3 (41) | 0.07 |
+| Q5 | chr6 146.4 Mb | 144.6–150.7 | 9.4 | -0.28 ± 0.05 | **7.8** | 0.0 | Zd -0.25 (12), Zv -0.28 (28), Zx -0.31 (49) | [157 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 146.4–148.7 (29) | 0.06 |
+| Q6 | chr7 135.7 Mb | 130.7–136.3 | 4.4 | -0.18 ± 0.04 | **4.7** | 0.3 | Zd -0.10 (11), Zh -0.20 (8), Zl -0.09 (7), Zv -0.28 (44), Zx -0.15 (60) | [138 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 132.7–136.3 (33) | 0.07 |
+| Q7 | chr8 24.8 Mb | 22.5–30.8 | 4.5 | -0.09 ± 0.09 | 0.5 | 1.1 | Zd -0.04 (31), Zh +0.03 (11), Zl +0.41 (5), Zv +0.07 (47), Zx -0.34 (54) | [172 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
+| Q8 | chr8 61.6 Mb | 60.3–64.6 | 4.5 | -0.04 ± 0.11 | 0.1 | 1.2 | Zd -0.04 (25), Zh -0.18 (9), Zl +0.18 (6), Zv -0.16 (43), Zx +0.08 (57) | [56 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
+| Q9 | chr8 74.5 Mb | 64.8–84.1 | 4.3 | -0.08 ± 0.09 | 0.5 | 1.3 | Zd -0.03 (25), Zh -0.48 (11), Zl +0.18 (6), Zv -0.13 (39), Zx -0.03 (61) | [335 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.02 |
+| Q10 | chr9 0.8 Mb | 0.7–1.8 | 5.8 | -0.24 ± 0.04 | **6.9** | 1.3 | Zd -0.15 (19), Zv -0.06 (30), Zx -0.34 (73) | [5 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 0.7–0.9 (0) | 0.26 |
+| Q11 | chr9 159.8 Mb | 158.9–160.2 | 4.3 | -0.15 ± 0.04 | **4.8** | 0.2 | Zd -0.15 (24), Zh -0.26 (6), Zl -0.31 (14), Zv -0.07 (35), Zx -0.14 (92) | [69 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 159.6–159.9 (14) | 0.28 |
+| Q12 | chr10 149.7 Mb | 149.4–150.2 | 4.3 | -0.16 ± 0.04 | **4.9** | 0.3 | Zd -0.04 (37), Zh -0.74 (5), Zl -0.33 (12), Zv -0.21 (39), Zx -0.15 (79) | [55 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 149.6–149.9 (15) | 0.30 |
 
-Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`qtl_genes/BW_qtl_genes.tsv`](qtl_genes/BW_qtl_genes.tsv).
+Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv).
 
 </details>
 
@@ -1720,72 +1877,73 @@ Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Top windows: the fewest win
 
 | Region | Traits (sign of the teosinte effect) | Known genes in the intervals |
 |---|---|---|
-| chr10 ~92–106 Mb | DTS +, DTA +, PH +, EH + (just below the cut), NBR + | Zm00001eb418700 (*ZmCCT10*) |
-| chr10 ~147–150 Mb | SPAD +, PredN + (below its threshold) | Zm00001eb432440 (FRS6-like), Zm00001eb432850 (chlorophyll a/b-binding) |
+| chr10 ~92–106 Mb | DTS +, DTA +, PH +, EH +, NBR + | Zm00001eb418700 (*ZmCCT10*) |
+| chr10 ~146–150 Mb | SPAD +, EN +, BW −, PredN + (its best region, below its threshold) | Zm00001eb432440 (FRS6-like), Zm00001eb432850 (chlorophyll a/b-binding) |
 | chr5 ~217–222 Mb | DTS +, DTA +, ASI + (mostly *luxurians*) | Zm00001eb257680 (HDR1-like), Zm00001eb255670 (*mads73*) |
-| chr9 ~1–14 Mb | DTA −, DTS − (suggestive), BW − | Zm00001eb372960 (*MADS74*) |
-| chr1 ~22–24 Mb | EN +, Prolif +, NBR − | Zm00001eb007670 (*ZmD14*) |
-| chr3 ~10–14 Mb | EN +, Prolif +, PH −, EH − | Zm00001eb123060 (*ra2*), Zm00001eb122520 (BZR1-like), Zm00001eb122680 (CYP734A6) |
-| chr4 ~165–172 Mb | EN +, Prolif +, BW − | |
-| chr4 ~90–140 Mb (conditional QTL) | EN +, Prolif + | |
-| chr2 ~6–35 Mb (conditional QTL) | Prolif +, BL − | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*ckx12*) |
-| chr7 ~137–144 Mb | PH −, SL −, EN +, Prolif + | |
-| chr4 ~194–207 Mb | PH +, EH +, SL +, BL −, ASI − | |
-| chr5 ~2–3 Mb | EH +, SL +, PH + (just below the threshold) | |
-| chr8 ~126 Mb | EH +, NBR + | Zm00001eb353250 (*ZCN8*) |
-| chr7 ~183–186 Mb | EH +, BL − | Zm00001eb331880 (*dlf1*), Zm00001eb331630 (PRR37-like) |
-| chr9 ~131–145 Mb | PH +, NBR + | Zm00001eb397240 (*PRR73*) |
-| chr2 ~18–30 Mb | ASI −, EH +, EN + | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*ckx12*) |
-| chr2 ~185–193 Mb | ASI −, Prolif + | |
+| chr9 ~1–14 Mb | BW −, NBR −; DTA − and DTS − (above the scan threshold for DTA, not holding) | Zm00001eb372960 (*MADS74*) |
+| chr1 ~22–24 Mb | EN +, Prolif + (NBR −, not holding) | Zm00001eb007670 (*ZmD14*) |
+| chr3 ~11–19 Mb | Prolif +, PH −, EH − (EN +, not holding) | Zm00001eb123060 (*ra2*), Zm00001eb122680 (CYP734A6) |
+| chr4 ~100–135 Mb | EN +, Prolif + (conditional QTL) | |
+| chr4 ~171 Mb | Prolif + (EN scan peak at 167 Mb, BW − not holding) | |
+| chr2 ~6–52 Mb | Prolif + (two QTL), BL − (two QTL) | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*ckx12*) |
+| chr2 ~18–30 Mb | ASI −, EH +, EN + | Zm00001eb077080 (*GA2ox2*), Zm00001eb076990 (*ckx12*) (in the ASI interval) |
+| chr2 ~202–206 Mb | EN +, Prolif + (same window) | |
+| chr7 ~131–146 Mb | PH −, SL −, BW − | Zm00001eb316740 (*tsh4*) |
+| chr7 ~165 Mb | ASI −, EN + | Zm00001eb323880 (*bhlh90*) |
+| chr4 ~194–207 Mb | PH +, EH +, SL +, BL −, ASI − | Zm00001eb197430 (*ns2*) |
+| chr5 ~2–3 Mb | PH +, EH +, SL + | |
+| chr8 ~126–129 Mb | EH +, NBR + | Zm00001eb353250 (*ZCN8*) |
+| chr7 ~183–186 Mb | EH +, BL − (DTS + in 2025) | Zm00001eb331880 (*dlf1*), Zm00001eb331630 (PRR37-like) |
+| chr9 ~139–141 Mb | PH + (NBR + in the first model) | Zm00001eb397240 (*PRR73*) |
 
-All genes in every region, with their GO terms and the −log10 p of the window they lie in, are in `data/introgression_spread/GO/genes_GO_all_<TRAIT>.tsv` (one file per trait).
+All genes in every region, with their GO terms and the −log10 p of the window they lie in, are in `data/introgression_fix1/GO/genes_GO_all_<TRAIT>.tsv` (one file per trait).
 
 #### 3.6.14 *mexicana* split by race (SUBTAXON)
 
-The same two analyses were rerun with *mexicana* split into its four races (Chalco, Mesa Central, Durango, Nobogame; section 2.1) instead of one Zx group: the fixed effect, the permutation strata and the per-taxon effects all use the race. Figures: `figures/subtaxon/kmerGWAS_joint_qtl_<TRAIT>.png`; tables: `data/introgression_spread/assoc_gridlmm_spats_subtaxon/` and `data/introgression_spread/joint_qtl/noperm_subtaxon/`.
+The same two analyses were rerun with *mexicana* split into its four races (Chalco, Mesa Central, Durango, Nobogame; section 2.1) instead of one Zx group: the fixed effect, the permutation strata and the per-taxon effects all use the race. Figures: `figures/fix1/subtaxon/joint_qtl_<TRAIT>.png`; tables: `data/introgression_fix1/assoc_gridlmm_spats_subtaxon/` and `data/introgression_fix1/joint_qtl/noperm_subtaxon/`.
 
 | Trait | Threshold, taxon / race | QTL, taxon / race | Hold in joint model, taxon / race |
 |---|---|---|---|
-| DTS | 5.25 / 5.20 | 2 / 2 | 2 / 2 |
-| DTA | 5.14 / 5.17 | 3 / 4 | 3 / 3 |
-| ASI | 4.35 / 4.42 | 12 / 13 | 6 / 6 |
-| PH | 4.19 / 4.26 | 16 / 20 | 8 / 8 |
-| EH | 4.27 / 4.24 | 18 / 18 | 7 / 7 |
-| EN | 4.57 / 4.47 | 20 / 17 | 11 / 12 |
-| Prolif | 4.55 / 4.80 | 15 / 13 | 10 / 9 |
-| NBR | 4.21 / 4.06 | 8 / 9 | 4 / 4 |
-| SL | 4.06 / 4.14 | 13 / 13 | 12 / 12 |
-| BL | 4.14 / 4.32 | 6 / 7 | 5 / 5 |
-| BW | 4.22 / 4.26 | 7 / 7 | 6 / 5 |
+| DTS | 5.50 / 5.19 | 2 / 3 | 2 / 3 |
+| DTA | 5.00 / 5.19 | 6 / 6 | 3 / 3 |
+| ASI | 4.42 / 4.30 | 10 / 10 | 6 / 6 |
+| PH | 4.17 / 4.10 | 15 / 13 | 10 / 11 |
+| EH | 4.11 / 4.19 | 16 / 15 | 9 / 9 |
+| EN | 4.49 / 4.43 | 18 / 17 | 12 / 12 |
+| Prolif | 4.72 / 4.77 | 15 / 13 | 9 / 9 |
+| NBR | 4.04 / 4.31 | 8 / 5 | 3 / 2 |
+| SL | 4.20 / 4.17 | 13 / 13 | 11 / 11 |
+| BL | 4.15 / 4.33 | 7 / 8 | 6 / 5 |
+| BW | 4.21 / 4.27 | 12 / 11 | 7 / 6 |
 
 **What changes:**
-- **The QTL are essentially the same.** Most differences are a peak moving by one or two windows (e.g. PH chr7 139.1 → 141.7 Mb, ASI chr5 218.3 → 217.8 Mb) or a broad region being split differently at a slightly different threshold. So splitting *mexicana* does not create or remove signals; treating it as one taxon was not hiding race-specific QTL.
-- **DTS / DTA chr5 221.8 Mb:** within *mexicana*, the effect comes from **Chalco** (+0.98 ± 0.41 d for DTS, 8 carrier plots); Mesa Central (+0.25), Durango (+0.09) and Nobogame (+0.06) are near zero. Chalco is the highland race (median 2,390 m). This is the same QTL where *luxurians* and *diploperennis* have the largest effects.
-- **DTA chr9 10.9 Mb** (teosinte flowers earlier): Durango and Nobogame −0.66 d, Mesa Central −0.21, Chalco −0.03.
-- **ZmCCT10 (chr10 94.5 Mb):** all four races delay flowering (DTS: Chalco +1.06, Durango +1.01, Nobogame +0.93, Mesa Central +0.50 d).
+- **The QTL are essentially the same.** Most differences are a peak moving by one or two windows (e.g. PH chr7 137.8 → 141.7 Mb, PH chr4 198.4 → 197.8 Mb) or a broad region being split differently at a slightly different threshold. The races run adds DTS chr1 84.5 Mb (joint −log10 p 5.1), which is DTA Q1 and suggestive for DTS in the taxon run. So splitting *mexicana* does not create or remove signals; treating it as one taxon was not hiding race-specific QTL.
+- **DTS / DTA chr5 221.8 Mb:** within *mexicana*, the effect comes from **Chalco** (+1.07 ± 0.41 d for DTS, 8 carrier plots); Mesa Central (+0.21), Nobogame (+0.19) and Durango (+0.09) are near zero. Chalco is the highland race (median 2,390 m). This is the same QTL where *luxurians* and *diploperennis* have the largest effects.
+- **DTA chr9 10.9 Mb** (teosinte flowers earlier; not holding in this model): Durango −0.70 d and Nobogame −0.68 d, Mesa Central −0.10, Chalco +0.15.
+- ***ZmCCT10* (chr10 97.8 Mb):** all four races delay flowering (DTS: Durango +1.02, Chalco +0.95, Nobogame +0.94, Mesa Central +0.61 d).
 - **Caution:** a race has 6–40 carrier plots at a QTL, and Durango (3 accessions) and Nobogame (2) come from very few donor plants, so a race effect can be one accession's allele.
 
 <details><summary>Figures with the races (DTS, DTA)</summary>
 
-![DTS by race](figures/subtaxon/kmerGWAS_joint_qtl_DTS.png)
+![DTS by race](figures/fix1/subtaxon/joint_qtl_DTS.png)
 
-![DTA by race](figures/subtaxon/kmerGWAS_joint_qtl_DTA.png)
+![DTA by race](figures/fix1/subtaxon/joint_qtl_DTA.png)
 
 </details>
 
 #### 3.6.15 Other traits
 
-Scanned with the same pipeline; figures in `figures/kmerGWAS_joint_qtl_<TRAIT>.png`, tables in the same folders as above.
+Scanned with the same pipeline; figures in `figures/fix1/joint_qtl_<TRAIT>.png`, tables in the same folders as above.
 
 | Trait | What it is | Plots | 5% threshold | QTL | Hold in joint model | Strongest QTL (−log10 p) |
 |---|---|---|---|---|---|---|
-| PredN | leaf nitrogen predicted from leaf spectra (scans with Mahalanobis distance > 3 dropped; mean of the rest per plot); 2025, field B5 block 2, one plot per line; H2 0.25 (`final_script/28b_spats_nitrogen.R`) | 711 | 4.24 | 0 | 0 | chr9 149.3 Mb (2.7) |
-| LAE | number of leaves above the ear; 2025 | 1274 | 4.15 | 8 | 2 | chr2 34.5 Mb (9.3) |
-| Kinki | how much the stem bends, score 0–2; 2023 | 1140 | 4.33 | 6 | 4 | chr2 30.1 Mb (12.0) |
-| StPu | stem pubescence (present/absent; line mean) | 1286 | 6.96 | 1 | 1 | chr4 240.8 Mb (8.5) |
-| StPi | stem pigmentation (present/absent; line mean) | 1286 | 4.77 | 8 | 5 | chr2 19.9 Mb (11.8) |
+| PredN | leaf nitrogen predicted from leaf spectra (scans with Mahalanobis distance > 3 dropped; mean of the rest per plot); 2025, field B5 block 2, one plot per line; H2 0.25 (`final_script/28b_spats_nitrogen.R`) | 698 | 4.23 | 0 | 0 | chr10 146.9 Mb (2.8) |
+| LAE | number of leaves above the ear; 2025 | 1248 | 4.23 | 9 | 4 | chr2 34.6 Mb (9.1) |
+| Kinki | how much the stem bends, score 0–2; 2023 | 1118 | 4.23 | 6 | 4 | chr2 30.1 Mb (11.5) |
+| StPu | stem pubescence (present/absent; line mean) | 1260 | 6.91 | 1 | 1 | chr4 240.8 Mb (8.7) |
+| StPi | stem pigmentation (present/absent; line mean) | 1260 | 4.72 | 9 | 4 | chr2 18.1 Mb (11.1) |
 
-StPu and StPi are scored present/absent, so their line means are mostly 0 with a few high values, and they agree poorly between years (r = 0.16 and 0.09). With such a skewed trait, a few plots can give very small p-values by chance, which is why the permutation threshold for StPu (6.96) is far above the others; the permutations account for this. A model for binary traits (e.g. a logistic mixed model) would suit them better.
+StPu and StPi are scored present/absent, so their line means are mostly 0 with a few high values, and they agree poorly between years (r = 0.16 and 0.09). With such a skewed trait, a few plots can give very small p-values by chance, which is why the permutation threshold for StPu (6.91) is far above the others; the permutations account for this. A model for binary traits (e.g. a logistic mixed model) would suit them better.
 
 ### 3.7 What is new here
 
@@ -1800,11 +1958,12 @@ The statistics themselves (mixed models, LOCO, permutations, R/qtl2) are standar
 - **Resolution** is set by tract length: regions are Mb wide, and genes inside them are candidates only.
 - **λ_GC** is high under LOCO; the permutation threshold controls the genome-wide error, but linked windows on the same chromosome are not independent evidence, and two nearby peaks may be one QTL.
 - **The pool is not the plot.** The genotype is 6 plants of a plot; the phenotype is the plot mean. For SEG plots, plants differ; the dosage of 1 is the expectation.
-- **Donor reference.** DONOR levels come from MaizeGDB assemblies, not from our donor plants (Section 2, Limitations).
-- **Replication:** DTS was checked in each year separately (section 3.6.1: both main QTL replicate); the other traits are not yet, and none within taxon.
+- **Donor reference.** DONOR levels start from MaizeGDB assemblies and are then learned from our pools, but not from our donor plants themselves (sections 2.6.6 and 2.13).
+- **The QTL list depends on which window leads a long region.** Several traits are significant over tens of Mb (e.g. EN and Prolif on chr2 and chr4), and the joint model starts from one window per region (plus conditional QTL). Where two peaks in one region are nearly equal, a small change in the calls moves the lead (e.g. EN chr4 167.0 → 119.3 Mb, Prolif chr2 191.3 → 205.2 Mb between the two models, with the GWAS scans themselves correlated at r ≥ 0.97). A QTL that moved this way is a property of the region, not a new locus.
+- **Replication:** DTS was checked in each year separately (section 3.6.1: both main QTL replicate). The same per-year runs exist for every trait (`*_y2023`, `*_y2025`) but are not yet described here; none within taxon.
 - **Small taxa:** *luxurians* (Zl) and *huehuetenangensis* (Zh) have 5–25 carrier plots at most QTL, so their per-taxon effects have wide CIs. The large *luxurians*-specific effects (DTS/DTA chr5 221.8 Mb) should be checked against how many accessions and F1 families the carriers come from.
-- **How peaks are split into regions.** A region is a run of windows above the threshold, joined when less than 5 Mb apart, so one region can hold more than one QTL. The conditional scans of the joint model (section 3.4) test this. They added 6 QTL in the taxon run (BL chr2 9.4; EN chr4 120.2; Prolif chr2 9.3, chr2 34.4, chr4 120.5; StPi chr2 168.1 Mb) and 5 in the race run, and confirmed that other peaks inside regions (e.g. BL chr4 238 Mb, BW chr6 133 Mb, ASI chr3 96 Mb) are not independent QTL.
-- **GO terms:** 2,300 of the 18,798 genes in the regions have no GO annotation in the lookup (`data/introgression_spread/GO/genes_missing_GO.txt`); they are listed in the gene tables without GO terms.
+- **How peaks are split into regions.** A region is a run of windows above the threshold, joined when less than 5 Mb apart, so one region can hold more than one QTL. The conditional scans of the joint model (section 3.4) test this. They added 6 QTL in the taxon run (BL chr2 9.2; EN chr4 183.6; PH chr10 6.5; Prolif chr2 34.4, chr4 114.3; StPi chr2 163.0 Mb) and 4 in the race run, and found that other peaks inside regions (e.g. BW chr6 133 Mb, ASI chr3 96 Mb) are not independent QTL.
+- **GO terms:** some of the 15,577 genes in the regions have no GO annotation in the lookup; they are listed in the gene tables without GO terms.
 
 ---
 

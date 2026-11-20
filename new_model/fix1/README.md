@@ -1,5 +1,9 @@
 # fix1: count only informative k-mers, where it helps (full build)
 
+![How fix 1 works](fix1_method.svg)
+
+(Drawing: `make_fix1_method_svg.py`.)
+
 The pilot (`../pilot_fix1/`) showed that at *parviglumis* and *mexicana* chr7 54–65 Mb, counting only the **informative** k-mers (B73 single-copy k-mers missing from all of the taxon's assemblies) raises the DONOR-vs-SEG contrast from 0.5–1.3 to 1.9–3.2. With these counts the SEG islands there read as DONOR, as the targeted sequencing says. Away from the hotspots the contrast hardly changed, and at *parviglumis* chr3 75–78 Mb nothing changed. So this build switches to the new counts **only in the windows where they raise the contrast**, and keeps the old counts, assembly levels and everything else of the current run elsewhere. Nothing in `final_script/` or the current run is changed. All outputs go to `${KMER_DIR}/new_model/fix1` (`FX`).
 
 | Step | Script | What it does |

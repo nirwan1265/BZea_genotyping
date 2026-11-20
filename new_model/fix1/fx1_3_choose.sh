@@ -16,9 +16,9 @@
 set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)
 source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"
-python3 -c "import numpy, scipy, pandas" 2> /dev/null || die "python3 here has no numpy/scipy/pandas: activate your python env before submitting"
+python -c "import numpy, scipy, pandas" 2> /dev/null || die "python here has no numpy/scipy/pandas: activate your python env before submitting"
 T=${FX_TAXA[$(( ${SLURM_ARRAY_TASK_ID:-1} - 1 ))]}
 mkdir -p "${FX}/choice"
-python3 "${HERE}/fx1_3_choose.py" --taxon "$T" --fx_dir "$FX" --d16 "$D16" --d19 "$D19" --pools_tsv "${D11}/pools.tsv" \
+python "${HERE}/fx1_3_choose.py" --taxon "$T" --fx_dir "$FX" --d16 "$D16" --d19 "$D19" --pools_tsv "${D11}/pools.tsv" \
   --hmm_dir "$D20" --rho_file "${D21}/rho_loglik.tsv" --tracts "${D21}/tracts_all.tsv.gz" --out_dir "${FX}/choice" \
   --min_new "$FX_MIN_NEW" --min_pools "$FX_MIN_POOLS" --gain "$FX_GAIN" --noisy_sigma "$KMER_NOISY_SIGMA"

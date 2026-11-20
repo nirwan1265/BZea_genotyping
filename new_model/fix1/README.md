@@ -33,3 +33,19 @@ Watch: `squeue -u $USER`; failed pools: `grep -l FAILED logs/fx1_2_pools.*.out`;
 **In the morning:** `cat ${FX}/compare_old_new.txt` (old vs new: genome shares, SEG-between-DONOR, hotspot counts, targeted-sequencing table) and `cat ${FX}/choice/summary_*.tsv` (windows switched per taxon, chromosome and hotspot; contrast before and after).
 
 **What success looks like:** sandwiched SEG tracts that are BB in the targeted sequencing drop from 47%, the chr7 hotspot count drops, and B73 → AA, DONOR → BB and SEG → AB do not get worse. *parviglumis* chr3 75–78 Mb is not expected to change (pilot: the islands there read between DONOR and SEG in every count).
+
+## Result, 20 Nov 2026
+
+| Check | Current | fix1 |
+|---|---|---|
+| Genome share SEG / DONOR | 6.22% / 4.94% | 6.26% / 4.93% |
+| SEG between two DONOR tracts (% of genome) | 0.38% | 0.33% |
+| Hotspots: chr6 21–23 / chr1 297 / chr7 54–65 / chr3 75–78 Mb (pools) | 48 / 28 / 28 / 19 | 48 / 28 / **7** / **8** |
+| Targeted seq.: B73 tracts that are AA | 97.1% (1,105) | 97.0% (969) |
+| Targeted seq.: SEG tracts that are AA / AB / BB | 17.9 / 74.3 / 7.8% (374) | **5.7 / 86.4** / 7.9% (316) |
+| Targeted seq.: DONOR tracts that are BB | 90.7% (375) | **95.5%** (353) |
+| Targeted seq.: SEG between two DONOR tracts | 38 tracts, 47% BB | 28 tracts, 54% BB |
+
+Windows switched to the informative k-mers: 33% (*diploperennis*) to 53% (*huehuetenangensis*) of the windows where both contrasts could be measured (≥ 5 pools called DONOR). Median contrast there rose from 3.3 to 3.8 (*parviglumis*) and 4.1 to 4.7 (*mexicana*). These gains are optimistic, because windows were chosen where the measured new contrast was higher; the targeted-sequencing table is the unbiased check. *parviglumis* chr7 54–65 Mb: 95% switched, contrast 1.16 → 2.63. *parviglumis* chr3 75–78 Mb: unchanged, as the pilot predicted. chr6 21–23 and chr1 297 Mb did not change: there the DONOR level is wrong rather than the contrast low, and 20c's learned levels fixed them (48 → 11, 28 → 14).
+
+**Next:** `fx1_submit_levels.sh` reruns steps 4–6 (no recount) with fix 1 in the switched windows and 20c's taxon levels in the others. Outputs go to `${FX}/with_levels/`.

@@ -20,7 +20,7 @@ FINAL_DIR=$(cd "${HERE}/../../final_script" && pwd); MAP_DIR=${FINAL_DIR}/geneti
 python3 -c "import numpy, scipy" 2> /dev/null || die "python3 in ${PY_ENV} has no numpy/scipy"
 [[ -n $(ls "${FX}/choice/"*.npz 2> /dev/null) ]] || die "no choices in ${FX}/choice (run fx1_3 first)"
 IDX=${SLURM_ARRAY_TASK_ID:-${1:?usage: bash $0 <task index>}}
-OUT=${FX}/hmm; mkdir -p "$OUT"
+OUT=${FXR}/hmm; mkdir -p "$OUT"
 mapfile -t POOLS < <(awk -F'\t' -v skip=" ${KMER_SKIP_GROUPS} " 'NR > 1 && ($2 == "control" || $2 == "donor") && index(skip, " " $3 " ") == 0 {print $1}' "${D11}/pools.tsv")
 FIRST=$(( (IDX - 1) * KMER_HMM_POOLS_PER_TASK ))
 (( FIRST < ${#POOLS[@]} )) || { echo "task ${IDX}: no pools"; exit 0; }
@@ -30,6 +30,6 @@ for (( i = FIRST; i < FIRST + KMER_HMM_POOLS_PER_TASK && i < ${#POOLS[@]}; i++ )
 done
 (( ${#TODO[@]} )) || { echo "task ${IDX}: all done already"; exit 0; }
 ASMS=$(for a in "${DONOR_ASSEMBLIES[@]}"; do IFS=: read -r n t _ <<< "$a"; echo "${n}:${t}"; done | paste -sd,)
-python3 "${HERE}/fx1_kmer_hmm.py" --d_spread --fix_dir "${FX}/choice" --new_win_dir "${FX}/windows" --new_ref_dir "${FX}/sets" \
+python3 "${HERE}/fx1_kmer_hmm.py" --d_spread ${FX_LEVEL_DIR:+--level_dir "$FX_LEVEL_DIR"} --fix_dir "${FX}/choice" --new_win_dir "${FX}/windows" --new_ref_dir "${FX}/sets" \
   --min_new "$FX_MIN_NEW" --samples "$(IFS=,; echo "${TODO[*]}")" --pools_tsv "${D11}/pools.tsv" --win_dir "$D16" --ref_dir "$D19" \
   --assemblies "$ASMS" --map_dir "$MAP_DIR" --out_dir "$OUT" --plants "$KMER_PLANTS"

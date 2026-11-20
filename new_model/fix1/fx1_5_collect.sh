@@ -15,5 +15,5 @@ set -euo pipefail
 HERE=$(cd "${SLURM_SUBMIT_DIR:-$PWD}" && pwd)
 source "${HERE}/../../final_script/config.sh"; source "${HERE}/fx1_config.sh"; use_py_env
 FINAL_DIR=$(cd "${HERE}/../../final_script" && pwd)
-python3 "${FINAL_DIR}/21_kmer_collect.py" --hmm_dir "${FX}/hmm" --ref_dir "$D19" --out_dir "${FX}/introgression" \
+python3 "${FINAL_DIR}/21_kmer_collect.py" --hmm_dir "${FXR}/hmm" --ref_dir "$D19" --out_dir "${FXR}/introgression" \
   --window "$KMER_WINDOW" --noisy_sigma "$KMER_NOISY_SIGMA"

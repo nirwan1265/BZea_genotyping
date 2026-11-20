@@ -7,3 +7,6 @@ data/phenotypes/spats_cache/
 data/introgression_spread/assoc_spats/
 .DS_Store
 data/introgression_fix1/assoc/
+data/introgression_fix1/assoc_y2023/
+data/introgression_fix1/assoc_y2025/
+data/introgression_fix1/assoc_N2025/

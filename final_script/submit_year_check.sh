@@ -20,7 +20,7 @@ NTR=$(wc -w <<< "$TRAITS")
 for Y in 2023 2025; do
   P=${FINAL_DIR}/../data/phenotypes/BZea_spats_BLUEs_${Y}.csv
   [[ -s "$P" ]] || { echo "missing $P"; exit 1; }
-  E="--export=ALL,ASSOC_TAG=y$Y,PHENO=$P,TRAITS=$TRAITS,ASSOC_FIXED_COL=TAXON,TAXON_COL=TAXON"
+  E="--export=ALL,ASSOC_TAG=y$Y,PHENO=$P,ASSOC_FIXED_COL=TAXON,TAXON_COL=TAXON"   # TRAITS is exported above (ALL passes it; spaces would break this list)
   J25=$(sbatch --parsable $E 25_assoc_inputs.sh)
   JS=$(sbatch --parsable $E --dependency=afterok:$J25 26_assoc_scan.sh)
   JP=$(sbatch --parsable $E --dependency=afterok:$J25 --array=1-100 26_assoc_perm.sh)

@@ -1,0 +1,6 @@
+relationship	short_pct	long_pct	short_tracts	long_tracts
+Same taxon, other accession (unrelated: the baseline)	15.7	20.7	12061	7083
+Same accession, other F1 plant	17.0	21.0	4376	2559
+Same F1 plant, other BC1 plant	16.3	20.8	12022	7067
+Same BC1 plant, other BC2 plant	17.4	23.8	8298	4925
+Same BC2 plant	31.8	40.6	9659	5757

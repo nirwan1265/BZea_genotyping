@@ -5,7 +5,7 @@
 #   30   genes + GO in the GWAS regions (taxon and mexicana races)
 #   33a  genes per joint-model QTL      33  SuSiE fine-mapping (PIP)      33b  PIPs into the gene tables
 #   31   GWAS + joint-model figures     31b  DTS by year      24b  introgression landscape      34e  targeted-seq figure
-#   32c  k-mer PCA vs the new calls     checks: tract-length simulation, ra2 x tsh4, NBR Q8 vs flowering
+#   32c  k-mer PCA vs the new calls     checks: tract-length simulation, ra2 x tsh4, NBR Q8 vs flowering, relatives (24c)
 # Inputs: data/introgression_fix1/ (calls, scans, joint QTL, step-25 inputs in assoc/, targseq/).
 # Outputs: data/introgression_fix1/{GO,GO_subtaxon,qtl_genes,finemap_susie,checks,sourmash/pca}, figures/fix1/.
 # The current model's files (data/introgression_spread, qtl_genes/, figures/) are not touched.
@@ -44,4 +44,5 @@ echo "== checks"
 python final_script/tract_length_sim.py --map_dir final_script/genetic_maps --tracts $D/tracts_all.tsv.gz --pool_summary $D/pool_summary.tsv > $D/checks/tract_length_sim.txt
 python final_script/ra2_tsh4_interaction.py --tracts $D/tracts_all.tsv.gz --pool_summary $D/pool_summary.tsv --pheno data/phenotypes/BZea_spats_BLUEs_combined.csv > $D/checks/ra2_tsh4.txt
 python final_script/nbr_q8_flowering_check.py --tracts $D/tracts_all.tsv.gz --pool_summary $D/pool_summary.tsv --pheno data/phenotypes/BZea_spats_BLUEs_combined.csv > $D/checks/nbr_q8.txt
+python final_script/24c_relatives_check.py --base $D --names data/phenotypes/raw/name_change_final.txt --out $D/checks/relatives_check.tsv
 echo "done: $D and $F"

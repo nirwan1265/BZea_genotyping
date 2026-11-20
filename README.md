@@ -1039,27 +1039,30 @@ The relatives are read from the pedigree name. For example, in `Zv.0200_P3_P2_P1
 
 So `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200_P3_P2_P1.2.1.1` and `Zv.0200_P3_P2_P1.3.1.1` all descend from the same BC2 plant, `Zv.0200_P3_P2_P1`, through different selfed lines.
 
-The check works like this (done on the first model's calls, 1,292 pools; not yet repeated on the current model; SEG and DONOR counted together as "introgression"):
+The check works like this (`final_script/24c_relatives_check.py`; current model, 1,266 pools, 19,144 tracts; SEG and DONOR counted together as "introgression"):
 1. Take one tract in one pool.
 2. Take a group of other pools with a given relationship to it, e.g. all pools from the same BC2 plant.
-3. Count how many of those pools also have an introgression at the position of the tract.
+3. Count how many of those pools also have an introgression somewhere inside the tract.
 4. Repeat for every tract in every pool, separately for short (< 10 Mb) and long (≥ 10 Mb) tracts.
 
-The table gives the result as a percentage: for example, 31.4% means that for a short tract in one pool, on average 31.4% of the other pools from the same BC2 plant have an introgression at the same place.
+The table gives the result as a percentage: for example, 31.8% means that for a short tract in one pool, on average 31.8% of the other pools from the same BC2 plant have an introgression in the same place.
 
-| The other pools | Short tracts (< 10 Mb) | Long tracts (≥ 10 Mb) |
-|---|---|---|
-| Same taxon, other accession (unrelated: the baseline) | 17.5% | 23.7% |
-| Same accession, other F1 plant | 17.2% | 22.6% |
-| Same F1 plant, other BC1 plant | 17.1% | 22.6% |
-| Same BC1 plant, other BC2 plant | 17.4% | 24.4% |
-| **Same BC2 plant** | **31.4%** | **43.8%** |
+| The other pools | Short tracts (< 10 Mb) | Long tracts (≥ 10 Mb) | First model: short | First model: long |
+|---|---|---|---|---|
+| Same taxon, other accession (unrelated: the baseline) | 15.7% | 20.7% | 16.0% | 20.8% |
+| Same accession, other F1 plant | 17.0% | 21.0% | 17.0% | 21.3% |
+| Same F1 plant, other BC1 plant | 16.3% | 20.8% | 16.5% | 21.0% |
+| Same BC1 plant, other BC2 plant | 17.4% | 23.8% | 18.1% | 24.2% |
+| **Same BC2 plant** | **31.8%** | **40.6%** | **31.9%** | **40.4%** |
+
+(Tables: `data/introgression_fix1/checks/relatives_check.tsv`, `data/introgression_spread/checks/relatives_check.tsv`. The numbers in `old_model_README.md` (31.4% / 43.8% for the same BC2 plant) came from an earlier version of this count that was not kept; the first-model columns here are recounted with step 24c, so the two models are compared with the same rule.)
 
 - **The baseline is not zero.** Introgressions are common and some genome regions carry them in many pools, so even unrelated pools share some by chance. That's why every row is compared with the baseline, not with zero.
-- **Pools from the same BC2 plant share tracts about 1.8 times as often as unrelated pools** (31.4% vs 17.5% for short tracts, 43.8% vs 23.7% for long tracts).
+- **Pools from the same BC2 plant share tracts about twice as often as unrelated pools** (31.8% vs 15.7% for short tracts, 40.6% vs 20.7% for long tracts).
 - **Short tracts rise by the same factor as long tracts.** If the short tracts were mostly noise, they would not be inherited, and their sharing would stay at the baseline even among close relatives. Since they rise like the long tracts, the short tracts are inherited like the long ones. This is pedigree-consistency evidence, not proof that each call is right: it doesn't tell how many calls are false, or how genome position and donor–assembly similarity affect sharing.
-- **Pools from the same accession but a different BC2 plant do not share more than the baseline.** If the short tracts were an artifact of the accession's donor plant being different from the teosinte assemblies, they would appear at the same places in every pool of that accession. They don't, so that artifact is not what makes them.
-- **Open question:** pools from the same BC1 plant but different BC2 plants should also share more than the baseline, about half the increase seen for the same BC2 plant, because each BC2 plant inherits about half of its BC1 parent's donor segments. They don't (24.4% vs 23.7% for long tracts). Why is not known yet.
+- **The current model's tracts are inherited as well as the first model's.** Every row is within 0.7 points of the first model, although the current model has slightly more short tracts (1.6 instead of 1.3 under 1 Mb per pool; 2.6.5).
+- **Pools from the same accession but a different BC2 plant share hardly more than the baseline** (17.0% vs 15.7%, 21.0% vs 20.7%). If the short tracts were an artifact of the accession's donor plant being different from the teosinte assemblies, they would appear at the same places in every pool of that accession. They don't, so that artifact is not what makes them.
+- **Open question:** pools from the same BC1 plant but different BC2 plants should also share more than the baseline, about half the increase seen for the same BC2 plant, because each BC2 plant inherits about half of its BC1 parent's donor segments. They share only a little more (23.8% vs 20.7% for long tracts: about 15% of the increase seen for the same BC2 plant, not half). Why is not known yet.
 
 **Future work:**
 1. **Read check, with data we already have.** The SNP route (steps 01–12) counted each pool's B73 and teosinte reads at SNP sites. Those reads come from mapping, which loses many donor reads, but they still show which alleles are present:
@@ -1148,16 +1151,16 @@ A kinship matrix that includes the tested region already "contains" the QTL: lin
 
 In a backcross population this matters a lot, because tracts are long and few loci carry most of the donor relatedness.
 
-The table compares the two choices of K on the same data (first model's calls: DTS, 1,284 plots, taxon fixed), using **λ_GC** (the genomic inflation factor; Devlin & Roeder 1999). λ_GC is the median test statistic over all windows divided by the median expected if no window had any effect. λ_GC = 1 means the test statistics look as expected under no effect; above 1, they are larger than expected (inflated); below 1, smaller (deflated, the model is too conservative). In most GWAS a λ_GC well above 1 is read as a warning of uncorrected population structure.
+The table compares the two choices of K on the same data (current model: DTS, 1,260 plots, taxon fixed; first model in brackets), using **λ_GC** (the genomic inflation factor; Devlin & Roeder 1999). λ_GC is the median test statistic over all windows divided by the median expected if no window had any effect. λ_GC = 1 means the test statistics look as expected under no effect; above 1, they are larger than expected (inflated); below 1, smaller (deflated, the model is too conservative). In most GWAS a λ_GC well above 1 is read as a warning of uncorrected population structure.
 
 | K | λ_GC | Best window chr10 (ZmCCT10 region, 94–98 Mb) | Best window chr5 (~221.7 Mb) |
 |---|---|---|---|
-| **LOCO** | 3.97 | −log10 p **9.1**, +1.0 day per teosinte copy | **9.7** |
-| Whole genome | 0.65 | 2.9 | 6.1 |
+| **LOCO** | 4.10 (3.97) | −log10 p **9.1**, +1.0 day per teosinte copy (9.1) | **9.4** (9.7) |
+| Whole genome | 0.59 (0.65) | 2.7 (2.9) | 6.0 (6.1) |
 
 With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC falls **below 1**: the model over-corrects. LOCO is the fix.
 
-**λ_GC under LOCO (~4) needs checking.** λ_GC assumes most markers are null and independent. In this population each QTL is tagged by hundreds of linked windows (tracts of several Mb, and with LOCO the tested chromosome's own background is not in K), and the traits are polygenic, so a high median test statistic is expected even without false positives (Yang et al. 2011). But a high λ_GC can also mean the test is miscalibrated, so this explanation is not proven. Significance is set by **permutation** (next section), and whether that threshold holds when lines are related is still to be checked.
+**λ_GC under LOCO (about 4) needs checking.** λ_GC assumes most markers are null and independent. In this population each QTL is tagged by hundreds of linked windows (tracts of several Mb, and with LOCO the tested chromosome's own background is not in K), and the traits are polygenic, so a high median test statistic is expected even without false positives (Yang et al. 2011). But a high λ_GC can also mean the test is miscalibrated, so this explanation is not proven. Significance is set by **permutation** (next section), and whether that threshold holds when lines are related is still to be checked.
 
 #### 3.3.3 Model
 
@@ -1292,7 +1295,7 @@ MODEL=fix1 TRAITS="DTS DTA ASI PH EH EN BW BL SL SPAD SPAD2 Prolif Kinki NBR LAE
 # Laptop, from the repo root, after copying the outputs to data/introgression_fix1 (rsync commands in new_model/fix1/README.md):
 bash new_model/fix1/fx1_8_laptop.sh
 #   genes + GO (30), genes per QTL (33a), SuSiE fine-mapping (33) and PIPs into the gene tables (33b),
-#   side-by-side figures (31), DTS by year (31b), landscape (24b), targeted sequencing (34e), k-mer PCA (32c), checks
+#   side-by-side figures (31), DTS by year (31b), landscape (24b), targeted sequencing (34e), k-mer PCA (32c), checks (incl. relatives, 24c)
 python final_script/34f_targseq_examples.py --sites data/introgression_fix1/targseq/sites_used.tsv.gz \
   --tracts data/introgression_fix1/tracts_all.tsv.gz --gallery_dir figures/fix1/targseq_all \
   --targseq_tracts data/introgression_fix1/targseq/tracts_targseq.tsv          # all targeted-sequencing samples

@@ -20,7 +20,7 @@ mkdir -p logs
 [[ -s "$P" ]] || { echo "missing $P"; exit 1; }
 Rscript -e 'library(GridLMM); library(qtl2)' > /dev/null 2>&1 || { echo "GridLMM/qtl2 not found: activate the GWAS conda env first"; exit 1; }
 NTR=$(wc -w <<< "$TRAITS")
-E="--export=ALL,ASSOC_TAG=$TAG,PHENO=$P,TRAITS=$TRAITS,ASSOC_FIXED_COL=TAXON,TAXON_COL=TAXON"
+E="--export=ALL,ASSOC_TAG=$TAG,PHENO=$P,ASSOC_FIXED_COL=TAXON,TAXON_COL=TAXON"   # TRAITS is exported above (ALL passes it)
 J25=$(sbatch --parsable $E 25_assoc_inputs.sh)
 JS=$(sbatch --parsable $E --dependency=afterok:$J25 26_assoc_scan.sh)
 JP=$(sbatch --parsable $E --dependency=afterok:$J25 --array=1-100 26_assoc_perm.sh)

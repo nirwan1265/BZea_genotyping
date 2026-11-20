@@ -1,0 +1,3 @@
+trait	qtl	chr	pos_Mb	interval_start_Mb	interval_end_Mb	found_by	carriers	gridlmm_mlog10p	gridlmm_effect_per_copy	lod	mlog10p	lod_joint	mlog10p_joint	effect_per_copy_joint	se	lod_taxa_differ	mlog10p_taxa_differ	pve_alone	threshold_lod
+SPAD	chr1:24750000	chr1	24.75	24.100001	27.6	k-mer scan (step 26)	121	4.56	-1.584	3.82	4.56	3.81	4.55	-1.575	0.376	4.95	3.86	0.0135	
+SPAD	chr10:145850000	chr10	145.85	144.700001	147.3	k-mer scan (step 26)	180	4.7	1.305	3.95	4.7	3.85	4.59	1.283	0.304	0.75	0.31	0.0139	

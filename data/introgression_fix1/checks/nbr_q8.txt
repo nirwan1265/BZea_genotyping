@@ -1,0 +1,5 @@
+1243 pools; 117 carry a donor segment at the gene; 1 differ between the gene and ZmCCT10
+correlation of NBR with: {'DTS': 0.1, 'DTA': 0.11, 'PH': 0.34}
+NBR ~ C(taxon) + g                       effect per copy +0.177  p = 2.5e-09
+NBR ~ C(taxon) + g + DTS                 effect per copy +0.164  p = 5.3e-08
+NBR ~ C(taxon) + g + DTS + DTA + PH      effect per copy +0.108  p = 0.00018

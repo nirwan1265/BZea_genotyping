@@ -1,0 +1,3 @@
+trait	round	qtl	chr	pos_Mb	lod_conditional	mlog10p_conditional	max_r2_with_earlier_qtl
+Prolif	1	chr4:114350000	chr4	114.35	4.34	5.1	0.18
+Prolif	2	chr2:34350000	chr2	34.35	4.21	4.97	0.03

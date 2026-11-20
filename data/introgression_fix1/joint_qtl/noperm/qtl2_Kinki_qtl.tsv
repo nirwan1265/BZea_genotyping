@@ -1,0 +1,7 @@
+trait	qtl	chr	pos_Mb	interval_start_Mb	interval_end_Mb	found_by	carriers	gridlmm_mlog10p	gridlmm_effect_per_copy	lod	mlog10p	lod_joint	mlog10p_joint	effect_per_copy_joint	se	lod_taxa_differ	mlog10p_taxa_differ	pve_alone	threshold_lod
+Kinki	chr2:30050000	chr2	30.05	27.300001	30.2	k-mer scan (step 26)	192	11.51	0.178	10.55	11.5	9.08	10	0.165	0.025	0.59	0.22	0.0402	
+Kinki	chr2:188050000	chr2	188.05	182.200001	191.4	k-mer scan (step 26)	170	4.44	0.116	3.69	4.43	0.1	0.3	0.025	0.037	0.46	0.15	0.0144	
+Kinki	chr2:202150000	chr2	202.15	197.700001	205.2	k-mer scan (step 26)	174	4.71	0.113	3.93	4.68	1.48	2.04	0.091	0.035	0.13	0.02	0.0152	
+Kinki	chr3:158350000	chr3	158.35	152.700001	163.2	k-mer scan (step 26)	155	4.96	-0.124	4.15	4.91	4.75	5.54	-0.13	0.028	1.16	0.6	0.0156	
+Kinki	chr5:221850000	chr5	221.85	220.600001	223.6	k-mer scan (step 26)	111	5.58	-0.15	4.77	5.56	4.88	5.67	-0.149	0.031	0.35	0.09	0.0179	
+Kinki	chr7:42850000	chr7	42.85	39.600001	61.4	k-mer scan (step 26)	113	4.48	0.139	3.74	4.48	3.63	4.36	0.135	0.033	0.94	0.44	0.0144	

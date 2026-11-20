@@ -1,0 +1,9 @@
+trait	qtl	taxon	plots	carriers	seg	donor	effect_per_copy	se	lod
+StPu	chr4:240850000	Zd	227	15	8	7	-0.001	0.003	0.03
+StPu	chr4:240850000	Zh	61	1	1	0			
+StPu	chr4:240850000	Zl	97	7	6	1	0.002	0.007	0.03
+StPu	chr4:240850000	Zv	308	36	20	16	0.032	0.007	4.89
+StPu	chr4:240850000	Zx_Chal	115	18	4	14	0.037	0.02	0.74
+StPu	chr4:240850000	Zx_Dura	146	16	9	7	0.051	0.012	3.59
+StPu	chr4:240850000	Zx_Mesa	164	20	11	9	-0.002	0.004	0.03
+StPu	chr4:240850000	Zx_Nobo	142	17	7	10	-0.003	0.004	0.09

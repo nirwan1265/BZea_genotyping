@@ -1,0 +1,4 @@
+our_call	tracts	n_AA	n_AB	n_BB	n_unclear	share_AA	share_AB	share_BB	Mb_share_AA	Mb_share_AB	Mb_share_BB
+B73	1471	971	34	8	458	0.959	0.034	0.008	0.975	0.023	0.002
+SEG	736	29	272	28	407	0.088	0.827	0.085	0.056	0.926	0.018
+DONOR	761	27	15	335	384	0.072	0.04	0.889	0.044	0.052	0.904

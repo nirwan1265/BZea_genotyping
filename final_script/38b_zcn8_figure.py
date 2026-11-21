@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 """
-38b — README figure for NBR Q6 / ZCN8 (step 38), in the format of 36e (NBR_Q8_rain.png, DTS_CCT10_elevation.png):
-  a  NBR per taxon/race (mexicana split into its four races): mean of plots WITHOUT the segment (open) and WITH it
+38b — README figure for NBR Q6 / ZCN8 (step 38). Top row: dose response; bottom row: the format of 36e
+(NBR_Q8_rain.png, DTS_CCT10_elevation.png).
+  a  NBR by teosinte copies at the window (0 = B73, 1 = segregating pool, 2 = donor): taxon-adjusted mean +- SE over
+     plots; effect per copy and p from step 38 (mixed model y ~ TAXON + dos + LOCO kinship)
+  b  DTA and DTS, the same
+  c  NBR per taxon/race (mexicana split into its four races): mean of plots WITHOUT the segment (open) and WITH it
      (filled), same taxon/race; in grey, the same difference within BC2 families (carrier minus non-carrier sibs from
      the same BC2 plant; families with at least one of each)
-  b  the same for flowering time (--trait2, default DTA), rows in the same order
-  c  one dot per donor accession: its effect on flowering (x) against its effect on NBR (y), carrier minus non-carrier
+  d  the same for flowering time (--trait2, default DTA), rows in the same order
+  e  one dot per donor accession: its effect on flowering (x) against its effect on NBR (y), carrier minus non-carrier
      plots of the same accession (size = carrier plots); Spearman rho across accessions and within taxa/races
 Usage (from the repo root; step-25 inputs as in step 38):
   python final_script/38b_zcn8_figure.py --assoc_in $HOME/bzea_assoc_fix1 --window chr8:126650000 \
-     --out figures/fix1/NBR_Q6_ZCN8.png
+     --tables data/introgression_fix1/zcn8 --out figures/fix1/NBR_Q6_ZCN8.png
 Needs: numpy, pandas, scipy, matplotlib.
 """
 import argparse
@@ -29,6 +33,7 @@ ap.add_argument("--trait2", default="DTA")
 ap.add_argument("--label", default="nodes with brace roots")
 ap.add_argument("--label2", default="days to anthesis")
 ap.add_argument("--title", default="ZCN8")
+ap.add_argument("--tables", default="data/introgression_fix1/zcn8", help="step-38 output folder (zcn8_effects.tsv)")
 ap.add_argument("--out", required=True)
 a = ap.parse_args()
 COL = {"Zd": "#E69F00", "Zh": "#6A3D9A", "Zl": "#009E73", "Zv": "#CC79A7", "Zx_Chal": "#D55E00", "Zx_Dura": "#0072B2",
@@ -96,9 +101,53 @@ def dumbbell(ax, t, label, letter):
     return Gr, Fm
 
 
-fig, ax = plt.subplots(1, 3, figsize=(20, 6.4), gridspec_kw={"width_ratios": [1, 1, 1.15]})
-G1, F1 = dumbbell(ax[0], a.trait, a.label, "a")
-G2, F2 = dumbbell(ax[1], a.trait2, a.label2, "b")
+fig = plt.figure(figsize=(21, 11.6))
+gs = fig.add_gridspec(2, 6, height_ratios=[0.8, 1.15], hspace=0.42, wspace=1.6)
+top = [fig.add_subplot(gs[0, 0:3]), fig.add_subplot(gs[0, 3:6])]
+ax = [fig.add_subplot(gs[1, 0:2]), fig.add_subplot(gs[1, 2:4]), fig.add_subplot(gs[1, 4:6])]
+
+# top row: dose response
+E = pd.read_csv(f"{a.tables}/zcn8_effects.tsv", sep="\t")
+eff = E[E.model.str.startswith("1 ")].set_index("trait")
+
+
+def adj_means(t):
+    d = P.dropna(subset=[t]).copy()
+    d["r"] = d[t] - d.groupby("TAXON")[t].transform("mean") + d[t].mean()
+    return d.groupby("dos").r.agg(["mean", "sem", "size"])
+
+
+def pfmt(p):
+    m, e = f"{p:.1e}".split("e")
+    return f"p = {p:.2g}" if p >= 1e-3 else f"p = {m}×10$^{{{int(e)}}}$"
+
+
+s = adj_means(a.trait)
+top[0].errorbar(s.index, s["mean"], yerr=s["sem"], color="#3B6E8F", marker="o", ms=8, lw=2, capsize=4)
+for x, r in s.iterrows():
+    top[0].text(x + 0.05, r["mean"] - r["sem"] - 0.004, f"{int(r['size'])} plots", fontsize=8, color="#73726c", va="top")
+top[0].set_ylim(s["mean"].min() - s["sem"].max() - 0.03, None)
+e = eff.loc[a.trait]
+top[0].set_title(f"a  {a.label[0].upper() + a.label[1:]} by teosinte copies at {a.window}\n"
+                 f"    {e.beta:+.2f} nodes per teosinte copy ({pfmt(e.p)}, mixed model)", fontsize=9, loc="left")
+top[0].set_ylabel(f"{a.trait}, adjusted for taxon\n(mean ± SE over plots)", fontsize=9)
+for t, mk, fill, dx in ((a.trait2, "o", True, -0.04), ("DTS", "s", False, 0.04)):
+    s = adj_means(t)
+    top[1].errorbar(s.index + dx, s["mean"], yerr=s["sem"], color="#B5502B", marker=mk, ms=7, lw=2 if fill else 1.3,
+                    ls="-" if fill else "--", capsize=4, mfc="#B5502B" if fill else "white", label=t)
+ea, es = eff.loc[a.trait2], eff.loc["DTS"]
+top[1].set_title(f"b  Flowering by teosinte copies at {a.window}\n    days per teosinte copy: {a.trait2} {ea.beta:+.2f} "
+                 f"({pfmt(ea.p)}),  DTS {es.beta:+.2f} ({pfmt(es.p)}), mixed model", fontsize=9, loc="left")
+top[1].set_ylabel("days after planting, adjusted for taxon\n(mean ± SE over plots)", fontsize=9)
+top[1].legend(frameon=False, fontsize=8.5, loc="upper left")
+for z in top:
+    z.set_xticks([0, 1, 2], ["0\nB73", "1\nsegregating", "2\ndonor"], fontsize=8.5)
+    z.set_xlim(-0.3, 2.5)
+    z.set_xlabel("teosinte copies at the window (pool call)", fontsize=9)
+    z.grid(axis="y", color="#e4e4e0", lw=0.8); z.set_axisbelow(True)
+
+G1, F1 = dumbbell(ax[0], a.trait, a.label, "c")
+G2, F2 = dumbbell(ax[1], a.trait2, a.label2, "d")
 
 acc = []
 for k, d in P.groupby("acc"):
@@ -119,14 +168,14 @@ ax[2].axhline(0, color="#d6d4cc", lw=1, zorder=0)
 ax[2].axvline(0, color="#d6d4cc", lw=1, zorder=0)
 ax[2].set_xlabel(f"effect of the segment on {a.label2}\n(carrier minus non-carrier plots, same accession)", fontsize=9)
 ax[2].set_ylabel(f"effect of the segment on {a.label}\n(carrier minus non-carrier plots, same accession)", fontsize=9)
-ax[2].set_title(f"c  One dot per accession (size = carrier plots)\n    {len(A)} accessions: {(A.e1 > 0).sum()} with more brace-root "
+ax[2].set_title(f"e  One dot per accession (size = carrier plots)\n    {len(A)} accessions: {(A.e1 > 0).sum()} with more brace-root "
                 f"nodes, {(A.e2 > 0).sum()} with later {a.trait2}\n    Spearman ρ = {r:.2f} (p = {p:.2g}); "
                 f"within taxa and races ρ = {rw:.2f} (p = {pw:.2g})", fontsize=9, loc="left")
 ax[2].legend(frameon=False, fontsize=8, title="taxon / race (accessions)", title_fontsize=8, loc="upper left", bbox_to_anchor=(1.0, 1.0))
-for z in ax:
+for z in ax + top:
     z.spines[["top", "right"]].set_visible(False)
     z.tick_params(labelsize=8)
-fig.tight_layout()
+fig.subplots_adjust(left=0.095, right=0.875, top=0.94, bottom=0.07)
 os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
 fig.savefig(a.out, dpi=200)
 print(G1.round(2).to_string(index=False)); print(G2.round(2).to_string(index=False))

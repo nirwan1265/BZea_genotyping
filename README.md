@@ -5,19 +5,109 @@ This repository goes from raw paired-end reads of **pooled, low-coverage (~0.8×
 - **Introgressions are called from k-mers**, not from mapped SNPs: for each pool, which B73 single-copy 31-mers its reads contain, per 100-kb window, decoded with an HMM that models the pool: each window is **B73** (all 6 plants AA), **DONOR** (all BB) or **SEG** (segregating: the plants are a mix of AA, AB and BB).
 - **QTL are mapped on that k-mer ancestry**: a genome scan (k-mer ancestry GWAS, GridLMM with leave-one-chromosome-out kinship) finds the peaks, and a joint QTL model (R/qtl2) fits them together, with an effect for each teosinte taxon. Each QTL interval is then fine-mapped (SuSiE).
 
-> **This README describes the current model (adopted 20 November 2026).** It differs from the first model in two places, both in how the HMM is fed, not in the HMM itself: where the teosinte shares most of the B73 k-mers, only the **informative** k-mers are counted (B73 k-mers missing from every assembly of the taxon), and the DONOR level of each window is **learned from our own pools** instead of taken from assemblies of other plants (section [2.6.6](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)). Checked against targeted sequencing of the same plots (three bad samples left out), SEG calls that are heterozygous rose from 74% to 86% and DONOR calls that are homozygous teosinte from 91% to 95% (section 2.9.1); the genome-wide shares and the GWAS scans hardly change. The first model, with all its results, is kept in [`old_model_README.md`](old_model_README.md) (results in `data/introgression_spread/`).
+> **This README describes the current model (adopted 20 November 2026).** It differs from the first model in two places, both in how the HMM is fed, not in the HMM itself: where the teosinte shares most of the B73 k-mers, only the **informative** k-mers are counted (B73 k-mers missing from every assembly of the taxon), and the DONOR level of each window is **learned from our own pools** instead of taken from assemblies of other plants (section [2.6.6](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)). Checked against targeted sequencing of the same plots (three bad samples left out; tracts ≥ 1 Mb that the targeted data could classify, about half of the SEG and DONOR tracts), SEG tracts whose data look intermediate (AB-like) rose from 74% to 86% and DONOR tracts whose data look homozygous teosinte from 91% to 95% (section 2.9.1). The targeted sequencing also helped choose between model versions, so it is not an untouched test set; the genome-wide shares and the GWAS scans hardly change. The first model, with all its results, is kept in [`old_model_README.md`](old_model_README.md) (results in `data/introgression_spread/`).
 
 > **Pipeline and commands from the k-mer and SNP steps on:** [`final_script/`](final_script/README.md) (the pre-processing scripts are not in the repository yet; see Section 1). Results tables: [`data/introgression_fix1/`](data/introgression_fix1/). Figures: [`figures/`](figures/).
+
+## At a glance
+
+- **Donor DNA:** the lines carry 8.0% donor alleles instead of the 12.5% expected; the whole shortfall is in DONOR (homozygous teosinte: 4.93% of the genome vs 9.38% expected), while SEG is as expected (6.24% vs 6.25%). Why: [2.8.1](#281-why-is-there-less-donor-dna-than-expected).
+- **Validation:** targeted sequencing of 83 plots agrees with our calls where it can classify a tract (≥ 1 Mb; three bad samples left out): 96.6% of B73, 95.2% of DONOR and 85.8% of SEG tracts, in every taxon. See [2.9.1](#291-independent-check-targeted-sequencing-of-83-plots).
+- **QTL:** 81 QTL hold in the joint model across 12 traits; 72 of them are also found by a stepwise mixed model. Overview table and every trait: [3.6](#36-results).
 
 ## Contents
 
 - [Words used in this README](#words-used-in-this-readme)
-- [The BZea population](#bzea-breeding-scheme): breeding scheme and expected genotype proportions
-- [Overview](#overview) and [software](#software-and-packages)
+- [The BZea population](#bzea-breeding-scheme): breeding scheme and expected genotype proportions in plants and pools
+- [Overview](#overview) of the pipeline and the [software](#software-and-packages)
 - [Section 1 — Pre-processing](#section-1--pre-processing): demultiplexing, trimming, alignment
-- [Section 2 — Introgression calling](#section-2--introgression-calling): the k-mer HMM, results, validation, population structure
-- [Section 3 — k-mer ancestry GWAS and joint QTL mapping](#section-3--k-mer-ancestry-gwas-and-joint-qtl-mapping): phenotypes, methods, results for 17 traits (11 in detail), *mexicana* races, candidate genes
+- [Section 2 — Introgression calling](#section-2--introgression-calling): the k-mer HMM ([2.4](#24-how-it-works)–[2.6](#26-the-hmm-in-detail)), [results](#28-results), [validation](#29-validation), [population structure](#210-population-structure-from-k-mers-step-32), [limitations](#213-limitations-and-future-work)
+- [Section 3 — k-mer ancestry GWAS and joint QTL mapping](#section-3--k-mer-ancestry-gwas-and-joint-qtl-mapping): [methods](#33-analysis-1-k-mer-ancestry-gwas), [how to run](#35-how-to-run), [results](#36-results) for [DTS](#361-days-to-silking-dts) · [DTA](#362-days-to-anthesis-dta) · [ASI](#363-anthesissilking-interval-asi) · [NBR](#364-nodes-with-brace-roots-nbr) · [SPAD](#365-leaf-greenness-after-silking-spad-2023-only) · [PH](#366-plant-height-ph) · [EH](#367-ear-height-eh) · [EN](#368-ear-number-en-number-of-nodes-with-ears) · [Prolif](#369-prolificacy-prolif-most-ears-on-one-node) · [SL](#3610-sheath-length-sl-2023-only) · [BL](#3611-blade-length-bl-2023-only) · [BW](#3612-blade-width-bw-2023-only) · [shared regions](#3613-regions-shared-between-traits) · [*mexicana* races](#3614-mexicana-split-by-race-subtaxon) · [other traits](#3615-other-traits)
 - [Section 4 — References](#section-4--references)
+
+<details><summary><b>Full contents</b> (every section)</summary>
+
+- **[BZea Breeding Scheme](#bzea-breeding-scheme)**
+- **[Expected genotype proportions (per locus)](#expected-genotype-proportions-per-locus)**
+  - [Step 1 — Two backcrosses (BC2)](#step-1--two-backcrosses-bc2)
+  - [Step 2 — Selfing a heterozygote](#step-2--selfing-a-heterozygote)
+  - [Two levels: plants and pools](#two-levels-plants-and-pools)
+  - [Step 3 — One BC2S3 plant (three selfs)](#step-3--one-bc2s3-plant-three-selfs)
+  - [Step 4 — One pool (6 BC2S3 siblings)](#step-4--one-pool-6-bc2s3-siblings)
+  - [Step 5 — From pool states back to plants](#step-5--from-pool-states-back-to-plants)
+  - [Implication for low-pass pooled genotyping](#implication-for-low-pass-pooled-genotyping)
+- **[Overview](#overview)**
+  - [1. Pre-processing (Section 1)](#1-pre-processing-section-1)
+  - [2. Introgression calling (Section 2)](#2-introgression-calling-section-2)
+  - [3. k-mer ancestry GWAS and joint QTL mapping (Section 3)](#3-k-mer-ancestry-gwas-and-joint-qtl-mapping-section-3)
+- **[Software and packages](#software-and-packages)**
+  - [Genotyping](#genotyping)
+  - [Imputation and Variant handling](#imputation-and-variant-handling)
+  - [Introgression inference (k-mers + HMM)](#introgression-inference-k-mers--hmm)
+  - [Phenotypes and QTL / association mapping](#phenotypes-and-qtl--association-mapping)
+  - [Gene annotation resources](#gene-annotation-resources)
+- **[Section 1 — Pre-processing](#section-1--pre-processing)**
+  - [1.1 Demultiplexing](#11-demultiplexing)
+  - [1.2 Trimming and quality filtering](#12-trimming-and-quality-filtering)
+  - [1.3 Alignment and BAM processing (SNP route)](#13-alignment-and-bam-processing-snp-route)
+- **[Section 2 — Introgression calling](#section-2--introgression-calling)**
+  - [2.1 What a sample is](#21-what-a-sample-is)
+  - [2.2 The problem: mapping reads and calling SNPs at 0.8x in pools](#22-the-problem-mapping-reads-and-calling-snps-at-08x-in-pools)
+  - [2.3 The solution: k-mers](#23-the-solution-k-mers)
+  - [2.4 How it works](#24-how-it-works)
+  - [2.5 How r is calculated: a worked example](#25-how-r-is-calculated-a-worked-example)
+  - [2.6 The HMM in detail](#26-the-hmm-in-detail)
+    - [2.6.1 Emissions: how well does r fit each state?](#261-emissions-how-well-does-r-fit-each-state)
+    - [2.6.2 Transitions: how often can the state change?](#262-transitions-how-often-can-the-state-change)
+    - [2.6.3 Calling the states](#263-calling-the-states)
+    - [2.6.4 What is fitted, and where](#264-what-is-fitted-and-where)
+    - [2.6.5 How long are the tracts?](#265-how-long-are-the-tracts)
+    - [2.6.6 The current model: informative k-mers and DONOR levels from our pools](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)
+  - [2.7 How k-mers solve mapping bias, low depth and pooling](#27-how-k-mers-solve-mapping-bias-low-depth-and-pooling)
+    - [2.7.1 Why not a SNP-based AA/AB/BB HMM (e.g. RTIGER)?](#271-why-not-a-snp-based-aaabbb-hmm-eg-rtiger)
+  - [2.8 Results](#28-results)
+    - [2.8.1 Why is there less donor DNA than expected?](#281-why-is-there-less-donor-dna-than-expected)
+  - [2.9 Validation](#29-validation)
+    - [2.9.1 Independent check: targeted sequencing of 83 plots](#291-independent-check-targeted-sequencing-of-83-plots)
+  - [2.10 Population structure from k-mers (step 32)](#210-population-structure-from-k-mers-step-32)
+  - [2.11 Noisy pools and resequencing](#211-noisy-pools-and-resequencing)
+  - [2.12 Interactive figures (step 23)](#212-interactive-figures-step-23)
+  - [2.13 Limitations and future work](#213-limitations-and-future-work)
+- **[Section 3 — k-mer ancestry GWAS and joint QTL mapping](#section-3--k-mer-ancestry-gwas-and-joint-qtl-mapping)**
+  - [3.1 Combining a k-mer ancestry GWAS with joint QTL mapping](#31-combining-a-k-mer-ancestry-gwas-with-joint-qtl-mapping)
+  - [3.2 Phenotypes](#32-phenotypes)
+  - [3.3 Analysis 1: k-mer ancestry GWAS](#33-analysis-1-k-mer-ancestry-gwas)
+    - [3.3.1 Genotypes and kinship](#331-genotypes-and-kinship)
+    - [3.3.2 Why LOCO, and not one K for the whole genome](#332-why-loco-and-not-one-k-for-the-whole-genome)
+    - [3.3.3 Model](#333-model)
+    - [3.3.4 Significance: permutations](#334-significance-permutations)
+    - [3.3.5 Regions and genes](#335-regions-and-genes)
+  - [3.4 Analysis 2: joint QTL model with per-taxon effects](#34-analysis-2-joint-qtl-model-with-per-taxon-effects)
+    - [3.4.1 Why the joint model starts from the peaks, and not from all windows at once](#341-why-the-joint-model-starts-from-the-peaks-and-not-from-all-windows-at-once)
+    - [3.4.2 Why some QTL show fewer taxa](#342-why-some-qtl-show-fewer-taxa)
+    - [3.4.3 Fine-mapping inside the support interval: how likely is each window?](#343-fine-mapping-inside-the-support-interval-how-likely-is-each-window)
+  - [3.5 How to run](#35-how-to-run)
+  - [3.6 Results](#36-results)
+    - [3.6.1 Days to silking (DTS)](#361-days-to-silking-dts)
+    - [3.6.2 Days to anthesis (DTA)](#362-days-to-anthesis-dta)
+    - [3.6.3 Anthesis–silking interval (ASI)](#363-anthesissilking-interval-asi)
+    - [3.6.4 Nodes with brace roots (NBR)](#364-nodes-with-brace-roots-nbr)
+    - [3.6.5 Leaf greenness after silking (SPAD; 2023 only)](#365-leaf-greenness-after-silking-spad-2023-only)
+    - [3.6.6 Plant height (PH)](#366-plant-height-ph)
+    - [3.6.7 Ear height (EH)](#367-ear-height-eh)
+    - [3.6.8 Ear number (EN; number of nodes with ears)](#368-ear-number-en-number-of-nodes-with-ears)
+    - [3.6.9 Prolificacy (Prolif; most ears on one node)](#369-prolificacy-prolif-most-ears-on-one-node)
+    - [3.6.10 Sheath length (SL; 2023 only)](#3610-sheath-length-sl-2023-only)
+    - [3.6.11 Blade length (BL; 2023 only)](#3611-blade-length-bl-2023-only)
+    - [3.6.12 Blade width (BW; 2023 only)](#3612-blade-width-bw-2023-only)
+    - [3.6.13 Regions shared between traits](#3613-regions-shared-between-traits)
+    - [3.6.14 *mexicana* split by race (SUBTAXON)](#3614-mexicana-split-by-race-subtaxon)
+    - [3.6.15 Other traits](#3615-other-traits)
+  - [3.7 What is new here](#37-what-is-new-here)
+  - [3.8 Limitations](#38-limitations)
+- **[Section 4 — References](#section-4--references)**
+
+</details>
 
 ## Words used in this README
 
@@ -502,7 +592,7 @@ The first model took each window's DONOR level d_w from teosinte assemblies of *
 - The assemblies have none of the informative k-mers by construction, so in switched windows the DONOR level, and its spread between our donors (τ_w), come from our pools called DONOR there.
 - 33% (*diploperennis*) to 53% (*huehuetenangensis*) of the windows where both contrasts could be measured switched. At *parviglumis* chr7 54–65 Mb, 95% of windows switched and the contrast rose from 1.2 to 2.6. (Contrasts after switching are somewhat optimistic, because windows were chosen where the measured new contrast was higher; the targeted sequencing below is the unbiased check.)
 
-**Result.** The two fixes were tested one by one and together, each time with the whole pipeline (HMM, calls) and the targeted sequencing (section 2.9.1, the three bad samples of its point 6 left out), which is independent of our calls:
+**Result.** The two fixes were tested one by one and together, each time with the whole pipeline (HMM, calls) and the targeted sequencing (section 2.9.1, the three bad samples of its point 6 left out). The targeted data are independent of our calls, but because they were used to choose between these versions, they are not an untouched test of the chosen one (a test on held-out families would be):
 
 | Check | First model | Learned levels only | Informative k-mers only | **Both (current)** |
 |---|---|---|---|---|
@@ -659,7 +749,7 @@ The lines carry 8.0% donor alleles instead of 12.5%. All of the shortfall is in 
 - But it gets the split wrong: it should lower SEG too (to about 5.2%), while SEG is on expectation and DONOR is even lower. So something acts **against BB more than against AB**.
 - That is what choosing the best-looking plant to advance does, if teosinte effects are mostly recessive:
   - **Selecting against teosinte.** A BB plant shows the teosinte form of the traits its segment controls (e.g. smaller or harder ears), with no B73 copy to mask it, so it is less often chosen. An AB plant still has a B73 copy, which often hides the teosinte effect.
-  - **Selecting for vigour.** An AB plant is a small "hybrid" between B73 and teosinte at that segment and can be more vigorous than either homozygote; picking the best-looking ears is in part picking for that vigour.
+  - **Selecting for vigour (a hypothesis).** An AB plant is a small "hybrid" between B73 and teosinte at that segment and might be more vigorous than either homozygote; if so, picking the best-looking ears would in part pick for that vigour. Our ancestry data do not test this; single-plant genotypes with plant vigour scores would.
   - **Hidden harmful alleles.** Teosinte is outcrossing, so it carries recessive harmful alleles that do no harm in AB plants but show up in BB plants (the same reason maize inbreeding reduces vigour).
 
 **Check 3: comparison with TeoNAM.** TeoNAM (Chen et al. 2019; 1,257 BC1S4 lines) is a maize × teosinte population made the same way (backcross, then selfing). It also kept less teosinte than Mendel predicts: 15% of SNP calls were homozygous teosinte (14.2–16.2% across its five subpopulations) against 23.4% expected, and 8.1% were heterozygous against 3.1% expected. The authors' explanation is the one we reach above: "unconscious selection for more heterozygous plants", and, at the region with the highest heterozygosity near *tga1*, selection against plants homozygous for the teosinte allele, which "have poor ear and kernel quality". Our lab's earlier lines also showed more heterozygosity than expected.
@@ -696,13 +786,13 @@ Two observed values cannot set three numbers, so one is kept at 0.5 in turn. Thi
 
 - The donor share inside SEG pools (0.455) is closer to the "selection during selfing" case (0.447) than to the "selection at the backcross" case (0.500). The model uses one average for the whole genome; the truth is probably a mix of the two cases.
 
-**Check 4: are the calls right?** Independent data say yes. 83 of our plots were also genotyped by high-depth targeted sequencing, and every tract of ours (≥ 1 Mb) was compared with it (details in [2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)). **95.9% of our B73 tracts carry no teosinte (97.5% of their length), and only 0.8% are homozygous teosinte**; 89% of our DONOR tracts are homozygous teosinte. So the low DONOR share is not DONOR called as B73: the teosinte really is missing. Inside our SEG tracts the targeted sequencing gives a median donor allele fraction of 0.45, close to the 0.46 of Check 1.
+**Check 4: are the calls right?** Independent data agree where they can be compared. 83 of our plots were also genotyped by high-depth targeted sequencing, and every tract of ours (≥ 1 Mb) was compared with it (details in [2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)). **95.9% of our B73 tracts carry no teosinte (97.5% of their length), and only 0.8% are homozygous teosinte**; 89% of our DONOR tracts are homozygous teosinte. So the low DONOR share is not explained by large DONOR tracts called B73 (tracts < 1 Mb and tracts the panel could not classify are not checked). Inside our SEG tracts the targeted sequencing gives a median donor allele fraction of 0.45, close to the 0.46 of Check 1.
 
-**So:** selection for good-looking plants, at two levels, explains the pattern: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.45–0.46). TeoNAM's authors explained their excess of heterozygous and maize genome the same way, and the targeted sequencing (Check 4) rules out calling errors as the cause. Lower survival of teosinte-carrying seeds and seedlings may add to it.
+**So:** the pattern is consistent with a loss of donor homozygotes during population development, acting more on BB than on AB. Selection for good-looking plants at two levels fits it: choosing the plant to advance removes BB mothers (low DONOR), and choosing the best-looking plants for the pool lowers the donor share inside SEG pools (0.45–0.46). TeoNAM's authors explained their excess of heterozygous and maize genome the same way. But selection is a likely explanation, not a demonstrated cause: lower survival or fertility of teosinte-carrying plants, segregation distortion, differences between donor parents, and calling errors in regions the targeted panel does not cover could add to it. What would separate them: single-plant genotypes from the same plots (AA : AB : BB inside SEG plots, and whether BB plants are missing before or after selection), and seed or seedling counts by genotype.
 
 **Caveats.**
 - The transmission calculation assumes the same loss in every generation and in both sexes; it is a rough guide.
-- Call errors (DONOR called B73) are ruled out for tracts of 1 Mb or more (Check 4); shorter tracts were not checked.
+- Large call errors (DONOR called B73) are unlikely for tracts of 1 Mb or more that the panel could classify (Check 4); shorter tracts and unclassified tracts were not checked.
 - Because the pooled plants were chosen, a SEG pool's donor copies are not exactly Binomial(12, ½) as the HMM assumes. The shift (0.455 vs 0.5) is small compared with the spread the SEG emission already allows.
 
 Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`, which passes the model's DONOR levels with `MODEL=fix1`; per-pool and per-taxon tables: `data/introgression_fix1/seg_donor_copies*.tsv`).
@@ -714,11 +804,11 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
 - **A second k-mer measure (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa, in both models). It uses other k-mers (teosinte k-mers present, not B73 k-mers missing) but the same reads, so it is complementary, not fully independent. It checks the total donor share, not the SEG/DONOR split.
 
-- **Targeted sequencing of 83 plots (section 2.9.1):** an independent, high-depth genotype for the same plots agrees with our calls: 95.9% of our B73 tracts carry no teosinte, 89% of our DONOR tracts are homozygous teosinte, and 83% of our SEG tracts are heterozygous.
+- **Targeted sequencing of 83 plots (section 2.9.1):** independent, high-depth data for the same plots agree with our calls where they can classify a tract (69% of B73, 45% of SEG and 50% of DONOR tracts ≥ 1 Mb): 95.9% of our B73 tracts carry no teosinte, 89% of our DONOR tracts look homozygous teosinte, and 83% of our SEG tracts look intermediate (AB-like).
 
 #### 2.9.1 Independent check: targeted sequencing of 83 plots
 
-**Data.** 96 of our plots were also genotyped by targeted sequencing: a fixed panel of SNP regions, sequenced at high depth (paired-end reads; median 23 reads per SNP in our comparison). The samples are named after the plot (e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`), and all 96 match a plot of ours. 95 samples had both read files, 94 aligned, 86 belong to a pool with k-mer calls in the current model (88 in the first; two pools are now among the noisy pools), and **83** had enough SNPs to compare. The DNA is thought to come from one plant of each plot, but this is not yet confirmed (see "One plant or a bulk?" below).
+**Data.** 96 of our plots were also genotyped by targeted sequencing: a fixed panel of SNP regions, sequenced at high depth (paired-end reads; median 23 reads per SNP in our comparison). The samples are named after the plot (e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`), and all 96 match a plot of ours. 95 samples had both read files, 94 aligned, 86 belong to a pool with k-mer calls in the current model (88 in the first; two pools are now among the noisy pools), and **83** had enough SNPs to compare. The DNA is most probably a **bulk of several plants of the plot**, not one plant (lab, November 2026; still to be confirmed; see "One plant or a bulk?" below). So "AA / AB / BB" below describe what the data look like (no, intermediate or near-complete donor allele fraction), not the genotype of one plant.
 
 **Methods.**
 1. **Reads to SNPs** (steps 34, 34b). Adapters trimmed (fastp), reads aligned to B73 v5 (bwa mem; duplicates kept, since the panel may be amplicon-based), and variable sites found in all samples together (bcftools mpileup with mapping and base quality ≥ 20, multi-sample call, biallelic SNPs with QUAL ≥ 30): 656,483 SNPs. Kept: sites with ≥ 10 reads in ≥ 20 samples, and not carrying the alternative allele in more than half of the samples (at any one place most pools are B73, so such sites are paralogs or places where our B73 differs from the reference): **84,813 sites**.
@@ -745,12 +835,12 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 | **SEG** | 736 | 329 | 8.8% | **82.7%** (92.6% of Mb) | 8.5% |
 | **DONOR** | 761 | 377 | 7.2% | 4.0% | **88.9%** (90.4% of Mb) |
 
-All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71.1** / 7.7%, DONOR 9.1 / 5.0 / **85.9%**. Without the three bad samples of point 6, the current model gives B73 96.6 / 3.0 / 0.4%, SEG 5.7 / 85.8 / 8.5%, DONOR 1.7 / 3.1 / 95.2% (the comparison of the models in 2.6.6 uses this set).
+Percentages are of the clearly called tracts only (B73 69%, SEG 45%, DONOR 50% of all tracts ≥ 1 Mb; the rest have too few informative SNPs). They measure agreement where the targeted panel is informative, not the accuracy of every tract. All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71.1** / 7.7%, DONOR 9.1 / 5.0 / **85.9%**. Without the three bad samples of point 6, the current model gives B73 96.6 / 3.0 / 0.4%, SEG 5.7 / 85.8 / 8.5%, DONOR 1.7 / 3.1 / 95.2% (the comparison of the models in 2.6.6 uses this set).
 
-1. **91% of the targeted-sequencing "SNPs" were amplification errors.** Of the 84,813 sites, only 7,666 are homozygous for the alternative allele in any sample. The others carry the alternative allele at a fraction of about 0.3, at random sites, in single samples; they are not shared by relatives and do not come from another sample in the batch. This fits errors made early in the amplification, which are then copied. On all sites, about 1 in 100 sites inside our B73 tracts looked like donor alleles, and a first comparison called 74% of our B73 tracts "AB". On real SNPs the contrast is clean: donor alleles at 0.6 per 100 SNPs in our B73 tracts, 16.5 in SEG and 25.3 in DONOR (figure, a).
-2. **Our B73 calls are right.** 95.9% of our B73 tracts (97.5% of their length) show no teosinte, and 0.8% are homozygous teosinte. So DONOR is not being called B73, and the low DONOR share (section 2.8.1) is real.
-3. **Our DONOR calls are right.** 89% of our DONOR tracts (90% of their length) are homozygous teosinte (86% in the first model), with a median donor allele fraction of **1.00** in the carrier tracts (figure, c); the targeted sequencing has no bias towards the B73 allele. Most of the 7% that look AA (21 of 27) come from the three bad samples in point 6; without them, 95% of DONOR tracts are BB.
-4. **Our SEG calls are heterozygous.** 83% of our SEG tracts are AB (71% in the first model), with a median donor allele fraction of **0.45** (300 carrier tracts; figure, c). SEG tracts where the plant carries no teosinte fell from 21% to 9%. This is close to the 0.455 measured from the k-mers inside SEG pools (Check 1 in 2.8.1), so two independent methods give the same number.
+1. **Only 9% of the candidate SNPs pass our check.** Of the 84,813 sites, only 7,666 are homozygous for the alternative allele in any sample; the others were left out because they could not be confirmed this way. Most of them carry the alternative allele at a fraction of about 0.3, at random sites, in single samples; they are not shared by relatives and do not come from another sample in the batch. Many look like errors made early in the amplification and then copied, but a site that fails the check is not necessarily an error (a real SNP can be rare, or heterozygous in every sample that has it). On all sites, about 1 in 100 sites inside our B73 tracts looked like donor alleles, and a first comparison called 74% of our B73 tracts "AB". On real SNPs the contrast is clean: donor alleles at 0.6 per 100 SNPs in our B73 tracts, 16.5 in SEG and 25.3 in DONOR (figure, a).
+2. **Our B73 calls agree.** 95.9% of our B73 tracts (97.5% of their length) show no teosinte, and 0.8% are homozygous teosinte. So large DONOR tracts are not being called B73, and the low DONOR share (section 2.8.1) is not explained by that error.
+3. **Our DONOR calls agree.** 89% of our DONOR tracts (90% of their length) look homozygous teosinte (86% in the first model), with a median donor allele fraction of **1.00** in the carrier tracts (figure, c); the targeted sequencing has no bias towards the B73 allele. Most of the 7% that look AA (21 of 27) come from the three bad samples in point 6; without them, 95% of DONOR tracts are BB.
+4. **Our SEG tracts look intermediate.** 83% of our SEG tracts are AB-like (71% in the first model), with a median donor allele fraction of **0.45** (300 carrier tracts; figure, c). SEG tracts where the plant carries no teosinte fell from 21% to 9%. This is close to the 0.455 measured from the k-mers inside SEG pools (Check 1 in 2.8.1), so two independent methods give the same number.
 5. **Missed introgressions are rare.** Inside our B73 tracts, 176 of 20,730 windows of 2 Mb (in 55 samples) carry more donor alleles than noise allows, against about 21 expected by chance. That is under 1% of the B73-called genome. Their median donor allele fraction is 0.37, so they are short intermediate (SEG-like) pieces at most, not missed DONOR.
 6. **Three samples are bad and explain most mismatches:**
    - `Zv0480_P3_P2_P1211` is **contaminated**: 53% of its stray donor alleles (inside our B73 tracts) are homozygous-donor sites of `Zx0550_P4_P3_P5311`, a *mexicana* sample. This explains why its DONOR regions show intermediate fractions (mean 0.44).
@@ -773,6 +863,26 @@ All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71
    | *parviglumis* | 3.3 (41%) | 3.8 (21%) |
 
    *parviglumis*, the closest relative of maize, shares the most k-mers with B73, so its DONOR and SEG are still the hardest to tell apart (the "current" column is somewhat optimistic, since windows switched where the measured new contrast was higher). The contrast is per window: the HMM pools the evidence of a whole stretch, so low contrast makes DONOR vs SEG harder, not impossible. **B73 vs introgressed is not affected**, and with it the ancestry dosage used in the GWAS except for the ½-vs-1 step.
+
+8. **By taxon and *mexicana* race** (three bad samples left out; clearly called tracts ≥ 1 Mb; all counts, including unclear tracts, in `data/introgression_fix1/targseq/concordance_by_taxon.tsv`):
+
+   | Taxon / race | Samples | B73 tracts with no teosinte | SEG tracts AB-like | DONOR tracts BB-like | SEG tracts that look BB | DONOR tracts that look AB |
+   |---|---|---|---|---|---|---|
+   | *diploperennis* | 7 | 86 of 87 (98.9%) | 20 of 22 (90.9%) | 10 of 11 (90.9%) | 0 | 1 |
+   | *huehuetenangensis* | 3 | 32 of 33 (97.0%) | 9 of 10 (90.0%) | 9 of 9 (100.0%) | 0 | 0 |
+   | *luxurians* | 6 | 67 of 68 (98.5%) | 10 of 13 (76.9%) | 7 of 7 (100.0%) | 0 | 0 |
+   | *parviglumis* | 21 | 246 of 262 (93.9%) | 88 of 101 (87.1%) | 98 of 102 (96.1%) | 7 | 4 |
+   | *mexicana* | 43 | 511 of 525 (97.3%) | 145 of 171 (84.8%) | 210 of 222 (94.6%) | 20 | 6 |
+   | &nbsp;&nbsp;*mexicana* Chalco | 9 | 109 of 111 (98.2%) | 35 of 42 (83.3%) | 39 of 41 (95.1%) | 3 | 0 |
+   | &nbsp;&nbsp;*mexicana* Durango | 8 | 91 of 93 (97.8%) | 25 of 27 (92.6%) | 32 of 35 (91.4%) | 1 | 1 |
+   | &nbsp;&nbsp;*mexicana* Mesa Central | 21 | 253 of 262 (96.6%) | 74 of 90 (82.2%) | 116 of 121 (95.9%) | 15 | 3 |
+   | &nbsp;&nbsp;*mexicana* Nobogame | 5 | 58 of 59 (98.3%) | 11 of 12 (91.7%) | 23 of 25 (92.0%) | 1 | 2 |
+   | **All** | 80 | 942 of 975 (96.6%) | 272 of 317 (85.8%) | 334 of 351 (95.2%) | 27 | 11 |
+
+   - Agreement is similar in every taxon: B73 94–99%, DONOR 91–100%, SEG 77–93%.
+   - **The SEG/DONOR mix-ups are almost all in *parviglumis* and *mexicana*:** SEG tracts that look BB (7 and 20; 15 of them in Mesa Central) and DONOR tracts that look AB (4 and 6). These are the taxa with the lowest contrast and the SEG islands of point 7.
+   - ***huehuetenangensis* and *luxurians* have neither.** This bears on τ_w (2.6.1): each of these taxa has only one assembly, so the uncertainty of its DONOR level cannot be measured from assemblies and is set to 0. If that made their DONOR calls overconfident, some true SEG would be called DONOR, and those DONOR tracts would look AB-like; none of their 16 DONOR tracts does. The numbers are small (16 DONOR and 23 SEG tracts in 9 samples), so this shows no sign of the problem rather than ruling it out (a sensitivity run is in 2.13).
+   - The three *luxurians* SEG tracts that miss look AA, not BB.
 
 **Examples: our calls against the targeted sequencing.** The targeted sequencing has no calls of its own. We align its reads and call its SNPs (steps 34–34c), and then only **describe** what those SNPs look like: AB-like (donor allele fraction around 0.5), BB-like (about 1) or no donor allele. The tract-level summary uses **our** tract boundaries, so it says whether the data inside a tract of ours look like what we called; it cannot say where a tract really starts or ends. Each panel is one sample and one chromosome, in three rows:
 - **OUR call:** our HMM call of the 6-plant pool, from the 0.8x skim-seq: B73 (grey), SEG (blue) or DONOR (orange);
@@ -891,11 +1001,11 @@ Same three rows and the same "ours · data look" labels as above, for every chro
 
 **How to read the SNPs:** they come in clusters (one targeted region each, often 5–30 SNPs), so points stack at one position; and SNPs of one region can differ (for example 0.3 and 0.95 at chr4 186.9 Mb), probably from amplification bias. So a region is read from all its SNPs together, and a tract from its median (as in the table).
 
-**One plant or a bulk?** This matters only for the SEG row, and it waits for confirmation of what DNA was sequenced:
+**One plant or a bulk?** This matters only for the SEG row. The DNA is most probably a bulk (see Data), which is also what the data say:
 - **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 9 : 83 : 9 among the clearly called tracts (21 : 71 : 8 in the first model), which would mean both homozygotes are strongly depleted. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.36–0.52).
 - **If it is a bulk of several plants,** the SEG fraction should be about 0.46, which is what we see, and nearly all SEG tracts would look intermediate (AB), which is also what we see.
 - Single samples point the same way: in good example 4 (`Zv0480_P3_P1_P1211`, chr5) the fraction sits between AB and BB at amplicon after amplicon, which one plant cannot do.
-- The data lean towards a bulk, but the B73 and DONOR rows hold either way: they are the validation.
+- In a bulk, "AB-like" is a mixture of plants, not one heterozygous plant: the SEG row then checks that the plot segregates and how much donor DNA it carries (0.45), not the plants' genotypes. The B73 and DONOR rows hold either way (every plant of such a plot is AA, or BB); they are the main validation.
 
 **Limits.** A tract's call is the median over its SNPs, so one amplicon with many SNPs can outvote the rest (bad example 4); counting per amplicon would be fairer and is not done yet. Only tracts of 1 Mb or more were compared, so short tracts are still unchecked; many tracts had too few panel SNPs for a clear call (31–55% unclear); and two samples were not aligned (one had only an R2 file, one job ran out of time) and were not rerun.
 
@@ -1033,13 +1143,14 @@ To view it, download the file and open it in a browser. GitHub shows HTML files 
 
 **Short tracts aren't proven yet.** The k-mer HMM calls tracts down to about 400 kb. Short tracts are expected from the crossing scheme ([Tract lengths](#265-how-long-are-the-tracts)), and they are shared by relatives as often as long tracts (below), but single short calls haven't been checked with independent data.
 
-**SEG vs DONOR is checked with targeted sequencing** ([2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)): our DONOR tracts are homozygous teosinte (89%; 95% without the three bad samples), our SEG tracts heterozygous (83% AB, donor allele fraction 0.45) and our B73 tracts clean (96%). What is still open is whether the targeted-sequencing DNA is one plant or a bulk, which decides how the SEG row is read, and tracts shorter than 1 Mb, which were not compared. The check found one systematic error of the first model, SEG tracts between two DONOR tracts that are really DONOR, recurring at four places; the current model (2.6.6) removes most of it, but 57% of the remaining SEG tracts between two DONOR tracts are still BB, and *parviglumis* chr3 75–78 Mb is not fixed. The current model also has slightly more short tracts (1.6 instead of 1.3 tracts under 1 Mb per pool), which are not checked.
+**SEG vs DONOR is checked with targeted sequencing** ([2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)): among the tracts it could classify, our DONOR tracts look homozygous teosinte (89%; 95% without the three bad samples), our SEG tracts intermediate (83% AB-like, donor allele fraction 0.45) and our B73 tracts clean (96%). Still open: tracts shorter than 1 Mb, which were not compared, and the tracts the targeted panel could not classify (about half of SEG and DONOR). The targeted DNA is most probably a bulk, so the SEG row checks segregation, not single-plant genotypes. The check found one systematic error of the first model, SEG tracts between two DONOR tracts that are really DONOR, recurring at four places; the current model (2.6.6) removes most of it, but 57% of the remaining SEG tracts between two DONOR tracts are still BB, and *parviglumis* chr3 75–78 Mb is not fixed. The current model also has slightly more short tracts (1.6 instead of 1.3 tracts under 1 Mb per pool), which are not checked.
 
 **The DONOR level still starts from the assemblies.** The model needs to know how much of each window's B73 k-mers a teosinte genome keeps (d_w). The best source would have been **the actual donor parents** of our lines, sequenced. We don't have them, so d_w starts from teosinte assemblies from MaizeGDB (PanAnd), other plants of the same taxa, and is then learned from our pools (2.6.6). Limits that remain:
 - One level per taxon and window: within a taxon, families carry different teosinte haplotypes (the per-accession levels tried in `new_model/` did not do better, and *parviglumis* chr3 75–78 Mb may be such a case).
 - The informative k-mers are defined by the assemblies (missing from all of them); k-mers that our donors lack but an assembly carries are not used.
 - In switched windows, the DONOR level is learned from pools the current model's first steps called DONOR, so it is partly circular; the targeted sequencing, which is independent, says the result is better.
 - Zv and Zx still switch between SEG and DONOR about twice as often as the other taxa.
+- *huehuetenangensis* and *luxurians* have one assembly each, so their τ_w (the uncertainty of the DONOR level) cannot be measured and is 0. The targeted sequencing shows no sign that this makes their DONOR calls overconfident (2.9.1, point 8), but on few tracts. Two ways to check: rerun their pools with a floor on τ_w (e.g. *parviglumis*' τ_w, the largest, as already used for the B73 controls) and count how many tracts change state; or estimate one τ per taxon from the spread of r among our own DONOR pools (beyond each pool's noise). Per window this is too noisy for these two taxa (a median of 3 *huehuetenangensis* and 4 *luxurians* pools are DONOR in a window), so it would be one value per taxon, not per window.
 - Zm (landraces) can't be done yet, because it needs a maize-based donor level (e.g. from NAM founder assemblies).
 
 A first check of whether the short tracts are real uses **relatives**. A real introgression is inherited: pools that descend from the same plant received their donor segments from that plant, so a real tract in one pool should often be found at the same place in its relatives. A false tract (noise) appears at random places, so it should be found in relatives no more often than in unrelated pools.
@@ -1188,7 +1299,7 @@ We used **taxon** (5 levels: Zd, Zh, Zl, Zv, Zx) as the fixed effect, not the **
 
 #### 3.3.4 Significance: permutations
 
-For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile of these 1,000 genome-wide maxima is the threshold. It controls the **family-wise error rate (FWER) at 5% across the whole genome**: if the trait had no QTL, a scan would put any window above it in only 5% of cases (Churchill & Doerge 1994). Because each permutation keeps the real correlation between neighbouring windows, the threshold accounts for it; Bonferroni over 21,309 windows (−log10 p = 5.63) would treat them as independent and be too strict. The thresholds come from **1,000 permutations** per trait. With *mexicana* split by race (section 3.6.14), phenotypes are shuffled within race.
+For each trait, phenotypes are shuffled **within taxon** (keeping the taxon means), the whole genome scan is rerun, and the largest −log10 p in the genome is kept. The 95th percentile of these 1,000 genome-wide maxima is used as an **empirical genome-wide threshold** (Churchill & Doerge 1994). For unrelated lines it would control the family-wise error rate (FWER) at 5%: with no QTL, a scan would put any window above it in only 5% of cases. Because shuffling within taxon does not keep the relatedness among plots, its FWER calibration here remains to be evaluated (caveat below). Because each permutation keeps the real correlation between neighbouring windows, the threshold accounts for it; Bonferroni over 21,309 windows (−log10 p = 5.63) would treat them as independent and be too strict. The thresholds come from **1,000 permutations** per trait. With *mexicana* split by race (section 3.6.14), phenotypes are shuffled within race.
 
 **Caveat: the plots are related.** Permutation assumes the phenotypes can be swapped between plots. Plots from the same F1 family share tracts and phenotypes, so shuffling within taxon also breaks that family structure, and the threshold may not give exactly 5% FWER. A check that keeps the relatedness is planned: simulate phenotypes with no QTL from the fitted model (taxon effects + u ~ N(0, σ²_g K) + e), run the whole scan on each, and count how often any window passes the threshold (it should be about 5%). The strongest QTL (e.g. ZmCCT10, −log10 p 9–14) are far above any plausible threshold; QTL close to the threshold are the ones the check could change.
 
@@ -1250,7 +1361,7 @@ The stepwise method that fits a population like ours is a multi-locus mixed mode
 | finds it, but its refinement step moved it along the same chromosome | 4 | NBR Q7 (chr9 4 → 41 Mb), EN Q12 (chr7 165 → 143 Mb), Prolif Q5 (chr2 34 → 9 Mb), SL Q8 (chr6 116 → 164 Mb) |
 | does not keep it | 9 | SPAD2 Q8, PH Q6, PH Q14, EH Q2, EN Q7, EN Q11, SL Q12, BL Q3, BW Q6 |
 
-So **72 of the 81 QTL are confirmed by the stepwise model; the other 9 are weaker** (joint −log10 p 2.1–4.7) **and depend on the method, and we treat them as a second tier.** The column "Stepwise" in every trait table (section 3.6) gives yes / moved / no for each QTL. The stepwise model also keeps a few QTL that do not hold in the joint model, once their competing peaks are dropped (e.g. one chr1 QTL for SPAD2, at 57.9 Mb, instead of five), and it adds 9 QTL of its own, mostly modest (−log10 p 4.3–8.2).
+So **72 of the 81 QTL are also found by the stepwise model** (agreement between two methods on the same data, not an independent confirmation); **the other 9 are weaker** (joint −log10 p 2.1–4.7) **and depend on the method, and we treat them as a second tier.** The column "Stepwise" in every trait table (section 3.6) gives yes / moved / no for each QTL. The stepwise model also keeps a few QTL that do not hold in the joint model, once their competing peaks are dropped (e.g. one chr1 QTL for SPAD2, at 57.9 Mb, instead of five), and it adds 9 QTL of its own, mostly modest (−log10 p 4.3–8.2).
 
 **Why the joint model stays the main result:** with tracts tens of Mb long, the stepwise search places QTL less reliably. Its refinement step moves QTL tens of Mb along the same tract (the 4 above), and it can split one region into two neighbouring windows with large opposite effects that cancel out (PH and EH at chr10 99.5 and 101.5 Mb: +16.6 and −10.9 cm for PH; BW at chr8 60.0 and 61.6 Mb). The joint model keeps every QTL at its scan peak and reports, rather than silently drops, the ones that do not hold.
 
@@ -1334,7 +1445,7 @@ python final_script/34f_targseq_examples.py $T --set bad --out figures/fix1/targ
 python final_script/34f_targseq_examples.py --sites data/introgression_fix1/targseq/sites_used.tsv.gz \
   --tracts data/introgression_fix1/tracts_all.tsv.gz --gallery_dir figures/fix1/targseq_all \
   --targseq_tracts data/introgression_fix1/targseq/tracts_targseq.tsv          # all targeted-sequencing samples
-python final_script/35_trait_tables.py --base data/introgression_fix1 --out <dir>  # the trait tables of 3.6
+python final_script/35_trait_tables.py --base data/introgression_fix1 --out results/trait_tables  # the trait tables of 3.6
 ```
 All results are in `data/introgression_fix1/` (figures in `figures/fix1/`):
 - `assoc_gridlmm_spats/`: scans, summaries, 1,000 permutations (`perm_<TRAIT>_seed<N>.tsv`), Manhattan plots, `genes/` (peaks and every gene in each region)

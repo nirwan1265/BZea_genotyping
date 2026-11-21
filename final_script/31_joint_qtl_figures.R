@@ -8,8 +8,10 @@
 ##   joint QTL dir: qtl2_<TRAIT>_qtl.tsv and qtl2_<TRAIT>_by_taxon.tsv (step 29 / 29.2; e.g. introgression_spread/joint_QTL)
 ##   TRAITs:        default = every trait with a qtl2_<TRAIT>_qtl.tsv
 ## Panel A: -log10 p per 100-kb window, chromosomes in black/grey, dotted line = 5% permutation threshold (when the
-##          step-26 summary has one), QTL numbered at their top window (open triangle = QTL added by the
-##          conditional scans of step 29, i.e. a second QTL inside a significant region).
+##          step-26 summary has one), every QTL of the scan numbered at its top window: filled triangle = it holds in
+##          the joint model (joint -log10 p above the Bonferroni cut over the trait's QTL, -log10(0.05 / number of QTL)),
+##          open triangle = it does not. "*" after the number = added by the conditional scans of step 29 (a second
+##          QTL inside a significant region).
 ## Panel B: per QTL, effect per teosinte copy (trait units) with 95% CI: black = joint model (all QTL together, all taxa),
 ##          colours = within each taxon (taxa with >= 5 carrier plots). Right: -log10 p of the joint test and of
 ##          "taxa differ" (two columns; these are p-values, not effects).
@@ -24,7 +26,7 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 traits <- if (length(args) > 3) args[-(1:3)] else
   sub("^qtl2_(.+)_qtl\\.tsv$", "\\1", list.files(jq_dir, pattern = "^qtl2_.+_qtl\\.tsv$"))
 if (!length(traits)) stop("no qtl2_<TRAIT>_qtl.tsv in ", jq_dir)
-taxon_col <- c(Zd = "#E69F00", Zh = "#56B4E9", Zl = "#009E73", Zv = "#CC79A7", Zx = "#0072B2",
+taxon_col <- c(Zd = "#E69F00", Zh = "#6A3D9A", Zl = "#009E73", Zv = "#CC79A7", Zx = "#0072B2",
                Zx_Chal = "#08306B", Zx_Mesa = "#2171B5", Zx_Dura = "#6BAED6", Zx_Nobo = "#9E9AC8", other = "#999999")
 taxon_lab <- c(Zd = "Zd diploperennis", Zh = "Zh huehuetenangensis", Zl = "Zl luxurians", Zv = "Zv parviglumis",
                Zx = "Zx mexicana", Zx_Chal = "Zx Chalco", Zx_Mesa = "Zx Mesa Central", Zx_Dura = "Zx Durango",
@@ -49,20 +51,25 @@ make_fig <- function(trait) {
   q[, chrn := as.integer(sub("^chr", "", chr))]
   q <- q[order(chrn, pos_Mb)]; q[, id := paste0("Q", seq_len(.N))]
   q <- merge(q, len[, .(chrn, off)], by = "chrn"); q[, x := pos_Mb * 1e6 + off]
-  q[, cond := if ("found_by" %in% names(q)) found_by == "conditional scan" else FALSE]
+  q[, cond := if ("found_by" %in% names(q)) grepl("^conditional", found_by) else FALSE]
+  cut <- -log10(0.05 / nrow(q)); q[, holds := mlog10p_joint > cut]
+  q[, id_lab := paste0(id, ifelse(cond, "*", ""))]
   q[, ytop := sapply(seq_len(.N), function(i) { w <- sc[chrn == q$chrn[i] & abs(pos - q$pos_Mb[i] * 1e6) < 1e5]; if (nrow(w)) max(w$y) else NA })]
   pA <- ggplot(sc, aes(x, y)) +
     geom_point(aes(colour = factor(chrn %% 2)), size = 0.5, show.legend = FALSE) +
     scale_colour_manual(values = c("0" = "grey55", "1" = "black")) +
     scale_x_continuous(breaks = len$mid, labels = len$chrn, expand = c(0.01, 0)) +
     scale_y_continuous(expand = expansion(mult = c(0.02, 0.12))) +
-    geom_point(data = q, aes(x, ytop, fill = cond), shape = 25, colour = "#D55E00", size = 2.4, show.legend = FALSE) +
-    scale_fill_manual(values = c(`FALSE` = "#D55E00", `TRUE` = "white")) +
-    geom_text(data = q, aes(x, ytop, label = id), vjust = -1.2, size = 3.2, colour = "#D55E00") +
+    geom_point(data = q, aes(x, ytop, fill = holds), shape = 25, colour = "#D55E00", size = 2.6, stroke = 0.9, show.legend = FALSE) +
+    scale_fill_manual(values = c(`TRUE` = "#D55E00", `FALSE` = "white")) +
+    geom_text(data = q, aes(x, ytop, label = id_lab), vjust = -1.2, size = 3.2, colour = "#D55E00") +
     labs(x = "Chromosome", y = expression(-log[10](italic(p))),
          title = sprintf("%s: k-mer additive scan (GridLMM, taxon + LOCO K, %s plots)", trait,
-                         if ("n_plots" %in% names(sc)) max(sc$n_plots, na.rm = TRUE) else "")) +
-    theme_classic(base_size = 11) + theme(plot.title = element_text(size = 11))
+                         if ("n_plots" %in% names(sc)) max(sc$n_plots, na.rm = TRUE) else ""),
+         caption = sprintf("Filled triangle: the QTL holds in the joint model (joint -log10 p > %.2f, Bonferroni over %d QTL); open: it does not.%s",
+                           cut, nrow(q), if (any(q$cond)) "  * found by a conditional scan." else "")) +
+    theme_classic(base_size = 11) + theme(plot.title = element_text(size = 11),
+                                          plot.caption = element_text(size = 8, colour = "grey30", hjust = 0))
   if (!is.na(thr)) pA <- pA + geom_hline(yintercept = thr, linetype = "dotted") +
     annotate("text", x = min(sc$x), y = thr, label = "5% permutation", hjust = 0, vjust = -0.4, size = 3)
 
@@ -87,10 +94,11 @@ make_fig <- function(trait) {
     theme_classic(base_size = 11) + theme(plot.title = element_text(size = 11), legend.position = "bottom") +
     guides(colour = guide_legend(nrow = 2))
   ## -log10 p of the joint test and of "taxa differ", as two labelled columns
-  tx <- rbind(q[, .(lab = factor(lab, levels = lev), col = "Joint\ntest", v = sprintf("%.1f", mlog10p_joint))],
+  tx <- rbind(q[, .(lab = factor(lab, levels = lev), col = "Joint\ntest", v = sprintf("%.1f", mlog10p_joint), b = holds)],
               q[, .(lab = factor(lab, levels = lev), col = "Taxa\ndiffer",
-                    v = ifelse(is.na(mlog10p_taxa_differ), "NA", sprintf("%.1f", mlog10p_taxa_differ)))])
-  pC <- ggplot(tx, aes(col, lab, label = v)) + geom_text(size = 3.2) +
+                    v = ifelse(is.na(mlog10p_taxa_differ), "NA", sprintf("%.1f", mlog10p_taxa_differ)),
+                    b = !is.na(mlog10p_taxa_differ) & mlog10p_taxa_differ > cut)])
+  pC <- ggplot(tx, aes(col, lab, label = v)) + geom_text(aes(fontface = ifelse(b, "bold", "plain")), size = 3.2) +
     scale_x_discrete(position = "top") +
     labs(title = expression(-log[10](italic(p))), x = NULL, y = NULL) +
     theme_void(base_size = 11) +

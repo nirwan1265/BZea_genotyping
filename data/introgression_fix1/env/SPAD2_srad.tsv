@@ -1,0 +1,21 @@
+test	qtl	layer	what	plots	carrier_plots	carrier_accessions	effect_per_copy_joint	change_per_copy_per_SD	se	p	change_within_taxa	se_within	p_within
+A per QTL	Q1 chr1:39950000	srad_06-10	mean daily solar radiation, June-October	1098.0	117.0	51	-1.527	0.49	0.556	0.3773096312902683	0.745	0.487	0.1263709269340131
+A per QTL	Q2 chr1:57850000	srad_06-10	mean daily solar radiation, June-October	1098.0	98.0	47	-1.656	0.847	0.482	0.07896445890666288	0.835	0.486	0.08529620567823755
+A per QTL	Q3 chr1:77950000	srad_06-10	mean daily solar radiation, June-October	1098.0	90.0	46	0.268	0.264	0.475	0.578011488592331	0.099	0.512	0.8470465445264228
+A per QTL	Q4 chr1:106150000	srad_06-10	mean daily solar radiation, June-October	1098.0	85.0	40	-0.026	-0.137	0.708	0.8467363423144237	-0.312	0.714	0.6620047475297013
+A per QTL	Q5 chr1:128850000	srad_06-10	mean daily solar radiation, June-October	1098.0	80.0	40	-2.949	-0.131	0.77	0.8651144967569796	-0.19	0.778	0.8072599119425088
+A per QTL	Q6 chr7:123350000	srad_06-10	mean daily solar radiation, June-October	1098.0	106.0	51	-2.985	-0.194	0.676	0.7740186435214502	-0.108	0.728	0.8823685339052803
+A per QTL	Q7 chr9:96850000	srad_06-10	mean daily solar radiation, June-October	1098.0	157.0	58	2.589	0.437	0.637	0.4924678898477063	-0.23	0.685	0.737177599257129
+A per QTL	Q8 chr10:148250000	srad_06-10	mean daily solar radiation, June-October	1098.0	163.0	57	2.148	-0.133	0.501	0.7905248765308726	-0.251	0.419	0.549029373085536
+B whole genome	donor share	srad_06-10	mean daily solar radiation, June-October	1098.0		80		-1.269	3.291	0.6998817344219336			
+C per accession (Spearman rho)	accession mean	srad_06-10	mean daily solar radiation, June-October			80		0.023		0.8405863015097698	0.033		0.770677724552134
+A per QTL	Q1 chr1:39950000	srad_01-12	mean daily solar radiation, year	1098.0	117.0	51	-1.527	0.174	0.58	0.7635976412713741	0.478	0.368	0.19427829126326923
+A per QTL	Q2 chr1:57850000	srad_01-12	mean daily solar radiation, year	1098.0	98.0	47	-1.656	0.17	0.558	0.7600254940029556	0.482	0.421	0.25200174558409494
+A per QTL	Q3 chr1:77950000	srad_01-12	mean daily solar radiation, year	1098.0	90.0	46	0.268	-0.035	0.433	0.9349380295796391	0.112	0.393	0.7753897047314111
+A per QTL	Q4 chr1:106150000	srad_01-12	mean daily solar radiation, year	1098.0	85.0	40	-0.026	0.105	0.538	0.8458857098112154	0.226	0.486	0.6412629284477223
+A per QTL	Q5 chr1:128850000	srad_01-12	mean daily solar radiation, year	1098.0	80.0	40	-2.949	-0.002	0.427	0.9966245330378475	0.227	0.315	0.4711758349683284
+A per QTL	Q6 chr7:123350000	srad_01-12	mean daily solar radiation, year	1098.0	106.0	51	-2.985	1.199	0.659	0.06898990061302282	1.058	1.112	0.3415447125572393
+A per QTL	Q7 chr9:96850000	srad_01-12	mean daily solar radiation, year	1098.0	157.0	58	2.589	-0.038	0.578	0.9472072999753793	0.222	0.68	0.7440079246596762
+A per QTL	Q8 chr10:148250000	srad_01-12	mean daily solar radiation, year	1098.0	163.0	57	2.148	0.241	0.378	0.5228651746845108	0.246	0.268	0.3592290510721706
+B whole genome	donor share	srad_01-12	mean daily solar radiation, year	1098.0		80		1.822	3.422	0.5944192954651548			
+C per accession (Spearman rho)	accession mean	srad_01-12	mean daily solar radiation, year			80		0.05		0.6607864083493545	0.082		0.4688980013821247

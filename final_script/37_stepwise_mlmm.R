@@ -45,9 +45,11 @@ K <- lapply(chrs, function(chr) {
 chr_of <- setNames(map$chr, map$Marker)
 message(sprintf("%s: %d plots, %d windows, threshold -log10 p %.2f", trait, nrow(dat), ncol(D), thr))
 
-## scan the windows `mk` of one chromosome with the QTL `qtl` as covariates
+## scan the windows `mk` of one chromosome with the QTL `qtl` as covariates (the QTL windows themselves are not
+## retested: on a QTL's own chromosome every other window is tested given that QTL)
 scan_chr <- function(chr, qtl, mk = map$Marker[map$chr == chr]) {
-  d <- dat; cov <- setdiff(qtl, mk)
+  d <- dat; cov <- qtl; mk <- setdiff(mk, qtl)
+  if (!length(mk)) return(NULL)
   for (q in cov) d[[make.names(q)]] <- D[, q]
   fml <- as.formula(paste("y ~ TAXON", paste(c("", make.names(cov)), collapse = " + "), "+ (1 | Line)"))
   r <- GridLMM_GWAS(formula = fml, test_formula = ~1, reduced_formula = ~0, data = d, X = D[, mk, drop = FALSE],

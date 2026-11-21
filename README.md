@@ -1592,6 +1592,7 @@ SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The m
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
+| Q1–Q5 chr1 40.0–128.8 Mb | candidates in the stretch below: *rccr1*, *bsd2*, *ppd1* | ≤ 0.03 | −0.03 to −2.95 | 0.0–1.4 | ≤ 0.2 (no) | Strong in the scan (−log10 p 4.7–6.2; the teosinte allele makes leaves less green over most of chr1 35–164 Mb), but split into five QTL that share tracts, and none holds in the joint model (cut 2.20). See the chr1 bullet below. |
 | **Q6 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | 0.039 (**top**) | −2.98 | 4.7 | 0.2 (no) | No significant difference between taxa (Zd −1.08, Zl −1.00, Zv −1.70, Zx −3.53). The gene is next to the top window. |
 | **Q7 chr9 96.8 Mb** | — | 0.01 (best window) | +2.59 | 4.7 | 1.8 (no) | Greener leaves (Zd +2.35, Zl +3.16, Zv +0.58, Zx +3.54). The interval spans 30.7 Mb and 505 genes, too wide to point to one gene. |
 | **Q8 chr10 148.2 Mb** | Zm00001eb432440 (FRS6-like); Zm00001eb432850 (chlorophyll a/b-binding protein) | 0.088 (**top**); 0.040 (**top**) | +2.15 | 4.1 | 0.3 (no) | No significant difference between taxa (Zd +1.73, Zh +2.43, Zl +3.37, Zv +0.82, Zx +2.99). Same region as the best PredN region. |

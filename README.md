@@ -1367,6 +1367,16 @@ Two QTL pass the 1,000-permutation threshold (−log10 p > 5.50), and both hold 
 
 > **Note: two very late *luxurians* plots.** Two 2023 plots, `Zl.0010_P1_P2_P2.3.1.1` and `Zl.0040_P4_P1_P2.2.1.1`, flowered very late (DTA 114 d against a median of 87 d; DTS 129 and 114 d). The fieldbook has them like this in every rep and notes the plants as short, with few or no shoots, so the values are real, not typing errors, and the plots are kept. Both carry two teosinte copies at chr5 221.8 Mb, and they make Q1 look stronger than it is: with their flowering values set to missing (step 26 rerun, same inputs), the DTS scan at 221.8 Mb drops from 9.4 to 4.6 (best chr5 window 5.5 at 218.8 Mb, at the threshold). The QTL does not rest on them alone: in 2025, when these lines were not grown, chr5 is above the 2025 threshold of 4.33 (4.8 at 221.8 Mb, 5.5 at 225.4 Mb). The large *luxurians* effect (+4.77 d) should be read with these two plots in mind. *ZmCCT10* (Q2) does not depend on them (9.1 → 11.8 without them).
 
+**Does the effect depend on the donor's elevation? Not clearly.** As for brace roots (NBR Q8, rain), we asked whether a flowering QTL's teosinte effect changes with where the donor was collected, here with elevation (80 to 2,713 m), since highland and lowland teosintes flower under different day lengths and temperatures (steps 36 and 36e; same layout as the NBR figure).
+
+![DTS at ZmCCT10 against the elevation of the donor's site](figures/fix1/DTS_CCT10_elevation.png)
+
+- **ZmCCT10 (Q2):** the segment delays silking at every elevation and in every taxon and race (+0.6 to +1.9 d; *luxurians*, the lowest, +5.6 d but from only 2 plots). Within BC2 families the sibs with the segment silk later too: +1.29 d over 74 families (Wilcoxon p = 3 × 10⁻⁵), so the effect is not a background difference. Per accession, the effect is a little larger from lower sites (Spearman ρ = −0.28, p = 0.05), but over all plots it does not change with elevation (−0.08 d per copy per SD of elevation, p = 0.63; within taxa −0.22, p = 0.39; step 36, `data/introgression_fix1/env/DTS_env.tsv`). So the teosinte *ZmCCT10* allele delays flowering about equally whatever the altitude it came from.
+- **HDR1-like (Q1, chr5):** no relation with elevation (per accession ρ = 0.06, p = 0.68; over all plots p = 0.45). The large *luxurians* effect here includes the two very late plots of the note above ([figure](figures/fix1/DTS_HDR1_elevation.png)).
+- **MADS74 (DTA Q4, chr9 10.9 Mb):** the segment makes plants shed pollen earlier (sibs −0.51 d over 112 families, p = 0.012), slightly less so from higher sites (per accession ρ = 0.26, p = 0.05; within taxa and races p = 0.14; over all plots p = 0.34) ([figure](figures/fix1/DTA_MADS74_elevation.png)).
+
+Unlike brace roots and rain, none of these flowering QTL changes clearly with the donor's elevation. The only exception is DTA Q1 (chr1 84.5 Mb), whose effect is larger from lower sites (−0.77 d per copy per SD, p = 0.001), but that QTL is the *luxurians* lead from a few plots of the DTA note.
+
 <details><summary>All DTS QTL with per-taxon effects and all genes in the interval</summary>
 
 | QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |

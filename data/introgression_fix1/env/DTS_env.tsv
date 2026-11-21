@@ -1,0 +1,9 @@
+test	qtl	layer	what	plots	carrier_plots	carrier_accessions	effect_per_copy_joint	change_per_copy_per_SD	se	p	change_within_taxa	se_within	p_within
+A per QTL	Q1 chr5:221750000	elevation	elevation	1258.0	122.0	57	1.002	-0.239	0.319	0.453373265318051	0.604	0.36	0.09364282876213569
+A per QTL	Q2 chr10:97750000	elevation	elevation	1258.0	119.0	49	1.013	-0.082	0.169	0.6281701663337836	-0.216	0.248	0.3848536645231516
+B whole genome	donor share	elevation	elevation	1258.0		82		-1.908	1.207	0.11409762361804421			
+C per accession (Spearman rho)	accession mean	elevation	elevation			82		-0.505		1.274112609165057e-06	-0.03		0.7871315947819851
+A per QTL	Q1 chr5:221750000	BIO1	BIO1	1258.0	122.0	57	1.002	0.228	0.268	0.3955099124326239	-0.54	0.342	0.11420609055097562
+A per QTL	Q2 chr10:97750000	BIO1	BIO1	1258.0	119.0	49	1.013	0.039	0.146	0.7866463285288703	-0.012	0.202	0.9521734323130291
+B whole genome	donor share	BIO1	BIO1	1258.0		82		1.403	1.263	0.266549877362233			
+C per accession (Spearman rho)	accession mean	BIO1	BIO1			82		0.453		1.931429161343633e-05	-0.033		0.7652393429550202

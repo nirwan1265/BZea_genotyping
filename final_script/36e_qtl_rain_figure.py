@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """
-36e — README figure for one QTL: does the teosinte segment add more to the trait when it comes from a wetter rainy
-season? Two panels, mexicana split into its four races (SUBTAXON):
-  a  per taxon/race, ordered by the median rainy-season rain at the donors' home sites: mean trait of plots WITHOUT
+36e — README figure for one QTL: does the teosinte segment's effect follow the environment of the donor's home site?
+Default: rainy-season rain (sum of --months, WorldClim 2.1 monthly, step 36c). With --env_layer: any column of
+data/env/BZea_accession_env.csv instead (e.g. elevation). Two panels, mexicana split into its four races (SUBTAXON):
+  a  per taxon/race, ordered by the median environment value at the donors' home sites: mean trait of plots WITHOUT
      the segment (open) and WITH it (filled), from the same taxon/race; in grey, the same difference within BC2
      families (sibs from the same BC2 plant, carriers minus non-carriers; families with at least one of each)
   b  one dot per donor accession: its effect (carrier minus non-carrier plots, same accession; as step 36b) against
-     its rainy-season rain (sum of the --months, WorldClim 2.1, step 36c); Spearman rho across accessions and within
+     its environment value; Spearman rho across accessions and within
      taxa/races (both centred on their group means)
 Usage (from the repo root; step-25 inputs and 36c output first):
   python final_script/36e_qtl_rain_figure.py --assoc_in $HOME/bzea_assoc_fix1 --monthly data/env/BZea_accession_monthly.csv \
      --trait NBR --window chr10:98250000 --out figures/fix1/NBR_Q8_rain.png
+  python final_script/36e_qtl_rain_figure.py --assoc_in $HOME/bzea_assoc_fix1 --monthly data/env/BZea_accession_monthly.csv \
+     --env_layer elevation --trait DTS --label "days to silking" --window chr10:97750000 --out figures/fix1/DTS_CCT10_elevation.png
 Needs: numpy, pandas, scipy, matplotlib.
 """
 import argparse
@@ -29,6 +32,9 @@ ap.add_argument("--trait", required=True)
 ap.add_argument("--window", required=True)
 ap.add_argument("--months", default="7 8 9 10", help="months summed as the rainy season (default July-October)")
 ap.add_argument("--label", default="nodes with brace roots", help="trait name on the axes")
+ap.add_argument("--env_layer", default="", help="a column of --env (e.g. elevation) instead of rainy-season rain")
+ap.add_argument("--env", default="data/env/BZea_accession_env.csv")
+ap.add_argument("--title", default="", help="text after 'segment at <window>' in panel a (e.g. the gene)")
 ap.add_argument("--out", required=True)
 a = ap.parse_args()
 MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -44,8 +50,16 @@ P = P.rename(columns={P.columns[0]: "line"}).dropna(subset=[a.trait])
 P["acc"] = P.line.str.split("_").str[0]
 G = pd.read_csv(f"{a.assoc_in}/geno_dosage.csv", index_col=0, usecols=lambda c: c in ("Line", a.window))
 P["dos"] = G.loc[P.line, a.window].to_numpy()
-M = pd.read_csv(a.monthly).rename(columns={"accession-id": "acc"})
-M["rain"] = M[[f"prec_{m:02d}" for m in ms]].sum(axis=1)
+if a.env_layer:
+    M = pd.read_csv(a.env).rename(columns={"accession-id": "acc", a.env_layer: "rain"})
+    UNIT = "m" if a.env_layer.startswith("elev") else ""
+    ENVTXT = "elevation" if a.env_layer.startswith("elev") else a.env_layer
+    XLAB = f"{ENVTXT} of the donor accession's site" + (f" ({UNIT})" if UNIT else "")
+else:
+    M = pd.read_csv(a.monthly).rename(columns={"accession-id": "acc"})
+    M["rain"] = M[[f"prec_{m:02d}" for m in ms]].sum(axis=1)
+    UNIT, ENVTXT = "mm", f"{season} rain"
+    XLAB = f"{season} rain at the donor accession's site (mm, WorldClim 2.1)"
 P = P.merge(M[["acc", "rain"]], on="acc", how="left")
 P["car"] = P.dos > 0
 
@@ -81,32 +95,35 @@ rw, pw = spearmanr(cen.rain, cen.effect)
 
 fig, ax = plt.subplots(1, 2, figsize=(14, 6.0), gridspec_kw={"width_ratios": [1, 1.15]})
 y = np.arange(len(Gr))
+vals = pd.concat([Gr.non, Gr.wi, Gr.non + Gr.sib.fillna(0)])
+span = vals.max() - vals.min()
+off = 0.03 * span
 for i, q in Gr.iterrows():
     c = COL.get(q.g, "#888")
     ax[0].plot([q.non, q.wi], [i, i], color=c, lw=2.2, alpha=0.6, zorder=1)
     ax[0].scatter(q.non, i, s=55, facecolor="white", edgecolor=c, lw=2, zorder=2)
     ax[0].scatter(q.wi, i, s=70, color=c, zorder=3)
-    ax[0].text(max(q.non, q.wi) + 0.05, i, f"{q.wi - q.non:+.2f}  ({q.n_with} plots)", va="center", fontsize=8, color="#3d3d3a")
+    ax[0].text(max(q.non, q.wi) + off, i, f"{q.wi - q.non:+.2f}  ({q.n_with} plots)", va="center", fontsize=8, color="#3d3d3a")
     if q.n_fam:   # sibs: the within-family difference, drawn from the same starting point (open dot) in light grey
         ys, x1 = i - 0.34, q.non + q.sib
         ax[0].plot([q.non, x1], [ys, ys], color="#c3c1b8", lw=2, zorder=1)
         ax[0].scatter(q.non, ys, s=26, facecolor="white", edgecolor="#a8a69d", lw=1.4, zorder=2)
         ax[0].scatter(x1, ys, s=32, color="#a8a69d", zorder=3)
-        ax[0].text(max(q.non, x1) + 0.05, ys, f"sibs {q.sib:+.2f}  ({q.n_fam} fam.)", va="center", fontsize=7.5,
+        ax[0].text(max(q.non, x1) + off, ys, f"sibs {q.sib:+.2f}  ({q.n_fam} fam.)", va="center", fontsize=7.5,
                    color="#73726c", style="italic")
-ax[0].set_yticks(y, [f"{NAME.get(g, g)}  ·  {rr:.0f} mm" for g, rr in zip(Gr.g, Gr.rain)], fontsize=8.5)
+ax[0].set_yticks(y, [f"{NAME.get(g, g)}  ·  {rr:.0f} {UNIT}" for g, rr in zip(Gr.g, Gr.rain)], fontsize=8.5)
 ax[0].set_xlabel(f"mean {a.label} (plot BLUE)", fontsize=9)
-ax[0].set_title(f"a  Plots without (○) and with (●) the segment,\n    ordered by median {season} rain at the donors' sites\n"
+ax[0].set_title(f"a  Plots without (○) and with (●) the segment at {a.window}{(' (' + a.title + ')') if a.title else ''},\n    ordered by median {ENVTXT} of the donors' sites\n"
                 f"    grey line below: the same within BC2 families (carrier minus non-carrier sibs);\n"
                 f"    {len(Fm)} families, mean {Fm['diff'].mean():+.2f}, Wilcoxon p = {p_sib:.2g}",
                 fontsize=9, loc="left")
-ax[0].set_xlim(right=ax[0].get_xlim()[1] + 0.25)
+ax[0].set_xlim(right=ax[0].get_xlim()[1] + 0.3 * span)
 ax[0].set_ylim(-0.75, len(Gr) - 0.5)
 for g, d in A.groupby("g"):
     ax[1].scatter(d.rain, d.effect, s=18 + 14 * d.n, color=COL.get(g, "#888"), edgecolor="white", lw=0.8,
                   label=f"{NAME.get(g, g)} ({len(d)})", zorder=2)
 ax[1].axhline(0, color="#d6d4cc", lw=1, zorder=0)
-ax[1].set_xlabel(f"{season} rain at the donor accession's site (mm, WorldClim 2.1)", fontsize=9)
+ax[1].set_xlabel(XLAB, fontsize=9)
 ax[1].set_ylabel(f"effect of the segment on {a.label}\n(carrier minus non-carrier plots, same accession)", fontsize=9)
 ax[1].set_title(f"b  One dot per accession (size = carrier plots)\n    Spearman ρ = {r:.2f} (p = {p:.1g}); "
                 f"within taxa and races ρ = {rw:.2f} (p = {pw:.2g})", fontsize=9, loc="left")

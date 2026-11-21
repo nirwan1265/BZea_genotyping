@@ -18,9 +18,13 @@ accessions, not plots, so the accession is the unit; kinship is not modelled, so
   C  per accession: mean of y over the accession's plots vs env (Spearman), all accessions and within taxon
 dos = teosinte copies at the QTL window (0/1/2, step 25); donor_share = the pool's DONOR + SEG/2 share (step 21).
 
-Usage: python final_script/36_qtl_env.py --assoc_in <step-25 dir: pheno.csv, geno_dosage.csv> \
-          --qtl data/introgression_fix1/joint_qtl/noperm/qtl2_NBR_qtl.tsv --pool_summary data/introgression_fix1/pool_summary.tsv \
-          --env data/env/BZea_accession_env.csv --trait NBR --out data/introgression_fix1/env/NBR_env.tsv
+Usage (from the repo root; step-25 inputs are not in git, so build them first, outside the repo):
+  python final_script/25_assoc_inputs.py --tracts data/introgression_fix1/tracts_all.tsv.gz \
+     --pool_summary data/introgression_fix1/pool_summary.tsv --pheno data/phenotypes/BZea_spats_BLUEs_combined.csv \
+     --out_dir $HOME/bzea_assoc_fix1 --min_carriers 20 --metadata data/metadata_BZea.csv
+  python final_script/36_qtl_env.py --assoc_in $HOME/bzea_assoc_fix1 \
+     --qtl data/introgression_fix1/joint_qtl/noperm/qtl2_NBR_qtl.tsv --pool_summary data/introgression_fix1/pool_summary.tsv \
+     --env data/env/BZea_accession_env.csv --trait NBR --out data/introgression_fix1/env/NBR_env.tsv
 Needs: numpy, pandas, scipy, statsmodels.
 """
 import argparse

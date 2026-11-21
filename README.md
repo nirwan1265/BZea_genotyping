@@ -893,6 +893,22 @@ Percentages are of the clearly called tracts only (B73 69%, SEG 45%, DONOR 50% o
      | *mexicana* | 5 | 0.38% | 13.31 → 13.34% | 75.0 → 79.3% | 92.2 → 94.0% |
 
      **Giving Zh and Zl a realistic τ changes 0.27% and 0.06% of their windows and leaves their targeted-sequencing agreement the same (±1 tract), so τ = 0 does not drive their calls.** Most of the Zd change is one pool (`PN15_SID1348`, bad example 1 below: DONOR → SEG on chr3, now matching its AB-like data), whose fitted scale a also jumped from 1.8 to 0.5, the two ends of its grid; the floor is not adopted (a small gain, mostly one pool, and choosing it on the targeted data would be model selection on the test data).
+
+     <details><summary>⚠️ The per-pool scale a: two more sensitivity runs (click to open)</summary>
+
+     a multiplies every DONOR level of a pool and is chosen from a grid (0.5–1.8; 2.6.1). 20% of *diploperennis* pools end at an edge of the grid (other taxa 1–7%). Two reruns of 35 pools (the 25 above plus 10 Zd pools at an edge; `data/tau_run/scale_wide/`, `data/tau_run/scale_1/`):
+
+     | Run | Windows that change (mean; max) | Targeted (23 pools): B73 / SEG / DONOR agree |
+     |---|---|---|
+     | Current (a from 0.5–1.8) | – | 96.4 / 83.0 / 95.8% |
+     | Wider grid (a from 0.3–2.5) | Zd 0.16%; 0.72%; other taxa 0% | 96.4 / 83.2 / 95.8% |
+     | a fixed at 1 | Zd 1.25%; 5.9%; other taxa ≤ 0.27% | 96.8 / 82.2 / 95.7% |
+
+     - The edges are harmless: most edge pools move past them with the wider grid, but their calls hardly change.
+     - a is still needed: fixing it at 1 does not agree better with the targeted sequencing.
+     - **Caveat:** in pools fitted at a = 1.8, some DONOR depends on a (with a = 1 it becomes SEG; e.g. `PN15_SID1348` chr3, bad example 1). These are 39 of 1,266 pools with 1.2% of all DONOR, so the genome-wide shares do not change.
+
+     </details>
    - The three *luxurians* SEG tracts that miss look AA, not BB.
 
 **Examples: our calls against the targeted sequencing.** The targeted sequencing has no calls of its own. We align its reads and call its SNPs (steps 34–34c), and then only **describe** what those SNPs look like: AB-like (donor allele fraction around 0.5), BB-like (about 1) or no donor allele. The tract-level summary uses **our** tract boundaries, so it says whether the data inside a tract of ours look like what we called; it cannot say where a tract really starts or ends. Each panel is one sample and one chromosome, in three rows:

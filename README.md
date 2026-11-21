@@ -774,10 +774,12 @@ All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71
 
    *parviglumis*, the closest relative of maize, shares the most k-mers with B73, so its DONOR and SEG are still the hardest to tell apart (the "current" column is somewhat optimistic, since windows switched where the measured new contrast was higher). The contrast is per window: the HMM pools the evidence of a whole stretch, so low contrast makes DONOR vs SEG harder, not impossible. **B73 vs introgressed is not affected**, and with it the ancestry dosage used in the GWAS except for the ½-vs-1 step.
 
-**Examples: our calls against the targeted sequencing.** Each panel is one sample and one chromosome, in three rows:
-- **k-mer call (pool):** our HMM call of the 6-plant pool, from the 0.8x skim-seq;
-- **targeted seq. call:** the call of the targeted sequencing for each targeted region (SNPs within 200 kb of each other): **AB** (blue) if its donor-carrying SNPs sit below 0.8, **BB** (orange) if at 0.8 or above. A short light tick means no donor allele was seen there: either the plant is AA, or the teosinte carries the B73 allele at those SNPs, so the region says nothing;
-- **targeted seq. SNPs:** the donor allele fraction at each real SNP, which is the raw data behind the second row.
+**Examples: our calls against the targeted sequencing.** "Ours" is our k-mer call; "theirs" is the targeted sequencing. Each panel is one sample and one chromosome, in three rows:
+- **OUR call:** our HMM call of the 6-plant pool, from the 0.8x skim-seq: B73 (grey), SEG (blue) or DONOR (orange);
+- **THEIR call:** the targeted sequencing's call for each targeted region (SNPs within 200 kb of each other): **AB** (blue) if its donor-carrying SNPs sit below 0.8, **BB** (orange) if at 0.8 or above. A short light tick means no donor allele was seen there: either the plant is AA, or the teosinte carries the B73 allele at those SNPs, so the region says nothing;
+- **THEIR SNPs:** the donor allele fraction at each real SNP, the raw data behind the second row. Dots come in clumps: one clump is usually one amplicon (10–20 SNPs within about 150 bp, read from the same reads), so one odd amplicon gives a clump of odd dots and its own small box in the second row.
+
+**The text above our row is the comparison**, one per tract of ours that the targeted sequencing calls clearly: "ours SEG → theirs AB" means we call the pool SEG there and the plant is AB over that tract (step 34d, from all its SNPs, not from single dots or boxes). Short tracts get the short form "SEG→AB". What to expect: our B73 → theirs AA and our DONOR → theirs BB, because every plant of such a plot must carry that genotype. Our SEG means the plot segregates, so one plant of it can be AA, AB or BB (1 : 2 : 1); a single "ours SEG → theirs AA" or "→ theirs BB" is therefore not an error. Only the proportions over all SEG tracts can be checked (point 4, and "One plant or a bulk?" below).
 
 The outlined tract is the one in the title.
 
@@ -790,7 +792,7 @@ The outlined tract is the one in the title.
 
 <details><summary>All 83 samples: every chromosome with an introgression (one figure per sample)</summary>
 
-Same three rows as above, for every chromosome where we call SEG or DONOR or the targeted sequencing finds donor alleles. Above the k-mer row, each tract of ours that the targeted sequencing calls clearly is labelled with the plant's genotype there (AA, AB or BB; 34d). The three bad samples of point 6 are included: `Zv0480_P3_P2_P1211` (contaminated), `Zx0090_P2_P5_P1111` and `Zx0160_P2_P4_P1111` (swapped). Made with `final_script/34f_targseq_examples.py --gallery_dir`.
+Same three rows and the same "ours → theirs" labels as above, for every chromosome where we call SEG or DONOR or the targeted sequencing finds donor alleles. The three bad samples of point 6 are included and marked BAD SAMPLE in their titles: `Zv0480_P3_P2_P1211` (contaminated), `Zx0090_P2_P5_P1111` and `Zx0160_P2_P4_P1111` (swapped). Made with `final_script/34f_targseq_examples.py --gallery_dir`.
 
 ![Zd0010_P3_P3_P3211](figures/fix1/targseq_all/Zd0010_P3_P3_P3211.png)
 ![Zd0010_P3_P3_P3411](figures/fix1/targseq_all/Zd0010_P3_P3_P3411.png)

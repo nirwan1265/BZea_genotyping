@@ -65,24 +65,7 @@ r, p = spearmanr(A.rain, A.effect)
 cen = A.groupby("g")[["rain", "effect"]].transform(lambda s: s - s.mean())
 rw, pw = spearmanr(cen.rain, cen.effect)
 
-fig, (gax, ax0, spacer, ax1) = plt.subplots(1, 4, figsize=(15, 5.4), gridspec_kw={"width_ratios": [0.07, 1, 0.22, 1.15]})
-spacer.axis("off")
-ax = [ax0, ax1]
-# rain strip: one cell per taxon/race, coloured by its median rainy-season rain (light = dry, dark = wet)
-from matplotlib.patches import Rectangle
-from matplotlib.colors import Normalize
-cmap, norm = plt.get_cmap("Blues"), Normalize(Gr.rain.min() * 0.8, Gr.rain.max())
-for i, q in Gr.iterrows():
-    gax.add_patch(Rectangle((0, i - 0.45), 1, 0.9, color=cmap(norm(q.rain)), lw=0))
-gax.set_xlim(0, 1); gax.set_ylim(-0.6, len(Gr) - 0.4)
-gax.set_xticks([])
-gax.set_yticks(np.arange(len(Gr)), [NAME.get(g, g) for g in Gr.g], fontsize=8.5)
-gax.text(0.5, len(Gr) - 0.4, f"{Gr.rain.max():.0f} mm\n(wettest)", ha="center", va="bottom", fontsize=7.5, color="#3d3d3a")
-gax.text(0.5, -0.6, f"{Gr.rain.min():.0f} mm\n(driest)", ha="center", va="top", fontsize=7.5, color="#3d3d3a")
-gax.set_xlabel(f"\n\n{season}\nrain", fontsize=8, color="#3d3d3a")
-for sp in gax.spines.values():
-    sp.set_visible(False)
-gax.tick_params(length=0)
+fig, ax = plt.subplots(1, 2, figsize=(14, 5.4), gridspec_kw={"width_ratios": [1, 1.15]})
 y = np.arange(len(Gr))
 for i, q in Gr.iterrows():
     c = COL.get(q.g, "#888")
@@ -90,9 +73,9 @@ for i, q in Gr.iterrows():
     ax[0].scatter(q.non, i, s=55, facecolor="white", edgecolor=c, lw=2, zorder=2)
     ax[0].scatter(q.wi, i, s=70, color=c, zorder=3)
     ax[0].text(max(q.non, q.wi) + 0.03, i, f"{q.wi - q.non:+.2f}  ({q.n_with} plots)", va="center", fontsize=8, color="#3d3d3a")
-ax[0].set_yticks(y, []); ax[0].set_ylim(-0.6, len(Gr) - 0.4); ax[0].tick_params(axis="y", length=0)
+ax[0].set_yticks(y, [f"{NAME.get(g, g)}  ·  {rr:.0f} mm" for g, rr in zip(Gr.g, Gr.rain)], fontsize=8.5)
 ax[0].set_xlabel(f"mean {a.label} (plot BLUE)", fontsize=9)
-ax[0].set_title(f"a  Plots without (○) and with (●) the segment\n    rows ordered by median {season} rain at the donors' sites (strip)",
+ax[0].set_title(f"a  Plots without (○) and with (●) the segment\n    ordered by median {season} rain at the donors' sites",
                 fontsize=9, loc="left")
 ax[0].set_xlim(right=ax[0].get_xlim()[1] + 0.25)
 for g, d in A.groupby("g"):
@@ -107,7 +90,7 @@ ax[1].legend(frameon=False, fontsize=8, title="taxon / race (accessions)", title
 for z in ax:
     z.spines[["top", "right"]].set_visible(False)
     z.tick_params(labelsize=8)
-fig.subplots_adjust(left=0.115, right=0.865, bottom=0.13, top=0.86, wspace=0.04)
+fig.tight_layout()
 os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
 fig.savefig(a.out, dpi=200)
 print(Gr.round(2).to_string(index=False))

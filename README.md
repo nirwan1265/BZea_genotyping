@@ -759,7 +759,7 @@ All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71
 
    **The errors sit at the same places in many pools.** Counting, for every 1-Mb bin, the pools whose SEG tract between two DONOR tracts covers it, the first model had four hotspots: chr6 21–23 Mb (48 pools), chr1 297 Mb (28), chr7 54–65 Mb (28) and chr3 75–78 Mb (19). This is what led to the current model (2.6.6), which brings them to 9, 11, 14 and 8 pools:
    - **chr6 and chr1: the DONOR level was wrong.** There, our donors keep more of the B73 k-mers than the assembly plants, so a DONOR window read like SEG. The DONOR level learned from all our pools removes most of these errors.
-   - **chr7 and chr3: too little contrast.** There, the teosinte keeps 61–78% of the B73 k-mers, so with all B73 k-mers counted a DONOR window scores almost like a SEG window (about one noise unit apart in *parviglumis* chr7). Counting only the informative k-mers raised the contrast (*parviglumis* chr7: 1.2 → 2.6) and turned most chr7 islands into DONOR (example 3 below). ***parviglumis* chr3 75–78 Mb is not fixed:** its islands read halfway between DONOR and SEG in every count, all B73 k-mers or informative only, so the problem there is not contrast; it may be family-specific teosinte haplotypes that share these k-mers with B73. The targeted sequencing at chr3 70–81 Mb is mixed (BB in some plots, AA or AB in others; most of them *mexicana*).
+   - **chr7 and chr3: too little contrast.** There, the teosinte keeps 61–78% of the B73 k-mers, so with all B73 k-mers counted a DONOR window scores almost like a SEG window (about one noise unit apart in *parviglumis* chr7). Counting only the informative k-mers raised the contrast (*parviglumis* chr7: 1.2 → 2.6) and turned most chr7 islands into DONOR (e.g. `Zv0210_P1_P5_P1111` chr7 at 54–66 Mb, in the gallery below). ***parviglumis* chr3 75–78 Mb is not fixed:** its islands read halfway between DONOR and SEG in every count, all B73 k-mers or informative only, so the problem there is not contrast; it may be family-specific teosinte haplotypes that share these k-mers with B73. The targeted sequencing at chr3 70–81 Mb is mixed (BB in some plots, AA or AB in others; most of them *mexicana*).
    - None of the QTL that hold in the joint model lies in these four regions.
 
    **Contrast: how far apart DONOR and SEG are in one window.** The HMM separates DONOR from SEG by the gap between their expected scores, about (1 − d_w) × g(½), where d_w is the share of B73 k-mers the teosinte keeps in the window. Divided by the window's noise, this gives the contrast: how many noise units apart the two states are. Measured from our pools (windows with at least 5 pools called DONOR; median, and share of windows below 3):
@@ -781,14 +781,23 @@ All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71
 
 **The text above our row is the comparison**, one per tract of ours that the targeted sequencing calls clearly: "ours SEG → theirs AB" means we call the pool SEG there and the plant is AB over that tract (step 34d, from all its SNPs, not from single dots or boxes). Short tracts get the short form "SEG→AB". What to expect: our B73 → theirs AA and our DONOR → theirs BB, because every plant of such a plot must carry that genotype. Our SEG means the plot segregates, so one plant of it can be AA, AB or BB (1 : 2 : 1); a single "ours SEG → theirs AA" or "→ theirs BB" is therefore not an error. Only the proportions over all SEG tracts can be checked (point 4, and "One plant or a bulk?" below).
 
-The outlined tract is the one in the title.
+The outlined tract is the one in the title. **Four good examples:**
 
-![Our k-mer calls against the targeted sequencing, four examples](figures/fix1/targseq_examples.png)
+![Our k-mer calls against the targeted sequencing, four good examples](figures/fix1/targseq_examples.png)
 
-1. **We call SEG; the targeted sequencing says AB. They agree** (`Zv0370_P3_P4_P1111`, chr5 29–117 Mb): the SNPs that carry donor alleles sit at 0.3–0.7, none at 0.8 or above.
-2. **We call DONOR; the targeted sequencing says BB. They agree** (`Zv0420_P3_P1_P1111`, chr5 41–97 Mb): the SNPs that carry donor alleles sit at about 1.
-3. **An error of the first model, fixed** (`Zv0210_P1_P5_P1111`, *parviglumis*, chr7). The first model called a SEG island at 54–66 Mb (outlined), inside a DONOR block, at the chr7 hotspot (point 7). The targeted sequencing has SNPs at about 1 there (BB), and the current model, with the informative k-mers, calls one DONOR tract from 41 to 115 Mb.
-4. **The remaining error** (`Zv0030_P1_P3_P1111`, *parviglumis*, chr1, zoomed to 280–309 Mb). We still call a 2.2-Mb SEG tract between two DONOR tracts at the chr1 297 Mb hotspot; the targeted sequencing has SNPs at about 1 there (BB), like the DONOR beside it.
+1. **Ours SEG, theirs AB** (`Zl0050_P1_P5_P1211`, chr5 0–193 Mb). Every amplicon with donor alleles in the tract sits at 0.3–0.6 (104 donor-carrying SNPs, median 0.42).
+2. **Ours DONOR, theirs BB** (`Zv0120_P2_P3_P2111`, chr7 0–92 Mb). Every amplicon with donor alleles sits at about 1 (24 SNPs, median 1.0), and the B73 rest of the chromosome has none.
+3. **Ours SEG then DONOR, theirs AB then BB** (`Zh0030_P4_P3_P1111`, chr6). SEG at 8–75 Mb is AB (median 0.50), DONOR at 75–142 Mb is BB (median 1.0).
+4. **Ours SEG; theirs between AB and BB along the whole tract** (`Zv0480_P3_P1_P1211`, chr5 11–150 Mb). The 23 amplicons with donor alleles sit anywhere from 0.3 to 0.9, most at 0.6–0.9 (99 SNPs, median 0.78, so step 34d calls the tract "unclear"). One plant cannot switch between AB and BB this often within one tract, and this sample is clean (no stray donor alleles in its B73 tracts, unlike the contaminated `Zv0480_P3_P2_P1211` of point 6). A fraction of about 0.7 all along fits DNA of several plants of a segregating plot, e.g. 6 plants carrying 8–9 of their 12 copies as teosinte. Our SEG call fits that plot. This example is evidence that at least some targeted-sequencing DNA is not one plant (see "One plant or a bulk?" below).
+
+**Four bad examples** (the three bad samples of point 6 left out):
+
+![Our k-mer calls against the targeted sequencing, four bad examples](figures/fix1/targseq_examples_bad.png)
+
+1. **Ours DONOR, theirs AB** (`Zd0010_P3_P4_P2311`, chr3 28–157 Mb). 16 amplicons with donor alleles, most at 0.3–0.7 (38 SNPs, median 0.60; only 7 at 0.8 or above). The plot most likely segregates here and our pool read too high, e.g. a pool that by chance held few AA plants (2.9.1, point 4). This is the largest DONOR → AB tract of the 80 good samples.
+2. **Ours SEG between two DONOR tracts, theirs BB** (`Zv0030_P1_P3_P1111`, chr1, zoomed to 280–309 Mb). The systematic error of point 7, at the chr1 297 Mb hotspot: our 2.2-Mb SEG tract has SNPs at about 1, like the DONOR beside it.
+3. **Our tract ends too early** (`Zv0370_P3_P4_P1111`, chr1, zoomed to 270–309 Mb). Our SEG tract ends at 297.0 Mb; the targeted sequencing finds an AB amplicon at 298.6 Mb (11 SNPs, median 0.41), inside what we call B73. The donor tract probably goes on for at least 1.5 Mb. This is a boundary error near the same chr1 hotspot.
+4. **A disagreement made by the check itself** (`Zv0420_P3_P1_P1111`, chr9, zoomed to 0–60 Mb). We call DONOR at 1.4–21 Mb. Two amplicons say BB (6.3 Mb: 18 SNPs at 0.98; 10.8 Mb: 2 SNPs at 0.90) and one says AB (18.7 Mb: 54 SNPs at 0.47). Because step 34d takes the median over SNPs, the one dense amplicon outvotes the other two, and the tract counts as DONOR → AB. Counted per amplicon it would be BB at two of three places. So part of the "ours DONOR → theirs AB" share (3%) can come from single amplicons with many SNPs, not from our calls.
 
 <details><summary>All 83 samples: every chromosome with an introgression (one figure per sample)</summary>
 
@@ -885,11 +894,12 @@ Same three rows and the same "ours → theirs" labels as above, for every chromo
 **One plant or a bulk?** This matters only for the SEG row, and it waits for confirmation of what DNA was sequenced:
 - **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 9 : 83 : 9 among the clearly called tracts (21 : 71 : 8 in the first model), which would mean both homozygotes are strongly depleted. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.36–0.52).
 - **If it is a bulk of several plants,** the SEG fraction should be about 0.46, which is what we see, and nearly all SEG tracts would look intermediate (AB), which is also what we see.
+- Single samples point the same way: in good example 4 (`Zv0480_P3_P1_P1211`, chr5) the fraction sits between AB and BB at amplicon after amplicon, which one plant cannot do.
 - The data lean towards a bulk, but the B73 and DONOR rows hold either way: they are the validation.
 
-**Limits.** Only tracts of 1 Mb or more were compared, so short tracts are still unchecked; many tracts had too few panel SNPs for a clear call (31–55% unclear); and two samples were not aligned (one had only an R2 file, one job ran out of time) and were not rerun.
+**Limits.** A tract's call is the median over its SNPs, so one amplicon with many SNPs can outvote the rest (bad example 4); counting per amplicon would be fairer and is not done yet. Only tracts of 1 Mb or more were compared, so short tracts are still unchecked; many tracts had too few panel SNPs for a clear call (31–55% unclear); and two samples were not aligned (one had only an R2 file, one job ran out of time) and were not rerun.
 
-Scripts: `final_script/34_targseq_align.sh`, `34b_targseq_call.sh`, `34c_targseq_compare.py` (site-level comparison), `34d_targseq_tracts.py` (tracts), `34e_targseq_figure.py` (summary figure), `34f_targseq_examples.py` (example panels; `--gallery_dir` for all samples). Results: `data/introgression_fix1/targseq/` (`tracts_targseq.tsv`, `hidden_b73_windows.tsv`, `per_sample.tsv`, `sites_used.tsv.gz`); the comparison of the models: `data/introgression_fix1/model/compare_old_new.txt`.
+Scripts: `final_script/34_targseq_align.sh`, `34b_targseq_call.sh`, `34c_targseq_compare.py` (site-level comparison), `34d_targseq_tracts.py` (tracts), `34e_targseq_figure.py` (summary figure), `34f_targseq_examples.py` (example panels: `--set good`, `--set bad`; `--gallery_dir` for all samples). Results: `data/introgression_fix1/targseq/` (`tracts_targseq.tsv`, `hidden_b73_windows.tsv`, `per_sample.tsv`, `sites_used.tsv.gz`); the comparison of the models: `data/introgression_fix1/model/compare_old_new.txt`.
 
 ### 2.10 Population structure from k-mers (step 32)
 
@@ -1298,6 +1308,9 @@ MODEL=fix1 TRAITS="DTS DTA ASI PH EH EN BW BL SL SPAD SPAD2 Prolif Kinki NBR LAE
 bash new_model/fix1/fx1_8_laptop.sh
 #   genes + GO (30), genes per QTL (33a), SuSiE fine-mapping (33) and PIPs into the gene tables (33b),
 #   side-by-side figures (31), DTS by year (31b), landscape (24b), targeted sequencing (34e), k-mer PCA (32c), checks (incl. relatives, 24c)
+T="--sites data/introgression_fix1/targseq/sites_used.tsv.gz --tracts data/introgression_fix1/tracts_all.tsv.gz --targseq_tracts data/introgression_fix1/targseq/tracts_targseq.tsv"
+python final_script/34f_targseq_examples.py $T --set good --out figures/fix1/targseq_examples.png       # the four good examples
+python final_script/34f_targseq_examples.py $T --set bad --out figures/fix1/targseq_examples_bad.png    # the four bad examples
 python final_script/34f_targseq_examples.py --sites data/introgression_fix1/targseq/sites_used.tsv.gz \
   --tracts data/introgression_fix1/tracts_all.tsv.gz --gallery_dir figures/fix1/targseq_all \
   --targseq_tracts data/introgression_fix1/targseq/tracts_targseq.tsv          # all targeted-sequencing samples

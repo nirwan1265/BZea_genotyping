@@ -18,7 +18,8 @@ Usage (the README figure):
   python final_script/34f_targseq_examples.py --sites data/introgression_fix1/targseq/sites_used.tsv.gz \
      --tracts data/introgression_fix1/tracts_all.tsv.gz --targseq_tracts data/introgression_fix1/targseq/tracts_targseq.tsv \
      --out figures/fix1/targseq_examples.png   [--example SAMPLE:CHR[@FROM-TO]:START_MB:END_MB:"title" ...]
-     (@FROM-TO: zoom the panel to FROM-TO Mb; without --example the four README examples below)
+     (@FROM-TO: zoom the panel to FROM-TO Mb; empty START_MB:END_MB = no outline; without --example the README examples
+      below: --set good, or --set bad --out figures/fix1/targseq_examples_bad.png)
   All samples, one figure each (every chromosome with an introgression): the same with --gallery_dir figures/fix1/targseq_all
 Needs: numpy, pandas, matplotlib.
 """
@@ -30,12 +31,17 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-EX = [
-    "Zv0370_P3_P4_P1111:chr5:28.99:116.57:ours SEG, theirs AB (agree)",
-    "Zv0420_P3_P1_P1111:chr5:40.79:97.37:ours DONOR, theirs BB (agree)",
-    "Zv0210_P1_P5_P1111:chr7:54.18:66.18:the outlined stretch was SEG in the old model; ours is now DONOR, theirs BB (fixed)",
-    "Zv0030_P1_P3_P1111:chr1@280-309:297.01:299.21:zoomed to 280–309 Mb: ours SEG between two DONOR tracts, theirs BB (still our error)",
-]
+EX = {"good": [
+    "Zl0050_P1_P5_P1211:chr5:0:192.84:ours SEG, theirs AB: every amplicon in the tract sits at 0.3–0.6 (agree)",
+    "Zv0120_P2_P3_P2111:chr7:0:91.57:ours DONOR, theirs BB: every amplicon in the tract sits at 1 (agree)",
+    "Zh0030_P4_P3_P1111:chr6:::ours SEG then DONOR, theirs AB then BB (agree)",
+    "Zv0480_P3_P1_P1211:chr5:10.80:150.45:ours SEG; theirs between AB and BB (0.5–1) along the whole tract: DNA of more than one plant of a segregating plot?",
+], "bad": [
+    "Zd0010_P3_P4_P2311:chr3:28.29:156.75:ours DONOR, theirs AB (our error: the plot probably segregates)",
+    "Zv0030_P1_P3_P1111:chr1@280-309:297.01:299.21:zoomed to 280–309 Mb: ours SEG between two DONOR tracts, theirs BB (our error, at the chr1 297 Mb hotspot)",
+    "Zv0370_P3_P4_P1111:chr1@270-309:297.01:308.51:zoomed to 270–309 Mb: our SEG tract ends at 297 Mb, theirs AB at 299 Mb (our tract ends too early)",
+    "Zv0420_P3_P1_P1111:chr9@0-60:1.40:21.19:zoomed to 0–60 Mb: ours DONOR; theirs BB at 6 and 11 Mb, but one dense amplicon (0.2–0.7) makes the tract AB",
+]}
 ap = argparse.ArgumentParser()
 ap.add_argument("--sites", required=True)
 ap.add_argument("--tracts", required=True)
@@ -43,8 +49,9 @@ ap.add_argument("--out", default="")
 ap.add_argument("--gallery_dir", default="", help="one figure per sample (all its introgressed chromosomes) instead of the examples")
 ap.add_argument("--targseq_tracts", default="", help="34d tracts_targseq.tsv: label each tract with its targeted-seq genotype (gallery)")
 ap.add_argument("--example", action="append", default=None)
+ap.add_argument("--set", default="good", choices=["good", "bad"], help="built-in examples when no --example is given")
 a = ap.parse_args()
-ex = [e.split(":", 4) for e in (a.example or EX)]
+ex = [e.split(":", 4) for e in (a.example or EX[a.set])]
 GREY, BLUE, ORANGE, INK, MUTED, PALE = "#cfcdc4", "#2a78d6", "#eb6834", "#0b0b0b", "#52514e", "#a8a69e"
 COL = {"B73": GREY, "SEG": BLUE, "DONOR": ORANGE}
 
@@ -173,7 +180,7 @@ if a.gallery_dir:
 else:
     fig, axes = plt.subplots(len(ex), 1, figsize=(12.5, 2.75 * len(ex)))
     for k, (ax, (smp, ch, s0, e0, title)) in enumerate(zip(np.atleast_1d(axes), ex)):
-        draw(ax, smp, ch, float(s0), float(e0), f"{k + 1}. {smp}, {ch.split('@')[0]}: {title}", labs(smp, ch))
+        draw(ax, smp, ch, float(s0) if s0 else None, float(e0) if e0 else None, f"{k + 1}. {smp}, {ch.split('@')[0]}: {title}", labs(smp, ch))
     np.atleast_1d(axes)[-1].set_xlabel("position (Mb, B73 v5)", fontsize=9, color=MUTED)
     legend(fig)
     fig.tight_layout(rect=(0.12, 0, 1, 0.965))

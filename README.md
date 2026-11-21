@@ -1511,7 +1511,7 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
 |---|---|---|---|---|---|---|
-| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.003 (outside CS) | +0.18 | 9.4 | 2.7 (yes) | Differs between taxa (Zd +0.29, Zv +0.23, Zx +0.08). The strongest NBR QTL; smallest in *mexicana*. |
+| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.003 (outside CS) | +0.18 | 9.4 | 2.7 (yes) | Differs between taxa (Zd +0.29, Zv +0.23, Zx +0.08). The strongest NBR QTL; smallest in *mexicana*, larger for alleles from wetter rainy seasons (below). |
 | **Q6 chr8 126.2 Mb** | — | 0.15 (best window; top windows 126.2–126.7 Mb, 14 genes) | +0.12 | 4.4 | 1.1 (no) | No significant difference between taxa (Zd +0.10, Zh +0.33, Zl +0.15, Zv +0.09, Zx +0.09). |
 | **Q7 chr9 4.2 Mb** | — | 0.07 (best window; top windows 4.0–9.5 Mb, 49 genes) | −0.09 | 4.4 | 3.2 (yes) | Fewer brace-root nodes; differs between taxa, mostly *diploperennis* (Zd −0.39; Zh −0.09, Zl −0.07, Zv −0.06, Zx −0.07). |
 
@@ -1532,6 +1532,19 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
   - **Fine-mapping does not favour this gene.** Its window has PIP 0.003 and lies outside the 95% credible set; the QTL's probability is spread over 98.0–99.4 Mb (highest window 0.05; 27 genes in the top windows, listed with `in_top_windows = yes` in `data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv`). This lowers the support from our own data, but does not remove the gene: the case for it comes from the brace-root GWAS of Sun et al. (2022), not from the position of our peak, and a low PIP does not rule a gene out (section 3.4.3). The genes in the top windows are equally worth a look.
 
   So the brace-root effect is not explained by flowering time. Our tracts are too long to separate Zm00001eb418930 from *ZmCCT10*, though: only 1 of the 1,243 pools has a different state at the two genes (117 carry a donor segment there). Script: `final_script/nbr_q8_flowering_check.py`; output `data/introgression_fix1/checks/nbr_q8.txt`.
+
+  **Does the effect depend on where the donor comes from? Yes: it is larger in taxa and races from wetter rainy seasons.** Each plot's donor accession was joined to the climate at its collection site (WorldClim 2.1 monthly rain, 10 arc-min, Fick & Hijmans 2017; steps 36c–36e). For each of the 47 accessions with plots both with and without the segment, the effect is the mean NBR of its plots with the segment minus that of its plots without it (same accession, so the same background and home site).
+
+  ![NBR Q8 against rainy-season rain at the donor's home site](figures/fix1/NBR_Q8_rain.png)
+
+  - **(a) By taxon and race** (*mexicana* split into its four races): the segment adds almost nothing in the driest races (Durango −0.08, Chalco +0.08, Mesa Central +0.02 nodes) and the most in the wetter taxa (*parviglumis* +0.37, *diploperennis* +0.63). The plots without the segment hardly differ between groups (0.95–1.10 nodes), so a taxon's average NBR does not change much; the difference is in what its allele at chr10 98 Mb does.
+  - **(b) By accession:** the effect rises with July–October rain at the donor's site (Spearman ρ = 0.54, p = 0.0001, 47 accessions).
+  - **It is rainy-season rain, not dry-season rain.** Month by month, the per-accession ρ is 0.49–0.55 for July, August and September (each p < 0.05/12) and near 0 for December–May ([month profile](data/introgression_fix1/env/NBR_Q8_months.png)). Over all plots, the effect per copy rises by +0.15 nodes per SD of the aridity index within taxa (p = 0.003, errors clustered by accession; step 36, `data/introgression_fix1/env/NBR_env.tsv`).
+  - **Lineage cannot be ruled out.** Within taxa *and* races the trend points the same way (per accession ρ = 0.18, p = 0.23; July–October months +0.06 to +0.10 per SD, p 0.07–0.17), but it is not significant: the link runs mainly between groups (the dry Durango and Mesa Central races against the wetter *parviglumis* and *diploperennis*), and with 2–16 accessions per group we cannot tell whether rain drives the effect or just tracks which lineage the allele came from. So: the teosinte allele at chr10 98 Mb adds more brace-root nodes when it comes from taxa and races with wetter rainy seasons; it is not shown to be local adaptation to rain.
+  - **It is not just flowering time or height:** with DTS and plant height as covariates, the effect still rises with humidity (+0.15 per SD, p = 0.002).
+  - Aerial brace roots of a Sierra Mixe maize landrace secrete a mucilage that hosts nitrogen-fixing bacteria (Van Deynze et al. 2018), and the mucilage and nitrogenase activity of a root rise with its diameter (Pankievicz et al. 2022). More brace-root nodes from alleles of wetter regions fits that picture, but we measured neither mucilage nor nitrogen fixation. Topsoil nitrogen at the donor site goes the same way as rain (ρ = 0.55 between the two), not the opposite, so the data do not say that the allele helps where soil N is low.
+
+  Scripts: `final_script/36_qtl_env.py` (dosage × environment per QTL), `36b_qtl_env_accession.py` (per accession), `36c_monthly_climate.R` (monthly WorldClim per accession → `data/env/BZea_accession_monthly.csv`), `36d_month_profile.py` (month by month), `36e_qtl_rain_figure.py` (the figure). Their run commands are in each script's header.
 
 The five chr1 peaks (all with negative effects) share their signal and do not hold individually. **Q4 chr1 219.8 Mb** has no overall effect but differs between taxa (joint −log10 p 0.2, taxa differ 2.5: *luxurians* carriers have fewer brace-root nodes, −0.86). *ZmD14* (Zm00001eb007670) is in the interval of Q2 (chr1 23.9 Mb; joint 1.8, taxa differ 1.9), which does not hold. The first model's chr10 25.4 Mb QTL (only *diploperennis* carriers, taxa differ 6.1) is not among this model's peaks.
 
@@ -2008,6 +2021,7 @@ All references cited in this README, in alphabetical order.
 - Churchill GA, Doerge RW (1994) Empirical threshold values for quantitative trait mapping. *Genetics* 138:963–971.
 - Danecek P, Bonfield JK, Liddle J, et al. (2021) Twelve years of SAMtools and BCFtools. *GigaScience* 10:giab008.
 - Devlin B, Roeder K (1999) Genomic control for association studies. *Biometrics* 55:997–1004.
+- Fick SE, Hijmans RJ (2017) WorldClim 2: new 1-km spatial resolution climate surfaces for global land areas. *Int J Climatol* 37:4302–4315. doi:10.1002/joc.5086
 - Haldane JBS (1919) The combination of linkage values and the calculation of distances between the loci of linked factors. *J Genet* 8:299–309.
 - Hrytsenko Y, Daniels NM, Schwartz RS (2025) Determining population structure from k-mer frequencies. *PeerJ* 13:e18939. doi:10.7717/peerj.18939
 - Huang C, Sun H, Xu D, et al. (2018) ZmCCT9 enhances maize adaptation to higher latitudes. *PNAS* 115:E334–E341.
@@ -2031,6 +2045,7 @@ All references cited in this README, in alphabetical order.
 - Ni J, Tang D, Chen Z, Yang S, Wang X, Liu Z, Deng W, Wu H, You C, Yang J, Meng P, Bao R, Rong T, Liu J (2024) Identification and segregation of two closely linked major QTLs for kernel row number in advanced maize–teosinte populations. *Theor Appl Genet* 137:271. doi:10.1007/s00122-024-04780-0
 - Oakey H, Verbyla A, Pitchford W, Cullis B, Kuchel H (2006) Joint modeling of additive and non-additive genetic line effects in single field trials. *Theor Appl Genet* 113:809–819.
 - Odell SG, Hudson AI, Praud S, Dubreuil P, Tixier M-H, Ross-Ibarra J, Runcie DE (2022) Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci. *G3* 12:jkac011.
+- Pankievicz VCS, Delaux P-M, Infante V, Hirsch HH, Rajasekar S, Zamora P, Jayaraman D, Calderon CI, Bennett A, Ané J-M (2022) Nitrogen fixation and mucilage production on maize aerial roots is controlled by aerial root development and border cell functions. *Front Plant Sci* 13:977056. doi:10.3389/fpls.2022.977056
 - Picard toolkit. Broad Institute. https://broadinstitute.github.io/picard/
 - Poretsky E, Cagirici HB, Andorf CM, Sen TZ (2024) Harnessing the predicted maize pan-interactome for putative gene function prediction and prioritization of candidate genes for important traits. *G3* 14:jkae059. doi:10.1093/g3journal/jkae059
 - Portwood JL 2nd, Woodhouse MR, Cannon EK, et al. (2019) MaizeGDB 2018: the maize multi-genome genetics and genomics database. *Nucleic Acids Res* 47:D1146–D1154. (Source of the teosinte assemblies.)
@@ -2051,6 +2066,7 @@ All references cited in this README, in alphabetical order.
 - Sun X, Zhang Z, Wu J, Cui X, Feng D, Wang K, Xu M, Zhou L, Han X, Gu X, Lu T (2016) The *Oryza sativa* regulator HDR1 associates with the kinase OsK4 to control photoperiodic flowering. *PLoS Genet* 12:e1005927. doi:10.1371/journal.pgen.1005927
 - Tang W, Wang W, Chen D, Ji Q, Jing Y, Wang H, Lin R (2012) Transposase-derived proteins FHY3/FAR1 interact with PHYTOCHROME-INTERACTING FACTOR1 to regulate chlorophyll biosynthesis by modulating *HEMB1* during deetiolation in *Arabidopsis*. *Plant Cell* 24:1984–2000.
 - Teixeira PF, Kmiec B, Branca RMM, Murcha MW, Byzia A, Ivanova A, Whelan J, Drag M, Lehtiö J, Glaser E (2016) A multi-step peptidolytic cascade for amino acid recovery in chloroplasts. *Nat Chem Biol*. doi:10.1038/nchembio.2227
+- Van Deynze A, Zamora P, Delaux P-M, et al., Bennett AB (2018) Nitrogen fixation in a landrace of maize is supported by a mucilage-associated diazotrophic microbiota. *PLoS Biol* 16:e2006352. doi:10.1371/journal.pbio.2006352
 - Viterbi AJ (1967) Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. *IEEE Trans Inf Theory* 13:260–269.
 - Voichek Y, Weigel D (2020) Identifying genetic variants underlying phenotypic variation in plants without complete genomes. *Nat Genet* 52:534–540.
 - Waditee-Sirisattha R, Shibato J, Rakwal R, Sirisattha S, Hattori A, Nakano T, Takabe T, Tsujimoto M (2011a) The *Arabidopsis* aminopeptidase LAP2 regulates plant growth, leaf longevity and stress response. *New Phytol* 191:958–969. doi:10.1111/j.1469-8137.2011.03758.x

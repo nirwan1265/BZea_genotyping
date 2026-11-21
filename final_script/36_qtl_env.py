@@ -25,6 +25,10 @@ Usage (from the repo root; step-25 inputs are not in git, so build them first, o
   python final_script/36_qtl_env.py --assoc_in $HOME/bzea_assoc_fix1 \
      --qtl data/introgression_fix1/joint_qtl/noperm/qtl2_NBR_qtl.tsv --pool_summary data/introgression_fix1/pool_summary.tsv \
      --env data/env/BZea_accession_env.csv --trait NBR --out data/introgression_fix1/env/NBR_env.tsv
+Solar radiation for SPAD (36c output; srad = mean daily solar radiation, kJ m-2 day-1, of those months):
+  python final_script/36_qtl_env.py --assoc_in $HOME/bzea_assoc_fix1 --qtl data/introgression_fix1/joint_qtl/noperm/qtl2_SPAD2_qtl.tsv \
+     --pool_summary data/introgression_fix1/pool_summary.tsv --env data/env/BZea_accession_env.csv \
+     --monthly data/env/BZea_accession_monthly.csv --trait SPAD2 --layers "srad_06-10 srad_01-12" --out data/introgression_fix1/env/SPAD2_srad.tsv
 Needs: numpy, pandas, scipy, statsmodels.
 """
 import argparse
@@ -41,15 +45,27 @@ ap.add_argument("--pool_summary", required=True)
 ap.add_argument("--env", required=True)
 ap.add_argument("--trait", required=True)
 ap.add_argument("--layers", default="aridity BIO12 BIO15 BIO18 nitrogen_0_5cm elevation")
+ap.add_argument("--monthly", default="", help="step 36c table; then a layer can be <var>_<MM>-<MM>, the mean over those "
+                                         "months, e.g. srad_06-10 = mean daily solar radiation June-October")
 ap.add_argument("--out", required=True)
 a = ap.parse_args()
-WHAT = {"aridity": "aridity index (higher = more humid)", "BIO12": "annual precipitation", "BIO15": "precipitation seasonality",
+WHAT = {"srad_06-10": "mean daily solar radiation, June-October", "srad_01-12": "mean daily solar radiation, year",
+        "aridity": "aridity index (higher = more humid)", "BIO12": "annual precipitation", "BIO15": "precipitation seasonality",
         "BIO18": "precipitation of warmest quarter", "nitrogen_0_5cm": "topsoil nitrogen", "elevation": "elevation"}
 
 P = pd.read_csv(f"{a.assoc_in}/pheno.csv")
 P = P.rename(columns={P.columns[0]: "line"}).dropna(subset=[a.trait])
 P["acc"] = P.line.str.split("_").str[0]
 E = pd.read_csv(a.env).rename(columns={"accession-id": "acc"})
+if a.monthly:
+    import re
+    M = pd.read_csv(a.monthly).rename(columns={"accession-id": "acc"}).drop(columns=["taxa_code", "race"], errors="ignore")
+    for L in a.layers.split():
+        m = re.fullmatch(r"(\w+?)_(\d\d)-(\d\d)", L)
+        if m:
+            v, m0, m1 = m.group(1), int(m.group(2)), int(m.group(3))
+            M[L] = M[[f"{v}_{k:02d}" for k in range(m0, m1 + 1)]].mean(axis=1)
+    E = E.merge(M, on="acc", how="left")
 P = P.merge(E[["acc"] + a.layers.split()], on="acc", how="left")
 ps = pd.read_csv(a.pool_summary, sep="\t").set_index("SAMPLE")
 P["donor_share"] = P.SAMPLE.map(ps.FRAC_DONOR + ps.FRAC_SEG / 2)

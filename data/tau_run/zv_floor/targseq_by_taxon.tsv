@@ -1,0 +1,13 @@
+run	TAXON	samples	B73_clear	B73_agree_%	SEG_clear	SEG_agree_%	DONOR_clear	DONOR_agree_%	SEG_look_BB	DONOR_look_AB
+old	Zd	5	64	98.4	20	90.0	9	88.9	0	1
+new	Zd	5	63	98.4	20	90.0	8	100.0	0	0
+old	Zh	3	33	97.0	10	90.0	9	100.0	0	0
+new	Zh	3	32	100.0	9	88.9	9	100.0	0	0
+old	Zl	5	57	98.2	12	75.0	6	100.0	0	0
+new	Zl	5	56	100.0	12	83.3	6	100.0	0	0
+old	Zv	5	63	95.2	26	88.5	43	100.0	3	0
+new	Zv	5	63	95.2	26	88.5	43	100.0	3	0
+old	Zx	5	64	93.8	32	75.0	51	92.2	7	2
+new	Zx	5	65	92.3	29	79.3	50	94.0	6	1
+old	all	23	281	96.4	100	83.0	118	95.8	10	3
+new	all	23	279	96.8	96	85.4	116	97.4	9	1

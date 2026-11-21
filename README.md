@@ -1561,9 +1561,9 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
 
   *What our lines show* (step 38: mixed model with taxon and the chr8 kinship, as in step 26, at window chr8:126.65 Mb, which holds *ZCN8*. The Q6 windows 126.35–126.65 Mb have the same genotype in every pool, so this is the Q6 tract):
 
-  ![NBR Q6 / ZCN8: brace-root nodes and flowering by teosinte copies](figures/fix1/NBR_Q6_ZCN8.png)
+  ![NBR Q6 / ZCN8: brace-root nodes and flowering with and without the segment](figures/fix1/NBR_Q6_ZCN8.png)
 
-  (a, b) Taxon-adjusted mean ± SE over plots by teosinte copies at the window (0 = B73, 1 = segregating pool, 2 = donor). (c, d) Effect per teosinte copy within each taxon and *mexicana* race, ± 95% interval (black: all carriers).
+  Same layout as the Q8 figure below. (a) Brace-root nodes and (b) days to anthesis: mean of plots without (○) and with (●) the segment in each taxon and *mexicana* race; grey line under each row: the same difference between sibs of the same BC2 plant (carriers minus non-carriers). (c) One dot per donor accession: the segment's effect on DTA (x) against its effect on NBR (y), carrier minus non-carrier plots of the same accession.
 
   | Trait | Effect per teosinte copy | p | −log10 p (genome-wide threshold) |
   |---|---|---|---|
@@ -1574,7 +1574,11 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
   | Ear height (EH) | +2.9 cm | 1 × 10⁻⁶ | 5.8 (EH Q11, chr8 129.2 Mb, the same tract) |
 
   - **The tract that adds brace-root nodes also delays flowering and makes taller plants.** The flowering effect is small and below the genome-wide threshold, so it supports the candidate but is not a flowering QTL on its own (the scans over both years found no DTS or DTA QTL here; the 2025-only DTS QTL at chr8 133.8 Mb lies outside this tract, section 3.6.1).
-  - **It goes the same way in every group** (panels c, d): DTA and DTS are later in all five taxa and all four *mexicana* races, and NBR goes up in 7 of 8 groups (*mexicana* Nobogame −0.01, 2 accessions). So we see no sign of an early *ZCN8* allele among our donors.
+  - **It goes the same way in almost every group.**
+    - In the mixed model per group (step 38, `zcn8_by_taxon.tsv`), DTA and DTS are later in all five taxa and all four *mexicana* races, and NBR goes up in 7 of 8 groups (*mexicana* Nobogame −0.01, 2 accessions).
+    - In the raw plot means (panels a, b) the one exception is *parviglumis* DTA (−0.18 days); its sibs, which share the same donor plant, show +0.53. The largest NBR effect is in *huehuetenangensis* (+0.54; sibs +0.71), from only 2 accessions.
+    - So we see no sign of an early *ZCN8* allele among our donors.
+  - **Within families:** sibs from the same BC2 plant with the segment have +0.21 more brace-root nodes than those without (83 families, Wilcoxon p = 0.006) and flower +0.35 days later (86 families, p = 0.19). So the NBR effect is not a background difference between plots; the flowering effect is too small to show up family by family.
   - **It is the mirror image of Lin et al. on the three traits both studies measured:**
 
     | | Flowering | Plant height | Nodal / brace roots |
@@ -1586,10 +1590,10 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
   - **The extra brace-root nodes are not a side effect of later flowering.**
     - Within taxa, NBR barely changes with flowering time: −0.006 nodes per day of DTS (p = 0.23).
     - With DTS in the model, the Q6 effect stays the same: +0.113 → +0.117 nodes per copy (p = 5 × 10⁻⁵). With DTA: +0.116.
-    - Per accession, the carrier-minus-non-carrier difference in NBR does not track the one in DTS (Spearman ρ = 0.15, p = 0.29, 50 accessions).
+    - Per accession, the segment's effect on NBR does not track its effect on flowering (panel c: ρ = 0.16 with DTA, p = 0.28; within taxa and races ρ = 0.19, p = 0.19; 50 accessions). 36 of the 50 accessions gain brace-root nodes and 29 flower later.
 
     This fits *ZCN8* acting on roots as well as on flowering (it is expressed in roots; Lin et al. 2022), but it does not show it.
-  - **Shape of the effect** (panels a, b): NBR rises with one copy (segregating pools about equal to donor pools), while flowering rises mainly in donor pools. Neither departs significantly from an additive effect (dominance test p = 0.30 for NBR, 0.15 for DTA), so we don't read anything into the difference.
+  - **Shape of the effect:** NBR rises with one copy (segregating pools about equal to donor pools), while flowering rises mainly in donor pools. Neither departs significantly from an additive effect (dominance test p = 0.30 for NBR, 0.15 for DTA), so we don't read anything into the difference.
   - **What we cannot say.**
     - The tract is inherited as one block, so *ZCN8* cannot be separated from the other genes in the top windows. These include two LOB-domain genes, *LOB7*/*ZmLBD37* (Zm00001eb353210, 126.50 Mb) and *LOB16*/*ZmLBD38* (Zm00001eb353230, 126.65 Mb), plus *DOF1.5* (Zm00001eb353140) and a CIPK19-like kinase (Zm00001eb353170), all with window PIP ≈ 0.15.
     - The experiment of Lin et al. tests a different pair of alleles in a different background, not our donors' alleles.

@@ -1242,6 +1242,18 @@ A joint model needs a short list of QTL to fit together. It cannot take all 21,3
 
 The stepwise method that fits a population like ours is a multi-locus mixed model (MLMM; Segura et al. 2012), which adds and removes QTL as fixed effects while keeping the kinship term; our forward steps plus the joint test are close to it.
 
+**Check: a stepwise mixed model on every trait** (`final_script/37_stepwise_mlmm.R` / `.sh`, output in `data/introgression_fix1/stepwise/`): forward, backward and refinement steps with the same LOCO kinship, keeping a QTL only if it passes the trait's genome-wide threshold given all the others. Of the **81 QTL that hold** in the joint model:
+
+| Stepwise model | QTL | Which |
+|---|---|---|
+| finds it in the same region | 68 | e.g. both DTS QTL (same windows, effects +1.00 and +1.01 d in both models), NBR Q8, EN Q1–Q3, Prolif Q1, ASI Q10 |
+| finds it, but its refinement step moved it along the same chromosome | 4 | NBR Q7 (chr9 4 → 41 Mb), EN Q12 (chr7 165 → 143 Mb), Prolif Q5 (chr2 34 → 9 Mb), SL Q8 (chr6 116 → 164 Mb) |
+| does not keep it | 9 | SPAD2 Q8, PH Q6, PH Q14, EH Q2, EN Q7, EN Q11, SL Q12, BL Q3, BW Q6 |
+
+So **72 of the 81 QTL are confirmed by the stepwise model; the other 9 are weaker** (joint −log10 p 2.1–4.7) **and depend on the method, and we treat them as a second tier.** The column "Stepwise" in every trait table (section 3.6) gives yes / moved / no for each QTL. The stepwise model also keeps a few QTL that do not hold in the joint model, once their competing peaks are dropped (e.g. one chr1 QTL for SPAD2, at 57.9 Mb, instead of five), and it adds 9 QTL of its own, mostly modest (−log10 p 4.3–8.2).
+
+**Why the joint model stays the main result:** with tracts tens of Mb long, the stepwise search places QTL less reliably. Its refinement step moves QTL tens of Mb along the same tract (the 4 above), and it can split one region into two neighbouring windows with large opposite effects that cancel out (PH and EH at chr10 99.5 and 101.5 Mb: +16.6 and −10.9 cm for PH; BW at chr8 60.0 and 61.6 Mb). The joint model keeps every QTL at its scan peak and reports, rather than silently drops, the ones that do not hold.
+
 #### 3.4.2 Why some QTL show fewer taxa
 
 A per-taxon effect needs carriers: plots of that taxon with the teosinte allele at the QTL. Taxa with fewer than 5 carrier plots at a QTL get no estimate. For example, DTS Q2 (chr10) has carriers from Zd (23), Zv (24) and Zx (66) but only 4 from *huehuetenangensis* and 2 from *luxurians*, so those two are not shown. Which taxa carry a tract depends on where the backcrosses happened to keep donor segments.
@@ -1362,10 +1374,10 @@ All results are in `data/introgression_fix1/` (figures in `figures/fix1/`):
 
 Two QTL pass the 1,000-permutation threshold (−log10 p > 5.50), and both hold in the joint model (Bonferroni over 2 QTL: −log10 p > 1.60). They are the same two QTL as in the first model.
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.644 (**top**) | +1.00 d | 9.5 | 13.9 (yes) | Differs between taxa (Zd +1.95, Zl +4.77, Zv +0.41, Zx +0.50). Strong, but mostly *luxurians* and *diploperennis*; Zv and Zx only about +0.5 d. |
-| **Q2 chr10 97.8 Mb** | Zm00001eb418700 (ZmCCT10) | 0.019 (**top**) | +1.01 d | 9.0 | 1.0 (no) | No significant difference between taxa (Zd +1.18, Zv +0.78, Zx +0.94). The ZmCCT10 (Zm00001eb418700) region: teosinte alleles delay flowering everywhere. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q1 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.644 (**top**) | +1.00 d | 9.5 | yes | 13.9 (yes) | Differs between taxa (Zd +1.95, Zl +4.77, Zv +0.41, Zx +0.50). Strong, but mostly *luxurians* and *diploperennis*; Zv and Zx only about +0.5 d. |
+| **Q2 chr10 97.8 Mb** | Zm00001eb418700 (ZmCCT10) | 0.019 (**top**) | +1.01 d | 9.0 | yes | 1.0 (no) | No significant difference between taxa (Zd +1.18, Zv +0.78, Zx +0.94). The ZmCCT10 (Zm00001eb418700) region: teosinte alleles delay flowering everywhere. |
 
 **Suggestive peaks** (above −log10 p 4.5 but below the 5.50 threshold, outside the two QTL): chr5 217.2 Mb (5.5), chr1 84.5 Mb (5.3; the DTA Q1 peak), chr10 81.8 Mb (5.3), chr9 10.9 Mb and chr9 1.4 Mb (5.0 each; both DTA QTL, teosinte earlier), chr10 69.2 Mb (4.8), chr10 125.0 Mb (4.6).
 
@@ -1387,10 +1399,10 @@ Unlike brace roots and rain, none of these flowering QTL changes clearly with th
 
 <details><summary>All DTS QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr5 221.8 Mb | 221.7–222.0 | 9.4 | +1.00 d ± 0.16 | **9.5** | **13.9** | Zd +1.95 (10), Zl +4.77 (13), Zv +0.41 (46), Zx +0.50 (51) | [16 genes](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv) | 221.7–221.8 (8) | 0.64 |
-| Q2 | chr10 97.8 Mb | 92.9–105.9 | 9.1 | +1.01 d ± 0.17 | **9.0** | 1.0 | Zd +1.18 (23), Zv +0.78 (24), Zx +0.94 (66) | [197 genes](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv) | 93.3–97.8 (43) | 0.02 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr5 221.8 Mb | 221.7–222.0 | 9.4 | +1.00 d ± 0.16 | **9.5** | yes | **13.9** | Zd +1.95 (10), Zl +4.77 (13), Zv +0.41 (46), Zx +0.50 (51) | [16 genes](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv) | 221.7–221.8 (8) | 0.64 |
+| Q2 | chr10 97.8 Mb | 92.9–105.9 | 9.1 | +1.01 d ± 0.17 | **9.0** | yes | 1.0 | Zd +1.18 (23), Zv +0.78 (24), Zx +0.94 (66) | [197 genes](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv) | 93.3–97.8 (43) | 0.02 |
 
 Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3), shown from the first to the last (they need not be next to each other). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/DTS_qtl_genes.tsv).
 
@@ -1431,12 +1443,12 @@ Results: `data/introgression_fix1/assoc_gridlmm_spats_y2023`, `_y2025` and `join
 
 Six QTL pass the threshold (−log10 p > 5.00); three hold in the joint model (Bonferroni over 6: −log10 p > 2.08). The first model had three, all holding; two of them are the same here (chr5 221.8 Mb and *ZmCCT10*), and the third (chr9 10.9 Mb, *MADS74*) is still above the scan threshold but no longer holds once the new chr9 1.4 Mb QTL is in the model.
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q6 chr10 101.2 Mb** | Zm00001eb418700 (ZmCCT10) | 0.009 (**top**) | +0.77 d | 4.4 | 1.9 (no) | No significant difference between taxa (Zd +1.07, Zv +0.44, Zx +0.54). Same region as DTS Q2 (ZmCCT10 at 96.2 Mb is inside the interval, 93.0–106.0 Mb); the strongest DTA scan peak (9.4). |
-| **Q1 chr1 84.5 Mb** | — | 0.03 (best window; top windows 75.3–85.8 Mb, 55 genes) | +0.71 d | 5.3 | 17.2 (yes) | New in this model. Differs strongly between taxa: almost all *luxurians* (Zl +3.47; Zh +0.96, Zv +0.59, Zx +0.16, Zd −0.09). Suggestive for DTS (5.3). |
-| **Q2 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.429 (**top**) | +0.62 d | 5.0 | 11.2 (yes) | Differs between taxa (Zd +1.48, Zl +2.95, Zv +0.14, Zx +0.20). Same QTL as DTS Q1 (Zm00001eb257680), mostly *luxurians* and *diploperennis*. It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
-| Q4 chr9 10.9 Mb | Zm00001eb372960 (MADS74) | 0.011 (CS) | −0.32 d | 1.3 | 0.5 (no) | Teosinte flowers earlier in every taxon (Zd −0.67, Zh −0.27, Zl −1.40, Zv −0.38, Zx −0.13). Above the scan threshold (5.5) but does not hold in the joint model; it shares tracts with Q3 (chr9 1.4 Mb, also earlier, also not holding). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q6 chr10 101.2 Mb** | Zm00001eb418700 (ZmCCT10) | 0.009 (**top**) | +0.77 d | 4.4 | yes | 1.9 (no) | No significant difference between taxa (Zd +1.07, Zv +0.44, Zx +0.54). Same region as DTS Q2 (ZmCCT10 at 96.2 Mb is inside the interval, 93.0–106.0 Mb); the strongest DTA scan peak (9.4). |
+| **Q1 chr1 84.5 Mb** | — | 0.03 (best window; top windows 75.3–85.8 Mb, 55 genes) | +0.71 d | 5.3 | yes | 17.2 (yes) | New in this model. Differs strongly between taxa: almost all *luxurians* (Zl +3.47; Zh +0.96, Zv +0.59, Zx +0.16, Zd −0.09). Suggestive for DTS (5.3). |
+| **Q2 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.429 (**top**) | +0.62 d | 5.0 | yes | 11.2 (yes) | Differs between taxa (Zd +1.48, Zl +2.95, Zv +0.14, Zx +0.20). Same QTL as DTS Q1 (Zm00001eb257680), mostly *luxurians* and *diploperennis*. It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
+| Q4 chr9 10.9 Mb | Zm00001eb372960 (MADS74) | 0.011 (CS) | −0.32 d | 1.3 | yes | 0.5 (no) | Teosinte flowers earlier in every taxon (Zd −0.67, Zh −0.27, Zl −1.40, Zv −0.38, Zx −0.13). Above the scan threshold (5.5) but does not hold in the joint model; it shares tracts with Q3 (chr9 1.4 Mb, also earlier, also not holding). |
 
 **Candidate genes:**
 - **Q2, chr5 221.8 Mb, shared with DTS Q1:** Zm00001eb257680, the ortholog of rice *HEADING DATE REPRESSOR 1* (see DTS). *Fine-mapping (3.4.3): PIP 0.429 (the highest in the interval); in the top windows (10 genes).*
@@ -1450,14 +1462,14 @@ Six QTL pass the threshold (−log10 p > 5.00); three hold in the joint model (B
 
 <details><summary>All DTA QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 84.5 Mb | 73.8–85.9 | 5.3 | +0.71 d ± 0.15 | **5.3** | **17.2** | Zd -0.09 (14), Zh +0.96 (6), Zl +3.47 (10), Zv +0.59 (19), Zx +0.16 (59) | [233 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 75.3–85.8 (55) | 0.03 |
-| Q2 | chr5 221.8 Mb | 221.7–222.3 | 5.4 | +0.62 d ± 0.14 | **5.0** | **11.2** | Zd +1.48 (10), Zl +2.95 (13), Zv +0.14 (47), Zx +0.20 (51) | [26 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 221.7–221.9 (10) | 0.43 |
-| Q3 | chr9 1.4 Mb | 0.9–2.2 | 5.6 | -0.37 d ± 0.17 | 1.5 | 0.5 | Zd -0.69 (21), Zh -0.27 (10), Zl -1.40 (22), Zv -0.09 (35), Zx -0.47 (84) | [12 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 0.9–1.5 (1) | 0.11 |
-| Q4 | chr9 10.9 Mb | 6.1–13.7 | 5.5 | -0.32 d ± 0.16 | 1.3 | 0.5 | Zd -0.67 (24), Zh -0.27 (8), Zl -1.40 (22), Zv -0.38 (56), Zx -0.13 (94) | [203 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 9.5–13.7 (102) | 0.02 |
-| Q5 | chr10 69.2 Mb | 67.3–75.6 | 6.0 | +0.24 d ± 0.20 | 0.7 | 0.5 | Zd +0.47 (25), Zv +0.17 (20), Zx +0.32 (52) | [115 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | – | 0.00 |
-| Q6 | chr10 101.2 Mb | 93.0–106.0 | 9.4 | +0.77 d ± 0.19 | **4.4** | 1.9 | Zd +1.07 (24), Zv +0.44 (24), Zx +0.54 (64) | [194 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 94.1–104.6 (78) | 0.02 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 84.5 Mb | 73.8–85.9 | 5.3 | +0.71 d ± 0.15 | **5.3** | yes | **17.2** | Zd -0.09 (14), Zh +0.96 (6), Zl +3.47 (10), Zv +0.59 (19), Zx +0.16 (59) | [233 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 75.3–85.8 (55) | 0.03 |
+| Q2 | chr5 221.8 Mb | 221.7–222.3 | 5.4 | +0.62 d ± 0.14 | **5.0** | yes | **11.2** | Zd +1.48 (10), Zl +2.95 (13), Zv +0.14 (47), Zx +0.20 (51) | [26 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 221.7–221.9 (10) | 0.43 |
+| Q3 | chr9 1.4 Mb | 0.9–2.2 | 5.6 | -0.37 d ± 0.17 | 1.5 | yes | 0.5 | Zd -0.69 (21), Zh -0.27 (10), Zl -1.40 (22), Zv -0.09 (35), Zx -0.47 (84) | [12 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 0.9–1.5 (1) | 0.11 |
+| Q4 | chr9 10.9 Mb | 6.1–13.7 | 5.5 | -0.32 d ± 0.16 | 1.3 | yes | 0.5 | Zd -0.67 (24), Zh -0.27 (8), Zl -1.40 (22), Zv -0.38 (56), Zx -0.13 (94) | [203 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 9.5–13.7 (102) | 0.02 |
+| Q5 | chr10 69.2 Mb | 67.3–75.6 | 6.0 | +0.24 d ± 0.20 | 0.7 | no | 0.5 | Zd +0.47 (25), Zv +0.17 (20), Zx +0.32 (52) | [115 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr10 101.2 Mb | 93.0–106.0 | 9.4 | +0.77 d ± 0.19 | **4.4** | yes | 1.9 | Zd +1.07 (24), Zv +0.44 (24), Zx +0.54 (64) | [194 genes](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv) | 94.1–104.6 (78) | 0.02 |
 
 Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/DTA_qtl_genes.tsv).
 
@@ -1469,14 +1481,14 @@ Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p o
 
 ASI = anthesis–silking interval, DTS − DTA. 10 regions, 6 hold in the joint model (Bonferroni over 10: −log10 p > 2.30). Many other chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. Five of the six are the QTL of the first model; the sixth, chr4 67.0 Mb, replaces the first model's chr4 52.0 Mb QTL (*tga1*), as the lead of the same long chr4 region (below).
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q10 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | 0.083 (CS) | -0.36 d | 13.5 | 0.3 (no) | No significant difference between taxa (Zd -0.47, Zl -0.57, Zv -0.36, Zx -0.30). The strongest ASI QTL: teosinte shortens the interval. |
-| **Q9 chr5 217.8 Mb** | Zm00001eb255670 (mads73) | 0.273 (**top**) | +0.34 d | 9.1 | 3.4 (yes) | Differs between taxa (Zl +1.03, Zv +0.24, Zx +0.26). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
-| **Q1 chr1 4.8 Mb** | Zm00001eb001510 (remorin) | 0.050 (CS) | +0.25 d | 6.5 | 0.0 (no) | No significant difference between taxa (Zd +0.18, Zh +0.22, Zl +0.14, Zv +0.32, Zx +0.23). Lengthens ASI. |
-| **Q7 chr4 67.0 Mb** | — | 0.049 (best window; top windows 66.9–68.0 Mb, 8 genes) | -0.29 d | 5.2 | 0.2 (no) | No significant difference between taxa (Zh -0.52, Zl -0.96, Zv -0.37, Zx -0.23; Zd +0.03). Shortens ASI. The lead of the long chr4 region that held *tga1* in the first model. |
-| **Q8 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | 0.004 (CS) | -0.21 d | 4.8 | 0.3 (no) | No significant difference between taxa (Zd -0.36, Zl +0.52, Zv -0.28, Zx -0.15). Shortens ASI. |
-| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.012 (CS); 0.015 (CS) | -0.16 d | 3.7 | 0.1 (no) | No significant difference between taxa (Zd -0.17, Zh -0.51, Zl -0.16, Zv -0.20, Zx -0.13). Shortens ASI. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q10 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | 0.083 (CS) | -0.36 d | 13.5 | yes | 0.3 (no) | No significant difference between taxa (Zd -0.47, Zl -0.57, Zv -0.36, Zx -0.30). The strongest ASI QTL: teosinte shortens the interval. |
+| **Q9 chr5 217.8 Mb** | Zm00001eb255670 (mads73) | 0.273 (**top**) | +0.34 d | 9.1 | yes | 3.4 (yes) | Differs between taxa (Zl +1.03, Zv +0.24, Zx +0.26). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
+| **Q1 chr1 4.8 Mb** | Zm00001eb001510 (remorin) | 0.050 (CS) | +0.25 d | 6.5 | yes | 0.0 (no) | No significant difference between taxa (Zd +0.18, Zh +0.22, Zl +0.14, Zv +0.32, Zx +0.23). Lengthens ASI. |
+| **Q7 chr4 67.0 Mb** | — | 0.049 (best window; top windows 66.9–68.0 Mb, 8 genes) | -0.29 d | 5.2 | yes | 0.2 (no) | No significant difference between taxa (Zh -0.52, Zl -0.96, Zv -0.37, Zx -0.23; Zd +0.03). Shortens ASI. The lead of the long chr4 region that held *tga1* in the first model. |
+| **Q8 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | 0.004 (CS) | -0.21 d | 4.8 | yes | 0.3 (no) | No significant difference between taxa (Zd -0.36, Zl +0.52, Zv -0.28, Zx -0.15). Shortens ASI. |
+| **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.012 (CS); 0.015 (CS) | -0.16 d | 3.7 | yes | 0.1 (no) | No significant difference between taxa (Zd -0.17, Zh -0.51, Zl -0.16, Zv -0.20, Zx -0.13). Shortens ASI. |
 
 **Candidate genes:**
 - **Q10, chr7 165.6 Mb (the strongest ASI QTL):** Zm00001eb323880 (*bhlh90*, bHLH transcription factor 90; 165.74 Mb, in a window with −log10 p 12.6 next to the top window). MaizeGDB annotates it as the ortholog of Arabidopsis *FLOWERING BHLH 4* (Neupane et al. 2025); Gramene lists Arabidopsis *FBH3* (AT1G51140) as its closest homolog and rice *OsFBH1* / *POH1* (Os08g0506700) as its closest rice gene. In Arabidopsis the four FBH proteins bind E-boxes in the *CONSTANS* promoter and activate *CO*: their overexpression causes early flowering regardless of photoperiod, and *CO* levels drop in the *fbh* quadruple mutant (Ito et al. 2012). In rice, POH1 forms a dimer with HBP1, both bind the *Hd1* promoter and activate *Hd1*; their overexpression delays flowering by suppressing *Ehd1*, *Hd3a* and *RFT1* (Yin et al. 2023). *Fine-mapping (3.4.3): PIP 0.083 (highest window 0.30); in the 95% credible set, but outside the top windows (165.5–165.7 Mb, 4 genes).*
@@ -1508,18 +1520,18 @@ The chr3 95.8 Mb peak (−log10 p 4.9) lies inside the chr3 108.3 Mb region (93.
 
 <details><summary>All ASI QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 4.8 Mb | 3.6–5.6 | 6.1 | +0.25 d ± 0.05 | **6.5** | 0.0 | Zd +0.18 (15), Zh +0.22 (10), Zl +0.14 (12), Zv +0.32 (36), Zx +0.23 (64) | [85 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 3.9–4.8 (29) | 0.09 |
-| Q2 | chr2 26.1 Mb | 25.3–29.5 | 7.1 | -0.16 d ± 0.04 | **3.7** | 0.1 | Zd -0.17 (35), Zh -0.51 (5), Zl -0.16 (21), Zv -0.20 (48), Zx -0.13 (107) | [126 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 25.3–28.2 (33) | 0.05 |
-| Q3 | chr2 68.2 Mb | 60.7–78.5 | 5.0 | -0.09 d ± 0.05 | 1.2 | 0.0 | Zd -0.21 (33), Zh -0.12 (7), Zl -0.10 (15), Zv -0.06 (43), Zx -0.07 (88) | [178 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 62.1–75.7 (72) | 0.01 |
-| Q4 | chr2 191.2 Mb | 184.6–193.2 | 4.7 | -0.12 d ± 0.05 | 1.9 | 0.2 | Zd +0.01 (17), Zh -0.14 (6), Zl -0.40 (16), Zv -0.13 (47), Zx -0.12 (112) | [200 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 190.8–193.2 (53) | 0.03 |
-| Q5 | chr3 70.7 Mb | 61.9–75.4 | 4.9 | -0.02 d ± 0.15 | 0.1 | 0.5 | Zd -0.41 (25), Zh -0.17 (13), Zl -0.41 (8), Zv -0.33 (25), Zx -0.14 (67) | [88 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | – | 0.00 |
-| Q6 | chr3 108.3 Mb | 93.8–121.6 | 5.2 | -0.20 d ± 0.15 | 0.8 | 0.6 | Zd -0.37 (25), Zh -0.17 (13), Zl -0.41 (8), Zv -0.38 (28), Zx -0.14 (72) | [285 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | – | 0.00 |
-| Q7 | chr4 67.0 Mb | 65.0–71.3 | 6.6 | -0.29 d ± 0.07 | **5.2** | 0.2 | Zd +0.03 (5), Zh -0.52 (8), Zl -0.96 (5), Zv -0.37 (29), Zx -0.23 (42) | [91 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 66.9–68.0 (8) | 0.05 |
-| Q8 | chr4 206.2 Mb | 202.3–226.0 | 5.2 | -0.21 d ± 0.05 | **4.8** | 0.3 | Zd -0.36 (17), Zl +0.52 (6), Zv -0.28 (32), Zx -0.15 (77) | [420 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 206.2–218.4 (82) | 0.02 |
-| Q9 | chr5 217.8 Mb | 217.4–218.8 | 9.4 | +0.34 d ± 0.06 | **9.1** | **3.4** | Zl +1.03 (13), Zv +0.24 (43), Zx +0.26 (42) | [56 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 217.8–218.0 (4) | 0.27 |
-| Q10 | chr7 165.6 Mb | 165.2–166.1 | 13.1 | -0.36 d ± 0.05 | **13.5** | 0.3 | Zd -0.47 (17), Zl -0.57 (14), Zv -0.36 (45), Zx -0.30 (78) | [26 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 165.5–165.7 (4) | 0.30 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 4.8 Mb | 3.6–5.6 | 6.1 | +0.25 d ± 0.05 | **6.5** | yes | 0.0 | Zd +0.18 (15), Zh +0.22 (10), Zl +0.14 (12), Zv +0.32 (36), Zx +0.23 (64) | [85 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 3.9–4.8 (29) | 0.09 |
+| Q2 | chr2 26.1 Mb | 25.3–29.5 | 7.1 | -0.16 d ± 0.04 | **3.7** | yes | 0.1 | Zd -0.17 (35), Zh -0.51 (5), Zl -0.16 (21), Zv -0.20 (48), Zx -0.13 (107) | [126 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 25.3–28.2 (33) | 0.05 |
+| Q3 | chr2 68.2 Mb | 60.7–78.5 | 5.0 | -0.09 d ± 0.05 | 1.2 | no | 0.0 | Zd -0.21 (33), Zh -0.12 (7), Zl -0.10 (15), Zv -0.06 (43), Zx -0.07 (88) | [178 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 62.1–75.7 (72) | 0.01 |
+| Q4 | chr2 191.2 Mb | 184.6–193.2 | 4.7 | -0.12 d ± 0.05 | 1.9 | no | 0.2 | Zd +0.01 (17), Zh -0.14 (6), Zl -0.40 (16), Zv -0.13 (47), Zx -0.12 (112) | [200 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 190.8–193.2 (53) | 0.03 |
+| Q5 | chr3 70.7 Mb | 61.9–75.4 | 4.9 | -0.02 d ± 0.15 | 0.1 | no | 0.5 | Zd -0.41 (25), Zh -0.17 (13), Zl -0.41 (8), Zv -0.33 (25), Zx -0.14 (67) | [88 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr3 108.3 Mb | 93.8–121.6 | 5.2 | -0.20 d ± 0.15 | 0.8 | yes | 0.6 | Zd -0.37 (25), Zh -0.17 (13), Zl -0.41 (8), Zv -0.38 (28), Zx -0.14 (72) | [285 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | – | 0.00 |
+| Q7 | chr4 67.0 Mb | 65.0–71.3 | 6.6 | -0.29 d ± 0.07 | **5.2** | yes | 0.2 | Zd +0.03 (5), Zh -0.52 (8), Zl -0.96 (5), Zv -0.37 (29), Zx -0.23 (42) | [91 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 66.9–68.0 (8) | 0.05 |
+| Q8 | chr4 206.2 Mb | 202.3–226.0 | 5.2 | -0.21 d ± 0.05 | **4.8** | yes | 0.3 | Zd -0.36 (17), Zl +0.52 (6), Zv -0.28 (32), Zx -0.15 (77) | [420 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 206.2–218.4 (82) | 0.02 |
+| Q9 | chr5 217.8 Mb | 217.4–218.8 | 9.4 | +0.34 d ± 0.06 | **9.1** | yes | **3.4** | Zl +1.03 (13), Zv +0.24 (43), Zx +0.26 (42) | [56 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 217.8–218.0 (4) | 0.27 |
+| Q10 | chr7 165.6 Mb | 165.2–166.1 | 13.1 | -0.36 d ± 0.05 | **13.5** | yes | 0.3 | Zd -0.47 (17), Zl -0.57 (14), Zv -0.36 (45), Zx -0.30 (78) | [26 genes](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv) | 165.5–165.7 (4) | 0.30 |
 
 Bonferroni over the 10 QTL: −log10 p > 2.30 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/ASI_qtl_genes.tsv).
 
@@ -1531,11 +1543,11 @@ Bonferroni over the 10 QTL: −log10 p > 2.30 (bold). Top windows: the fewest wi
 
 Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20). The first model had 4 holding; chr10 98.2 Mb and chr8 126.2 Mb are the same, chr9 4.2 Mb is new, and chr1 260.8 Mb (2.1) and chr9 140 Mb no longer hold.
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.003 (outside CS) | +0.18 | 9.4 | 2.7 (yes) | Differs between taxa (Zd +0.29, Zv +0.23, Zx +0.08). The strongest NBR QTL; smallest in *mexicana*, larger for alleles from wetter rainy seasons (below). |
-| **Q6 chr8 126.2 Mb** | — | 0.15 (best window; top windows 126.2–126.7 Mb, 14 genes) | +0.12 | 4.4 | 1.1 (no) | No significant difference between taxa (Zd +0.10, Zh +0.33, Zl +0.15, Zv +0.09, Zx +0.09). |
-| **Q7 chr9 4.2 Mb** | — | 0.07 (best window; top windows 4.0–9.5 Mb, 49 genes) | −0.09 | 4.4 | 3.2 (yes) | Fewer brace-root nodes; differs between taxa, mostly *diploperennis* (Zd −0.39; Zh −0.09, Zl −0.07, Zv −0.06, Zx −0.07). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.003 (outside CS) | +0.18 | 9.4 | yes | 2.7 (yes) | Differs between taxa (Zd +0.29, Zv +0.23, Zx +0.08). The strongest NBR QTL; smallest in *mexicana*, larger for alleles from wetter rainy seasons (below). |
+| **Q6 chr8 126.2 Mb** | — | 0.15 (best window; top windows 126.2–126.7 Mb, 14 genes) | +0.12 | 4.4 | yes | 1.1 (no) | No significant difference between taxa (Zd +0.10, Zh +0.33, Zl +0.15, Zv +0.09, Zx +0.09). |
+| **Q7 chr9 4.2 Mb** | — | 0.07 (best window; top windows 4.0–9.5 Mb, 49 genes) | −0.09 | 4.4 | moved (chr9 41.5) | 3.2 (yes) | Fewer brace-root nodes; differs between taxa, mostly *diploperennis* (Zd −0.39; Zh −0.09, Zl −0.07, Zv −0.06, Zx −0.07). |
 
 **Candidate gene:**
 - **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (GRMZM2G174736 in B73 v3; 97.41 Mb, in a window with −log10 p 8.0; the top window has 9.3). Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). Their significant chr10 SNP for brace root diameter (chr10.S_95437751, in older B73 coordinates) explains 13.95% of the variance, and GRMZM2G174736 is one of their candidate genes for brace root diameter:
@@ -1577,16 +1589,16 @@ The five chr1 peaks (all with negative effects) share their signal and do not ho
 
 <details><summary>All NBR QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 12.2 Mb | 8.7–12.4 | 4.3 | -0.07 ± 0.03 | 1.9 | 1.2 | Zd -0.04 (16), Zh -0.14 (10), Zl +0.06 (6), Zv -0.03 (36), Zx -0.07 (59) | [127 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 8.9–12.3 (63) | 0.04 |
-| Q2 | chr1 23.9 Mb | 21.9–25.7 | 4.0 | -0.07 ± 0.03 | 1.8 | 1.9 | Zd +0.10 (14), Zh -0.18 (9), Zl -0.10 (12), Zv -0.15 (28), Zx -0.06 (56) | [102 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 23.3–24.9 (30) | 0.05 |
-| Q3 | chr1 210.3 Mb | 198.3–216.0 | 4.3 | -0.06 ± 0.04 | 1.1 | 1.3 | Zd -0.22 (8), Zh -0.26 (5), Zl +0.12 (8), Zv -0.01 (30), Zx -0.08 (78) | [444 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | – | 0.01 |
-| Q4 | chr1 219.8 Mb | 216.2–222.5 | 4.5 | -0.02 ± 0.04 | 0.2 | **2.5** | Zd -0.18 (9), Zh -0.14 (5), Zl -0.86 (7), Zv -0.00 (33), Zx +0.04 (72) | [116 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | – | 0.00 |
-| Q5 | chr1 260.8 Mb | 259.3–264.4 | 5.3 | -0.09 ± 0.04 | 2.1 | 1.5 | Zd -0.11 (13), Zh +0.17 (6), Zl +0.46 (9), Zv -0.16 (34), Zx -0.07 (77) | [134 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 260.4–262.7 (42) | 0.03 |
-| Q6 | chr8 126.2 Mb | 125.7–127.6 | 4.2 | +0.12 ± 0.03 | **4.4** | 1.1 | Zd +0.10 (23), Zh +0.33 (10), Zl +0.15 (9), Zv +0.09 (32), Zx +0.09 (61) | [54 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 126.2–126.7 (14) | 0.15 |
-| Q7 | chr9 4.2 Mb | 2.1–9.7 | 4.1 | -0.09 ± 0.02 | **4.4** | **3.2** | Zd -0.39 (26), Zh -0.09 (10), Zl -0.07 (21), Zv -0.06 (46), Zx -0.07 (88) | [185 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 4.0–9.5 (49) | 0.07 |
-| Q8 | chr10 98.2 Mb | 93.0–99.6 | 9.3 | +0.18 ± 0.03 | **9.4** | **2.7** | Zd +0.29 (23), Zv +0.23 (23), Zx +0.08 (64) | [107 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 98.0–99.4 (27) | 0.05 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 12.2 Mb | 8.7–12.4 | 4.3 | -0.07 ± 0.03 | 1.9 | yes | 1.2 | Zd -0.04 (16), Zh -0.14 (10), Zl +0.06 (6), Zv -0.03 (36), Zx -0.07 (59) | [127 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 8.9–12.3 (63) | 0.04 |
+| Q2 | chr1 23.9 Mb | 21.9–25.7 | 4.0 | -0.07 ± 0.03 | 1.8 | moved (chr1 12.2) | 1.9 | Zd +0.10 (14), Zh -0.18 (9), Zl -0.10 (12), Zv -0.15 (28), Zx -0.06 (56) | [102 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 23.3–24.9 (30) | 0.05 |
+| Q3 | chr1 210.3 Mb | 198.3–216.0 | 4.3 | -0.06 ± 0.04 | 1.1 | no | 1.3 | Zd -0.22 (8), Zh -0.26 (5), Zl +0.12 (8), Zv -0.01 (30), Zx -0.08 (78) | [444 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | – | 0.01 |
+| Q4 | chr1 219.8 Mb | 216.2–222.5 | 4.5 | -0.02 ± 0.04 | 0.2 | no | **2.5** | Zd -0.18 (9), Zh -0.14 (5), Zl -0.86 (7), Zv -0.00 (33), Zx +0.04 (72) | [116 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | – | 0.00 |
+| Q5 | chr1 260.8 Mb | 259.3–264.4 | 5.3 | -0.09 ± 0.04 | 2.1 | yes | 1.5 | Zd -0.11 (13), Zh +0.17 (6), Zl +0.46 (9), Zv -0.16 (34), Zx -0.07 (77) | [134 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 260.4–262.7 (42) | 0.03 |
+| Q6 | chr8 126.2 Mb | 125.7–127.6 | 4.2 | +0.12 ± 0.03 | **4.4** | yes | 1.1 | Zd +0.10 (23), Zh +0.33 (10), Zl +0.15 (9), Zv +0.09 (32), Zx +0.09 (61) | [54 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 126.2–126.7 (14) | 0.15 |
+| Q7 | chr9 4.2 Mb | 2.1–9.7 | 4.1 | -0.09 ± 0.02 | **4.4** | moved (chr9 41.5) | **3.2** | Zd -0.39 (26), Zh -0.09 (10), Zl -0.07 (21), Zv -0.06 (46), Zx -0.07 (88) | [185 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 4.0–9.5 (49) | 0.07 |
+| Q8 | chr10 98.2 Mb | 93.0–99.6 | 9.3 | +0.18 ± 0.03 | **9.4** | yes | **2.7** | Zd +0.29 (23), Zv +0.23 (23), Zx +0.08 (64) | [107 genes](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv) | 98.0–99.4 (27) | 0.05 |
 
 Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv).
 
@@ -1598,12 +1610,12 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
 
 SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The meter reads how green the leaf is, a proxy for its chlorophyll; at this stage the leaves begin to senesce, so a high value means the leaf keeps its chlorophyll longer (stay-green), and nitrogen moving out of the leaf to the grain lowers it. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20). The first model had 4: chr10 148 Mb, chr7 123 Mb and chr9 (now at 96.8 Mb) are the same; chr1 148.6 Mb no longer holds (below).
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| Q1–Q5 chr1 40.0–128.8 Mb | candidates in the stretch below: *rccr1*, *bsd2*, *ppd1* | ≤ 0.03 | −0.03 to −2.95 | 0.0–1.4 | ≤ 0.2 (no) | Strong in the scan (−log10 p 4.7–6.2; the teosinte allele makes leaves less green over most of chr1 35–164 Mb), but split into five QTL that share tracts, and none holds in the joint model (cut 2.20). See the chr1 bullet below. |
-| **Q6 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | 0.039 (**top**) | −2.98 | 4.7 | 0.2 (no) | No significant difference between taxa (Zd −1.08, Zl −1.00, Zv −1.70, Zx −3.53). The gene is next to the top window. |
-| **Q7 chr9 96.8 Mb** | — | 0.01 (best window) | +2.59 | 4.7 | 1.8 (no) | Greener leaves (Zd +2.35, Zl +3.16, Zv +0.58, Zx +3.54). The interval spans 30.7 Mb and 505 genes, too wide to point to one gene. |
-| **Q8 chr10 148.2 Mb** | Zm00001eb432440 (FRS6-like); Zm00001eb432850 (chlorophyll a/b-binding protein) | 0.088 (**top**); 0.040 (**top**) | +2.15 | 4.1 | 0.3 (no) | No significant difference between taxa (Zd +1.73, Zh +2.43, Zl +3.37, Zv +0.82, Zx +2.99). Same region as the best PredN region. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| Q1–Q5 chr1 40.0–128.8 Mb | candidates in the stretch below: *rccr1*, *bsd2*, *ppd1* | ≤ 0.03 | −0.03 to −2.95 | 0.0–1.4 | one kept (Q2) | ≤ 0.2 (no) | Strong in the scan (−log10 p 4.7–6.2; the teosinte allele makes leaves less green over most of chr1 35–164 Mb), but split into five QTL that share tracts, and none holds in the joint model (cut 2.20). See the chr1 bullet below. |
+| **Q6 chr7 123.3 Mb** | Zm00001eb313460 (senescence-associated protein) | 0.039 (**top**) | −2.98 | 4.7 | yes | 0.2 (no) | No significant difference between taxa (Zd −1.08, Zl −1.00, Zv −1.70, Zx −3.53). The gene is next to the top window. |
+| **Q7 chr9 96.8 Mb** | — | 0.01 (best window) | +2.59 | 4.7 | yes | 1.8 (no) | Greener leaves (Zd +2.35, Zl +3.16, Zv +0.58, Zx +3.54). The interval spans 30.7 Mb and 505 genes, too wide to point to one gene. |
+| **Q8 chr10 148.2 Mb** | Zm00001eb432440 (FRS6-like); Zm00001eb432850 (chlorophyll a/b-binding protein) | 0.088 (**top**); 0.040 (**top**) | +2.15 | 4.1 | no | 0.3 (no) | No significant difference between taxa (Zd +1.73, Zh +2.43, Zl +3.37, Zv +0.82, Zx +2.99). Same region as the best PredN region. |
 
 **Candidate genes:**
 - **Q8, chr10 148.2 Mb:** Zm00001eb432440 (FAR1-RELATED SEQUENCE 6-like; 148.33 Mb). It lies in the top windows of the QTL (window −log10 p 4.3; the windows of the interval range from 2.9 to 4.4), next to a second FAR1-related gene (Zm00001eb432450). FAR1 and FHY3 are light-signalling transcription factors; in *Arabidopsis* they switch on *HEMB1*, an enzyme of chlorophyll synthesis, when seedlings first turn green (Tang et al. 2012). This maize gene is not characterized; the ATP-synthase GO terms it carries in MaizeGDB are automatic predictions and do not fit a FAR1 protein. The teosinte allele makes leaves greener (+2.15 SPAD units per copy, alike across taxa). *Fine-mapping (3.4.3): PIP 0.088; in the top windows (148.2–149.5 Mb, 52 genes).*
@@ -1620,16 +1632,16 @@ These candidates come from the gene annotation only; none has been tested for SP
 
 <details><summary>All SPAD QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 40.0 Mb | 34.8–40.5 | 5.1 | -1.53 ± 0.76 | 1.4 | 0.2 | Zd +0.91 (23), Zh +2.74 (8), Zl -4.55 (9), Zv -1.70 (24), Zx -2.55 (53) | [149 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 34.8–40.0 (59) | 0.03 |
-| Q2 | chr1 57.9 Mb | 56.8–60.1 | 6.2 | -1.66 ± 1.02 | 1.0 | 0.1 | Zd -2.94 (19), Zh -0.04 (9), Zl -0.78 (7), Zv -0.27 (18), Zx -0.21 (45) | [62 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | – | 0.00 |
-| Q3 | chr1 78.0 Mb | 76.3–105.0 | 4.7 | +0.27 ± 1.19 | 0.1 | 0.1 | Zd -0.30 (11), Zh -1.29 (5), Zl +0.76 (8), Zv -3.00 (14), Zx +0.26 (52) | [448 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | – | 0.02 |
-| Q4 | chr1 106.2 Mb | 105.1–108.9 | 4.9 | -0.03 ± 1.50 | 0.0 | 0.1 | Zd +0.53 (12), Zh +3.27 (6), Zl +0.34 (6), Zv -1.24 (16), Zx -1.82 (45) | [48 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 105.1–108.9 (24) | 0.03 |
-| Q5 | chr1 128.8 Mb | 114.5–143.8 | 6.1 | -2.95 ± 1.44 | 1.4 | 0.2 | Zd -3.83 (13), Zh -7.69 (5), Zl -4.19 (7), Zv -2.55 (11), Zx -0.73 (44) | [197 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 128.7–141.5 (64) | 0.01 |
-| Q6 | chr7 123.3 Mb | 119.8–130.7 | 4.5 | -2.98 ± 0.70 | **4.7** | 0.2 | Zd -1.08 (7), Zl -1.00 (5), Zv -1.70 (37), Zx -3.53 (53) | [198 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 122.2–126.2 (56) | 0.04 |
-| Q7 | chr9 96.8 Mb | 86.3–117.0 | 4.6 | +2.59 ± 0.61 | **4.7** | 1.8 | Zd +2.35 (18), Zh -6.69 (5), Zl +3.16 (11), Zv +0.58 (43), Zx +3.54 (80) | [505 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 93.2–112.9 (129) | 0.01 |
-| Q8 | chr10 148.2 Mb | 146.7–150.2 | 4.4 | +2.15 ± 0.55 | **4.1** | 0.3 | Zd +1.73 (38), Zh +2.43 (5), Zl +3.37 (13), Zv +0.82 (32), Zx +2.99 (75) | [182 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 148.2–149.5 (52) | 0.10 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 40.0 Mb | 34.8–40.5 | 5.1 | -1.53 ± 0.76 | 1.4 | no | 0.2 | Zd +0.91 (23), Zh +2.74 (8), Zl -4.55 (9), Zv -1.70 (24), Zx -2.55 (53) | [149 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 34.8–40.0 (59) | 0.03 |
+| Q2 | chr1 57.9 Mb | 56.8–60.1 | 6.2 | -1.66 ± 1.02 | 1.0 | yes | 0.1 | Zd -2.94 (19), Zh -0.04 (9), Zl -0.78 (7), Zv -0.27 (18), Zx -0.21 (45) | [62 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | – | 0.00 |
+| Q3 | chr1 78.0 Mb | 76.3–105.0 | 4.7 | +0.27 ± 1.19 | 0.1 | no | 0.1 | Zd -0.30 (11), Zh -1.29 (5), Zl +0.76 (8), Zv -3.00 (14), Zx +0.26 (52) | [448 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | – | 0.02 |
+| Q4 | chr1 106.2 Mb | 105.1–108.9 | 4.9 | -0.03 ± 1.50 | 0.0 | no | 0.1 | Zd +0.53 (12), Zh +3.27 (6), Zl +0.34 (6), Zv -1.24 (16), Zx -1.82 (45) | [48 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 105.1–108.9 (24) | 0.03 |
+| Q5 | chr1 128.8 Mb | 114.5–143.8 | 6.1 | -2.95 ± 1.44 | 1.4 | no | 0.2 | Zd -3.83 (13), Zh -7.69 (5), Zl -4.19 (7), Zv -2.55 (11), Zx -0.73 (44) | [197 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 128.7–141.5 (64) | 0.01 |
+| Q6 | chr7 123.3 Mb | 119.8–130.7 | 4.5 | -2.98 ± 0.70 | **4.7** | yes | 0.2 | Zd -1.08 (7), Zl -1.00 (5), Zv -1.70 (37), Zx -3.53 (53) | [198 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 122.2–126.2 (56) | 0.04 |
+| Q7 | chr9 96.8 Mb | 86.3–117.0 | 4.6 | +2.59 ± 0.61 | **4.7** | yes | 1.8 | Zd +2.35 (18), Zh -6.69 (5), Zl +3.16 (11), Zv +0.58 (43), Zx +3.54 (80) | [505 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 93.2–112.9 (129) | 0.01 |
+| Q8 | chr10 148.2 Mb | 146.7–150.2 | 4.4 | +2.15 ± 0.55 | **4.1** | no | 0.3 | Zd +1.73 (38), Zh +2.43 (5), Zl +3.37 (13), Zv +0.82 (32), Zx +2.99 (75) | [182 genes](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv) | 148.2–149.5 (52) | 0.10 |
 
 Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/SPAD2_qtl_genes.tsv).
 
@@ -1641,12 +1653,12 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
 
 15 regions, 10 hold in the joint model (Bonferroni over 15: −log10 p > 2.48). Effects are in cm per teosinte copy and alike across taxa (no "taxa differ" test passes). Seven of the first model's eight held QTL are found again (chr2, chr3, chr4, chr5 118 Mb, chr7, chr9, chr10 *ZmCCT10*); chr1 201.8 Mb is replaced by chr1 184.1 Mb (Q1, −3.83 cm), and two QTL are new: chr5 2.6 Mb (Q6, +3.05 cm; just below the threshold in the first model) and chr10 6.5 Mb (Q14, +3.27 cm, added by the conditional scan). The strongest are Q13 chr9 139.8 Mb (+4.64 cm, joint −log10 p 10.5) and Q12 chr7 137.8 Mb (below).
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q12 chr7 137.8 Mb** | Zm00001eb316740 (tsh4) | 0.017 (CS) | -5.10 cm | 10.2 | 0.3 (no) | No significant difference between taxa (Zd -5.01, Zh -5.94, Zl +0.38, Zv -4.58, Zx -5.78). Same region as SL Q10. |
-| **Q3 chr3 13.2 Mb** | Zm00001eb123060 (ra2) | 0.057 (**top**) | -3.73 cm | 6.8 | 0.7 (no) | No significant difference between taxa (Zd -4.92, Zh +5.69, Zl -0.23, Zv -3.63, Zx -4.42). Same window as EH Q3. |
-| **Q15 chr10 99.5 Mb** | Zm00001eb418700 (ZmCCT10) | 0.014 (CS) | +4.70 cm | 6.3 | 0.1 (no) | No significant difference between taxa (Zd +2.46, Zv +7.09, Zx +4.06). The ZmCCT10 region: later flowering, taller plants. |
-| **Q4 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.027 (**top**) | +4.05 cm | 2.8 | 0.1 (no) | No significant difference between taxa (Zd +6.75, Zh +4.71, Zl +11.94, Zv +5.04, Zx +3.72). Same region as EH Q4, BL Q5 and SL Q3. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q12 chr7 137.8 Mb** | Zm00001eb316740 (tsh4) | 0.017 (CS) | -5.10 cm | 10.2 | yes | 0.3 (no) | No significant difference between taxa (Zd -5.01, Zh -5.94, Zl +0.38, Zv -4.58, Zx -5.78). Same region as SL Q10. |
+| **Q3 chr3 13.2 Mb** | Zm00001eb123060 (ra2) | 0.057 (**top**) | -3.73 cm | 6.8 | yes | 0.7 (no) | No significant difference between taxa (Zd -4.92, Zh +5.69, Zl -0.23, Zv -3.63, Zx -4.42). Same window as EH Q3. |
+| **Q15 chr10 99.5 Mb** | Zm00001eb418700 (ZmCCT10) | 0.014 (CS) | +4.70 cm | 6.3 | yes | 0.1 (no) | No significant difference between taxa (Zd +2.46, Zv +7.09, Zx +4.06). The ZmCCT10 region: later flowering, taller plants. |
+| **Q4 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.027 (**top**) | +4.05 cm | 2.8 | yes | 0.1 (no) | No significant difference between taxa (Zd +6.75, Zh +4.71, Zl +11.94, Zv +5.04, Zx +3.72). Same region as EH Q4, BL Q5 and SL Q3. |
 
 **Candidate genes:**
 - **Q12, chr7 137.8 Mb:** Zm00001eb316740 (*tsh4*, *tassel sheath4*; 138.54 Mb, in a window with −log10 p 9.9; the top window is at 137.75 Mb, −log10 p 10.5; in the first model it was at 139.05 Mb). *tsh4* encodes an SBP-box (SPL) transcription factor and is one of the genes that miR156 represses (the dominant *Corngrass1* mutant overexpresses miR156; Chuck et al. 2007, 2010). *Fine-mapping (3.4.3): PIP 0.017 (highest window 0.08); in the 95% credible set, but outside the top windows (137.5–139.1 Mb, 26 genes).* It works in the developing tassel and ear:
@@ -1675,23 +1687,23 @@ The chr6 peaks (Q9–Q11), Q5 chr4 218.6 Mb and Q7 chr5 64.0 Mb (*td1*, Zm00001e
 
 <details><summary>All PH QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 184.1 Mb | 183.6–186.1 | 5.3 | -3.83 cm ± 0.86 | **5.1** | 0.4 | Zd -3.37 (18), Zh -0.07 (6), Zl +0.24 (9), Zv -4.46 (21), Zx -4.17 (72) | [63 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 184.0–185.7 (30) | 0.07 |
-| Q2 | chr2 2.2 Mb | 0.0–3.4 | 4.9 | -2.64 cm ± 0.59 | **5.1** | 0.2 | Zd -4.00 (43), Zh -2.98 (9), Zl -1.91 (15), Zv -2.31 (63), Zx -2.21 (111) | [165 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 1.8–2.7 (45) | 0.14 |
-| Q3 | chr3 13.2 Mb | 12.4–18.7 | 6.5 | -3.73 cm ± 0.71 | **6.8** | 0.7 | Zd -4.92 (28), Zh +5.69 (14), Zl -0.23 (10), Zv -3.63 (27), Zx -4.42 (87) | [169 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 12.8–13.5 (19) | 0.09 |
-| Q4 | chr4 198.4 Mb | 194.5–201.4 | 7.0 | +4.05 cm ± 1.28 | **2.8** | 0.1 | Zd +6.75 (16), Zh +4.71 (7), Zl +11.94 (6), Zv +5.04 (33), Zx +3.72 (75) | [164 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 195.5–198.7 (40) | 0.03 |
-| Q5 | chr4 218.6 Mb | 215.2–223.7 | 4.9 | +0.23 cm ± 1.38 | 0.1 | 0.1 | Zd -4.68 (15), Zl +11.94 (6), Zv -1.92 (32), Zx +0.68 (69) | [142 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | – | 0.00 |
-| Q6 | chr5 2.6 Mb | 2.4–3.4 | 4.2 | +3.05 cm ± 0.74 | **4.5** | 0.5 | Zd +4.69 (32), Zh +3.90 (5), Zl +0.75 (11), Zv +1.75 (44), Zx +3.07 (73) | [81 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 2.6–2.7 (11) | 0.53 |
-| Q7 | chr5 64.0 Mb | 60.0–69.1 | 4.7 | -2.24 cm ± 1.13 | 1.3 | 0.1 | Zd -8.03 (8), Zl -4.07 (12), Zv -1.93 (37), Zx -3.66 (51) | [217 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 60.8–68.5 (113) | 0.02 |
-| Q8 | chr5 118.0 Mb | 102.1–121.4 | 6.2 | -3.46 cm ± 1.15 | **2.6** | 0.0 | Zd +3.98 (8), Zl -3.08 (8), Zv -3.82 (28), Zx -2.53 (50) | [115 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 113.0–120.7 (44) | 0.02 |
-| Q9 | chr6 50.6 Mb | 49.4–51.3 | 6.4 | +5.94 cm ± 2.15 | 2.3 | 0.2 | Zd +2.06 (14), Zh +6.06 (6), Zl +3.00 (10), Zv -1.84 (29), Zx +8.40 (41) | [17 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 49.4–51.2 (5) | 0.12 |
-| Q10 | chr6 67.2 Mb | 64.2–68.7 | 5.0 | -3.16 cm ± 2.12 | 0.9 | 0.3 | Zd +1.86 (13), Zh +4.59 (6), Zl +4.14 (10), Zv -1.01 (30), Zx -4.34 (50) | [65 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 64.2–68.2 (14) | 0.10 |
-| Q11 | chr6 105.0 Mb | 102.9–106.2 | 6.5 | +3.26 cm ± 1.14 | 2.4 | 2.3 | Zd +3.34 (10), Zh -2.93 (7), Zl -1.10 (8), Zv +9.56 (28), Zx +2.04 (45) | [84 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 104.6–105.6 (27) | 0.08 |
-| Q12 | chr7 137.8 Mb | 136.3–140.5 | 10.5 | -5.10 cm ± 0.78 | **10.2** | 0.3 | Zd -5.01 (12), Zh -5.94 (8), Zl +0.38 (9), Zv -4.58 (45), Zx -5.78 (69) | [103 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 137.5–139.1 (26) | 0.08 |
-| Q13 | chr9 139.8 Mb | 139.0–141.0 | 10.1 | +4.64 cm ± 0.70 | **10.5** | 0.5 | Zd +3.88 (26), Zl +2.08 (25), Zv +6.23 (41), Zx +4.19 (87) | [61 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 139.6–139.9 (5) | 0.21 |
-| Q14 (cond.) | chr10 6.5 Mb | 5.0–15.2 | 8.3 | +3.27 cm ± 0.82 | **4.2** | 2.4 | Zd +7.74 (25), Zh -13.61 (5), Zl +5.96 (11), Zv +2.98 (34), Zx +2.64 (60) | [234 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | – | 0.07 |
-| Q15 | chr10 99.5 Mb | 93.0–99.9 | 11.0 | +4.70 cm ± 0.94 | **6.3** | 0.1 | Zd +2.46 (24), Zv +7.09 (23), Zx +4.06 (66) | [111 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 97.9–99.6 (33) | 0.04 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 184.1 Mb | 183.6–186.1 | 5.3 | -3.83 cm ± 0.86 | **5.1** | yes | 0.4 | Zd -3.37 (18), Zh -0.07 (6), Zl +0.24 (9), Zv -4.46 (21), Zx -4.17 (72) | [63 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 184.0–185.7 (30) | 0.07 |
+| Q2 | chr2 2.2 Mb | 0.0–3.4 | 4.9 | -2.64 cm ± 0.59 | **5.1** | yes | 0.2 | Zd -4.00 (43), Zh -2.98 (9), Zl -1.91 (15), Zv -2.31 (63), Zx -2.21 (111) | [165 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 1.8–2.7 (45) | 0.14 |
+| Q3 | chr3 13.2 Mb | 12.4–18.7 | 6.5 | -3.73 cm ± 0.71 | **6.8** | yes | 0.7 | Zd -4.92 (28), Zh +5.69 (14), Zl -0.23 (10), Zv -3.63 (27), Zx -4.42 (87) | [169 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 12.8–13.5 (19) | 0.09 |
+| Q4 | chr4 198.4 Mb | 194.5–201.4 | 7.0 | +4.05 cm ± 1.28 | **2.8** | yes | 0.1 | Zd +6.75 (16), Zh +4.71 (7), Zl +11.94 (6), Zv +5.04 (33), Zx +3.72 (75) | [164 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 195.5–198.7 (40) | 0.03 |
+| Q5 | chr4 218.6 Mb | 215.2–223.7 | 4.9 | +0.23 cm ± 1.38 | 0.1 | no | 0.1 | Zd -4.68 (15), Zl +11.94 (6), Zv -1.92 (32), Zx +0.68 (69) | [142 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr5 2.6 Mb | 2.4–3.4 | 4.2 | +3.05 cm ± 0.74 | **4.5** | no | 0.5 | Zd +4.69 (32), Zh +3.90 (5), Zl +0.75 (11), Zv +1.75 (44), Zx +3.07 (73) | [81 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 2.6–2.7 (11) | 0.53 |
+| Q7 | chr5 64.0 Mb | 60.0–69.1 | 4.7 | -2.24 cm ± 1.13 | 1.3 | no | 0.1 | Zd -8.03 (8), Zl -4.07 (12), Zv -1.93 (37), Zx -3.66 (51) | [217 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 60.8–68.5 (113) | 0.02 |
+| Q8 | chr5 118.0 Mb | 102.1–121.4 | 6.2 | -3.46 cm ± 1.15 | **2.6** | yes | 0.0 | Zd +3.98 (8), Zl -3.08 (8), Zv -3.82 (28), Zx -2.53 (50) | [115 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 113.0–120.7 (44) | 0.02 |
+| Q9 | chr6 50.6 Mb | 49.4–51.3 | 6.4 | +5.94 cm ± 2.15 | 2.3 | no | 0.2 | Zd +2.06 (14), Zh +6.06 (6), Zl +3.00 (10), Zv -1.84 (29), Zx +8.40 (41) | [17 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 49.4–51.2 (5) | 0.12 |
+| Q10 | chr6 67.2 Mb | 64.2–68.7 | 5.0 | -3.16 cm ± 2.12 | 0.9 | yes | 0.3 | Zd +1.86 (13), Zh +4.59 (6), Zl +4.14 (10), Zv -1.01 (30), Zx -4.34 (50) | [65 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 64.2–68.2 (14) | 0.10 |
+| Q11 | chr6 105.0 Mb | 102.9–106.2 | 6.5 | +3.26 cm ± 1.14 | 2.4 | no | 2.3 | Zd +3.34 (10), Zh -2.93 (7), Zl -1.10 (8), Zv +9.56 (28), Zx +2.04 (45) | [84 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 104.6–105.6 (27) | 0.08 |
+| Q12 | chr7 137.8 Mb | 136.3–140.5 | 10.5 | -5.10 cm ± 0.78 | **10.2** | yes | 0.3 | Zd -5.01 (12), Zh -5.94 (8), Zl +0.38 (9), Zv -4.58 (45), Zx -5.78 (69) | [103 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 137.5–139.1 (26) | 0.08 |
+| Q13 | chr9 139.8 Mb | 139.0–141.0 | 10.1 | +4.64 cm ± 0.70 | **10.5** | yes | 0.5 | Zd +3.88 (26), Zl +2.08 (25), Zv +6.23 (41), Zx +4.19 (87) | [61 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 139.6–139.9 (5) | 0.21 |
+| Q14 (cond.) | chr10 6.5 Mb | 5.0–15.2 | 8.3 | +3.27 cm ± 0.82 | **4.2** | no | 2.4 | Zd +7.74 (25), Zh -13.61 (5), Zl +5.96 (11), Zv +2.98 (34), Zx +2.64 (60) | [234 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | – | 0.07 |
+| Q15 | chr10 99.5 Mb | 93.0–99.9 | 11.0 | +4.70 cm ± 0.94 | **6.3** | yes | 0.1 | Zd +2.46 (24), Zv +7.09 (23), Zx +4.06 (66) | [111 genes](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv) | 97.9–99.6 (33) | 0.04 |
 
 Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/PH_qtl_genes.tsv).
 
@@ -1703,17 +1715,17 @@ Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest wi
 
 16 regions, 9 hold (Bonferroni over 16: −log10 p > 2.51). Ear height follows flowering: several QTL hold known flowering genes in their intervals. Six of the first model's seven held QTL are found again (chr2 25 Mb, chr3 13 Mb, chr4 197 Mb, chr5 2.6 Mb, chr7 184 Mb, chr8 126–129 Mb); chr7 124 Mb (Q8) no longer holds, and chr2 83.5 Mb, chr6 105 Mb and chr10 99.5 Mb (*ZmEMF1a*, just below the cut before) now hold.
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q4 chr4 196.6 Mb** | Zm00001eb197430 (ns2) | 0.026 (**top**) | +3.15 cm | 8.1 | 0.1 (no) | No significant difference between taxa (Zd +2.88, Zh +0.18, Zl +6.76, Zv +2.49, Zx +3.62). The strongest EH QTL; shared with PH Q4, BL Q5 and SL Q3. |
-| **Q11 chr8 129.2 Mb** | Zm00001eb353250 (ZCN8) | 0.016 (**top**) | +2.82 cm | 6.0 | 0.3 (no) | No significant difference between taxa (Zd +2.22, Zh +5.38, Zl +1.48, Zv +2.98, Zx +2.41). *ZCN8* is the maize florigen (126.68 Mb, inside the interval 125.7–133.7 Mb). |
-| **Q10 chr7 184.4 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.018 (outside CS); 0.076 (**top**) | +2.15 cm | 5.7 | 0.4 (no) | No significant difference between taxa (Zd +2.95, Zl −0.62, Zv +1.63, Zx +2.13). Same region as BL Q7. |
-| **Q3 chr3 13.2 Mb** | Zm00001eb123060 (ra2) | 0.047 (**top**) | −2.15 cm | 5.1 | 1.8 (no) | No significant difference between taxa (Zd −5.33, Zh +0.25, Zl +0.11, Zv −3.38, Zx −1.22). Same window as PH Q3. |
-| **Q1 chr2 25.4 Mb** | — | 0.024 (best window) | +2.06 cm | 5.0 | 1.3 (no) | Higher ears (Zh +2.15, Zv +2.18, Zx +2.73; Zd −1.09). *ckx12* and *GA2ox2* (29.1–29.3 Mb), in this QTL's interval in the first model, are now just outside it (16.2–28.7 Mb). |
-| **Q5 chr5 2.6 Mb** | — | 0.244 (best window) | +2.06 cm | 4.5 | 0.6 (no) | Higher ears in every taxon. Same region as PH Q6 and SL Q4. |
-| **Q2 chr2 83.5 Mb** | — | 0.010 (best window) | +1.55 cm | 2.7 | 0.6 (no) | Wide interval (79.6–98.4 Mb). |
-| **Q7 chr6 105.0 Mb** | — | 0.078 (best window) | +2.26 cm | 2.6 | 3.2 (yes) | The only QTL where taxa differ: *parviglumis* +6.64 cm and *diploperennis* +3.61 cm, *luxurians* −2.81 cm. |
-| **Q16 chr10 99.5 Mb** | Zm00001eb417870 (ZmEMF1a); Zm00001eb418700 (ZmCCT10) | 0.006 (CS); 0.008 (CS) | +2.41 cm | 2.6 | 0.0 (no) | Holds just above the cut (Zd −2.13, Zv +3.19, Zx +3.29). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q4 chr4 196.6 Mb** | Zm00001eb197430 (ns2) | 0.026 (**top**) | +3.15 cm | 8.1 | yes | 0.1 (no) | No significant difference between taxa (Zd +2.88, Zh +0.18, Zl +6.76, Zv +2.49, Zx +3.62). The strongest EH QTL; shared with PH Q4, BL Q5 and SL Q3. |
+| **Q11 chr8 129.2 Mb** | Zm00001eb353250 (ZCN8) | 0.016 (**top**) | +2.82 cm | 6.0 | yes | 0.3 (no) | No significant difference between taxa (Zd +2.22, Zh +5.38, Zl +1.48, Zv +2.98, Zx +2.41). *ZCN8* is the maize florigen (126.68 Mb, inside the interval 125.7–133.7 Mb). |
+| **Q10 chr7 184.4 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.018 (outside CS); 0.076 (**top**) | +2.15 cm | 5.7 | yes | 0.4 (no) | No significant difference between taxa (Zd +2.95, Zl −0.62, Zv +1.63, Zx +2.13). Same region as BL Q7. |
+| **Q3 chr3 13.2 Mb** | Zm00001eb123060 (ra2) | 0.047 (**top**) | −2.15 cm | 5.1 | yes | 1.8 (no) | No significant difference between taxa (Zd −5.33, Zh +0.25, Zl +0.11, Zv −3.38, Zx −1.22). Same window as PH Q3. |
+| **Q1 chr2 25.4 Mb** | — | 0.024 (best window) | +2.06 cm | 5.0 | yes | 1.3 (no) | Higher ears (Zh +2.15, Zv +2.18, Zx +2.73; Zd −1.09). *ckx12* and *GA2ox2* (29.1–29.3 Mb), in this QTL's interval in the first model, are now just outside it (16.2–28.7 Mb). |
+| **Q5 chr5 2.6 Mb** | — | 0.244 (best window) | +2.06 cm | 4.5 | yes | 0.6 (no) | Higher ears in every taxon. Same region as PH Q6 and SL Q4. |
+| **Q2 chr2 83.5 Mb** | — | 0.010 (best window) | +1.55 cm | 2.7 | no | 0.6 (no) | Wide interval (79.6–98.4 Mb). |
+| **Q7 chr6 105.0 Mb** | — | 0.078 (best window) | +2.26 cm | 2.6 | yes | 3.2 (yes) | The only QTL where taxa differ: *parviglumis* +6.64 cm and *diploperennis* +3.61 cm, *luxurians* −2.81 cm. |
+| **Q16 chr10 99.5 Mb** | Zm00001eb417870 (ZmEMF1a); Zm00001eb418700 (ZmCCT10) | 0.006 (CS); 0.008 (CS) | +2.41 cm | 2.6 | yes | 0.0 (no) | Holds just above the cut (Zd −2.13, Zv +3.19, Zx +3.29). |
 
 Not held: Q12 chr9 116.8 Mb (+1.57 cm, joint −log10 p 2.1; *ZmCCT9*, Zm00001eb391230; Huang et al. 2018) and Q8 chr7 124.0 Mb (−1.64 cm, 1.8).
 
@@ -1727,24 +1739,24 @@ In our lines the teosinte segment raises the ear by 2.41 cm per copy at Q16 (joi
 
 <details><summary>All EH QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr2 25.4 Mb | 16.2–28.7 | 6.5 | +2.06 cm ± 0.47 | **5.0** | 1.3 | Zd -1.09 (31), Zh +2.15 (5), Zl +0.64 (21), Zv +2.18 (48), Zx +2.73 (107) | [373 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 18.1–26.3 (86) | 0.02 |
-| Q2 | chr2 83.5 Mb | 79.6–98.4 | 5.4 | +1.55 cm ± 0.51 | **2.7** | 0.6 | Zd +0.61 (31), Zh +3.86 (7), Zl +3.66 (14), Zv +3.37 (41), Zx +0.83 (101) | [145 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 81.3–95.6 (52) | 0.01 |
-| Q3 | chr3 13.2 Mb | 12.4–19.7 | 5.0 | -2.15 cm ± 0.48 | **5.1** | 1.8 | Zd -5.33 (28), Zh +0.25 (14), Zl +0.11 (10), Zv -3.38 (27), Zx -1.22 (87) | [182 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 12.6–17.0 (32) | 0.07 |
-| Q4 | chr4 196.6 Mb | 194.7–201.4 | 7.2 | +3.15 cm ± 0.55 | **8.1** | 0.1 | Zd +2.88 (16), Zh +0.18 (7), Zl +6.76 (6), Zv +2.49 (38), Zx +3.62 (75) | [161 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 195.5–198.7 (25) | 0.07 |
-| Q5 | chr5 2.6 Mb | 1.0–2.9 | 4.5 | +2.06 cm ± 0.50 | **4.5** | 0.6 | Zd +3.45 (32), Zh +3.28 (5), Zl +3.77 (11), Zv +1.09 (44), Zx +1.62 (73) | [146 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 2.4–2.7 (34) | 0.24 |
-| Q6 | chr6 50.6 Mb | 48.6–51.9 | 4.1 | +1.17 cm ± 0.70 | 1.0 | 0.3 | Zd -0.05 (14), Zh +0.69 (6), Zl +0.89 (10), Zv -1.14 (29), Zx +1.70 (41) | [27 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 49.3–51.3 (17) | 0.04 |
-| Q7 | chr6 105.0 Mb | 102.9–106.5 | 5.5 | +2.26 cm ± 0.75 | **2.6** | **3.2** | Zd +3.61 (10), Zh -0.10 (7), Zl -2.81 (8), Zv +6.64 (28), Zx +0.91 (45) | [91 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 104.6–105.6 (27) | 0.08 |
-| Q8 | chr7 124.0 Mb | 122.6–131.5 | 4.6 | -1.64 cm ± 0.68 | 1.8 | 0.5 | Zd +0.30 (11), Zh -5.22 (6), Zl -2.44 (7), Zv -1.08 (45), Zx -1.85 (58) | [169 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 122.9–126.0 (48) | 0.03 |
-| Q9 | chr7 136.3 Mb | 135.2–140.5 | 4.2 | -1.11 cm ± 0.64 | 1.1 | 0.4 | Zd -2.70 (13), Zh -1.73 (8), Zl +3.20 (9), Zv -0.20 (46), Zx -1.77 (65) | [137 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 136.3–139.4 (73) | 0.03 |
-| Q10 | chr7 184.4 Mb | 183.4–185.8 | 6.0 | +2.15 cm ± 0.45 | **5.7** | 0.4 | Zd +2.95 (32), Zl -0.62 (9), Zv +1.63 (48), Zx +2.13 (95) | [82 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 184.2–185.2 (26) | 0.08 |
-| Q11 | chr8 129.2 Mb | 125.7–133.7 | 6.3 | +2.82 cm ± 0.58 | **6.0** | 0.3 | Zd +2.22 (23), Zh +5.38 (11), Zl +1.48 (8), Zv +2.98 (30), Zx +2.41 (62) | [179 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 126.2–130.1 (43) | 0.05 |
-| Q12 | chr9 116.8 Mb | 115.2–122.2 | 5.3 | +1.57 cm ± 0.60 | 2.1 | 1.1 | Zd +3.13 (22), Zl -3.26 (21), Zv +1.61 (47), Zx +2.11 (89) | [166 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 116.5–120.2 (42) | 0.03 |
-| Q13 | chr9 139.8 Mb | 127.8–146.1 | 4.6 | +1.19 cm ± 0.58 | 1.4 | 0.1 | Zd +1.66 (26), Zl +2.77 (24), Zv +0.45 (41), Zx +0.99 (87) | [493 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | – | 0.01 |
-| Q14 | chr10 6.8 Mb | 5.0–9.5 | 5.4 | +1.79 cm ± 0.65 | 2.3 | 1.4 | Zd +3.79 (23), Zh -4.75 (5), Zl +4.76 (11), Zv +0.99 (31), Zx +1.12 (63) | [122 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 5.0–7.9 (56) | 0.05 |
-| Q15 | chr10 66.8 Mb | 63.0–67.8 | 5.0 | +0.00 cm ± 0.93 | 0.0 | 0.2 | Zd +2.76 (24), Zv +0.62 (22), Zx -0.47 (55) | [49 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | – | 0.00 |
-| Q16 | chr10 99.5 Mb | 88.8–99.6 | 7.2 | +2.41 cm ± 0.80 | **2.6** | 0.0 | Zd -2.13 (24), Zv +3.19 (23), Zx +3.29 (66) | [187 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 93.3–99.6 (52) | 0.03 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr2 25.4 Mb | 16.2–28.7 | 6.5 | +2.06 cm ± 0.47 | **5.0** | yes | 1.3 | Zd -1.09 (31), Zh +2.15 (5), Zl +0.64 (21), Zv +2.18 (48), Zx +2.73 (107) | [373 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 18.1–26.3 (86) | 0.02 |
+| Q2 | chr2 83.5 Mb | 79.6–98.4 | 5.4 | +1.55 cm ± 0.51 | **2.7** | no | 0.6 | Zd +0.61 (31), Zh +3.86 (7), Zl +3.66 (14), Zv +3.37 (41), Zx +0.83 (101) | [145 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 81.3–95.6 (52) | 0.01 |
+| Q3 | chr3 13.2 Mb | 12.4–19.7 | 5.0 | -2.15 cm ± 0.48 | **5.1** | yes | 1.8 | Zd -5.33 (28), Zh +0.25 (14), Zl +0.11 (10), Zv -3.38 (27), Zx -1.22 (87) | [182 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 12.6–17.0 (32) | 0.07 |
+| Q4 | chr4 196.6 Mb | 194.7–201.4 | 7.2 | +3.15 cm ± 0.55 | **8.1** | yes | 0.1 | Zd +2.88 (16), Zh +0.18 (7), Zl +6.76 (6), Zv +2.49 (38), Zx +3.62 (75) | [161 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 195.5–198.7 (25) | 0.07 |
+| Q5 | chr5 2.6 Mb | 1.0–2.9 | 4.5 | +2.06 cm ± 0.50 | **4.5** | yes | 0.6 | Zd +3.45 (32), Zh +3.28 (5), Zl +3.77 (11), Zv +1.09 (44), Zx +1.62 (73) | [146 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 2.4–2.7 (34) | 0.24 |
+| Q6 | chr6 50.6 Mb | 48.6–51.9 | 4.1 | +1.17 cm ± 0.70 | 1.0 | no | 0.3 | Zd -0.05 (14), Zh +0.69 (6), Zl +0.89 (10), Zv -1.14 (29), Zx +1.70 (41) | [27 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 49.3–51.3 (17) | 0.04 |
+| Q7 | chr6 105.0 Mb | 102.9–106.5 | 5.5 | +2.26 cm ± 0.75 | **2.6** | yes | **3.2** | Zd +3.61 (10), Zh -0.10 (7), Zl -2.81 (8), Zv +6.64 (28), Zx +0.91 (45) | [91 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 104.6–105.6 (27) | 0.08 |
+| Q8 | chr7 124.0 Mb | 122.6–131.5 | 4.6 | -1.64 cm ± 0.68 | 1.8 | yes | 0.5 | Zd +0.30 (11), Zh -5.22 (6), Zl -2.44 (7), Zv -1.08 (45), Zx -1.85 (58) | [169 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 122.9–126.0 (48) | 0.03 |
+| Q9 | chr7 136.3 Mb | 135.2–140.5 | 4.2 | -1.11 cm ± 0.64 | 1.1 | no | 0.4 | Zd -2.70 (13), Zh -1.73 (8), Zl +3.20 (9), Zv -0.20 (46), Zx -1.77 (65) | [137 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 136.3–139.4 (73) | 0.03 |
+| Q10 | chr7 184.4 Mb | 183.4–185.8 | 6.0 | +2.15 cm ± 0.45 | **5.7** | yes | 0.4 | Zd +2.95 (32), Zl -0.62 (9), Zv +1.63 (48), Zx +2.13 (95) | [82 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 184.2–185.2 (26) | 0.08 |
+| Q11 | chr8 129.2 Mb | 125.7–133.7 | 6.3 | +2.82 cm ± 0.58 | **6.0** | yes | 0.3 | Zd +2.22 (23), Zh +5.38 (11), Zl +1.48 (8), Zv +2.98 (30), Zx +2.41 (62) | [179 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 126.2–130.1 (43) | 0.05 |
+| Q12 | chr9 116.8 Mb | 115.2–122.2 | 5.3 | +1.57 cm ± 0.60 | 2.1 | yes | 1.1 | Zd +3.13 (22), Zl -3.26 (21), Zv +1.61 (47), Zx +2.11 (89) | [166 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 116.5–120.2 (42) | 0.03 |
+| Q13 | chr9 139.8 Mb | 127.8–146.1 | 4.6 | +1.19 cm ± 0.58 | 1.4 | no | 0.1 | Zd +1.66 (26), Zl +2.77 (24), Zv +0.45 (41), Zx +0.99 (87) | [493 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | – | 0.01 |
+| Q14 | chr10 6.8 Mb | 5.0–9.5 | 5.4 | +1.79 cm ± 0.65 | 2.3 | no | 1.4 | Zd +3.79 (23), Zh -4.75 (5), Zl +4.76 (11), Zv +0.99 (31), Zx +1.12 (63) | [122 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 5.0–7.9 (56) | 0.05 |
+| Q15 | chr10 66.8 Mb | 63.0–67.8 | 5.0 | +0.00 cm ± 0.93 | 0.0 | no | 0.2 | Zd +2.76 (24), Zv +0.62 (22), Zx -0.47 (55) | [49 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | – | 0.00 |
+| Q16 | chr10 99.5 Mb | 88.8–99.6 | 7.2 | +2.41 cm ± 0.80 | **2.6** | yes | 0.0 | Zd -2.13 (24), Zv +3.19 (23), Zx +3.29 (66) | [187 genes](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv) | 93.3–99.6 (52) | 0.03 |
 
 Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/EH_qtl_genes.tsv).
 
@@ -1758,37 +1770,37 @@ Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Top windows: the fewest wi
 
 The scan is almost the same as in the first model, but chr2, chr4 and chr7 are significant over long stretches, and within such a stretch the lead window can move between two nearly equal peaks. So several QTL sit at a different place than before: chr2 19.0 Mb (Q2; −log10 p 18.3, against 17.9 at the first model's 22.4 Mb), chr2 205.3 Mb (Q3; first model 202.4 Mb), chr4 119.3 Mb and 183.6 Mb (Q8, Q9; first model 120.2 and 167.0 Mb, which still has −log10 p 14.6 in the scan) and chr7 165.3 Mb (Q12; first model 143.6 Mb, still 10.1 in the scan). The QTL at chr1 22.9 Mb (Q1), chr6 96 and 173 Mb (Q10, Q11), chr8 36.7 Mb (Q13) and chr10 148.6 Mb (Q18; first model 144.0 Mb) are the same or close.
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q1 chr1 22.9 Mb** | Zm00001eb007670 (ZmD14) | 0.012 (outside CS) | +0.20 | 16.3 | 2.1 (no) | No significant difference between taxa (Zd +0.21, Zh +0.15, Zl −0.12, Zv +0.24, Zx +0.22). *ZmD14* is the strigolactone receptor (shoot branching). |
-| **Q2 chr2 19.0 Mb** | — | 0.14 (best window) | +0.16 | 15.5 | 0.5 (no) | The strongest EN scan peak (18.3); alike in the taxa (Zd +0.07 to Zh, Zx +0.19). |
-| **Q3 chr2 205.3 Mb** | — | 0.23 (best window) | +0.16 | 15.1 | 3.5 (yes) | Differs between taxa: *parviglumis* +0.22 and *mexicana* +0.19, *diploperennis* −0.09, *luxurians* +0.02. Same window as Prolif Q6. |
-| **Q12 chr7 165.3 Mb** | — | 0.19 (best window) | +0.15 | 11.2 | 0.5 (no) | Alike in the taxa (Zd +0.11, Zv +0.16, Zx +0.16). Next to the ASI Q10 peak (165.6 Mb). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q1 chr1 22.9 Mb** | Zm00001eb007670 (ZmD14) | 0.012 (outside CS) | +0.20 | 16.3 | yes | 2.1 (no) | No significant difference between taxa (Zd +0.21, Zh +0.15, Zl −0.12, Zv +0.24, Zx +0.22). *ZmD14* is the strigolactone receptor (shoot branching). |
+| **Q2 chr2 19.0 Mb** | — | 0.14 (best window) | +0.16 | 15.5 | yes | 0.5 (no) | The strongest EN scan peak (18.3); alike in the taxa (Zd +0.07 to Zh, Zx +0.19). |
+| **Q3 chr2 205.3 Mb** | — | 0.23 (best window) | +0.16 | 15.1 | yes | 3.5 (yes) | Differs between taxa: *parviglumis* +0.22 and *mexicana* +0.19, *diploperennis* −0.09, *luxurians* +0.02. Same window as Prolif Q6. |
+| **Q12 chr7 165.3 Mb** | — | 0.19 (best window) | +0.15 | 11.2 | moved (chr7 143.1) | 0.5 (no) | Alike in the taxa (Zd +0.11, Zv +0.16, Zx +0.16). Next to the ASI Q10 peak (165.6 Mb). |
 
 Not holding: Q4 chr3 12.4 Mb (+0.07, joint 1.4) holds *ra2* (Zm00001eb123060). *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880), in a chr8 QTL of the first model that did not hold, and the clock-coupling gene *ZGT* (Zm00001eb020350; first model's chr1 81.3 Mb QTL) are not in any QTL interval in this model.
 
 <details><summary>All EN QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 22.9 Mb | 22.6–23.7 | 15.6 | +0.20 ± 0.02 | **16.3** | 2.1 | Zd +0.21 (15), Zh +0.15 (10), Zl -0.12 (13), Zv +0.24 (30), Zx +0.22 (58) | [34 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 22.9–23.1 (8) | 0.30 |
-| Q2 | chr2 18.9 Mb | 18.1–19.7 | 18.3 | +0.16 ± 0.02 | **15.5** | 0.5 | Zd +0.07 (24), Zh +0.19 (5), Zl +0.16 (19), Zv +0.13 (46), Zx +0.19 (108) | [54 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 18.5–19.0 (15) | 0.14 |
-| Q3 | chr2 205.2 Mb | 204.4–205.5 | 16.2 | +0.16 ± 0.02 | **15.1** | **3.5** | Zd -0.09 (26), Zl +0.02 (11), Zv +0.22 (50), Zx +0.19 (107) | [39 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 205.0–205.3 (16) | 0.23 |
-| Q4 | chr3 12.4 Mb | 10.9–13.9 | 5.8 | +0.07 ± 0.03 | 1.4 | 0.0 | Zd +0.03 (29), Zh +0.09 (13), Zl +0.15 (10), Zv +0.13 (29), Zx +0.01 (92) | [73 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 11.0–13.2 (25) | 0.05 |
-| Q5 | chr3 20.9 Mb | 17.5–22.8 | 5.2 | +0.02 ± 0.04 | 0.2 | 0.1 | Zd +0.10 (23), Zh -0.04 (12), Zl -0.09 (10), Zv +0.00 (25), Zx +0.02 (86) | [99 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
-| Q6 | chr3 37.0 Mb | 27.9–43.4 | 4.6 | +0.02 ± 0.03 | 0.2 | 0.6 | Zd -0.06 (24), Zh -0.04 (11), Zl -0.10 (8), Zv -0.01 (25), Zx +0.08 (73) | [261 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
-| Q7 | chr3 175.1 Mb | 171.4–176.8 | 5.1 | +0.07 ± 0.02 | **2.8** | 2.1 | Zd -0.06 (24), Zh +0.04 (10), Zl +0.10 (14), Zv +0.03 (36), Zx +0.13 (77) | [131 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 173.8–175.4 (42) | 0.05 |
-| Q8 | chr4 119.2 Mb | 119.2–121.3 | 14.8 | +0.18 ± 0.03 | **8.7** | 0.6 | Zh -0.00 (6), Zv +0.21 (32), Zx +0.17 (50) | [12 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 119.2–119.5 (1) | 0.19 |
-| Q9 (cond.) | chr4 183.6 Mb | 179.8–212.2 | 13.0 | +0.14 ± 0.02 | **7.6** | 0.1 | Zd +0.05 (14), Zh +0.00 (9), Zl +0.04 (6), Zv +0.12 (40), Zx +0.16 (76) | [852 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 180.3–212.2 (97) | 0.08 |
-| Q10 | chr6 96.2 Mb | 94.2–99.2 | 5.2 | +0.11 ± 0.03 | **4.7** | 0.1 | Zd +0.10 (10), Zh +0.16 (7), Zl +0.12 (7), Zv +0.10 (30), Zx +0.12 (43) | [119 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 95.6–96.9 (25) | 0.06 |
-| Q11 | chr6 173.2 Mb | 171.5–175.3 | 4.7 | +0.10 ± 0.02 | **4.4** | 0.6 | Zd +0.04 (16), Zl +0.10 (9), Zv +0.06 (35), Zx +0.15 (55) | [192 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 171.8–173.3 (42) | 0.06 |
-| Q12 | chr7 165.2 Mb | 165.1–166.6 | 11.0 | +0.15 ± 0.02 | **11.2** | 0.5 | Zd +0.11 (17), Zl +0.01 (13), Zv +0.16 (44), Zx +0.16 (77) | [56 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 165.2–165.5 (7) | 0.19 |
-| Q13 | chr8 36.6 Mb | 29.3–41.0 | 7.7 | +0.12 ± 0.03 | **3.7** | 1.2 | Zd +0.01 (28), Zh -0.00 (11), Zl -0.04 (6), Zv +0.20 (46), Zx +0.19 (60) | [140 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 32.6–37.1 (26) | 0.04 |
-| Q14 | chr8 98.2 Mb | 95.0–106.9 | 5.1 | +0.04 ± 0.03 | 0.7 | 0.0 | Zd +0.03 (19), Zh +0.05 (8), Zl +0.10 (5), Zv -0.04 (38), Zx +0.01 (74) | [207 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
-| Q15 | chr9 19.4 Mb | 18.2–20.1 | 7.5 | +0.10 ± 0.03 | **3.8** | 0.4 | Zd +0.08 (26), Zh +0.34 (8), Zl +0.08 (22), Zv +0.15 (51), Zx +0.06 (94) | [86 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 18.8–19.5 (21) | 0.13 |
-| Q16 | chr9 70.0 Mb | 67.8–70.3 | 5.5 | -0.05 ± 0.07 | 0.3 | 0.5 | Zd +0.08 (25), Zh -0.47 (7), Zl +0.04 (21), Zv +0.01 (45), Zx +0.07 (90) | [29 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 67.8–70.3 (5) | 0.15 |
-| Q17 | chr9 81.0 Mb | 78.8–82.9 | 5.8 | +0.07 ± 0.06 | 0.6 | 0.8 | Zd +0.07 (27), Zh +0.07 (6), Zl +0.13 (21), Zv +0.01 (51), Zx +0.06 (84) | [41 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.23 |
-| Q18 | chr10 148.6 Mb | 148.2–149.3 | 5.5 | +0.10 ± 0.02 | **6.1** | 0.2 | Zd +0.10 (39), Zh +0.10 (7), Zl +0.05 (14), Zv +0.11 (40), Zx +0.09 (85) | [60 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 148.5–148.7 (7) | 0.34 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 22.9 Mb | 22.6–23.7 | 15.6 | +0.20 ± 0.02 | **16.3** | yes | 2.1 | Zd +0.21 (15), Zh +0.15 (10), Zl -0.12 (13), Zv +0.24 (30), Zx +0.22 (58) | [34 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 22.9–23.1 (8) | 0.30 |
+| Q2 | chr2 18.9 Mb | 18.1–19.7 | 18.3 | +0.16 ± 0.02 | **15.5** | yes | 0.5 | Zd +0.07 (24), Zh +0.19 (5), Zl +0.16 (19), Zv +0.13 (46), Zx +0.19 (108) | [54 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 18.5–19.0 (15) | 0.14 |
+| Q3 | chr2 205.2 Mb | 204.4–205.5 | 16.2 | +0.16 ± 0.02 | **15.1** | yes | **3.5** | Zd -0.09 (26), Zl +0.02 (11), Zv +0.22 (50), Zx +0.19 (107) | [39 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 205.0–205.3 (16) | 0.23 |
+| Q4 | chr3 12.4 Mb | 10.9–13.9 | 5.8 | +0.07 ± 0.03 | 1.4 | yes | 0.0 | Zd +0.03 (29), Zh +0.09 (13), Zl +0.15 (10), Zv +0.13 (29), Zx +0.01 (92) | [73 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 11.0–13.2 (25) | 0.05 |
+| Q5 | chr3 20.9 Mb | 17.5–22.8 | 5.2 | +0.02 ± 0.04 | 0.2 | yes | 0.1 | Zd +0.10 (23), Zh -0.04 (12), Zl -0.09 (10), Zv +0.00 (25), Zx +0.02 (86) | [99 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
+| Q6 | chr3 37.0 Mb | 27.9–43.4 | 4.6 | +0.02 ± 0.03 | 0.2 | no | 0.6 | Zd -0.06 (24), Zh -0.04 (11), Zl -0.10 (8), Zv -0.01 (25), Zx +0.08 (73) | [261 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
+| Q7 | chr3 175.1 Mb | 171.4–176.8 | 5.1 | +0.07 ± 0.02 | **2.8** | no | 2.1 | Zd -0.06 (24), Zh +0.04 (10), Zl +0.10 (14), Zv +0.03 (36), Zx +0.13 (77) | [131 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 173.8–175.4 (42) | 0.05 |
+| Q8 | chr4 119.2 Mb | 119.2–121.3 | 14.8 | +0.18 ± 0.03 | **8.7** | yes | 0.6 | Zh -0.00 (6), Zv +0.21 (32), Zx +0.17 (50) | [12 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 119.2–119.5 (1) | 0.19 |
+| Q9 (cond.) | chr4 183.6 Mb | 179.8–212.2 | 13.0 | +0.14 ± 0.02 | **7.6** | yes | 0.1 | Zd +0.05 (14), Zh +0.00 (9), Zl +0.04 (6), Zv +0.12 (40), Zx +0.16 (76) | [852 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 180.3–212.2 (97) | 0.08 |
+| Q10 | chr6 96.2 Mb | 94.2–99.2 | 5.2 | +0.11 ± 0.03 | **4.7** | yes | 0.1 | Zd +0.10 (10), Zh +0.16 (7), Zl +0.12 (7), Zv +0.10 (30), Zx +0.12 (43) | [119 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 95.6–96.9 (25) | 0.06 |
+| Q11 | chr6 173.2 Mb | 171.5–175.3 | 4.7 | +0.10 ± 0.02 | **4.4** | no | 0.6 | Zd +0.04 (16), Zl +0.10 (9), Zv +0.06 (35), Zx +0.15 (55) | [192 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 171.8–173.3 (42) | 0.06 |
+| Q12 | chr7 165.2 Mb | 165.1–166.6 | 11.0 | +0.15 ± 0.02 | **11.2** | moved (chr7 143.1) | 0.5 | Zd +0.11 (17), Zl +0.01 (13), Zv +0.16 (44), Zx +0.16 (77) | [56 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 165.2–165.5 (7) | 0.19 |
+| Q13 | chr8 36.6 Mb | 29.3–41.0 | 7.7 | +0.12 ± 0.03 | **3.7** | yes | 1.2 | Zd +0.01 (28), Zh -0.00 (11), Zl -0.04 (6), Zv +0.20 (46), Zx +0.19 (60) | [140 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 32.6–37.1 (26) | 0.04 |
+| Q14 | chr8 98.2 Mb | 95.0–106.9 | 5.1 | +0.04 ± 0.03 | 0.7 | no | 0.0 | Zd +0.03 (19), Zh +0.05 (8), Zl +0.10 (5), Zv -0.04 (38), Zx +0.01 (74) | [207 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.00 |
+| Q15 | chr9 19.4 Mb | 18.2–20.1 | 7.5 | +0.10 ± 0.03 | **3.8** | yes | 0.4 | Zd +0.08 (26), Zh +0.34 (8), Zl +0.08 (22), Zv +0.15 (51), Zx +0.06 (94) | [86 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 18.8–19.5 (21) | 0.13 |
+| Q16 | chr9 70.0 Mb | 67.8–70.3 | 5.5 | -0.05 ± 0.07 | 0.3 | no | 0.5 | Zd +0.08 (25), Zh -0.47 (7), Zl +0.04 (21), Zv +0.01 (45), Zx +0.07 (90) | [29 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 67.8–70.3 (5) | 0.15 |
+| Q17 | chr9 81.0 Mb | 78.8–82.9 | 5.8 | +0.07 ± 0.06 | 0.6 | no | 0.8 | Zd +0.07 (27), Zh +0.07 (6), Zl +0.13 (21), Zv +0.01 (51), Zx +0.06 (84) | [41 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | – | 0.23 |
+| Q18 | chr10 148.6 Mb | 148.2–149.3 | 5.5 | +0.10 ± 0.02 | **6.1** | yes | 0.2 | Zd +0.10 (39), Zh +0.10 (7), Zl +0.05 (14), Zv +0.11 (40), Zx +0.09 (85) | [60 genes](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv) | 148.5–148.7 (7) | 0.34 |
 
 Bonferroni over the 18 QTL: −log10 p > 2.56 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/EN_qtl_genes.tsv).
 
@@ -1800,35 +1812,35 @@ Bonferroni over the 18 QTL: −log10 p > 2.56 (bold). Top windows: the fewest wi
 
 13 regions plus two QTL added by the conditional scans (Q5 chr2 34.4 Mb and Q11 chr4 114.3 Mb, marked "*"); 9 of the 15 hold (Bonferroni over 15: −log10 p > 2.48). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN, all positive** (teosinte adds ears per node): the same loci raise both the number of ear-bearing nodes and the number of ears per node. Eight of the first model's ten held QTL are found again; chr7 142.3 Mb no longer holds (1.4), and the first model's chr2 191.3 Mb QTL is now at chr2 205.2 Mb (Q6), the same window as EN Q3 (chr2 is significant from 101 to 220 Mb, and the lead moved between two nearly equal peaks; 191.3 Mb still has −log10 p 11.3 in the scan).
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q1 chr1 23.2 Mb** | — | 0.57 (best window; top windows 23.2–23.3 Mb, 2 genes) | +0.20 | 16.2 | 1.0 (no) | The strongest QTL (scan 19.4); the same peak as EN Q1. Fine-mapping puts more than half of the probability on one window. |
-| **Q7 chr3 11.4 Mb** | Zm00001eb122680 (CYP734A6) | 0.158 (**top**) | +0.15 | 12.0 | 0.4 (no) | No significant difference between taxa (Zd +0.18, Zh +0.12, Zl +0.08, Zv +0.23, Zx +0.12). |
-| **Q4 chr2 9.2 Mb** | — | 0.07 (best window) | +0.08 | 5.4 | 0.7 (no) | No significant difference between taxa (Zd +0.11, Zh +0.13, Zl +0.12, Zv +0.03, Zx +0.06). Its interval (6.5–9.8 Mb) no longer reaches *ckx12* and *GA2ox2*. |
-| **Q5 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 5.0 | 0.7 (no) | No significant difference between taxa (Zd +0.06, Zl +0.01, Zv +0.13, Zx +0.10). Added by the conditional scan: a second QTL on the chr2 short arm; its 29.7-Mb interval has no credible set. |
-| **Q3 chr1 214.1 Mb** | Zm00001eb040280 (CKX10) | 0.010 (CS) | +0.12 | 6.2 | 0.6 (no) | No significant difference between taxa (Zd +0.05, Zh −0.09, Zl +0.02, Zv +0.13, Zx +0.15). *CKX10* is a cytokinin oxidase. Stronger than in the first model (joint 3.1). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q1 chr1 23.2 Mb** | — | 0.57 (best window; top windows 23.2–23.3 Mb, 2 genes) | +0.20 | 16.2 | yes | 1.0 (no) | The strongest QTL (scan 19.4); the same peak as EN Q1. Fine-mapping puts more than half of the probability on one window. |
+| **Q7 chr3 11.4 Mb** | Zm00001eb122680 (CYP734A6) | 0.158 (**top**) | +0.15 | 12.0 | yes | 0.4 (no) | No significant difference between taxa (Zd +0.18, Zh +0.12, Zl +0.08, Zv +0.23, Zx +0.12). |
+| **Q4 chr2 9.2 Mb** | — | 0.07 (best window) | +0.08 | 5.4 | yes | 0.7 (no) | No significant difference between taxa (Zd +0.11, Zh +0.13, Zl +0.12, Zv +0.03, Zx +0.06). Its interval (6.5–9.8 Mb) no longer reaches *ckx12* and *GA2ox2*. |
+| **Q5 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 5.0 | moved (chr2 9.2) | 0.7 (no) | No significant difference between taxa (Zd +0.06, Zl +0.01, Zv +0.13, Zx +0.10). Added by the conditional scan: a second QTL on the chr2 short arm; its 29.7-Mb interval has no credible set. |
+| **Q3 chr1 214.1 Mb** | Zm00001eb040280 (CKX10) | 0.010 (CS) | +0.12 | 6.2 | yes | 0.6 (no) | No significant difference between taxa (Zd +0.05, Zh −0.09, Zl +0.02, Zv +0.13, Zx +0.15). *CKX10* is a cytokinin oxidase. Stronger than in the first model (joint 3.1). |
 
 The other held QTL are Q6 chr2 205.2 Mb (+0.12; taxa differ 3.5: mostly *mexicana*), Q11 chr4 114.3 Mb (+0.14, added by the conditional scan), Q12 chr4 171.3 Mb (+0.15) and Q15 chr9 32.0 Mb (+0.09).
 
 <details><summary>All Prolif QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 23.2 Mb | 22.6–23.3 | 19.4 | +0.20 ± 0.02 | **16.2** | 1.0 | Zd +0.14 (15), Zh +0.07 (10), Zl -0.07 (13), Zv +0.26 (28), Zx +0.22 (57) | [24 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 23.2–23.3 (2) | 0.57 |
-| Q2 | chr1 51.4 Mb | 48.5–54.0 | 4.8 | +0.03 ± 0.02 | 0.7 | 1.8 | Zd +0.05 (25), Zh +0.12 (11), Zl +0.08 (14), Zv -0.02 (24), Zx -0.03 (64) | [118 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.00 |
-| Q3 | chr1 214.1 Mb | 211.4–216.5 | 5.6 | +0.12 ± 0.02 | **6.2** | 0.6 | Zd +0.05 (7), Zh -0.09 (7), Zl +0.02 (6), Zv +0.13 (31), Zx +0.15 (73) | [114 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 213.9–216.1 (38) | 0.08 |
-| Q4 | chr2 9.2 Mb | 6.5–9.8 | 7.0 | +0.08 ± 0.02 | **5.4** | 0.7 | Zd +0.11 (37), Zh +0.13 (10), Zl +0.12 (17), Zv +0.03 (52), Zx +0.06 (98) | [151 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 6.5–9.4 (39) | 0.07 |
-| Q5 (cond.) | chr2 34.4 Mb | 22.9–52.6 | 9.1 | +0.08 ± 0.02 | **5.0** | 0.7 | Zd +0.06 (33), Zl +0.01 (18), Zv +0.13 (46), Zx +0.10 (93) | [754 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.04 |
-| Q6 | chr2 205.2 Mb | 202.3–205.8 | 12.6 | +0.12 ± 0.02 | **10.7** | **3.5** | Zd -0.03 (26), Zl +0.01 (12), Zv +0.08 (50), Zx +0.18 (107) | [135 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 205.0–205.4 (20) | 0.15 |
-| Q7 | chr3 11.4 Mb | 11.0–11.7 | 17.2 | +0.15 ± 0.02 | **12.0** | 0.4 | Zd +0.18 (29), Zh +0.12 (13), Zl +0.08 (10), Zv +0.23 (31), Zx +0.12 (90) | [11 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 11.2–11.5 (4) | 0.26 |
-| Q8 | chr3 73.5 Mb | 63.7–81.3 | 5.4 | -0.08 ± 0.06 | 0.7 | 0.6 | Zd +0.00 (25), Zh -0.04 (13), Zl -0.09 (8), Zv -0.07 (20), Zx +0.02 (65) | [107 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.03 |
-| Q9 | chr3 119.8 Mb | 113.5–137.3 | 6.3 | +0.08 ± 0.06 | 0.9 | 0.8 | Zd +0.07 (26), Zh -0.04 (13), Zl -0.09 (8), Zv +0.01 (26), Zx +0.03 (74) | [341 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.00 |
-| Q10 | chr3 172.3 Mb | 170.1–181.1 | 5.3 | +0.06 ± 0.02 | 2.4 | 1.5 | Zd +0.03 (24), Zh +0.04 (12), Zl +0.03 (12), Zv +0.00 (35), Zx +0.11 (83) | [278 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 171.7–180.2 (96) | 0.02 |
-| Q11 (cond.) | chr4 114.3 Mb | 77.3–135.6 | 12.2 | +0.14 ± 0.03 | **5.2** | 0.1 | Zh +0.04 (6), Zv +0.16 (32), Zx +0.15 (50) | [503 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 100.6–121.7 (56) | 0.02 |
-| Q12 | chr4 171.3 Mb | 168.5–172.1 | 16.5 | +0.15 ± 0.03 | **8.9** | 1.6 | Zd +0.23 (11), Zh -0.05 (5), Zl +0.08 (6), Zv +0.14 (28), Zx +0.17 (67) | [106 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 171.1–171.9 (13) | 0.07 |
-| Q13 | chr7 136.2 Mb | 135.6–139.1 | 4.9 | +0.05 ± 0.03 | 1.3 | **4.2** | Zd -0.15 (14), Zh +0.36 (9), Zl -0.04 (8), Zv +0.08 (46), Zx +0.05 (64) | [98 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.03 |
-| Q14 | chr7 142.2 Mb | 141.8–146.0 | 5.4 | +0.06 ± 0.03 | 1.4 | 1.3 | Zd +0.09 (16), Zh -0.05 (8), Zl +0.04 (10), Zv +0.02 (42), Zx +0.05 (73) | [111 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 142.2–145.4 (50) | 0.04 |
-| Q15 | chr9 32.0 Mb | 25.4–32.7 | 5.0 | +0.09 ± 0.02 | **5.4** | 0.1 | Zd +0.11 (24), Zh -0.01 (8), Zl +0.14 (22), Zv +0.07 (46), Zx +0.09 (93) | [156 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 31.6–32.5 (10) | 0.07 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 23.2 Mb | 22.6–23.3 | 19.4 | +0.20 ± 0.02 | **16.2** | yes | 1.0 | Zd +0.14 (15), Zh +0.07 (10), Zl -0.07 (13), Zv +0.26 (28), Zx +0.22 (57) | [24 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 23.2–23.3 (2) | 0.57 |
+| Q2 | chr1 51.4 Mb | 48.5–54.0 | 4.8 | +0.03 ± 0.02 | 0.7 | no | 1.8 | Zd +0.05 (25), Zh +0.12 (11), Zl +0.08 (14), Zv -0.02 (24), Zx -0.03 (64) | [118 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.00 |
+| Q3 | chr1 214.1 Mb | 211.4–216.5 | 5.6 | +0.12 ± 0.02 | **6.2** | yes | 0.6 | Zd +0.05 (7), Zh -0.09 (7), Zl +0.02 (6), Zv +0.13 (31), Zx +0.15 (73) | [114 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 213.9–216.1 (38) | 0.08 |
+| Q4 | chr2 9.2 Mb | 6.5–9.8 | 7.0 | +0.08 ± 0.02 | **5.4** | yes | 0.7 | Zd +0.11 (37), Zh +0.13 (10), Zl +0.12 (17), Zv +0.03 (52), Zx +0.06 (98) | [151 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 6.5–9.4 (39) | 0.07 |
+| Q5 (cond.) | chr2 34.4 Mb | 22.9–52.6 | 9.1 | +0.08 ± 0.02 | **5.0** | moved (chr2 9.2) | 0.7 | Zd +0.06 (33), Zl +0.01 (18), Zv +0.13 (46), Zx +0.10 (93) | [754 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.04 |
+| Q6 | chr2 205.2 Mb | 202.3–205.8 | 12.6 | +0.12 ± 0.02 | **10.7** | yes | **3.5** | Zd -0.03 (26), Zl +0.01 (12), Zv +0.08 (50), Zx +0.18 (107) | [135 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 205.0–205.4 (20) | 0.15 |
+| Q7 | chr3 11.4 Mb | 11.0–11.7 | 17.2 | +0.15 ± 0.02 | **12.0** | yes | 0.4 | Zd +0.18 (29), Zh +0.12 (13), Zl +0.08 (10), Zv +0.23 (31), Zx +0.12 (90) | [11 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 11.2–11.5 (4) | 0.26 |
+| Q8 | chr3 73.5 Mb | 63.7–81.3 | 5.4 | -0.08 ± 0.06 | 0.7 | no | 0.6 | Zd +0.00 (25), Zh -0.04 (13), Zl -0.09 (8), Zv -0.07 (20), Zx +0.02 (65) | [107 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.03 |
+| Q9 | chr3 119.8 Mb | 113.5–137.3 | 6.3 | +0.08 ± 0.06 | 0.9 | no | 0.8 | Zd +0.07 (26), Zh -0.04 (13), Zl -0.09 (8), Zv +0.01 (26), Zx +0.03 (74) | [341 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.00 |
+| Q10 | chr3 172.3 Mb | 170.1–181.1 | 5.3 | +0.06 ± 0.02 | 2.4 | no | 1.5 | Zd +0.03 (24), Zh +0.04 (12), Zl +0.03 (12), Zv +0.00 (35), Zx +0.11 (83) | [278 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 171.7–180.2 (96) | 0.02 |
+| Q11 (cond.) | chr4 114.3 Mb | 77.3–135.6 | 12.2 | +0.14 ± 0.03 | **5.2** | yes | 0.1 | Zh +0.04 (6), Zv +0.16 (32), Zx +0.15 (50) | [503 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 100.6–121.7 (56) | 0.02 |
+| Q12 | chr4 171.3 Mb | 168.5–172.1 | 16.5 | +0.15 ± 0.03 | **8.9** | yes | 1.6 | Zd +0.23 (11), Zh -0.05 (5), Zl +0.08 (6), Zv +0.14 (28), Zx +0.17 (67) | [106 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 171.1–171.9 (13) | 0.07 |
+| Q13 | chr7 136.2 Mb | 135.6–139.1 | 4.9 | +0.05 ± 0.03 | 1.3 | yes | **4.2** | Zd -0.15 (14), Zh +0.36 (9), Zl -0.04 (8), Zv +0.08 (46), Zx +0.05 (64) | [98 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | – | 0.03 |
+| Q14 | chr7 142.2 Mb | 141.8–146.0 | 5.4 | +0.06 ± 0.03 | 1.4 | yes | 1.3 | Zd +0.09 (16), Zh -0.05 (8), Zl +0.04 (10), Zv +0.02 (42), Zx +0.05 (73) | [111 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 142.2–145.4 (50) | 0.04 |
+| Q15 | chr9 32.0 Mb | 25.4–32.7 | 5.0 | +0.09 ± 0.02 | **5.4** | yes | 0.1 | Zd +0.11 (24), Zh -0.01 (8), Zl +0.14 (22), Zv +0.07 (46), Zx +0.09 (93) | [156 genes](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv) | 31.6–32.5 (10) | 0.07 |
 
 Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/Prolif_qtl_genes.tsv).
 
@@ -1842,21 +1854,21 @@ Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest wi
 
 <details><summary>All SL QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr1 69.7 Mb | 67.6–71.1 | 5.2 | +0.29 ± 0.06 | **5.7** | 0.1 | Zd +0.25 (18), Zh +0.58 (10), Zl -0.25 (7), Zv +0.40 (15), Zx +0.25 (49) | [74 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 69.6–70.4 (10) | 0.12 |
-| Q2 | chr2 6.0 Mb | 5.8–7.4 | 7.0 | -0.23 ± 0.04 | **7.2** | 1.3 | Zd -0.43 (41), Zh -0.17 (11), Zl -0.66 (13), Zv -0.16 (54), Zx -0.14 (94) | [92 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 5.9–6.5 (26) | 0.16 |
-| Q3 | chr4 198.8 Mb | 183.0–205.5 | 5.6 | +0.26 ± 0.05 | **6.0** | 0.4 | Zd +0.14 (15), Zl +0.10 (5), Zv +0.14 (31), Zx +0.36 (68) | [641 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 183.4–199.7 (158) | 0.02 |
-| Q4 | chr5 2.5 Mb | 1.8–2.7 | 5.8 | +0.25 ± 0.05 | **6.5** | 1.3 | Zd +0.15 (30), Zh +0.91 (5), Zl -0.18 (12), Zv +0.20 (42), Zx +0.29 (70) | [76 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 2.5–2.7 (22) | 0.39 |
-| Q5 | chr5 49.4 Mb | 47.9–52.0 | 5.2 | -0.18 ± 0.10 | 1.2 | 1.4 | Zd -0.28 (10), Zl -0.20 (12), Zv -0.34 (29), Zx +0.03 (41) | [72 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 48.2–49.9 (18) | 0.04 |
-| Q6 | chr5 64.2 Mb | 63.3–67.4 | 5.0 | -0.03 ± 0.11 | 0.1 | 0.2 | Zd +0.12 (8), Zl -0.15 (11), Zv -0.17 (34), Zx -0.12 (41) | [96 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | – | 0.00 |
-| Q7 | chr5 161.8 Mb | 157.2–164.8 | 7.0 | -0.27 ± 0.07 | **3.8** | 0.8 | Zd -0.59 (7), Zl +0.01 (8), Zv -0.16 (35), Zx -0.25 (49) | [129 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 157.6–161.8 (27) | 0.04 |
-| Q8 | chr6 116.2 Mb | 113.6–118.1 | 4.9 | -0.26 ± 0.06 | **4.7** | 0.6 | Zd -0.28 (12), Zh -0.51 (7), Zl -0.04 (9), Zv -0.21 (22), Zx -0.17 (38) | [117 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 115.1–116.5 (41) | 0.05 |
-| Q9 | chr6 167.8 Mb | 166.6–171.7 | 4.5 | -0.22 ± 0.06 | **3.6** | 0.1 | Zd -0.32 (17), Zh -0.45 (8), Zl -0.33 (8), Zv -0.23 (29), Zx -0.16 (43) | [256 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 167.4–171.0 (77) | 0.05 |
-| Q10 | chr7 141.7 Mb | 139.6–141.9 | 9.2 | -0.34 ± 0.05 | **9.9** | 0.8 | Zd -0.26 (12), Zh +0.03 (7), Zl -0.60 (9), Zv -0.39 (38), Zx -0.35 (70) | [38 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 140.6–141.8 (20) | 0.15 |
-| Q11 | chr9 157.2 Mb | 155.9–160.5 | 7.5 | -0.24 ± 0.04 | **7.3** | 2.2 | Zd -0.63 (20), Zh -0.17 (10), Zl -0.32 (13), Zv -0.27 (44), Zx -0.15 (94) | [263 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | – | 0.10 |
-| Q12 | chr10 25.6 Mb | 25.0–30.7 | 7.1 | +0.23 ± 0.07 | **3.1** | 2.0 | Zd +0.58 (22), Zv +0.10 (21), Zx +0.11 (56) | [71 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 25.3–30.0 (26) | 0.04 |
-| Q13 | chr10 129.7 Mb | 125.9–131.1 | 7.2 | +0.20 ± 0.06 | **3.2** | 0.1 | Zd +0.21 (31), Zh +0.43 (8), Zl -0.12 (5), Zv +0.23 (33), Zx +0.28 (61) | [158 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 127.7–129.9 (55) | 0.05 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr1 69.7 Mb | 67.6–71.1 | 5.2 | +0.29 ± 0.06 | **5.7** | yes | 0.1 | Zd +0.25 (18), Zh +0.58 (10), Zl -0.25 (7), Zv +0.40 (15), Zx +0.25 (49) | [74 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 69.6–70.4 (10) | 0.12 |
+| Q2 | chr2 6.0 Mb | 5.8–7.4 | 7.0 | -0.23 ± 0.04 | **7.2** | yes | 1.3 | Zd -0.43 (41), Zh -0.17 (11), Zl -0.66 (13), Zv -0.16 (54), Zx -0.14 (94) | [92 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 5.9–6.5 (26) | 0.16 |
+| Q3 | chr4 198.8 Mb | 183.0–205.5 | 5.6 | +0.26 ± 0.05 | **6.0** | yes | 0.4 | Zd +0.14 (15), Zl +0.10 (5), Zv +0.14 (31), Zx +0.36 (68) | [641 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 183.4–199.7 (158) | 0.02 |
+| Q4 | chr5 2.5 Mb | 1.8–2.7 | 5.8 | +0.25 ± 0.05 | **6.5** | yes | 1.3 | Zd +0.15 (30), Zh +0.91 (5), Zl -0.18 (12), Zv +0.20 (42), Zx +0.29 (70) | [76 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 2.5–2.7 (22) | 0.39 |
+| Q5 | chr5 49.4 Mb | 47.9–52.0 | 5.2 | -0.18 ± 0.10 | 1.2 | no | 1.4 | Zd -0.28 (10), Zl -0.20 (12), Zv -0.34 (29), Zx +0.03 (41) | [72 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 48.2–49.9 (18) | 0.04 |
+| Q6 | chr5 64.2 Mb | 63.3–67.4 | 5.0 | -0.03 ± 0.11 | 0.1 | no | 0.2 | Zd +0.12 (8), Zl -0.15 (11), Zv -0.17 (34), Zx -0.12 (41) | [96 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | – | 0.00 |
+| Q7 | chr5 161.8 Mb | 157.2–164.8 | 7.0 | -0.27 ± 0.07 | **3.8** | yes | 0.8 | Zd -0.59 (7), Zl +0.01 (8), Zv -0.16 (35), Zx -0.25 (49) | [129 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 157.6–161.8 (27) | 0.04 |
+| Q8 | chr6 116.2 Mb | 113.6–118.1 | 4.9 | -0.26 ± 0.06 | **4.7** | moved (chr6 164.1) | 0.6 | Zd -0.28 (12), Zh -0.51 (7), Zl -0.04 (9), Zv -0.21 (22), Zx -0.17 (38) | [117 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 115.1–116.5 (41) | 0.05 |
+| Q9 | chr6 167.8 Mb | 166.6–171.7 | 4.5 | -0.22 ± 0.06 | **3.6** | yes | 0.1 | Zd -0.32 (17), Zh -0.45 (8), Zl -0.33 (8), Zv -0.23 (29), Zx -0.16 (43) | [256 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 167.4–171.0 (77) | 0.05 |
+| Q10 | chr7 141.7 Mb | 139.6–141.9 | 9.2 | -0.34 ± 0.05 | **9.9** | yes | 0.8 | Zd -0.26 (12), Zh +0.03 (7), Zl -0.60 (9), Zv -0.39 (38), Zx -0.35 (70) | [38 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 140.6–141.8 (20) | 0.15 |
+| Q11 | chr9 157.2 Mb | 155.9–160.5 | 7.5 | -0.24 ± 0.04 | **7.3** | yes | 2.2 | Zd -0.63 (20), Zh -0.17 (10), Zl -0.32 (13), Zv -0.27 (44), Zx -0.15 (94) | [263 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | – | 0.10 |
+| Q12 | chr10 25.6 Mb | 25.0–30.7 | 7.1 | +0.23 ± 0.07 | **3.1** | no | 2.0 | Zd +0.58 (22), Zv +0.10 (21), Zx +0.11 (56) | [71 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 25.3–30.0 (26) | 0.04 |
+| Q13 | chr10 129.7 Mb | 125.9–131.1 | 7.2 | +0.20 ± 0.06 | **3.2** | yes | 0.1 | Zd +0.21 (31), Zh +0.43 (8), Zl -0.12 (5), Zv +0.23 (33), Zx +0.28 (61) | [158 genes](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv) | 127.7–129.9 (55) | 0.05 |
 
 Bonferroni over the 13 QTL: −log10 p > 2.41 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/SL_qtl_genes.tsv).
 
@@ -1868,28 +1880,28 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold). Top windows: the fewest wi
 
 6 regions plus one QTL added by the conditional scans (Q1 chr2 9.2 Mb, marked "*"); 6 of the 7 hold (Bonferroni over 7: −log10 p > 2.15). **chr2 has two QTL** (Q1 and Q2), which were one region in the scan. The six held QTL are those of the first model plus chr3 184.4 Mb (Q3, just below the cut before), with chr4 238.3 Mb not holding (1.3).
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q2 chr2 35.1 Mb** | — | 0.20 (best window; top windows 35.0–35.3 Mb, 9 genes) | −1.52 | 7.8 | 2.0 (no) | No significant difference between taxa (Zd −0.71, Zl +1.59, Zv −1.57, Zx −1.93). Not in *luxurians*. The peak moved from 39.8 Mb (first model; still −log10 p 10.4 in the scan), so *FT-INTERACTING PROTEIN 1* (Zm00001eb079900, 40.14 Mb) is no longer in the interval (34.7–36.0 Mb). |
-| **Q1 chr2 9.2 Mb** (added) | — | 0.07 (best window; no credible set) | −1.35 | 6.8 | 0.0 (no) | Shorter blades in every taxon (Zd −1.76, Zh −1.31, Zl −2.90, Zv −1.40, Zx −1.04). |
-| **Q7 chr7 185.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.021 (CS); 0.066 (**top**) | −1.19 | 4.9 | 1.0 (no) | No significant difference between taxa (Zd −0.05, Zl +0.51, Zv −1.49, Zx −1.62). Same region as EH Q10. |
-| **Q5 chr4 198.1 Mb** | Zm00001eb197430 (ns2) | 0.019 (**top**) | −1.20 | 2.8 | 0.1 (no) | The PH/EH/SL chr4 region (Zd +2.12, Zh −2.91, Zl +0.93, Zv −0.03, Zx −1.80). |
-| **Q4 chr3 204.2 Mb** | Zm00001eb153000 (CCD8); Zm00001eb153190 (ZCN12) | 0.011 (CS); 0.015 (**top**) | +0.92 | 2.2 | 0.4 (no) | No significant difference between taxa (Zd +0.78, Zh +0.39, Zl +0.04, Zv +0.90, Zx +1.22). |
-| **Q3 chr3 184.4 Mb** | — | 0.06 (best window) | +0.94 | 2.1 | 0.7 (no) | Longer blades; holds just above the cut. *liguleless2* (Zm00001eb147220), named here in the first model, is outside this model's interval (182.9–185.8 Mb). |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q2 chr2 35.1 Mb** | — | 0.20 (best window; top windows 35.0–35.3 Mb, 9 genes) | −1.52 | 7.8 | yes | 2.0 (no) | No significant difference between taxa (Zd −0.71, Zl +1.59, Zv −1.57, Zx −1.93). Not in *luxurians*. The peak moved from 39.8 Mb (first model; still −log10 p 10.4 in the scan), so *FT-INTERACTING PROTEIN 1* (Zm00001eb079900, 40.14 Mb) is no longer in the interval (34.7–36.0 Mb). |
+| **Q1 chr2 9.2 Mb** (added) | — | 0.07 (best window; no credible set) | −1.35 | 6.8 | yes | 0.0 (no) | Shorter blades in every taxon (Zd −1.76, Zh −1.31, Zl −2.90, Zv −1.40, Zx −1.04). |
+| **Q7 chr7 185.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.021 (CS); 0.066 (**top**) | −1.19 | 4.9 | yes | 1.0 (no) | No significant difference between taxa (Zd −0.05, Zl +0.51, Zv −1.49, Zx −1.62). Same region as EH Q10. |
+| **Q5 chr4 198.1 Mb** | Zm00001eb197430 (ns2) | 0.019 (**top**) | −1.20 | 2.8 | yes | 0.1 (no) | The PH/EH/SL chr4 region (Zd +2.12, Zh −2.91, Zl +0.93, Zv −0.03, Zx −1.80). |
+| **Q4 chr3 204.2 Mb** | Zm00001eb153000 (CCD8); Zm00001eb153190 (ZCN12) | 0.011 (CS); 0.015 (**top**) | +0.92 | 2.2 | yes | 0.4 (no) | No significant difference between taxa (Zd +0.78, Zh +0.39, Zl +0.04, Zv +0.90, Zx +1.22). |
+| **Q3 chr3 184.4 Mb** | — | 0.06 (best window) | +0.94 | 2.1 | no | 0.7 (no) | Longer blades; holds just above the cut. *liguleless2* (Zm00001eb147220), named here in the first model, is outside this model's interval (182.9–185.8 Mb). |
 
 The chr4 238.3 Mb peak (Q6, −log10 p 4.9 in the scan) does not hold in the joint model (1.3): given chr4 198 Mb and the other QTL, it is not an independent QTL.
 
 <details><summary>All BL QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 (cond.) | chr2 9.2 Mb | 2.1–11.2 | 9.2 | -1.35 ± 0.26 | **6.8** | 0.0 | Zd -1.76 (35), Zh -1.31 (10), Zl -2.90 (15), Zv -1.40 (51), Zx -1.04 (90) | [484 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | – | 0.07 |
-| Q2 | chr2 35.1 Mb | 34.7–36.0 | 10.7 | -1.52 ± 0.27 | **7.8** | 2.0 | Zd -0.71 (32), Zl +1.59 (16), Zv -1.57 (50), Zx -1.93 (91) | [26 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 35.0–35.3 (9) | 0.20 |
-| Q3 | chr3 184.4 Mb | 182.9–185.8 | 4.7 | +0.94 ± 0.35 | **2.1** | 0.7 | Zd +0.80 (12), Zh -1.24 (6), Zl +1.11 (15), Zv +2.03 (28), Zx +0.88 (67) | [85 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 183.0–184.5 (40) | 0.06 |
-| Q4 | chr3 204.2 Mb | 195.5–206.5 | 4.8 | +0.92 ± 0.33 | **2.2** | 0.4 | Zd +0.78 (19), Zh +0.39 (9), Zl +0.04 (14), Zv +0.90 (40), Zx +1.22 (58) | [307 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 202.4–205.9 (84) | 0.03 |
-| Q5 | chr4 198.1 Mb | 193.8–207.2 | 6.7 | -1.20 ± 0.38 | **2.8** | 0.1 | Zd +2.12 (15), Zh -2.91 (6), Zl +0.93 (5), Zv -0.03 (30), Zx -1.80 (66) | [339 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 194.0–198.4 (69) | 0.02 |
-| Q6 | chr4 238.3 Mb | 236.9–240.2 | 4.9 | -0.78 ± 0.39 | 1.3 | 0.7 | Zd -3.58 (17), Zl -4.61 (6), Zv -1.89 (32), Zx -0.19 (62) | [68 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 237.7–239.6 (27) | 0.04 |
-| Q7 | chr7 185.2 Mb | 183.5–185.8 | 5.5 | -1.19 ± 0.27 | **4.9** | 1.0 | Zd -0.05 (30), Zl +0.51 (8), Zv -1.49 (39), Zx -1.62 (87) | [80 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 184.3–185.4 (27) | 0.09 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 (cond.) | chr2 9.2 Mb | 2.1–11.2 | 9.2 | -1.35 ± 0.26 | **6.8** | yes | 0.0 | Zd -1.76 (35), Zh -1.31 (10), Zl -2.90 (15), Zv -1.40 (51), Zx -1.04 (90) | [484 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | – | 0.07 |
+| Q2 | chr2 35.1 Mb | 34.7–36.0 | 10.7 | -1.52 ± 0.27 | **7.8** | yes | 2.0 | Zd -0.71 (32), Zl +1.59 (16), Zv -1.57 (50), Zx -1.93 (91) | [26 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 35.0–35.3 (9) | 0.20 |
+| Q3 | chr3 184.4 Mb | 182.9–185.8 | 4.7 | +0.94 ± 0.35 | **2.1** | no | 0.7 | Zd +0.80 (12), Zh -1.24 (6), Zl +1.11 (15), Zv +2.03 (28), Zx +0.88 (67) | [85 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 183.0–184.5 (40) | 0.06 |
+| Q4 | chr3 204.2 Mb | 195.5–206.5 | 4.8 | +0.92 ± 0.33 | **2.2** | yes | 0.4 | Zd +0.78 (19), Zh +0.39 (9), Zl +0.04 (14), Zv +0.90 (40), Zx +1.22 (58) | [307 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 202.4–205.9 (84) | 0.03 |
+| Q5 | chr4 198.1 Mb | 193.8–207.2 | 6.7 | -1.20 ± 0.38 | **2.8** | yes | 0.1 | Zd +2.12 (15), Zh -2.91 (6), Zl +0.93 (5), Zv -0.03 (30), Zx -1.80 (66) | [339 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 194.0–198.4 (69) | 0.02 |
+| Q6 | chr4 238.3 Mb | 236.9–240.2 | 4.9 | -0.78 ± 0.39 | 1.3 | no | 0.7 | Zd -3.58 (17), Zl -4.61 (6), Zv -1.89 (32), Zx -0.19 (62) | [68 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 237.7–239.6 (27) | 0.04 |
+| Q7 | chr7 185.2 Mb | 183.5–185.8 | 5.5 | -1.19 ± 0.27 | **4.9** | yes | 1.0 | Zd -0.05 (30), Zl +0.51 (8), Zv -1.49 (39), Zx -1.62 (87) | [80 genes](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv) | 184.3–185.4 (27) | 0.09 |
 
 Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/BL_qtl_genes.tsv).
 
@@ -1901,32 +1913,32 @@ Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Top windows: the fewest win
 
 12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves. Five of the first model's six held QTL are found again (chr4 237.6 Mb, chr5 39–41 Mb, chr6 146.4 Mb, chr7 136 Mb, chr9 0.8–1.8 Mb); chr4 166.3 Mb does not hold (1.9, as before), and chr9 159.8 Mb and chr10 149.7 Mb are new.
 
-| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Taxa differ | What it says |
-|---|---|---|---|---|---|---|
-| **Q4 chr5 41.2 Mb** | — | 0.07 (best window) | −0.33 | 10.7 | 2.3 (no) | The strongest BW QTL; mostly *mexicana* (Zx −0.51, Zl −0.25, Zv −0.16, Zd +0.06). |
-| **Q5 chr6 146.4 Mb** | — | 0.06 (best window) | −0.28 | 7.8 | 0.0 (no) | Alike in the taxa (Zd −0.25, Zv −0.28, Zx −0.31). |
-| **Q10 chr9 0.8 Mb** | — | 0.26 (best window, 0.7–0.9 Mb, no gene) | −0.24 | 6.9 | 1.3 (no) | Mostly *mexicana* (Zx −0.34, Zd −0.15, Zv −0.06). |
-| **Q3 chr4 237.6 Mb** | — | 0.12 (best window) | −0.24 | 6.6 | 0.0 (no) | Alike in the taxa (Zd −0.22, Zl −0.31, Zv −0.34, Zx −0.21). |
-| **Q6 chr7 135.7 Mb** | — | 0.07 (best window) | −0.18 | 4.7 | 0.3 (no) | Alike in the taxa (Zd −0.10, Zh −0.20, Zl −0.09, Zv −0.28, Zx −0.15). Its interval (130.7–136.3 Mb) no longer reaches *tsh4* (Zm00001eb316740, 138.54 Mb), which was in it in the first model. |
+| QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
+|---|---|---|---|---|---|---|---|
+| **Q4 chr5 41.2 Mb** | — | 0.07 (best window) | −0.33 | 10.7 | yes | 2.3 (no) | The strongest BW QTL; mostly *mexicana* (Zx −0.51, Zl −0.25, Zv −0.16, Zd +0.06). |
+| **Q5 chr6 146.4 Mb** | — | 0.06 (best window) | −0.28 | 7.8 | yes | 0.0 (no) | Alike in the taxa (Zd −0.25, Zv −0.28, Zx −0.31). |
+| **Q10 chr9 0.8 Mb** | — | 0.26 (best window, 0.7–0.9 Mb, no gene) | −0.24 | 6.9 | yes | 1.3 (no) | Mostly *mexicana* (Zx −0.34, Zd −0.15, Zv −0.06). |
+| **Q3 chr4 237.6 Mb** | — | 0.12 (best window) | −0.24 | 6.6 | yes | 0.0 (no) | Alike in the taxa (Zd −0.22, Zl −0.31, Zv −0.34, Zx −0.21). |
+| **Q6 chr7 135.7 Mb** | — | 0.07 (best window) | −0.18 | 4.7 | no | 0.3 (no) | Alike in the taxa (Zd −0.10, Zh −0.20, Zl −0.09, Zv −0.28, Zx −0.15). Its interval (130.7–136.3 Mb) no longer reaches *tsh4* (Zm00001eb316740, 138.54 Mb), which was in it in the first model. |
 
 The other held QTL are Q11 chr9 159.8 Mb (−0.15) and Q12 chr10 149.7 Mb (−0.16); both have their probability on a few windows (best window PIP 0.28 and 0.30). The chr6 133.1 Mb peak (*fea4*, Zm00001eb280500; −log10 p 4.86) is above the threshold, but the scan puts it in the same significant region as chr6 146.4 Mb and does not make it a QTL of its own.
 
 <details><summary>All BW QTL with per-taxon effects and all genes in the interval</summary>
 
-| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Q1 | chr4 166.3 Mb | 165.1–167.6 | 5.6 | -0.16 ± 0.06 | 1.9 | 0.2 | Zd -0.00 (7), Zv -0.07 (30), Zx -0.18 (64) | [64 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 165.5–166.4 (18) | 0.09 |
-| Q2 | chr4 182.7 Mb | 180.3–183.4 | 4.9 | -0.04 ± 0.06 | 0.3 | 0.4 | Zd -0.08 (13), Zh +1.01 (8), Zl +0.91 (5), Zv -0.03 (31), Zx -0.07 (68) | [83 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
-| Q3 | chr4 237.6 Mb | 237.0–238.7 | 8.7 | -0.24 ± 0.05 | **6.6** | 0.0 | Zd -0.22 (19), Zl -0.31 (6), Zv -0.34 (29), Zx -0.21 (62) | [32 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 237.1–237.7 (11) | 0.12 |
-| Q4 | chr5 41.2 Mb | 33.3–43.8 | 9.4 | -0.33 ± 0.05 | **10.7** | 2.3 | Zd +0.06 (12), Zl -0.25 (12), Zv -0.16 (29), Zx -0.51 (46) | [216 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 36.8–42.3 (41) | 0.07 |
-| Q5 | chr6 146.4 Mb | 144.6–150.7 | 9.4 | -0.28 ± 0.05 | **7.8** | 0.0 | Zd -0.25 (12), Zv -0.28 (28), Zx -0.31 (49) | [157 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 146.4–148.7 (29) | 0.06 |
-| Q6 | chr7 135.7 Mb | 130.7–136.3 | 4.4 | -0.18 ± 0.04 | **4.7** | 0.3 | Zd -0.10 (11), Zh -0.20 (8), Zl -0.09 (7), Zv -0.28 (44), Zx -0.15 (60) | [138 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 132.7–136.3 (33) | 0.07 |
-| Q7 | chr8 24.8 Mb | 22.5–30.8 | 4.5 | -0.09 ± 0.09 | 0.5 | 1.1 | Zd -0.04 (31), Zh +0.03 (11), Zl +0.41 (5), Zv +0.07 (47), Zx -0.34 (54) | [172 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
-| Q8 | chr8 61.6 Mb | 60.3–64.6 | 4.5 | -0.04 ± 0.11 | 0.1 | 1.2 | Zd -0.04 (25), Zh -0.18 (9), Zl +0.18 (6), Zv -0.16 (43), Zx +0.08 (57) | [56 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
-| Q9 | chr8 74.5 Mb | 64.8–84.1 | 4.3 | -0.08 ± 0.09 | 0.5 | 1.3 | Zd -0.03 (25), Zh -0.48 (11), Zl +0.18 (6), Zv -0.13 (39), Zx -0.03 (61) | [335 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.02 |
-| Q10 | chr9 0.8 Mb | 0.7–1.8 | 5.8 | -0.24 ± 0.04 | **6.9** | 1.3 | Zd -0.15 (19), Zv -0.06 (30), Zx -0.34 (73) | [5 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 0.7–0.9 (0) | 0.26 |
-| Q11 | chr9 159.8 Mb | 158.9–160.2 | 4.3 | -0.15 ± 0.04 | **4.8** | 0.2 | Zd -0.15 (24), Zh -0.26 (6), Zl -0.31 (14), Zv -0.07 (35), Zx -0.14 (92) | [69 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 159.6–159.9 (14) | 0.28 |
-| Q12 | chr10 149.7 Mb | 149.4–150.2 | 4.3 | -0.16 ± 0.04 | **4.9** | 0.3 | Zd -0.04 (37), Zh -0.74 (5), Zl -0.33 (12), Zv -0.21 (39), Zx -0.15 (79) | [55 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 149.6–149.9 (15) | 0.30 |
+| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q1 | chr4 166.3 Mb | 165.1–167.6 | 5.6 | -0.16 ± 0.06 | 1.9 | no | 0.2 | Zd -0.00 (7), Zv -0.07 (30), Zx -0.18 (64) | [64 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 165.5–166.4 (18) | 0.09 |
+| Q2 | chr4 182.7 Mb | 180.3–183.4 | 4.9 | -0.04 ± 0.06 | 0.3 | no | 0.4 | Zd -0.08 (13), Zh +1.01 (8), Zl +0.91 (5), Zv -0.03 (31), Zx -0.07 (68) | [83 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
+| Q3 | chr4 237.6 Mb | 237.0–238.7 | 8.7 | -0.24 ± 0.05 | **6.6** | yes | 0.0 | Zd -0.22 (19), Zl -0.31 (6), Zv -0.34 (29), Zx -0.21 (62) | [32 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 237.1–237.7 (11) | 0.12 |
+| Q4 | chr5 41.2 Mb | 33.3–43.8 | 9.4 | -0.33 ± 0.05 | **10.7** | yes | 2.3 | Zd +0.06 (12), Zl -0.25 (12), Zv -0.16 (29), Zx -0.51 (46) | [216 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 36.8–42.3 (41) | 0.07 |
+| Q5 | chr6 146.4 Mb | 144.6–150.7 | 9.4 | -0.28 ± 0.05 | **7.8** | yes | 0.0 | Zd -0.25 (12), Zv -0.28 (28), Zx -0.31 (49) | [157 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 146.4–148.7 (29) | 0.06 |
+| Q6 | chr7 135.7 Mb | 130.7–136.3 | 4.4 | -0.18 ± 0.04 | **4.7** | no | 0.3 | Zd -0.10 (11), Zh -0.20 (8), Zl -0.09 (7), Zv -0.28 (44), Zx -0.15 (60) | [138 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 132.7–136.3 (33) | 0.07 |
+| Q7 | chr8 24.8 Mb | 22.5–30.8 | 4.5 | -0.09 ± 0.09 | 0.5 | no | 1.1 | Zd -0.04 (31), Zh +0.03 (11), Zl +0.41 (5), Zv +0.07 (47), Zx -0.34 (54) | [172 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
+| Q8 | chr8 61.6 Mb | 60.3–64.6 | 4.5 | -0.04 ± 0.11 | 0.1 | yes | 1.2 | Zd -0.04 (25), Zh -0.18 (9), Zl +0.18 (6), Zv -0.16 (43), Zx +0.08 (57) | [56 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.00 |
+| Q9 | chr8 74.5 Mb | 64.8–84.1 | 4.3 | -0.08 ± 0.09 | 0.5 | no | 1.3 | Zd -0.03 (25), Zh -0.48 (11), Zl +0.18 (6), Zv -0.13 (39), Zx -0.03 (61) | [335 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | – | 0.02 |
+| Q10 | chr9 0.8 Mb | 0.7–1.8 | 5.8 | -0.24 ± 0.04 | **6.9** | yes | 1.3 | Zd -0.15 (19), Zv -0.06 (30), Zx -0.34 (73) | [5 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 0.7–0.9 (0) | 0.26 |
+| Q11 | chr9 159.8 Mb | 158.9–160.2 | 4.3 | -0.15 ± 0.04 | **4.8** | yes | 0.2 | Zd -0.15 (24), Zh -0.26 (6), Zl -0.31 (14), Zv -0.07 (35), Zx -0.14 (92) | [69 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 159.6–159.9 (14) | 0.28 |
+| Q12 | chr10 149.7 Mb | 149.4–150.2 | 4.3 | -0.16 ± 0.04 | **4.9** | yes | 0.3 | Zd -0.04 (37), Zh -0.74 (5), Zl -0.33 (12), Zv -0.21 (39), Zx -0.15 (79) | [55 genes](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv) | 149.6–149.9 (15) | 0.30 |
 
 Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Top windows: the fewest windows holding half of the QTL's fine-mapping probability (section 3.4.3). Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p of its window and its window's PIP: [`data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv`](data/introgression_fix1/qtl_genes/BW_qtl_genes.tsv).
 

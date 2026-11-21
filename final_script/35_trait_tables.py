@@ -3,7 +3,7 @@
 35 — README tables of the k-mer ancestry GWAS + joint QTL model + fine-mapping, built from the result files
 (so the numbers in the README come from the data, not by hand).
 
-Writes to --out (one markdown file per trait, plus overview.md):
+Writes to --out (one markdown file per trait, plus overview.md); the Stepwise column compares with step 37:
   overview.md          one row per trait: plots, threshold, QTL, QTL that hold, strongest scan window
   <TRAIT>.md           the per-QTL table (position, interval, scan and joint -log10 p, effect, taxa differ,
                        per-taxon effects, genes in the interval, top windows, best-window PIP), the Bonferroni cut,
@@ -22,7 +22,11 @@ ap.add_argument("--out", required=True)
 ap.add_argument("--traits", default="DTS DTA ASI NBR SPAD2 PH EH EN Prolif SL BL BW SPAD Kinki LAE StPu StPi")
 ap.add_argument("--sub", default="", help="'_subtaxon' for the races run")
 ap.add_argument("--genes", default="", help="comma-separated gene IDs to locate (named candidates)")
+ap.add_argument("--stepwise", default="", help="step-37 output folder (default <base>/stepwise): adds a Stepwise column")
 a = ap.parse_args()
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from stepwise_status import stepwise_status
 os.makedirs(a.out, exist_ok=True)
 UNIT = {"DTS": " d", "DTA": " d", "ASI": " d", "PH": " cm", "EH": " cm"}
 B = a.base
@@ -45,9 +49,10 @@ for T in a.traits.split():
     SU = pd.read_csv(SU, sep="\t").set_index("qtl") if os.path.exists(SU) and not a.sub else None
     G = pd.read_csv(link(T), sep="\t") if os.path.exists(link(T)) and not a.sub else None
     L = [f"Bonferroni over the {len(Q)} QTL: −log10 p > {cut:.2f} (bold).", "",
-         "| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Taxa differ −log10 p | "
+         "| QTL | Position | Interval (Mb) | Scan −log10 p | Effect per copy (joint) | Joint −log10 p | Stepwise | Taxa differ −log10 p | "
          "Per-taxon effects (carrier plots) | Genes in interval | Top windows, Mb (genes) | Best window PIP |",
-         "|---|---|---|---|---|---|---|---|---|---|---|"]
+         "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    SW = stepwise_status(Q, a.stepwise or f"{B}/stepwise", T) if not a.sub else None
     for i, q in enumerate(Q.itertuples(), 1):
         bt = BT[(BT.qtl == q.qtl) & (BT.carriers >= 5) & BT.effect_per_copy.notna()]
         pt = ", ".join(f"{r.taxon} {r.effect_per_copy:+.2f} ({r.carriers})" for r in bt.itertuples())
@@ -67,7 +72,7 @@ for T in a.traits.split():
             bp = f"{s.best_window_pip:.2f}" if pd.notna(s.best_window_pip) else "–"
         tri = " (cond.)" if str(q.found_by).startswith("conditional") else ""
         L.append(f"| Q{i}{tri} | {q.chr} {q.pos_Mb:.1f} Mb | {q.interval_start_Mb:.1f}–{q.interval_end_Mb:.1f} | {q.gridlmm_mlog10p:.1f} | "
-                 f"{q.effect_per_copy_joint:+.2f}{u} ± {q.se:.2f} | {jp} | {tds} | {pt} | {gl} | {tw} | {bp} |")
+                 f"{q.effect_per_copy_joint:+.2f}{u} ± {q.se:.2f} | {jp} | {SW[i - 1] if SW else ''} | {tds} | {pt} | {gl} | {tw} | {bp} |")
     if a.genes and G is not None:
         L += ["", "Named genes:"]
         for g in a.genes.split(","):

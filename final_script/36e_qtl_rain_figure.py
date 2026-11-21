@@ -34,7 +34,7 @@ a = ap.parse_args()
 MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 ms = [int(m) for m in a.months.split()]
 season = f"{MON[ms[0] - 1]}–{MON[ms[-1] - 1]}"
-COL = {"Zd": "#E69F00", "Zh": "#999999", "Zl": "#009E73", "Zv": "#CC79A7", "Zx_Chal": "#D55E00", "Zx_Dura": "#0072B2",
+COL = {"Zd": "#E69F00", "Zh": "#6A3D9A", "Zl": "#009E73", "Zv": "#CC79A7", "Zx_Chal": "#D55E00", "Zx_Dura": "#0072B2",
        "Zx_Mesa": "#56B4E9", "Zx_Nobo": "#8C564B"}
 NAME = {"Zd": "diploperennis", "Zh": "huehuetenangensis", "Zl": "luxurians", "Zv": "parviglumis", "Zx_Chal": "mexicana Chalco",
         "Zx_Dura": "mexicana Durango", "Zx_Mesa": "mexicana Mesa Central", "Zx_Nobo": "mexicana Nobogame"}
@@ -86,13 +86,18 @@ for i, q in Gr.iterrows():
     ax[0].plot([q.non, q.wi], [i, i], color=c, lw=2.2, alpha=0.6, zorder=1)
     ax[0].scatter(q.non, i, s=55, facecolor="white", edgecolor=c, lw=2, zorder=2)
     ax[0].scatter(q.wi, i, s=70, color=c, zorder=3)
-    sibtxt = f"   sibs {q.sib:+.2f} ({q.n_fam} fam.)" if q.n_fam else "   sibs –"
-    ax[0].text(max(q.non, q.wi) + 0.03, i, f"{q.wi - q.non:+.2f}  ({q.n_with} plots)", va="center", fontsize=8, color="#3d3d3a")
-    ax[0].text(max(q.non, q.wi) + 0.03, i - 0.33, sibtxt.strip(), va="center", fontsize=7.5, color="#73726c", style="italic")
+    ax[0].text(max(q.non, q.wi) + 0.05, i, f"{q.wi - q.non:+.2f}  ({q.n_with} plots)", va="center", fontsize=8, color="#3d3d3a")
+    if q.n_fam:   # sibs: the within-family difference, drawn from the same starting point (open dot) in light grey
+        ys, x1 = i - 0.34, q.non + q.sib
+        ax[0].plot([q.non, x1], [ys, ys], color="#c3c1b8", lw=2, zorder=1)
+        ax[0].scatter(q.non, ys, s=26, facecolor="white", edgecolor="#a8a69d", lw=1.4, zorder=2)
+        ax[0].scatter(x1, ys, s=32, color="#a8a69d", zorder=3)
+        ax[0].text(max(q.non, x1) + 0.05, ys, f"sibs {q.sib:+.2f}  ({q.n_fam} fam.)", va="center", fontsize=7.5,
+                   color="#73726c", style="italic")
 ax[0].set_yticks(y, [f"{NAME.get(g, g)}  ·  {rr:.0f} mm" for g, rr in zip(Gr.g, Gr.rain)], fontsize=8.5)
 ax[0].set_xlabel(f"mean {a.label} (plot BLUE)", fontsize=9)
 ax[0].set_title(f"a  Plots without (○) and with (●) the segment,\n    ordered by median {season} rain at the donors' sites\n"
-                f"    grey: within BC2 families (carrier minus non-carrier sibs);\n"
+                f"    grey line below: the same within BC2 families (carrier minus non-carrier sibs);\n"
                 f"    {len(Fm)} families, mean {Fm['diff'].mean():+.2f}, Wilcoxon p = {p_sib:.2g}",
                 fontsize=9, loc="left")
 ax[0].set_xlim(right=ax[0].get_xlim()[1] + 0.25)

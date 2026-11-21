@@ -79,7 +79,7 @@ print(R.to_string(index=False, float_format=lambda v: f"{v:.3g}"))
 
 x = np.arange(12)
 fig, ax = plt.subplots(3, 1, figsize=(9.5, 8.2), sharex=True, gridspec_kw={"height_ratios": [1.1, 1, 1]})
-COL = {"Zd": "#E69F00", "Zh": "#999999", "Zl": "#009E73", "Zv": "#CC79A7", "Zx_Chal": "#D55E00", "Zx_Dura": "#0072B2",
+COL = {"Zd": "#E69F00", "Zh": "#6A3D9A", "Zl": "#009E73", "Zv": "#CC79A7", "Zx_Chal": "#D55E00", "Zx_Dura": "#0072B2",
        "Zx_Mesa": "#56B4E9", "Zx_Nobo": "#8C564B"}
 NAME = {"Zd": "diploperennis", "Zh": "huehuetenangensis", "Zl": "luxurians", "Zv": "parviglumis", "Zx_Chal": "mexicana, Chalco",
         "Zx_Dura": "mexicana, Durango", "Zx_Mesa": "mexicana, Mesa Central", "Zx_Nobo": "mexicana, Nobogame"}

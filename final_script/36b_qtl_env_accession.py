@@ -38,13 +38,11 @@ ap.add_argument("--out_prefix", required=True)
 a = ap.parse_args()
 LAB = {"aridity": "aridity index of the home site (higher = more humid)", "nitrogen_0_5cm": "topsoil nitrogen at the home site (cg/kg)",
        "BIO12": "annual precipitation (mm)", "BIO18": "precipitation of warmest quarter (mm)", "elevation": "elevation (m)"}
-COL = {"Zd": "#E69F00", "Zh": "#56B4E9", "Zl": "#009E73", "Zv": "#CC79A7", "Zx": "#0072B2",
+COL = {"Zd": "#E69F00", "Zh": "#6A3D9A", "Zl": "#009E73", "Zv": "#CC79A7", "Zx": "#0072B2",
        "Zx_Chal": "#D55E00", "Zx_Dura": "#0072B2", "Zx_Mesa": "#56B4E9", "Zx_Nobo": "#8C564B"}
 NAME = {"Zd": "diploperennis", "Zh": "huehuetenangensis", "Zl": "luxurians", "Zv": "parviglumis", "Zx": "mexicana",
         "Zx_Chal": "mexicana, Chalco", "Zx_Dura": "mexicana, Durango", "Zx_Mesa": "mexicana, Mesa Central",
         "Zx_Nobo": "mexicana, Nobogame"}
-if a.group_col == "SUBTAXON":
-    COL["Zh"] = "#999999"
 L = a.layers.split()
 
 P = pd.read_csv(f"{a.assoc_in}/pheno.csv")

@@ -1546,10 +1546,58 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
 | **Q8 chr10 98.2 Mb** | Zm00001eb418930 | 0.003 (outside CS) | +0.18 | 9.4 | yes | 2.7 (yes) | Differs between taxa (Zd +0.29, Zv +0.23, Zx +0.08). The strongest NBR QTL; smallest in *mexicana*, larger for alleles from wetter rainy seasons (below). |
-| **Q6 chr8 126.2 Mb** | — | 0.15 (best window; top windows 126.2–126.7 Mb, 14 genes) | +0.12 | 4.4 | yes | 1.1 (no) | No significant difference between taxa (Zd +0.10, Zh +0.33, Zl +0.15, Zv +0.09, Zx +0.09). |
+| **Q6 chr8 126.2 Mb** | Zm00001eb353250 (*ZCN8*) | 0.15 (best window; top windows 126.2–126.7 Mb, 14 genes) | +0.12 | 4.4 | yes | 1.1 (no) | No significant difference between taxa (Zd +0.10, Zh +0.33, Zl +0.15, Zv +0.09, Zx +0.09). The same tract delays flowering by about half a day per copy (below the genome-wide threshold) and holds the maize florigen gene *ZCN8* (below). |
 | **Q7 chr9 4.2 Mb** | — | 0.07 (best window; top windows 4.0–9.5 Mb, 49 genes) | −0.09 | 4.4 | moved (chr9 41.5) | 3.2 (yes) | Fewer brace-root nodes; differs between taxa, mostly *diploperennis* (Zd −0.39; Zh −0.09, Zl −0.07, Zv −0.06, Zx −0.07). |
 
-**Candidate gene:**
+**Candidate genes:**
+- **Q6, chr8 126.2 Mb: the florigen gene *ZCN8* (Zm00001eb353250, *PEBP8*; 126.68 Mb; Zm00001d010752 in B73 v4).**
+
+  *What is known about ZCN8:*
+  - ZCN8 is the maize florigen: an FT-like protein made in the leaf that switches the shoot tip from making leaves to making the tassel. Expressing it in the shoot apex of young plants makes maize flower early, and silencing it makes maize flower late (Meng et al. 2011).
+  - It is the gene behind qDTA8, a flowering-time QTL found again and again in maize × teosinte populations. The strongest variant is a SNP in its promoter (SNP-1245) that changes binding by the flowering activator ZmMADS1. Its early allele already existed in teosinte and was carried to near fixation in maize during domestication. A second early variant upstream most likely came from *mexicana* and helped maize spread to higher latitudes (Guo et al. 2018).
+  - Lin et al. (2022) mapped a tiller-number QTL (*Tin8*) in a cross of *parviglumis* (Ames 21861) with the maize inbred A661 to an 862-bp fragment 1.8 kb from *Zcn8*. Their teosinte allele was expressed more highly (in leaf, tassel, ear, root and tiller bud) and gave more tillers and earlier flowering. Maize *Zcn8* overexpressed in rice also gave earlier flowering and more tillers.
+  - In their near-isogenic lines (NILs: lines that differ only around the gene), the NIL with the teosinte allele had significantly fewer aerial nodal roots (the brace roots), crown roots and total nodal roots, shorter plants and fewer tassel branches than the NIL with the A661 allele (their Supplementary Fig. S14).
+  - In their gene tree, that teosinte allele groups with maize; they suggest it came into their teosinte line from early-flowering maize (Lin et al. 2022).
+
+  *What our lines show* (step 38: mixed model with taxon and the chr8 kinship, as in step 26, at window chr8:126.65 Mb, which holds *ZCN8*. The Q6 windows 126.35–126.65 Mb have the same genotype in every pool, so this is the Q6 tract):
+
+  ![NBR Q6 / ZCN8: brace-root nodes and flowering by teosinte copies](figures/fix1/NBR_Q6_ZCN8.png)
+
+  (a, b) Taxon-adjusted mean ± SE over plots by teosinte copies at the window (0 = B73, 1 = segregating pool, 2 = donor). (c, d) Effect per teosinte copy within each taxon and *mexicana* race, ± 95% interval (black: all carriers).
+
+  | Trait | Effect per teosinte copy | p | −log10 p (genome-wide threshold) |
+  |---|---|---|---|
+  | Brace-root nodes (NBR) | +0.11 nodes | 7 × 10⁻⁵ | 4.1 (QTL Q6 in the joint model) |
+  | Days to anthesis (DTA) | +0.54 days | 4 × 10⁻⁴ | 3.4 (5.0) |
+  | Days to silking (DTS) | +0.45 days | 0.007 | 2.2 (5.5) |
+  | Plant height (PH) | +2.8 cm | 0.002 | 2.7 |
+  | Ear height (EH) | +2.9 cm | 1 × 10⁻⁶ | 5.8 (EH Q11, chr8 129.2 Mb, the same tract) |
+
+  - **The tract that adds brace-root nodes also delays flowering and makes taller plants.** The flowering effect is small and below the genome-wide threshold, so it supports the candidate but is not a flowering QTL on its own (the scans over both years found no DTS or DTA QTL here; the 2025-only DTS QTL at chr8 133.8 Mb lies outside this tract, section 3.6.1).
+  - **It goes the same way in every group** (panels c, d): DTA and DTS are later in all five taxa and all four *mexicana* races, and NBR goes up in 7 of 8 groups (*mexicana* Nobogame −0.01, 2 accessions). So we see no sign of an early *ZCN8* allele among our donors.
+  - **It is the mirror image of Lin et al. on the three traits both studies measured:**
+
+    | | Flowering | Plant height | Nodal / brace roots |
+    |---|---|---|---|
+    | Lin et al. 2022: their teosinte allele (maize-type, highly expressed) vs A661 | earlier | shorter | fewer |
+    | Our teosinte tract vs B73 | later | taller | more |
+
+    In both studies the allele that flowers later also gives taller plants and more nodal roots. The signs flip because the alleles differ. Their "teosinte" allele is an early, maize-type allele, while ours act like the late allele relative to B73. That fits the teosinte allele of qDTA8 being the late one (Guo et al. 2018). We cannot genotype SNP-1245 or the upstream variant from skim-seq pools, so the allele types are inferred, not typed.
+  - **The extra brace-root nodes are not a side effect of later flowering.**
+    - Within taxa, NBR barely changes with flowering time: −0.006 nodes per day of DTS (p = 0.23).
+    - With DTS in the model, the Q6 effect stays the same: +0.113 → +0.117 nodes per copy (p = 5 × 10⁻⁵). With DTA: +0.116.
+    - Per accession, the carrier-minus-non-carrier difference in NBR does not track the one in DTS (Spearman ρ = 0.15, p = 0.29, 50 accessions).
+
+    This fits *ZCN8* acting on roots as well as on flowering (it is expressed in roots; Lin et al. 2022), but it does not show it.
+  - **Shape of the effect** (panels a, b): NBR rises with one copy (segregating pools about equal to donor pools), while flowering rises mainly in donor pools. Neither departs significantly from an additive effect (dominance test p = 0.30 for NBR, 0.15 for DTA), so we don't read anything into the difference.
+  - **What we cannot say.**
+    - The tract is inherited as one block, so *ZCN8* cannot be separated from the other genes in the top windows. These include two LOB-domain genes, *LOB7*/*ZmLBD37* (Zm00001eb353210, 126.50 Mb) and *LOB16*/*ZmLBD38* (Zm00001eb353230, 126.65 Mb), plus *DOF1.5* (Zm00001eb353140) and a CIPK19-like kinase (Zm00001eb353170), all with window PIP ≈ 0.15.
+    - The experiment of Lin et al. tests a different pair of alleles in a different background, not our donors' alleles.
+
+    So *ZCN8* is the best-supported candidate for Q6: it is the gene in the tract with an experimentally tested effect on both flowering and brace roots, and all three effects point the way its biology predicts. It is not shown to be the causal gene. Testing it would take NILs or a knockout in B73 carrying our donor allele.
+
+  Scripts: `final_script/38_zcn8_flowering_nbr.R` (effects, flowering-adjusted model, per taxon and per accession → `data/introgression_fix1/zcn8/`) and `final_script/38b_zcn8_figure.py` (the figure). Run commands are in each script's header.
+
 - **Q8, chr10 98.2 Mb (the strongest NBR QTL):** Zm00001eb418930 (GRMZM2G174736 in B73 v3; 97.41 Mb, in a window with −log10 p 8.0; the top window has 9.3). Sun et al. (2022) ran a GWAS of brace root angle and brace root diameter in 508 maize inbreds grown in three environments (Liaoning 2016 and 2017, Jilin 2016). Their significant chr10 SNP for brace root diameter (chr10.S_95437751, in older B73 coordinates) explains 13.95% of the variance, and GRMZM2G174736 is one of their candidate genes for brace root diameter:
   - They annotate it as a hydroxyproline-rich glycoprotein (HRGP, also called extensin), a structural protein of the cell wall. HRGPs help assemble the cell wall, are expressed in specific tissues and stages, and some act in root development (Sun et al. 2022).
   - It is one of three cell-wall candidates they highlight for brace root diameter, with an expansin (GRMZM2G445169, which loosens the cell wall) and a homolog of the *Arabidopsis* receptor kinase FEI (GRMZM2G479243). They propose that these genes shape brace roots through the cell wall (Sun et al. 2022).
@@ -1963,7 +2011,7 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Top windows: the fewest wi
 | chr7 ~165 Mb | ASI −, EN + | Zm00001eb323880 (*bhlh90*) |
 | chr4 ~194–207 Mb | PH +, EH +, SL +, BL −, ASI − | Zm00001eb197430 (*ns2*) |
 | chr5 ~2–3 Mb | PH +, EH +, SL + | |
-| chr8 ~126–129 Mb | EH +, NBR + | Zm00001eb353250 (*ZCN8*) |
+| chr8 ~126–129 Mb | EH +, NBR + (DTA +, PH +, both below threshold) | Zm00001eb353250 (*ZCN8*) |
 | chr7 ~183–186 Mb | EH +, BL − (DTS + in 2025) | Zm00001eb331880 (*dlf1*), Zm00001eb331630 (PRR37-like) |
 | chr9 ~139–141 Mb | PH + (NBR + in the first model) | Zm00001eb397240 (*PRR73*) |
 
@@ -2064,6 +2112,7 @@ All references cited in this README, in alphabetical order.
 - Danecek P, Bonfield JK, Liddle J, et al. (2021) Twelve years of SAMtools and BCFtools. *GigaScience* 10:giab008.
 - Devlin B, Roeder K (1999) Genomic control for association studies. *Biometrics* 55:997–1004.
 - Fick SE, Hijmans RJ (2017) WorldClim 2: new 1-km spatial resolution climate surfaces for global land areas. *Int J Climatol* 37:4302–4315. doi:10.1002/joc.5086
+- Guo L, Wang X, Zhao M, Huang C, Li C, Li D, Yang CJ, York AM, Xue W, Xu G, Liang Y, Chen Q, Doebley JF, Tian F (2018) Stepwise cis-regulatory changes in *ZCN8* contribute to maize flowering-time adaptation. *Curr Biol* 28:3005–3015. doi:10.1016/j.cub.2018.07.029
 - Haldane JBS (1919) The combination of linkage values and the calculation of distances between the loci of linked factors. *J Genet* 8:299–309.
 - Hrytsenko Y, Daniels NM, Schwartz RS (2025) Determining population structure from k-mer frequencies. *PeerJ* 13:e18939. doi:10.7717/peerj.18939
 - Huang C, Sun H, Xu D, et al. (2018) ZmCCT9 enhances maize adaptation to higher latitudes. *PNAS* 115:E334–E341.
@@ -2078,10 +2127,12 @@ All references cited in this README, in alphabetical order.
 - Li H (2013) Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM. *arXiv* 1303.3997.
 - Li M, Sun M, et al., Zhang A, Lu C (2026) Uncovering the role of the PPR protein PHOTOSYSTEM ONE BIOGENESIS FACTOR6 in splicing chloroplast group II introns. *J Integr Plant Biol*. doi:10.1111/jipb.70289
 - Li X, Zhang M, Huang Y, Li M, Zhu H, Li S, Shi D, Xu L, Wang Q, Zhang J, et al., Wang J, Liu H (2026) Polycomb protein ZmEMF1a restricts endosperm proliferation and directs differentiation via stage-specific H2Aub1 and H3K27me3 landscapes in maize. *New Phytol* 252:1130–1148. doi:10.1111/nph.71543
+- Lin Z, Zhou L, Zhong S, Fang X, Liu H, Li Y, Zhu C, Liu J, Lin Z (2022) A gene regulatory network for tiller development mediated by *Tin8* in maize. *J Exp Bot* 73:110–122. doi:10.1093/jxb/erab399
 - Lippert C, Listgarten J, Liu Y, Kadie CM, Davidson RI, Heckerman D (2011) FaST linear mixed models for genome-wide association studies. *Nat Methods* 8:833–835.
 - Listgarten J, Lippert C, Kadie CM, Davidson RI, Eskin E, Heckerman D (2012) Improved linear mixed models for genome-wide association studies. *Nat Methods* 9:525–526.
 - Manichaikul A, Moon JY, Sen Ś, Yandell BS, Broman KW (2009) A model selection approach for the identification of quantitative trait loci in experimental crosses, allowing epistasis. *Genetics* 181:1077–1086. doi:10.1534/genetics.108.094565
 - Marín-González E, Matías-Hernández L, Aguilar-Jaramillo AE, Lee JH, Ahn JH, Suárez-López P, Pelaz S (2015) SHORT VEGETATIVE PHASE up-regulates TEMPRANILLO2 floral repressor at low ambient temperatures. *Plant Physiol* 169:1214–1224. doi:10.1104/pp.15.00570
+- Meng X, Muszynski MG, Danilevskaya ON (2011) The FT-like *ZCN8* gene functions as a floral activator and is involved in photoperiod sensitivity in maize. *Plant Cell* 23:942–960. doi:10.1105/tpc.110.081406
 - Méndez-Vigo B, Martínez-Zapater JM, Alonso-Blanco C (2013) The flowering repressor SVP underlies a novel *Arabidopsis thaliana* QTL interacting with the genetic background. *PLoS Genet* 9:e1003289. doi:10.1371/journal.pgen.1003289
 - Nardmann J, Ji J, Werr W, Scanlon MJ (2004) The maize duplicate genes *narrow sheath1* and *narrow sheath2* encode a conserved homeobox gene function in a lateral domain of shoot apical meristems. *Development* 131:2827–2839.
 - Neupane SP, et al. (2025) Genetic basis of Fusarium ear rot resistance and productivity traits in a heterozygous multi-parent recombinant inbred intercross (RIX) maize population. *BMC Plant Biol* 25:639. (MaizeGDB annotation of *bhlh90*.)

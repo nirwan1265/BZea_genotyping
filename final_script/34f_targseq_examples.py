@@ -2,15 +2,16 @@
 """
 34f — Examples: our k-mer calls against the targeted sequencing, one chromosome per panel (README section 2.9.1).
 
-Each panel has three rows, top to bottom. "Ours" = our k-mer call; "theirs" = the targeted sequencing (one plant of the plot?).
-  1. "OUR call":     our HMM call of the 6-plant pool from 0.8x skim-seq: B73 / SEG / DONOR
-  2. "THEIR call":   their call per targeted region (SNPs within 200 kb of each other): AB if its donor-carrying SNPs have
+Each panel has three rows, top to bottom. The targeted sequencing has no calls of its own: rows 2-3 and the labels only
+describe its SNPs (what the data look like), and the tract-level summary uses OUR tract boundaries (34d).
+  1. "OUR call":            our HMM call of the 6-plant pool from 0.8x skim-seq: B73 / SEG / DONOR
+  2. "TARGETED-SEQ DATA":   what each targeted region looks like (SNPs within 200 kb of each other): AB if its donor-carrying SNPs have
                      a median fraction below 0.8, BB if >= 0.8; a short light tick = no donor allele seen (fewer than 2 SNPs
                      carry donor alleles: AA, or the donor carries the B73 allele at these SNPs, so the region says nothing)
-  3. "THEIR SNPs":   the donor allele fraction at each real SNP (homozygous alt in another sample, as in 34d). Dots come
+  3. "TARGETED-SEQ SNPs":    the donor allele fraction at each real SNP (homozygous alt in another sample, as in 34d). Dots come
                      in clumps: one clump is usually one amplicon (10-20 SNPs in ~150 bp, from the same reads)
-Above row 1 (with --targseq_tracts), for each of our SEG/DONOR tracts that 34d calls clearly: "ours SEG -> theirs AB",
-i.e. our call and the plant's genotype over the whole tract (34d, from all its SNPs). The verdict is per tract, not per dot.
+Above row 1 (with --targseq_tracts), for each of our SEG/DONOR tracts that 34d calls clearly: "ours SEG · data look AB",
+i.e. our call and what the targeted-seq SNPs inside that tract look like (34d, from all its SNPs). The verdict is per tract, not per dot.
 Same colours: grey = B73 / AA, blue = SEG / AB, orange = DONOR / BB.
 The outlined tract is the one described in the title.
 
@@ -32,15 +33,15 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 EX = {"good": [
-    "Zl0050_P1_P5_P1211:chr5:0:192.84:ours SEG, theirs AB: every amplicon in the tract sits at 0.3–0.6 (agree)",
-    "Zv0120_P2_P3_P2111:chr7:0:91.57:ours DONOR, theirs BB: every amplicon in the tract sits at 1 (agree)",
-    "Zh0030_P4_P3_P1111:chr6:::ours SEG then DONOR, theirs AB then BB (agree)",
-    "Zv0480_P3_P1_P1211:chr5:10.80:150.45:ours SEG; theirs between AB and BB (0.5–1) along the whole tract: DNA of more than one plant of a segregating plot?",
+    "Zl0050_P1_P5_P1211:chr5:0:192.84:ours SEG; the data look AB: every amplicon in the tract sits at 0.3–0.6 (agree)",
+    "Zv0120_P2_P3_P2111:chr7:0:91.57:ours DONOR; the data look BB: every amplicon in the tract sits at 1 (agree)",
+    "Zh0030_P4_P3_P1111:chr6:::ours SEG then DONOR; the data look AB then BB (agree)",
+    "Zv0480_P3_P1_P1211:chr5:10.80:150.45:ours SEG; the data sit between AB and BB (0.3–0.9) along the whole tract: DNA of several plants of a segregating plot?",
 ], "bad": [
-    "Zd0010_P3_P4_P2311:chr3:28.29:156.75:ours DONOR, theirs AB (our error: the plot probably segregates)",
-    "Zv0030_P1_P3_P1111:chr1@280-309:297.01:299.21:zoomed to 280–309 Mb: ours SEG between two DONOR tracts, theirs BB (our error, at the chr1 297 Mb hotspot)",
-    "Zv0370_P3_P4_P1111:chr1@270-309:297.01:308.51:zoomed to 270–309 Mb: our SEG tract ends at 297 Mb, theirs AB at 299 Mb (our tract ends too early)",
-    "Zv0420_P3_P1_P1111:chr9@0-60:1.40:21.19:zoomed to 0–60 Mb: ours DONOR; theirs BB at 6 and 11 Mb, but one dense amplicon (0.2–0.7) makes the tract AB",
+    "Zd0010_P3_P4_P2311:chr3:28.29:156.75:ours DONOR; the data look AB (our error: the plot probably segregates)",
+    "Zv0030_P1_P3_P1111:chr1@280-309:297.01:299.21:zoomed to 280–309 Mb: ours SEG between two DONOR tracts; the data look BB (our error, at the chr1 297 Mb hotspot)",
+    "Zv0370_P3_P4_P1111:chr1@270-309:297.01:308.51:zoomed to 270–309 Mb: our SEG tract ends at 297 Mb; the data look AB at 299 Mb (our tract ends too early)",
+    "Zv0420_P3_P1_P1111:chr9@0-60:1.40:21.19:zoomed to 0–60 Mb: ours DONOR; the data look BB at 6 and 11 Mb, but one dense amplicon (0.2–0.7) makes the tract AB",
 ]}
 ap = argparse.ArgumentParser()
 ap.add_argument("--sites", required=True)
@@ -63,7 +64,7 @@ T = pd.read_csv(a.tracts, sep="\t")
 
 
 def regions(x):
-    """targeted regions (SNPs within 200 kb) and their call"""
+    """targeted regions (SNPs within 200 kb) and what each looks like (AB / BB / none)"""
     x = x.sort_values("pos")
     rid = (x.pos.diff() > 2e5).cumsum()
     out = []
@@ -81,7 +82,7 @@ def regions(x):
 def draw(ax, smp, ch, s0, e0, title, lab=None):
     """one panel: k-mer call, targeted-seq call, targeted-seq SNPs. s0/e0: outlined tract (None = none);
     lab: (start, end, our call, plant genotype) of the tracts the targeted seq. calls clearly; printed above the k-mer
-    row as "ours SEG -> theirs AB" so that our call and theirs are never mixed up"""
+    row as "ours SEG · data look AB" so that our call and the data are never mixed up"""
     view = None
     if "@" in ch:                                   # chr1@280-309: zoom to 280-309 Mb
         ch, v = ch.split("@"); view = tuple(float(q) for q in v.split("-"))
@@ -106,7 +107,7 @@ def draw(ax, smp, ch, s0, e0, title, lab=None):
         ax.axvspan(s0, e0, ymin=0, ymax=(1.08 + 0.06) / 1.95, color=BLUE, alpha=0.07, lw=0)
     for a0, a1, ours, g in (lab or []):
         w = (a1 - a0) / 1e6
-        txt = f"ours {ours} → theirs {g}" if w >= 0.13 * Lw else (f"{ours}→{g}" if w >= 0.045 * Lw else "")
+        txt = f"ours {ours} · data look {g}" if w >= 0.15 * Lw else (f"{ours} · {g}-like" if w >= 0.05 * Lw else "")
         if txt:
             ax.text((a0 + a1) / 2e6, Y1 + H + 0.07, txt, ha="center", va="bottom", fontsize=7, color=INK)
     ax.axhline(1.18, color="#e4e2da", lw=0.8)
@@ -117,8 +118,8 @@ def draw(ax, smp, ch, s0, e0, title, lab=None):
     ax.scatter(hom.pos / 1e6, hom.af, s=15, color=ORANGE, lw=0)
     for yy in (0.5, 1.0):
         ax.axhline(yy, color="#eeece6", lw=0.8, zorder=0)
-    for yy, lb in [(Y1 + H / 2, "OUR call\n(k-mer, pool of 6 plants)"), (Y2 + H / 2, "THEIR call\n(targeted seq., per region)"),
-                    (0.5, "THEIR SNPs:\ndonor allele fraction")]:
+    for yy, lb in [(Y1 + H / 2, "OUR call\n(k-mer, pool of 6 plants)"), (Y2 + H / 2, "TARGETED-SEQ DATA\n(looks like, per region)"),
+                    (0.5, "TARGETED-SEQ SNPs:\ndonor allele fraction")]:
         ax.text(-0.035, yy, lb, ha="right", va="center", fontsize=8, color=INK, transform=ax.get_yaxis_transform())
     ax.set_title(title, loc="left", fontsize=9, color=INK)
     ax.set_xlim(*(view or (0, L))); ax.set_ylim(-0.06, 2.04 if lab else 1.89)
@@ -129,9 +130,9 @@ def draw(ax, smp, ch, s0, e0, title, lab=None):
 
 def legend(fig):
     h = [Rectangle((0, 0), 1, 1, color=c) for c in (GREY, BLUE, ORANGE, "#dddbd3")]
-    fig.legend(h, ["no teosinte: ours B73 (all plants AA)", "one teosinte copy: ours SEG (plot segregates)  /  theirs AB",
-                   "two teosinte copies: ours DONOR (all plants BB)  /  theirs BB",
-                   "theirs: no donor allele seen (AA, or the donor shares the B73 allele)"],
+    fig.legend(h, ["no teosinte: ours B73 (all plants AA)", "one teosinte copy: ours SEG (plot segregates)  /  data look AB",
+                   "two teosinte copies: ours DONOR (all plants BB)  /  data look BB",
+                   "data: no donor allele seen (AA, or the donor shares the B73 allele)"],
                ncol=2, frameon=False, fontsize=8.5, loc="upper center", bbox_to_anchor=(0.5, 1.0))
 
 

@@ -1,6 +1,6 @@
 import random
 random.seed(4)
-W,Hh=1100,1110
+W,Hh=1100,1480
 B73="#3A6FB5"; SEG="#B8860B"; DON="#BB5566"; OK="#2E8B57"; GRAY="#9AA3AD"; INK="#1F2933"; SOFT="#5B6670"
 o=[]
 def t(x,y,s,size=15,w="normal",fill=INK,anchor="start",style=""):
@@ -69,8 +69,9 @@ circ(dx+40,by+104,5,DON); t(dx+52,by+109,"teosinte SNP",12.5,fill=SOFT)
 line(dx+170,by+104,dx+210,by+104,"#C9A0A3",5,'stroke-linecap="round"'); t(dx+218,by+109,"read",12.5,fill=SOFT)
 
 # ---------- panel 3 ----------
-y=568; panel(y,3,"Score the window (step 20)","r = k-mers found in the pool ÷ k-mers our sequenced B73 control samples find at the same depth")
-base=y+200; x0=170; h=130
+y=568; panel(y,3,"Score the window (step 20)","r = k-mers found in the pool ÷ k-mers our sequenced B73 control samples find at the same depth. Expected DONOR level d: from the teosinte")
+t(68,y+58,"assemblies to start with, then learned from all our pools of the taxon (our donor plants are not the assembly plants).",13.5,fill=SOFT)
+base=y+215; x0=170; h=130
 line(x0-20,base,x0+560,base,SOFT,1.5)
 line(x0-20,base-h,x0+560,base-h,SOFT,1,'stroke-dasharray="5,5"'); t(x0-28,base-h+5,"1.0",13,fill=SOFT,anchor="end"); t(x0-28,base+5,"0",13,fill=SOFT,anchor="end")
 for i,(lab,val,c,desc) in enumerate([("B73",1.0,B73,"all plants AA"),("SEG",0.66,SEG,"about half B73, half donor"),("DONOR",0.27,DON,"all plants BB (Zd)")]):
@@ -88,8 +89,36 @@ ex=[("Average window, typical Zd pool:",INK,"bold"),
     ("the rest come only from the B73 half,",SEG,"normal"),
     ("found 0.54 as often: 0.27 + 0.73 × 0.54 = 0.66.",SEG,"bold")]
 for k,(txt,c,wt) in enumerate(ex): t(x0+605,base-140+k*18,txt,13,wt,fill=c)
-# ---------- panel 4 ----------
-y=845; panel(y,4,"HMM along each chromosome (steps 20-21)","Windows → B73 / SEG / DONOR. Switches follow the NAM genetic map; switch rate ρ fitted by maximum likelihood.")
+
+# ---------- panel 4: informative k-mers ----------
+y=865; panel(y,4,"Where the teosinte keeps most B73 k-mers, count only the informative ones","There (e.g. parviglumis chr7 54-65 Mb, 90% kept) the shared k-mers are found in every pool, whatever its state: they add noise, no signal.")
+t(68,y+58,"Informative k-mers of a taxon = B73 single-copy k-mers found in NONE of the taxon's assemblies. Pools are counted against their taxon's list too.",13.5,fill=SOFT)
+gy=y+108
+rows=[("B73",None),("assembly 1",{0,1,2,3,4,5,7,8,9}),("assembly 2",{0,1,2,3,4,5,7,8,9})]
+for r_,(lab,has) in enumerate(rows):
+    yy=gy+r_*32
+    t(150,yy+5,lab,13,"bold" if has is None else "normal",fill=INK if has is None else SOFT,anchor="end")
+    for i in range(10):
+        x=162+i*36
+        if has is None: stick(x,x+26,yy,DON if i==6 else GRAY)
+        else: (check if i in has else cross)(x+13,yy)
+stick(170,200,gy+100,GRAY); t(210,gy+105,"shared with the teosinte: found in every pool",13)
+stick(170,200,gy+124,DON); t(210,gy+129,"informative: in no assembly, only from B73 DNA",13,"bold",fill=DON)
+def bars(x0,base,h,vals,title,contrast,good):
+    t(x0+105,base-h-26,title,13.5,"bold",anchor="middle")
+    line(x0-6,base,x0+215,base,SOFT,1.2); line(x0-6,base-h,x0+215,base-h,SOFT,1,'stroke-dasharray="4,4"')
+    for i,(lab,v,c) in enumerate(zip(["B73","SEG","DONOR"],vals,[B73,SEG,DON])):
+        x=x0+8+i*70; rect(x,base-h*v,46,h*v,c,3)
+        t(x+23,base-h*v-6,f"{v:.2f}",12,"bold",anchor="middle"); t(x+23,base+16,lab,12,"bold",fill=c,anchor="middle")
+    t(x0+105,base+38,contrast,13,"bold",fill=OK if good else DON,anchor="middle")
+bars(590,gy+100,90,[1.0,0.95,0.90],"all B73 k-mers","contrast 0.5",False)
+bars(840,gy+100,90,[1.0,0.70,0.35],"informative k-mers only","contrast 3.2",True)
+t(68,gy+172,"A window uses its informative k-mers if B73 has at least 200 of them there and the DONOR/SEG contrast rises at least 1.2× (33-53% of measured windows,",13.5,fill=SOFT)
+t(68,gy+190,"by taxon); its DONOR level and spread then come from our pools called DONOR there. Contrast = the SEG-DONOR gap in noise units",13.5,fill=SOFT)
+t(68,gy+208,"(parviglumis chr7 54-65 Mb); bar heights illustrative.",13.5,fill=SOFT)
+
+# ---------- panel 5 ----------
+y=1215; panel(y,5,"HMM along each chromosome (steps 20-21)","Windows → B73 / SEG / DONOR. Switches follow the NAM genetic map; switch rate ρ fitted by maximum likelihood.")
 px0,px1,pyb,ph=110,1040,y+175,95
 line(px0,pyb,px1,pyb,SOFT,1); line(px0,pyb-ph,px1,pyb-ph,SOFT,1,'stroke-dasharray="4,4"')
 t(px0-8,pyb-ph+5,"1.0",12,fill=SOFT,anchor="end"); t(px0-8,pyb+5,"0",12,fill=SOFT,anchor="end"); t(px0-40,pyb-ph/2,"r",15,"bold",fill=SOFT)

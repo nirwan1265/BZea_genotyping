@@ -2,10 +2,10 @@
 
 This repository goes from raw paired-end reads of **pooled, low-coverage (~0.8×)** BC2S3 samples to **teosinte introgression calls** and **QTL** for flowering, height, ear and leaf traits. B73 was crossed to 5 teosinte taxa, backcrossed twice to B73 and selfed three times; each sample is a pool of 6 plants from one BC2S3 plot.
 
-- **Introgressions are called from k-mers**, not from mapped SNPs: for each pool, which B73 single-copy 31-mers its reads contain, per 100-kb window, decoded with an HMM that models the pool: each window is **B73** (all 6 plants AA), **DONOR** (all BB) or **SEG** (segregating: the plants are a mix of AA, AB and BB).
+- **Introgressions are called from k-mers**, not from mapped SNPs: for each pool, which B73 single-copy 31-mers its reads contain, per 100-kb window, decoded with an HMM that models the pool: each window is **B73** (all 6 plants AA), **DONOR** (all BB) or **SEG** (segregating: the plants are a mix of AA, AB and BB). Each window's DONOR level is learned from all our pools of the taxon, and where the teosinte keeps most of B73's k-mers, only the **informative** k-mers (missing from every assembly of the taxon) are counted ([2.6.6](#266-informative-k-mers-and-donor-levels-learned-from-our-pools)).
 - **QTL are mapped on that k-mer ancestry**: a genome scan (k-mer ancestry GWAS, GridLMM with leave-one-chromosome-out kinship) finds the peaks, and a joint QTL model (R/qtl2) fits them together, with an effect for each teosinte taxon. Each QTL interval is then fine-mapped (SuSiE).
 
-> **This README describes the current model (adopted 20 November 2026).** It differs from the first model in two places, both in how the HMM is fed, not in the HMM itself: where the teosinte shares most of the B73 k-mers, only the **informative** k-mers are counted (B73 k-mers missing from every assembly of the taxon), and the DONOR level of each window is **learned from our own pools** instead of taken from assemblies of other plants (section [2.6.6](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)). Checked against targeted sequencing of the same plots (three bad samples left out; tracts ≥ 1 Mb that the targeted data could classify, about half of the SEG and DONOR tracts), SEG tracts whose data look intermediate (AB-like) rose from 74% to 86% and DONOR tracts whose data look homozygous teosinte from 91% to 95% (section 2.9.1). The targeted sequencing also helped choose between model versions, so it is not an untouched test set; the genome-wide shares and the GWAS scans hardly change. The first model, with all its results, is kept in [`old_model_README.md`](old_model_README.md) (results in `data/introgression_spread/`).
+> **Model history:** an earlier version of the model (DONOR levels from the assemblies only, all B73 k-mers counted everywhere) and the comparisons with it are archived in [`old_model_README.md`](old_model_README.md). Its results are in `data/introgression_spread/`.
 
 > **Pipeline and commands from the k-mer and SNP steps on:** [`final_script/`](final_script/README.md) (the pre-processing scripts are not in the repository yet; see Section 1). Results tables: [`data/introgression_fix1/`](data/introgression_fix1/). Figures: [`figures/`](figures/).
 
@@ -62,7 +62,7 @@ This repository goes from raw paired-end reads of **pooled, low-coverage (~0.8×
     - [2.6.3 Calling the states](#263-calling-the-states)
     - [2.6.4 What is fitted, and where](#264-what-is-fitted-and-where)
     - [2.6.5 How long are the tracts?](#265-how-long-are-the-tracts)
-    - [2.6.6 The current model: informative k-mers and DONOR levels from our pools](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)
+    - [2.6.6 Informative k-mers and DONOR levels learned from our pools](#266-informative-k-mers-and-donor-levels-learned-from-our-pools)
   - [2.7 How k-mers solve mapping bias, low depth and pooling](#27-how-k-mers-solve-mapping-bias-low-depth-and-pooling)
     - [2.7.1 Why not a SNP-based AA/AB/BB HMM (e.g. RTIGER)?](#271-why-not-a-snp-based-aaabbb-hmm-eg-rtiger)
   - [2.8 Results](#28-results)
@@ -387,7 +387,7 @@ We first did it the usual way (steps 01–15): map reads to B73, count each pool
 
 Finding introgressions by counting reference k-mers in genome windows, without mapping reads, was developed in wheat: **IBSpy** (Uauy lab; Quiroz-Chávez 2023) was used to find einkorn introgressions in bread wheat (Ahmed et al. 2023), and **KCFtools** (Selvanayagam et al. 2026) is a fast tool for k-mer introgression screening and k-mer GWAS, which we use for the per-window counts. k-mers are counted with **KMC 3** (Kokot et al. 2017). The DONOR levels come from teosinte genome assemblies (PanAnd-1.0, Stitzer et al. 2025), downloaded from **MaizeGDB** (Portwood et al. 2019).
 
-**What we added:** low-coverage *pools* instead of single plants, a three-state pool model (B73 / SEG / DONOR) with per-window DONOR levels (from assemblies, then learned from our own pools), counting only the informative k-mers where the teosinte shares most of B73's (section 2.6.6), and the HMM on the NAM genetic map.
+**What we added:** low-coverage *pools* instead of single plants, a three-state pool model (B73 / SEG / DONOR) with per-window DONOR levels (from assemblies, then learned from our own pools), counting only the informative k-mers where the teosinte shares most of B73's ([2.6.6](#266-informative-k-mers-and-donor-levels-learned-from-our-pools)), and the HMM on the NAM genetic map.
 
 ### 2.4 How it works
 
@@ -402,11 +402,12 @@ Finding introgressions by counting reference k-mers in genome windows, without m
    - **r = k-mers found in the pool ÷ k-mers the B73 controls find** (at the pool's depth).
    - So two kinds of B73 are used: the **B73 reference genome** decides *which* k-mers are counted (step 1), and the **B73 control samples** say *how many* of them a B73 sample at this depth should find.
    - B73 gives **r ≈ 1**, DONOR **r ≈ d**, and SEG falls between them.
-   - d is the share of B73 k-mers a donor genome keeps. It depends on the taxon and on the window, and is measured per window from teosinte genome assemblies (PanAnd-1.0 from MaizeGDB, step 19). Genome-wide: Zd 0.27, Zl 0.26, Zh 0.34, Zx 0.37, Zv 0.43.
+   - d is the share of B73 k-mers a donor genome keeps. It depends on the taxon and on the window. It starts from teosinte genome assemblies (PanAnd-1.0 from MaizeGDB, step 19; genome-wide Zd 0.27, Zl 0.26, Zh 0.34, Zx 0.37, Zv 0.43) and is then learned per window from all our pools of the taxon, because our donor plants are not the assembly plants ([2.6.6](#266-informative-k-mers-and-donor-levels-learned-from-our-pools)).
    - SEG: k-mers the donor lacks come only from the B73 plants in the pool. For 6 plants, the pool's donor fraction follows Binomial(12, ½).
-4. **HMM along each chromosome (steps 20–21).** The windows' r values are read along each chromosome by a three-state hidden Markov model (B73 / SEG / DONOR). It uses the NAM genetic map, so a state change costs more where recombination is rare. Adjacent windows in the same state become tracts. **The model is explained step by step in [The HMM in detail](#26-the-hmm-in-detail) below.**
-5. **Allow for our donor plants differing from the assembly plants (step 20).** Where the two assemblies of a taxon disagree on d, the model is told that the DONOR level there is uncertain, so it doesn't flip between SEG and DONOR on small differences (see τ_w under [Emissions](#261-emissions-how-well-does-r-fit-each-state)). In the current model, d is then learned from all our pools of the taxon, and where the teosinte keeps most of B73's k-mers only the informative ones are counted ([2.6.6](#266-the-current-model-informative-k-mers-and-donor-levels-from-our-pools)).
-6. **Tests (step 22).** Observed vs expected BC2S3 proportions, with a bootstrap over F1 families. Pools of one F1 family share segments, so the F1 family is the unit.
+4. **Informative k-mers where the teosinte keeps most of B73's.** There the shared k-mers are found in every pool whatever its state, so DONOR and SEG score almost the same. In such windows only the informative k-mers are counted: B73 single-copy k-mers found in none of the taxon's assemblies (panel 4 of the figure; [2.6.6](#266-informative-k-mers-and-donor-levels-learned-from-our-pools)).
+5. **HMM along each chromosome (steps 20–21).** The windows' r values are read along each chromosome by a three-state hidden Markov model (B73 / SEG / DONOR). It uses the NAM genetic map, so a state change costs more where recombination is rare. Adjacent windows in the same state become tracts. **The model is explained step by step in [The HMM in detail](#26-the-hmm-in-detail) below.**
+6. **Allow for our donor plants differing from each other (step 20).** Where the two assemblies of a taxon disagree on d, the model is told that the DONOR level there is uncertain, so it doesn't flip between SEG and DONOR on small differences (see τ_w under [Emissions](#261-emissions-how-well-does-r-fit-each-state)).
+7. **Tests (step 22).** Observed vs expected BC2S3 proportions, with a bootstrap over F1 families. Pools of one F1 family share segments, so the F1 family is the unit.
 
 ### 2.5 How r is calculated: a worked example
 
@@ -424,13 +425,13 @@ An average window in a typical Zd pool. The numbers are genome-wide averages fro
 | DONOR (all plants BB, Zd) | ~2,600 | 2,600 / 9,600 ≈ **0.27** |
 | SEG (about half B73, half donor) | ~6,300 | 6,300 / 9,600 ≈ **0.66** (below) |
 
-**Where the DONOR level comes from (step 19).** We take the complete Zd genome assemblies (Gigi and Momo, PanAnd-1.0 from MaizeGDB) and count how many of the window's ~32,000 B73 k-mers appear anywhere in them. Genome-wide it's 27% (Gigi 0.26, Momo 0.28), i.e. about 8,600 of 32,000: **d = 0.27**. A pool that is all Zd in this window can only find that 27%, so it finds 0.27 × 9,600 ≈ 2,600 and its expected r is 0.27. A real example: the Zd tract of PN13_SID1199 (chr2:22–25 Mb, section 2.2) has r ≈ 0.20, where the Zd assemblies give 0.26.
+**Where the DONOR level comes from (step 19).** We take the complete Zd genome assemblies (Gigi and Momo, PanAnd-1.0 from MaizeGDB) and count how many of the window's ~32,000 B73 k-mers appear anywhere in them. Genome-wide it's 27% (Gigi 0.26, Momo 0.28), i.e. about 8,600 of 32,000: **d = 0.27**. A pool that is all Zd in this window can only find that 27%, so it finds 0.27 × 9,600 ≈ 2,600 and its expected r is 0.27. This is the starting value; the level actually used is learned from all our Zd pools ([2.6.6](#266-informative-k-mers-and-donor-levels-learned-from-our-pools)). A real example: the Zd tract of PN13_SID1199 (chr2:22–25 Mb, section 2.2) has r ≈ 0.20, where the Zd assemblies give 0.26.
 
 d depends on the taxon and on the window:
 - **Taxon:** genome-wide Zd 0.27, Zl 0.26, Zh 0.34, Zx 0.37 and Zv 0.43. Zv is closest to maize, so it keeps the most.
 - **Window:** for Zd, the per-window median is 0.23, and 80% of windows are between 0.13 and 0.42. The HMM uses each window's own d.
 
-Sequencing the **actual donor parents** of our lines would have been better, because d would then be measured on the plants our lines came from. We don't have them, so we use the MaizeGDB assemblies of the same taxa.
+Sequencing the **actual donor parents** of our lines would have been better, because d would then be measured on the plants our lines came from. We don't have them, so we start from the MaizeGDB assemblies of the same taxa and learn the level from our pools.
 
 **Why SEG falls in between.** In a SEG region the pool is a mix of B73 and donor chromosomes. Split the window's k-mers in two:
 - **Shared with the donor (27%):** every chromosome carries them, so they're found as often as in a B73 sample (ratio 1.0).
@@ -482,16 +483,16 @@ Each state expects r near a certain value, with some spread (noise). The spread 
 | **SEG** | between d_w and 1 | average of Normal(a·d_w + (1 − a·d_w)·g(k/12), √(σ_w² + ((1 − g)·a·τ_w)²)) over k = 1…11 donor copies, weighted by Binomial(12, ½) | for each possible number of donor copies k in the 6 plants, r near the matching in-between level; the k are weighted by how likely they are under 1:2:1 segregation |
 
 What the terms mean:
-- **d_w:** the share of the window's B73 k-mers that the donor genome keeps, measured from the teosinte assemblies (step 19). Each window has its own value.
+- **d_w:** the share of the window's B73 k-mers that the donor genome keeps: from the teosinte assemblies (step 19) to start with, then learned from all our pools of the taxon (2.6.6). Each window has its own value.
 - **τ_w (uncertainty of d_w):** our donor plants are not the assembly plants, so their real level can differ from d_w. Teosinte is outcrossing and very diverse, so two plants of the same taxon can differ a lot in a given window; even the two Zv assemblies differ by more than 0.2 in 28% of windows. τ_w is how much the taxon's two assemblies disagree in that window (their SD × √1.5, the expected spread of a new plant around the mean of two, averaged over ±5 windows). It adds to the noise of DONOR, and to SEG in proportion to how much SEG depends on d. Mean τ: Zv 0.18, Zx 0.16, Zd 0.06. Zh and Zl have only one assembly, so τ = 0 for them (raising it to Zv's changes 0.06–0.27% of their windows; [2.9.1](#291-independent-check-targeted-sequencing-of-83-plots), point 8). The B73 controls get the widest τ (Zv) as a worst-case test. Why it was added: in a first run without τ_w, Zv and Zx tracts kept flipping between SEG and DONOR; τ_w halved that. Details: [`final_script/README.md`, section 5.7](final_script/README.md#57-method-history-family-donor-levels-then-donor-level-uncertainty-current).
-- **a:** one scale factor per pool. It absorbs genome-wide differences between our donor plant and the assembly plants; for example, our plant may keep a few percent more B73 k-mers everywhere. **How it's fitted (maximum likelihood by grid search):**
+- **a:** one scale factor per pool. It absorbs genome-wide differences between the pool's donor plant and the taxon's level; for example, our plant may keep a few percent more B73 k-mers everywhere. **How it's fitted (maximum likelihood by grid search):**
   1. The whole HMM is run for the pool with each value of a: 0.5, 0.6, …, 1.4, 1.6, 1.8.
   2. Each run gives the **likelihood**: the probability of the pool's observed r values in all windows of all chromosomes under that model. The forward algorithm computes it.
   3. The a with the highest likelihood is kept.
 
   The same grid is repeated for every value of **ρ**, the switch rate of the transitions (how easily the state changes from one window to the next; see [Transitions](#262-transitions-how-often-can-the-state-change)). a and ρ both change the likelihood, so the best a is found separately for each ρ, and then the best ρ is chosen over all pools.
 
-  The fitted a is mostly 0.9–1.0 in every taxon, so on average the assembly levels fit our lines well.
+  The fitted a has a median of 0.8–0.9 in every taxon. A wider grid and a = 1 change few calls (2.9.1, point 8).
 - **k/12:** the donor fraction of a SEG pool. 6 plants carry 12 chromosome copies. A SEG family segregates 1:2:1, so the number of donor copies k follows Binomial(12, ½). The model averages over all k instead of assuming exactly half (see [What SEG means](#21-what-a-sample-is)).
 - **f and g(f):** f is the donor fraction of the pool's chromosomes in the window (f = k/12). g(f) is how often the pool still finds the B73 k-mers that the donor lacks, compared with a pure-B73 pool. Those k-mers sit only on the B73 chromosomes, a share (1 − f) of the pool, so they get only that share of the reads. From the coverage formula, g(f) = (1 − e^(−(1−f)λ)) / (1 − e^(−λ)), where λ is the pool's k-mer coverage (measured from the share of B73 k-mers it finds in B73 windows). In the worked example, f = ½ gives g = 0.54. g = 1 when the pool is all B73 (f = 0), and g = 0 when it's all donor (f = 1).
 - **Outliers:** each state also has a 2% chance that the window is junk. A junk window's r is treated as equally likely anywhere from 0 to 2 (a uniform distribution). This is a standard robustness device, a "contamination" term in the emission. Without it, one odd window (e.g. a mis-assembled or duplicated region) could give near-certain evidence for a state just because it lies far out in a normal curve's tail.
@@ -512,7 +513,7 @@ What the terms mean:
 
 SEG covers a wide range (here 0.35–0.95) because a 6-plant pool can carry from 1 to 11 donor copies.
 
-**τ_w and a are only needed because we don't have the donor parents.** Both correct for the same thing: d_w comes from assemblies of *other* plants of the same taxon, not from the plants our lines came from. τ_w allows for differences in single windows; a allows for a difference over the whole genome. Both can be switched off:
+**τ_w and a are only needed because we don't have the donor parents.** Both correct for the same thing: d_w is a level for the whole taxon (from its assemblies and all its pools), not measured on the plants our lines came from. τ_w allows for differences in single windows; a allows for a difference over the whole genome. Both can be switched off:
 - **τ_w:** on with `SPREAD=1` (`20_kmer_hmm.py --d_spread`, the default), off with `SPREAD=0`.
 - **a:** fitted over `--scale_grid`; `--scale_grid 1` fixes a = 1.
 
@@ -523,7 +524,7 @@ SEG covers a wide range (here 0.35–0.95) because a 6-plant pool can carry from
 
 Each state keeps the 2% outlier term: probability = 0.98 × the Normal above + 0.02 × Uniform(0, 2).
 
-One caveat: a teosinte parent is an outcrossing, heterozygous plant, and the F1 got only one of its two chromosome sets (recombined). The parent's k-mers are the union of both sets, so where its two sets differ, the parent's d_w is a bit higher than that of the set our line carries. A small τ_w can still help there, so it stays an option rather than being removed. Reading d_w from a sequenced parent (a `--parent` input) is not in the code yet; for now d_w comes only from assemblies.
+One caveat: a teosinte parent is an outcrossing, heterozygous plant, and the F1 got only one of its two chromosome sets (recombined). The parent's k-mers are the union of both sets, so where its two sets differ, the parent's d_w is a bit higher than that of the set our line carries. A small τ_w can still help there, so it stays an option rather than being removed. Reading d_w from a sequenced parent (a `--parent` input) is not in the code yet; for now d_w comes from the assemblies and our pools.
 
 #### 2.6.2 Transitions: how often can the state change?
 
@@ -556,7 +557,7 @@ With ρ = 1.5, the chance of a change is about **0.1% per window** on average. T
 | Plants per pool | fixed | 6 | `config.sh` (`KMER_PLANTS`) |
 | Outlier share | fixed | 2% | `20_kmer_hmm.py` (`--eps`) |
 
-"Donor taxon" is the pool's teosinte (Zd, Zh, Zl, Zv or Zx, from the sample sheet). Every pool of that taxon uses the same d_w and τ_w. In the current model d_w is learned from all the pools of the taxon at once (2.6.6), without using any calls, except in switched windows; nothing here comes from our BC1 or BC2 plants. The HMM itself (emissions, transitions, decoding) is the same as in step 20: `new_model/fix1/fx1_kmer_hmm.py` is a copy of `20_kmer_hmm.py` with the two inputs of 2.6.6 added.
+"Donor taxon" is the pool's teosinte (Zd, Zh, Zl, Zv or Zx, from the sample sheet). Every pool of that taxon uses the same d_w and τ_w. d_w is learned from all the pools of the taxon at once (2.6.6), without using any calls, except in switched windows; nothing here comes from our BC1 or BC2 plants. The HMM itself (emissions, transitions, decoding) is the same as in step 20: `new_model/fix1/fx1_kmer_hmm.py` is a copy of `20_kmer_hmm.py` with the two inputs of 2.6.6 added.
 
 **Why the prior is fixed.** It only sets the state each chromosome starts in, and which state a switch goes to. It doesn't set how much of the genome ends up in each state: with about 2,000 windows per chromosome, the data decide. DONOR came out at 4.9% although the prior expects 9.4%, so the prior isn't forcing the result.
 
@@ -573,28 +574,26 @@ To check that short tracts are expected and not just a feature of our data, the 
 
 - **Short tracts are expected from the crossing scheme alone**, not only in our data: about 1 in 12 introgressed tracts should be under 1 Mb.
 - We find slightly fewer under 1 Mb than the simulation. That fits the HMM's detection limit: a piece needs about 4 windows (400 kb) to be called ([Transitions](#262-transitions-how-often-can-the-state-change)), so the shortest tracts are missed.
-- **Any single short tract can still be an error**, e.g. a window run where our donor plant differs from the assemblies, or a structural variant. They are a small part of the genome: tracts under 1 Mb hold 0.18% of the introgressed sequence (0.11% in the simulation). The current model has slightly more of them than the first one (1.6 instead of 1.3 tracts under 1 Mb per pool; section 2.6.6). See [Limitations](#213-limitations-and-future-work) for how they can be checked.
+- **Any single short tract can still be an error**, e.g. a window run where our donor plant differs from the assemblies, or a structural variant. They are a small part of the genome: tracts under 1 Mb hold 0.18% of the introgressed sequence (0.11% in the simulation). A pool has 1.6 tracts under 1 Mb on average. See [Limitations](#213-limitations-and-future-work) for how they can be checked.
 
 The simulation does not include crossover interference (which makes two crossovers close together in one meiosis rarer) or selection, so it is a rough guide, not an exact expectation. Script: `final_script/tract_length_sim.py` (seed 1); output `data/introgression_fix1/checks/tract_length_sim.txt`.
 
-#### 2.6.6 The current model: informative k-mers and DONOR levels from our pools
+#### 2.6.6 Informative k-mers and DONOR levels learned from our pools
 
-The first model took each window's DONOR level d_w from teosinte assemblies of *other* plants and counted all B73 single-copy k-mers. The targeted sequencing (section 2.9.1) found one systematic error with it: in *parviglumis* and *mexicana*, a SEG tract between two DONOR tracts was really DONOR (BB) in about half of the cases, and these errors recurred at the same places in many pools (chr6 21–23 Mb in 48 pools, chr1 297 Mb in 28, chr7 54–65 Mb in 28, chr3 75–78 Mb in 19). There were two causes, and the current model changes one input for each. The HMM itself is unchanged.
+Two inputs of the HMM come from our own pools, not from the assemblies alone. **Why:** with each window's DONOR level d_w taken from teosinte assemblies of *other* plants and all B73 single-copy k-mers counted, the targeted sequencing (section 2.9.1) found one systematic error: in *parviglumis* and *mexicana*, a SEG tract between two DONOR tracts was really DONOR (BB) in about half of the cases, and these errors recurred at the same places in many pools (chr6 21–23 Mb in 48 pools, chr1 297 Mb in 28, chr7 54–65 Mb in 28, chr3 75–78 Mb in 19). There were two causes, and each step below addresses one. The HMM itself is the same.
 
-**1. A wrong DONOR level (chr6, chr1).** Where our donor plants keep more of the B73 k-mers than the assembly plants, a DONOR window reads too high and looks like SEG. Fix: learn d_w from **all pools of the taxon at once**, without using any calls (`new_model/20c_pool_levels.py`). In each window the scores of a taxon's 60–570 pools are a mixture of three groups that share the window's level: B73 (r ≈ 1), SEG (r = d + (1 − d)·g(f), f from Binomial(12, ½)) and DONOR (r ≈ d). d is fitted by maximum likelihood (the group sizes by EM), then shrunk towards the assembly level by how many pools carry teosinte there, so windows with little evidence keep the assembly level. This is the idea of RTIGER's shared emission fit (one set of emission parameters learned from all samples; Campos-Martin et al. 2023), applied to the parameter that was wrong. On simulated pools the fitted level was within 0.02 of the truth in a hotspot where the assembly level was 0.18 off, and unchanged elsewhere.
+**1. A wrong DONOR level (chr6, chr1).** Where our donor plants keep more of the B73 k-mers than the assembly plants, a DONOR window reads too high and looks like SEG. So d_w is learned from **all pools of the taxon at once**, without using any calls (`new_model/20c_pool_levels.py`). In each window the scores of a taxon's 60–570 pools are a mixture of three groups that share the window's level: B73 (r ≈ 1), SEG (r = d + (1 − d)·g(f), f from Binomial(12, ½)) and DONOR (r ≈ d). d is fitted by maximum likelihood (the group sizes by EM), then shrunk towards the assembly level by how many pools carry teosinte there, so windows with little evidence keep the assembly level. This is the idea of RTIGER's shared emission fit (one set of emission parameters learned from all samples; Campos-Martin et al. 2023), applied to the parameter that was wrong. On simulated pools the fitted level was within 0.02 of the truth in a hotspot where the assembly level was 0.18 off, and unchanged elsewhere.
 
-**2. Too little contrast (chr7, chr3).** Where the teosinte keeps most of B73's k-mers (d_w ≈ 0.7–0.9), DONOR and SEG score almost the same: the shared k-mers are present in every pool whatever its state, so they add counting noise and no signal. *parviglumis* chr7 54–65 Mb had a contrast (gap between the SEG and DONOR levels ÷ noise) of 1.2, i.e. the two states were about one noise unit apart. Fix: count only the **informative** k-mers there, the B73 single-copy k-mers found in **none** of the taxon's assemblies (`new_model/fix1/`):
-
-![How fix 1 works](new_model/fix1/fix1_method.svg)
+**2. Too little contrast (chr7, chr3).** Where the teosinte keeps most of B73's k-mers (d_w ≈ 0.7–0.9), DONOR and SEG score almost the same: the shared k-mers are present in every pool whatever its state, so they add counting noise and no signal. *parviglumis* chr7 54–65 Mb had a contrast (gap between the SEG and DONOR levels ÷ noise) of 1.2, i.e. the two states were about one noise unit apart. So only the **informative** k-mers are counted there, the B73 single-copy k-mers found in **none** of the taxon's assemblies (panel 4 of the figure in [2.4](#24-how-it-works); `new_model/fix1/`):
 
 - Every pool was recounted against its taxon's informative k-mers (the 10 B73 controls against all five taxa's), with the same KMC + KCFtools steps as step 17.
-- Per taxon and window, the scores of all pools were computed both ways, and a window **switches** to the informative k-mers only if B73 has at least 200 of them there and they raise the contrast at least 1.2-fold (contrast measured from the pools called DONOR and the B73 controls). Elsewhere, the old counts and the learned levels of point 1 are kept.
+- Per taxon and window, the scores of all pools were computed both ways, and a window **switches** to the informative k-mers only if B73 has at least 200 of them there and they raise the contrast at least 1.2-fold (contrast measured from the pools called DONOR and the B73 controls). Elsewhere, all B73 k-mers and the learned levels of point 1 are used.
 - The assemblies have none of the informative k-mers by construction, so in switched windows the DONOR level, and its spread between our donors (τ_w), come from our pools called DONOR there.
 - 33% (*diploperennis*) to 53% (*huehuetenangensis*) of the windows where both contrasts could be measured switched. At *parviglumis* chr7 54–65 Mb, 95% of windows switched and the contrast rose from 1.2 to 2.6. (Contrasts after switching are somewhat optimistic, because windows were chosen where the measured new contrast was higher; the targeted sequencing below is the unbiased check.)
 
-**Result.** The two fixes were tested one by one and together, each time with the whole pipeline (HMM, calls) and the targeted sequencing (section 2.9.1, the three bad samples of its point 6 left out). The targeted data are independent of our calls, but because they were used to choose between these versions, they are not an untouched test of the chosen one (a test on held-out families would be):
+**What the two steps change.** Each step was tested alone and together, each time with the whole pipeline (HMM, calls) and the targeted sequencing (section 2.9.1, the three bad samples of its point 6 left out). The targeted data are independent of our calls, but because they were used to choose between these versions, they are not an untouched test of the chosen one (a test on held-out families would be):
 
-| Check | First model | Learned levels only | Informative k-mers only | **Both (current)** |
+| Check | Assembly levels, all B73 k-mers | Learned levels only | Informative k-mers only | **Both (this model)** |
 |---|---|---|---|---|
 | SEG tracts that are AA / AB / BB in the plant | 17.9 / 74.3 / 7.8% | 6.2 / 81.8 / 12.1% | 5.7 / 86.4 / 7.9% | **5.7 / 85.8 / 8.5%** |
 | DONOR tracts that are BB | 90.7% | 93.7% | 95.5% | **95.2%** |
@@ -609,7 +608,7 @@ The first model took each window's DONOR level d_w from teosinte assemblies of *
 - **Costs:** about 0.3 more short tracts (< 1 Mb) per pool (1.31 → 1.62), spread over the genome rather than in switched windows; the targeted sequencing compared only tracts of 1 Mb or more, so whether they are right is not known. And 26 more pools pass the noise cut-off σ > 0.15 (119 instead of 93 left out): 25 *parviglumis* pools that sat just under it (e.g. 0.149 → 0.157, as switched windows have fewer k-mers) and PN17_SID1585 (*mexicana*, 0.077 → 0.226, to be checked).
 - **Not fixed:** SEG between two DONOR tracts is less common (0.38% → 0.30% of the genome), but 57% of the remaining ones are BB; *parviglumis* chr3 75–78 Mb is unchanged (its islands read between DONOR and SEG in every count, so they are not a contrast problem).
 
-Details, simulations and all intermediate runs: [`new_model/README.md`](new_model/README.md), [`new_model/pilot_fix1/README.md`](new_model/pilot_fix1/README.md), [`new_model/fix1/README.md`](new_model/fix1/README.md).
+Details, simulations and all intermediate runs (the earlier version's README: [`old_model_README.md`](old_model_README.md)): [`new_model/README.md`](new_model/README.md), [`new_model/pilot_fix1/README.md`](new_model/pilot_fix1/README.md), [`new_model/fix1/README.md`](new_model/fix1/README.md).
 
 ### 2.7 How k-mers solve mapping bias, low depth and pooling
 
@@ -670,11 +669,11 @@ The figure has three groups, because these numbers are different kinds of measur
 
 ![Donor share per pool](data/introgression_fix1/figures/fig5_pool_share.png)
 
-Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `data/introgression_fix1/figures/family_values.tsv`. The same figures for the first model are in `final_script/figures/results_spread/` (`old_model_README.md`).
+Figures from step 24 (`24_kmer_figures.py`); the per-family values are in `data/introgression_fix1/figures/family_values.tsv`.
 
 **What this shows:**
 - **SEG is as expected:** the HMM calls 6.24% of the genome SEG, against 6.25% expected for BC2S3; the F1-family bootstrap finds no difference (p = 0.94). The AB estimate (3.12%) is half of SEG by construction, so it is the same result, not a second one.
-- **DONOR is about half of the expectation** (4.93% vs 9.38% of the genome; estimated BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That deficit is the whole shortfall in donor alleles (8.0% vs 12.5%). The first model gave the same (SEG 6.23%, DONOR 4.95%), so this does not depend on how the DONOR level is set.
+- **DONOR is about half of the expectation** (4.93% vs 9.38% of the genome; estimated BB 6.5% vs 10.9%; p < 0.0002 in every taxon). That deficit is the whole shortfall in donor alleles (8.0% vs 12.5%). With DONOR levels from the assemblies alone and all B73 k-mers counted, the shares are the same (2.6.6), so this does not depend on how the DONOR level is set.
 - **So a larger share of the remaining donor is estimated to be het:** 32% of donor-carrying plants are AB, against 22% expected. This is not extra het: SEG, and so AB, is as expected. The share goes up only because DONOR went down, so AB is a bigger part of a smaller total. This holds on every chromosome (29–35%).
 - **Why is DONOR low?** See [Why is there less donor DNA than expected?](#281-why-is-there-less-donor-dna-than-expected) below.
 - **F1 families:** only 2 of 98 F1 families reach the expected 12.5% donor alleles (Zx.0390_P2, Zx.0130_P1); 86% sit between 5% and 11%. AB/(AB+BB) is above 22% in 87 of the 98 F1 families, and in all F1 families of Zd, Zh and Zl.
@@ -734,7 +733,7 @@ The lines carry 8.0% donor alleles instead of 12.5%. All of the shortfall is in 
 
 - **The method works:** the simulation returns ½, and the B73 level is where the model puts it. The DONOR level is close (offsets ≤ 0.04); in *parviglumis* and *mexicana*, DONOR windows read about 0.03–0.04 above a·d_w.
 - **It is not an edge effect.** Near the ends of a SEG tract, stretches with 10–11 donor copies could be called DONOR and stretches with 1–2 copies B73, which would move the estimate. Rerun on the middle of long SEG tracts only (tracts ≥ 5 Mb, 1 Mb trimmed at each end; 1,207 pools, 1.36 million windows; `--core_mb 5`), it is unchanged: 0.454 (0.450–0.460) overall and 0.448–0.493 per taxon.
-- **SEG pools carry 45–46% donor alleles, not 50%,** alike in all five taxa (the first model gave 0.459). Part of this can come from the DONOR offset (a DONOR r above a·d_w pulls the estimate down, by up to about 0.03–0.04 in *parviglumis* and *mexicana*), but *diploperennis* and *luxurians*, with offsets of 0.002–0.007, are still at 0.45–0.46.
+- **SEG pools carry 45–46% donor alleles, not 50%,** alike in all five taxa. Part of this can come from the DONOR offset (a DONOR r above a·d_w pulls the estimate down, by up to about 0.03–0.04 in *parviglumis* and *mexicana*), but *diploperennis* and *luxurians*, with offsets of 0.002–0.007, are still at 0.45–0.46.
 - **This fits the choice of the best-looking plants.** Within a SEG plot the plants are AA, AB and BB; choosing the best-looking ones for the pool favours plants without the teosinte form of a trait, i.e. fewer BB, so fewer donor copies. Seeds or seedlings with teosinte alleles doing worse would give the same result; the two can't be told apart here.
 
 **Check 2: what would a loss like this do over the whole crossing scheme?** If every generation passed on teosinte alleles at 0.46 instead of 0.5 (F1 → BC1 → BC2 → two selfings to the BC2S2 mother):
@@ -800,20 +799,20 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 ### 2.9 Validation
 
 - **B73 controls are clean:** all 10 have ≤ 0.56% non-B73 windows (donor share ≤ 0.28%). This is a fair test, because the k-mer route never used the controls to filter sites.
-- **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26 (first model).
+- **Known tracts:** they are found with the expected levels. For example, a Zd DONOR tract on chr2 has r ≈ 0.20 against an assembly value of 0.26.
 - **Agreement with the SNP route:** donor shares agree where the SNP route works. Where they differ, the cause is on the SNP side: lost donor reads, κ collapsing, or noisy pools.
-- **A second k-mer measure (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa, in both models). It uses other k-mers (teosinte k-mers present, not B73 k-mers missing) but the same reads, so it is complementary, not fully independent. It checks the total donor share, not the SEG/DONOR split.
+- **A second k-mer measure (section 2.10):** teosinte-specific k-mers in the reads give the pool's donor taxon (matches the pedigree in 93.9% of pools, 99.7% when the assignment is clear) and its donor share, which agrees with the HMM's across pools (Spearman ρ 0.91–0.98 within taxa). It uses other k-mers (teosinte k-mers present, not B73 k-mers missing) but the same reads, so it is complementary, not fully independent. It checks the total donor share, not the SEG/DONOR split.
 
 - **Targeted sequencing of 83 plots (section 2.9.1):** independent, high-depth data for the same plots agree with our calls where they can classify a tract (69% of B73, 45% of SEG and 50% of DONOR tracts ≥ 1 Mb): 95.9% of our B73 tracts carry no teosinte, 89% of our DONOR tracts look homozygous teosinte, and 83% of our SEG tracts look intermediate (AB-like).
 
 #### 2.9.1 Independent check: targeted sequencing of 83 plots
 
-**Data.** 96 of our plots were also genotyped by targeted sequencing: a fixed panel of SNP regions, sequenced at high depth (paired-end reads; median 23 reads per SNP in our comparison). The samples are named after the plot (e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`), and all 96 match a plot of ours. 95 samples had both read files, 94 aligned, 86 belong to a pool with k-mer calls in the current model (88 in the first; two pools are now among the noisy pools), and **83** had enough SNPs to compare. The DNA is most probably a **bulk of several plants of the plot**, not one plant (lab, November 2026; still to be confirmed; see "One plant or a bulk?" below). So "AA / AB / BB" below describe what the data look like (no, intermediate or near-complete donor allele fraction), not the genotype of one plant.
+**Data.** 96 of our plots were also genotyped by targeted sequencing: a fixed panel of SNP regions, sequenced at high depth (paired-end reads; median 23 reads per SNP in our comparison). The samples are named after the plot (e.g. `Zd0010_P3_P3_P3211` = plot `Zd.0010_P3_P3_P3.2.1.1`), and all 96 match a plot of ours. 95 samples had both read files, 94 aligned, 86 belong to a pool with k-mer calls (not a noisy pool), and **83** had enough SNPs to compare. The DNA is most probably a **bulk of several plants of the plot**, not one plant (lab, November 2026; still to be confirmed; see "One plant or a bulk?" below). So "AA / AB / BB" below describe what the data look like (no, intermediate or near-complete donor allele fraction), not the genotype of one plant.
 
 **Methods.**
 1. **Reads to SNPs** (steps 34, 34b). Adapters trimmed (fastp), reads aligned to B73 v5 (bwa mem; duplicates kept, since the panel may be amplicon-based), and variable sites found in all samples together (bcftools mpileup with mapping and base quality ≥ 20, multi-sample call, biallelic SNPs with QUAL ≥ 30): 656,483 SNPs. Kept: sites with ≥ 10 reads in ≥ 20 samples, and not carrying the alternative allele in more than half of the samples (at any one place most pools are B73, so such sites are paralogs or places where our B73 differs from the reference): **84,813 sites**.
 2. **Donor allele fraction.** At each site, a sample's donor allele fraction is alt reads / all reads; the reference is B73, so the alternative allele is the non-B73 one. The donor genotypes are not needed. A site counts as **carrying donor alleles** if it has ≥ 3 alt reads and a fraction ≥ 0.2.
-3. **Real SNPs only.** Most of the 84,813 sites are not real SNPs (see Results 1). A site is used for a sample only if it is homozygous for the alternative allele (fraction ≥ 0.9, ≥ 10 reads) in at least one *other* sample. Leaving the sample out means its own reads do not decide which of its sites are used. **7,269 real SNPs** remain (7,666 with the 85 samples of the first model).
+3. **Real SNPs only.** Most of the 84,813 sites are not real SNPs (see Results 1). A site is used for a sample only if it is homozygous for the alternative allele (fraction ≥ 0.9, ≥ 10 reads) in at least one *other* sample. Leaving the sample out means its own reads do not decide which of its sites are used. **7,269 real SNPs** remain (7,666 in point 1 below, which counts 85 samples).
 4. **Our call at each site** (step 34c): the k-mer state (B73 / SEG / DONOR) of the sample's pool at that position.
 5. **Tract comparison** (step 34d). Each tract of ours of 1 Mb or more is compared with the targeted-sequencing reads inside it. The sample's own noise (sites carrying donor alleles inside our B73 tracts; median 0.4 per 100 real SNPs) sets what counts as signal:
    - **carrier:** at least 2 sites carry donor alleles, and more than the noise allows (Poisson, p < 0.001); then **BB** if their median fraction is ≥ 0.8, **AB** if it is 0.25–0.75;
@@ -835,26 +834,26 @@ Script: `final_script/22b_seg_donor_copies.py` (Slurm: `22b_seg_donor_copies.sh`
 | **SEG** | 736 | 329 | 8.8% | **82.7%** (92.6% of Mb) | 8.5% |
 | **DONOR** | 761 | 377 | 7.2% | 4.0% | **88.9%** (90.4% of Mb) |
 
-Percentages are of the clearly called tracts only (B73 69%, SEG 45%, DONOR 50% of all tracts ≥ 1 Mb; the rest have too few informative SNPs). They measure agreement where the targeted panel is informative, not the accuracy of every tract. All 83 samples. First model (85 samples): B73 96.5 / 2.9 / 0.6%, SEG 21.2 / **71.1** / 7.7%, DONOR 9.1 / 5.0 / **85.9%**. Without the three bad samples of point 6, the current model gives B73 96.6 / 3.0 / 0.4%, SEG 5.7 / 85.8 / 8.5%, DONOR 1.7 / 3.1 / 95.2% (the comparison of the models in 2.6.6 uses this set).
+Percentages are of the clearly called tracts only (B73 69%, SEG 45%, DONOR 50% of all tracts ≥ 1 Mb; the rest have too few informative SNPs). They measure agreement where the targeted panel is informative, not the accuracy of every tract. All 83 samples. Without the three bad samples of point 6: B73 96.6 / 3.0 / 0.4%, SEG 5.7 / 85.8 / 8.5%, DONOR 1.7 / 3.1 / 95.2% (the comparison in 2.6.6 uses this set).
 
 1. **Only 9% of the candidate SNPs pass our check.** Of the 84,813 sites, only 7,666 are homozygous for the alternative allele in any sample; the others were left out because they could not be confirmed this way. Most of them carry the alternative allele at a fraction of about 0.3, at random sites, in single samples; they are not shared by relatives and do not come from another sample in the batch. Many look like errors made early in the amplification and then copied, but a site that fails the check is not necessarily an error (a real SNP can be rare, or heterozygous in every sample that has it). On all sites, about 1 in 100 sites inside our B73 tracts looked like donor alleles, and a first comparison called 74% of our B73 tracts "AB". On real SNPs the contrast is clean: donor alleles at 0.6 per 100 SNPs in our B73 tracts, 16.5 in SEG and 25.3 in DONOR (figure, a).
 2. **Our B73 calls agree.** 95.9% of our B73 tracts (97.5% of their length) show no teosinte, and 0.8% are homozygous teosinte. So large DONOR tracts are not being called B73, and the low DONOR share (section 2.8.1) is not explained by that error.
-3. **Our DONOR calls agree.** 89% of our DONOR tracts (90% of their length) look homozygous teosinte (86% in the first model), with a median donor allele fraction of **1.00** in the carrier tracts (figure, c); the targeted sequencing has no bias towards the B73 allele. Most of the 7% that look AA (21 of 27) come from the three bad samples in point 6; without them, 95% of DONOR tracts are BB.
-4. **Our SEG tracts look intermediate.** 83% of our SEG tracts are AB-like (71% in the first model), with a median donor allele fraction of **0.45** (300 carrier tracts; figure, c). SEG tracts where the plant carries no teosinte fell from 21% to 9%. This is close to the 0.455 measured from the k-mers inside SEG pools (Check 1 in 2.8.1), so two independent methods give the same number.
+3. **Our DONOR calls agree.** 89% of our DONOR tracts (90% of their length) look homozygous teosinte, with a median donor allele fraction of **1.00** in the carrier tracts (figure, c); the targeted sequencing has no bias towards the B73 allele. Most of the 7% that look AA (21 of 27) come from the three bad samples in point 6; without them, 95% of DONOR tracts are BB.
+4. **Our SEG tracts look intermediate.** 83% of our SEG tracts are AB-like, with a median donor allele fraction of **0.45** (300 carrier tracts; figure, c). 9% of SEG tracts show no teosinte (18% with assembly DONOR levels and all B73 k-mers; 2.6.6). This is close to the 0.455 measured from the k-mers inside SEG pools (Check 1 in 2.8.1), so two independent methods give the same number.
 5. **Missed introgressions are rare.** Inside our B73 tracts, 176 of 20,730 windows of 2 Mb (in 55 samples) carry more donor alleles than noise allows, against about 21 expected by chance. That is under 1% of the B73-called genome. Their median donor allele fraction is 0.37, so they are short intermediate (SEG-like) pieces at most, not missed DONOR.
 6. **Three samples are bad and explain most mismatches:**
    - `Zv0480_P3_P2_P1211` is **contaminated**: 53% of its stray donor alleles (inside our B73 tracts) are homozygous-donor sites of `Zx0550_P4_P3_P5311`, a *mexicana* sample. This explains why its DONOR regions show intermediate fractions (mean 0.44).
    - `Zx0090_P2_P5_P1111` and `Zx0160_P2_P4_P1111` look like **sample swaps or wrong plants**: 8 and 10 of their DONOR tracts show no teosinte at all. Their targeted-sequencing DNA does not seem to come from the pool we sequenced.
-7. **The remaining error: some SEG tracts between two DONOR tracts are DONOR.** In the targeted sequencing (three bad samples left out), SEG tracts that lie between two DONOR tracts are BB in **57%** of cases (17 of 30 clearly called), against 6.5% for SEG tracts next to one DONOR tract and 2.1% for SEG tracts with no DONOR neighbour (4 of 195). This happens only in *parviglumis* (4 of 8) and *mexicana* (13 of 19); for *diploperennis*, *huehuetenangensis* and *luxurians* none of these tracts is BB. In the first model the same check gave 47% (18 of 38): the current model removed 8 of these tracts, but mostly correct ones, so the share of errors among the rest went up. These tracts are now 0.30% of the genome (4.8% of all SEG; median 1.6 Mb), against 0.38% before. If about half of them are DONOR, DONOR rises from 4.93% to about 5.1% and SEG falls from 6.24% to about 6.1%, which does not change the DONOR deficit in 2.8.1.
+7. **The remaining error: some SEG tracts between two DONOR tracts are DONOR.** In the targeted sequencing (three bad samples left out), SEG tracts that lie between two DONOR tracts are BB in **57%** of cases (17 of 30 clearly called), against 6.5% for SEG tracts next to one DONOR tract and 2.1% for SEG tracts with no DONOR neighbour (4 of 195). This happens only in *parviglumis* (4 of 8) and *mexicana* (13 of 19); for *diploperennis*, *huehuetenangensis* and *luxurians* none of these tracts is BB. With assembly DONOR levels and all B73 k-mers the same check gave 47% (18 of 38): the two steps of 2.6.6 removed 8 of these tracts, but mostly correct ones, so the share of errors among the rest went up. These tracts are now 0.30% of the genome (4.8% of all SEG; median 1.6 Mb), against 0.38% before. If about half of them are DONOR, DONOR rises from 4.93% to about 5.1% and SEG falls from 6.24% to about 6.1%, which does not change the DONOR deficit in 2.8.1.
 
-   **The errors sit at the same places in many pools.** Counting, for every 1-Mb bin, the pools whose SEG tract between two DONOR tracts covers it, the first model had four hotspots: chr6 21–23 Mb (48 pools), chr1 297 Mb (28), chr7 54–65 Mb (28) and chr3 75–78 Mb (19). This is what led to the current model (2.6.6), which brings them to 9, 11, 14 and 8 pools:
+   **The errors sit at the same places in many pools.** Counting, for every 1-Mb bin, the pools whose SEG tract between two DONOR tracts covers it, with assembly DONOR levels and all B73 k-mers there were four hotspots: chr6 21–23 Mb (48 pools), chr1 297 Mb (28), chr7 54–65 Mb (28) and chr3 75–78 Mb (19). This is what led to the two steps of 2.6.6, which bring them to 9, 11, 14 and 8 pools:
    - **chr6 and chr1: the DONOR level was wrong.** There, our donors keep more of the B73 k-mers than the assembly plants, so a DONOR window read like SEG. The DONOR level learned from all our pools removes most of these errors.
    - **chr7 and chr3: too little contrast.** There, the teosinte keeps 61–78% of the B73 k-mers, so with all B73 k-mers counted a DONOR window scores almost like a SEG window (about one noise unit apart in *parviglumis* chr7). Counting only the informative k-mers raised the contrast (*parviglumis* chr7: 1.2 → 2.6) and turned most chr7 islands into DONOR (e.g. `Zv0210_P1_P5_P1111` chr7 at 54–66 Mb, in the gallery below). ***parviglumis* chr3 75–78 Mb is not fixed:** its islands read halfway between DONOR and SEG in every count, all B73 k-mers or informative only, so the problem there is not contrast; it may be family-specific teosinte haplotypes that share these k-mers with B73. The targeted sequencing at chr3 70–81 Mb is mixed (BB in some plots, AA or AB in others; most of them *mexicana*).
    - None of the QTL that hold in the joint model lies in these four regions.
 
    **Contrast: how far apart DONOR and SEG are in one window.** The HMM separates DONOR from SEG by the gap between their expected scores, about (1 − d_w) × g(½), where d_w is the share of B73 k-mers the teosinte keeps in the window. Divided by the window's noise, this gives the contrast: how many noise units apart the two states are. Measured from our pools (windows with at least 5 pools called DONOR; median, and share of windows below 3):
 
-   | Taxon | All B73 k-mers | Current model (switched windows: informative k-mers) |
+   | Taxon | All B73 k-mers | This model (switched windows: informative k-mers) |
    |---|---|---|
    | *diploperennis* | 4.2 (9% below 3) | 4.7 (3%) |
    | *luxurians* | 4.3 (15%) | 4.8 (7%) |
@@ -881,8 +880,8 @@ Percentages are of the clearly called tracts only (B73 69%, SEG 45%, DONOR 50% o
 
    - Agreement is similar in every taxon: B73 94–99%, DONOR 91–100%, SEG 77–93%.
    - **The SEG/DONOR mix-ups are almost all in *parviglumis* and *mexicana*:** SEG tracts that look BB (7 and 20; 15 of them in Mesa Central) and DONOR tracts that look AB (4 and 6). These are the taxa with the lowest contrast and the SEG islands of point 7.
-   - ***huehuetenangensis* and *luxurians* have neither.** This bears on τ_w (2.6.1): each of these taxa has only one assembly, so the uncertainty of its DONOR level cannot be measured from assemblies and is set to 0. In the current model their DONOR level is learned from our own pools (2.6.6), so τ_w only has to cover differences between our donor families around it. If τ_w = 0 still made the model too sure of that level, SEG and DONOR would get mixed up: some of their DONOR tracts would look AB-like, or some SEG tracts BB-like. Neither happens. The numbers are small (16 DONOR and 23 SEG tracts in 9 samples), so this shows no sign of the problem rather than ruling it out.
-   - **Sensitivity run: τ raised to *parviglumis*' τ** (the widest; `new_model/tau_run/`, outputs in `data/tau_run/zv_floor/`). The current model's HMM was rerun on 25 pools (5 per taxon; those with the most targeted-sequencing tracts, plus 2 more Zh pools), with every taxon's assembly τ raised to at least Zv's. Zh and Zl go from τ = 0 to Zv's τ; Zv itself is unchanged, which checks that the rerun is exact (it is: 0 windows change).
+   - ***huehuetenangensis* and *luxurians* have neither.** This bears on τ_w (2.6.1): each of these taxa has only one assembly, so the uncertainty of its DONOR level cannot be measured from assemblies and is set to 0. Their DONOR level is learned from our own pools (2.6.6), so τ_w only has to cover differences between our donor families around it. If τ_w = 0 still made the model too sure of that level, SEG and DONOR would get mixed up: some of their DONOR tracts would look AB-like, or some SEG tracts BB-like. Neither happens. The numbers are small (16 DONOR and 23 SEG tracts in 9 samples), so this shows no sign of the problem rather than ruling it out.
+   - **Sensitivity run: τ raised to *parviglumis*' τ** (the widest; `new_model/tau_run/`, outputs in `data/tau_run/zv_floor/`). The HMM was rerun on 25 pools (5 per taxon; those with the most targeted-sequencing tracts, plus 2 more Zh pools), with every taxon's assembly τ raised to at least Zv's. Zh and Zl go from τ = 0 to Zv's τ; Zv itself is unchanged, which checks that the rerun is exact (it is: 0 windows change).
 
      | Taxon | Pools | Windows that change | DONOR share, current → floor | Targeted: SEG AB-like | Targeted: DONOR BB-like |
      |---|---|---|---|---|---|
@@ -1029,7 +1028,7 @@ Same three rows and the same "ours · data look" labels as above, for every chro
 **How to read the SNPs:** they come in clusters (one targeted region each, often 5–30 SNPs), so points stack at one position; and SNPs of one region can differ (for example 0.3 and 0.95 at chr4 186.9 Mb), probably from amplification bias. So a region is read from all its SNPs together, and a tract from its median (as in the table).
 
 **One plant or a bulk?** This matters only for the SEG row. The DNA is most probably a bulk (see Data), which is also what the data say:
-- **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 9 : 83 : 9 among the clearly called tracts (21 : 71 : 8 in the first model), which would mean both homozygotes are strongly depleted. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.36–0.52).
+- **If it is one plant of the plot,** a SEG plot's plant should be AA : AB : BB = 25 : 50 : 25 (child of an AB mother). We see 9 : 83 : 9 among the clearly called tracts, which would mean both homozygotes are strongly depleted. An AB plant's donor allele fraction should also centre on 0.5; we see 0.45 (middle half of the well-covered tracts 0.36–0.52).
 - **If it is a bulk of several plants,** the SEG fraction should be about 0.46, which is what we see, and nearly all SEG tracts would look intermediate (AB), which is also what we see.
 - Single samples point the same way: in good example 4 (`Zv0480_P3_P1_P1211`, chr5) the fraction sits between AB and BB at amplicon after amplicon, which one plant cannot do.
 - In a bulk, "AB-like" is a mixture of plants, not one heterozygous plant: the SEG row then checks that the plot segregates and how much donor DNA it carries (0.45), not the plants' genotypes. The B73 and DONOR rows hold either way (every plant of such a plot is AA, or BB); they are the main validation.
@@ -1103,7 +1102,7 @@ So Chalco differs from the other three races in its k-mer content, as expected f
 
 ![The four mexicana races](data/introgression_spread/sourmash/pca/mexicana_races.png)
 
-Finally, the k-mer profile gives a second measure of the HMM's donor share. The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads, so the check is complementary rather than fully independent. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.97 (Zh), 0.97 (Zl), 0.93 (Zv) and 0.98 (Zx) (1,266 pools, NOISY pools left out; the first model gave 0.91–0.98).
+Finally, the k-mer profile gives a second measure of the HMM's donor share. The HMM measures the donor share from *B73* k-mers that are missing; sourmash measures it from *teosinte* k-mers that are present (f_teo). They use different k-mers from the same reads, so the check is complementary rather than fully independent. After correcting f_teo for sequencing depth (residual of log f_teo on log sketch size, within taxon), the two agree closely across pools: Spearman ρ = 0.91 (Zd), 0.97 (Zh), 0.97 (Zl), 0.93 (Zv) and 0.98 (Zx) (1,266 pools, NOISY pools left out).
 
 ![Teosinte k-mers vs the HMM donor share](data/introgression_fix1/sourmash/pca/kmer_vs_hmm.png)
 
@@ -1118,7 +1117,7 @@ Output in `${D32}` (copied to `data/introgression_fix1/sourmash/`): `kmer_taxon_
 
 ### 2.11 Noisy pools and resequencing
 
-119 of the 1,385 donor pools are flagged **NOISY** (σ > 0.15; 93 in the first model). They are left out of the results above. Almost all of them are on three plates with low sequencing depth:
+119 of the 1,385 donor pools are flagged **NOISY** (σ > 0.15). They are left out of the results above. Almost all of them are on three plates with low sequencing depth:
 
 | Plate | Pools | NOISY | Median σ | Mean single-copy k-mers per pool | NOISY by taxon |
 |---|---|---|---|---|---|
@@ -1139,7 +1138,7 @@ Output in `${D32}` (copied to `data/introgression_fix1/sourmash/`): `kmer_taxon_
 | PN16 | 95 | 0 | 0.088 | 214 M | — |
 | PN17 | 96 | 1 | 0.085 | 217 M | Zx 1 (PN17_SID1585; see below) |
 
-**Why 26 more than in the first model.** In the windows that switch to informative k-mers (2.6.6) there are fewer k-mers, so a pool's σ rises a little. 25 *parviglumis* pools that sat just under the cut-off (σ 0.140–0.150) moved just over it (0.150–0.160). One *mexicana* pool, PN17_SID1585, rose from 0.077 to 0.226, which points to a problem with its recount rather than its reads; it is to be checked.
+**Why many *parviglumis* pools.** In the windows that switch to informative k-mers (2.6.6) there are fewer k-mers, so a pool's σ rises a little: 25 *parviglumis* pools sit just over the cut-off (σ 0.150–0.160; 0.140–0.150 with all B73 k-mers counted). One *mexicana* pool, PN17_SID1585, has σ 0.226 here but 0.077 with all B73 k-mers counted, which points to a problem with its informative-k-mer recount rather than its reads; it is to be checked.
 
 **Recommendation: resequence PN11, PN13 and PN15.**
 - **Depth:** PN13 and PN15 have about half the k-mers of a typical plate (109–115 M vs ~200 M), and PN11 about 75%. On PN11, 39% of pools are NOISY, on PN15 39% and on PN13 36%.
@@ -1156,7 +1155,7 @@ The full statistics and the per-plate table are in [`final_script/README.md`](fi
 
 ### 2.12 Interactive figures (step 23)
 
-[`data/introgression_fix1/introgression_viewer.html`](data/introgression_fix1/introgression_viewer.html) is one self-contained page with every pool's chromosome plot from the current model ([download it](https://raw.githubusercontent.com/nirwan1265/BZea_genotyping/main/data/introgression_fix1/introgression_viewer.html) and open it in a browser). The first model's page is `final_script/figures/introgression_viewer_spread.html`.
+[`data/introgression_fix1/introgression_viewer.html`](data/introgression_fix1/introgression_viewer.html) is one self-contained page with every pool's chromosome plot ([download it](https://raw.githubusercontent.com/nirwan1265/BZea_genotyping/main/data/introgression_fix1/introgression_viewer.html) and open it in a browser).
 - **Drop-down menus:** taxon → F1 family → "All pools" or one pool. There is also a search box for a pool ID.
 - **Family view:** each chromosome shows one track per pool of the F1 family, so the segments the pools share line up.
 - **Pool view:** the 10 chromosomes of one pool.
@@ -1170,12 +1169,12 @@ To view it, download the file and open it in a browser. GitHub shows HTML files 
 
 **Short tracts aren't proven yet.** The k-mer HMM calls tracts down to about 400 kb. Short tracts are expected from the crossing scheme ([Tract lengths](#265-how-long-are-the-tracts)), and they are shared by relatives as often as long tracts (below), but single short calls haven't been checked with independent data.
 
-**SEG vs DONOR is checked with targeted sequencing** ([2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)): among the tracts it could classify, our DONOR tracts look homozygous teosinte (89%; 95% without the three bad samples), our SEG tracts intermediate (83% AB-like, donor allele fraction 0.45) and our B73 tracts clean (96%). Still open: tracts shorter than 1 Mb, which were not compared, and the tracts the targeted panel could not classify (about half of SEG and DONOR). The targeted DNA is most probably a bulk, so the SEG row checks segregation, not single-plant genotypes. The check found one systematic error of the first model, SEG tracts between two DONOR tracts that are really DONOR, recurring at four places; the current model (2.6.6) removes most of it, but 57% of the remaining SEG tracts between two DONOR tracts are still BB, and *parviglumis* chr3 75–78 Mb is not fixed. The current model also has slightly more short tracts (1.6 instead of 1.3 tracts under 1 Mb per pool), which are not checked.
+**SEG vs DONOR is checked with targeted sequencing** ([2.9.1](#291-independent-check-targeted-sequencing-of-83-plots)): among the tracts it could classify, our DONOR tracts look homozygous teosinte (89%; 95% without the three bad samples), our SEG tracts intermediate (83% AB-like, donor allele fraction 0.45) and our B73 tracts clean (96%). Still open: tracts shorter than 1 Mb, which were not compared, and the tracts the targeted panel could not classify (about half of SEG and DONOR). The targeted DNA is most probably a bulk, so the SEG row checks segregation, not single-plant genotypes. The check found one systematic error, SEG tracts between two DONOR tracts that are really DONOR, recurring at four places; the two steps of 2.6.6 remove most of it, but 57% of the remaining SEG tracts between two DONOR tracts are still BB, and *parviglumis* chr3 75–78 Mb is not fixed. Tracts under 1 Mb (1.6 per pool) are not checked.
 
 **The DONOR level still starts from the assemblies.** The model needs to know how much of each window's B73 k-mers a teosinte genome keeps (d_w). The best source would have been **the actual donor parents** of our lines, sequenced. We don't have them, so d_w starts from teosinte assemblies from MaizeGDB (PanAnd), other plants of the same taxa, and is then learned from our pools (2.6.6). Limits that remain:
 - One level per taxon and window: within a taxon, families carry different teosinte haplotypes (the per-accession levels tried in `new_model/` did not do better, and *parviglumis* chr3 75–78 Mb may be such a case).
 - The informative k-mers are defined by the assemblies (missing from all of them); k-mers that our donors lack but an assembly carries are not used.
-- In switched windows, the DONOR level is learned from pools the current model's first steps called DONOR, so it is partly circular; the targeted sequencing, which is independent, says the result is better.
+- In switched windows, the DONOR level is learned from pools that an earlier run called DONOR, so it is partly circular; the targeted sequencing, which is independent, says the result is better.
 - Zv and Zx still switch between SEG and DONOR about twice as often as the other taxa.
 - *huehuetenangensis* and *luxurians* have one assembly each, so their τ_w (the uncertainty of the DONOR level) cannot be measured and is 0. A rerun of 25 pools with τ raised to *parviglumis*' τ changed 0.27% (Zh) and 0.06% (Zl) of their windows and not their agreement with the targeted sequencing (2.9.1, point 8), so this does not drive their calls.
 - Zm (landraces) can't be done yet, because it needs a maize-based donor level (e.g. from NAM founder assemblies).
@@ -1189,7 +1188,7 @@ The relatives are read from the pedigree name. For example, in `Zv.0200_P3_P2_P1
 
 So `Zv.0200_P3_P2_P1.1.1.1`, `Zv.0200_P3_P2_P1.2.1.1` and `Zv.0200_P3_P2_P1.3.1.1` all descend from the same BC2 plant, `Zv.0200_P3_P2_P1`, through different selfed lines.
 
-The check works like this (`final_script/24c_relatives_check.py`; current model, 1,266 pools, 19,144 tracts; SEG and DONOR counted together as "introgression"):
+The check works like this (`final_script/24c_relatives_check.py`; 1,266 pools, 19,144 tracts; SEG and DONOR counted together as "introgression"):
 1. Take one tract in one pool.
 2. Take a group of other pools with a given relationship to it, e.g. all pools from the same BC2 plant.
 3. Count how many of those pools also have an introgression somewhere inside the tract.
@@ -1197,20 +1196,19 @@ The check works like this (`final_script/24c_relatives_check.py`; current model,
 
 The table gives the result as a percentage: for example, 31.8% means that for a short tract in one pool, on average 31.8% of the other pools from the same BC2 plant have an introgression in the same place.
 
-| The other pools | Short tracts (< 10 Mb) | Long tracts (≥ 10 Mb) | First model: short | First model: long |
-|---|---|---|---|---|
-| Same taxon, other accession (unrelated: the baseline) | 15.7% | 20.7% | 16.0% | 20.8% |
-| Same accession, other F1 plant | 17.0% | 21.0% | 17.0% | 21.3% |
-| Same F1 plant, other BC1 plant | 16.3% | 20.8% | 16.5% | 21.0% |
-| Same BC1 plant, other BC2 plant | 17.4% | 23.8% | 18.1% | 24.2% |
-| **Same BC2 plant** | **31.8%** | **40.6%** | **31.9%** | **40.4%** |
+| The other pools | Short tracts (< 10 Mb) | Long tracts (≥ 10 Mb) |
+|---|---|---|
+| Same taxon, other accession (unrelated: the baseline) | 15.7% | 20.7% |
+| Same accession, other F1 plant | 17.0% | 21.0% |
+| Same F1 plant, other BC1 plant | 16.3% | 20.8% |
+| Same BC1 plant, other BC2 plant | 17.4% | 23.8% |
+| **Same BC2 plant** | **31.8%** | **40.6%** |
 
-(Tables: `data/introgression_fix1/checks/relatives_check.tsv`, `data/introgression_spread/checks/relatives_check.tsv`. The numbers in `old_model_README.md` (31.4% / 43.8% for the same BC2 plant) came from an earlier version of this count that was not kept; the first-model columns here are recounted with step 24c, so the two models are compared with the same rule.)
+(Table: `data/introgression_fix1/checks/relatives_check.tsv`. With assembly DONOR levels and all B73 k-mers every row is within 0.7 points: `data/introgression_spread/checks/relatives_check.tsv`.)
 
 - **The baseline is not zero.** Introgressions are common and some genome regions carry them in many pools, so even unrelated pools share some by chance. That's why every row is compared with the baseline, not with zero.
 - **Pools from the same BC2 plant share tracts about twice as often as unrelated pools** (31.8% vs 15.7% for short tracts, 40.6% vs 20.7% for long tracts).
 - **Short tracts rise by the same factor as long tracts.** If the short tracts were mostly noise, they would not be inherited, and their sharing would stay at the baseline even among close relatives. Since they rise like the long tracts, the short tracts are inherited like the long ones. This is pedigree-consistency evidence, not proof that each call is right: it doesn't tell how many calls are false, or how genome position and donor–assembly similarity affect sharing.
-- **The current model's tracts are inherited as well as the first model's.** Every row is within 0.7 points of the first model, although the current model has slightly more short tracts (1.6 instead of 1.3 under 1 Mb per pool; 2.6.5).
 - **Pools from the same accession but a different BC2 plant share hardly more than the baseline** (17.0% vs 15.7%, 21.0% vs 20.7%). If the short tracts were an artifact of the accession's donor plant being different from the teosinte assemblies, they would appear at the same places in every pool of that accession. They don't, so that artifact is not what makes them.
 - **Open question:** pools from the same BC1 plant but different BC2 plants should also share more than the baseline, about half the increase seen for the same BC2 plant, because each BC2 plant inherits about half of its BC1 parent's donor segments. They share only a little more (23.8% vs 20.7% for long tracts: about 15% of the increase seen for the same BC2 plant, not half). Why is not known yet.
 
@@ -1227,7 +1225,7 @@ The table gives the result as a percentage: for example, 31.8% means that for a 
    - **DONOR tract:** all plants BB.
    - **B73 region:** all plants AA.
 4. **Donor plants.** If seed or tissue of the donor parents (or of the same accessions) can be found, 10–20x short-read sequencing gives their own d_w directly, and their own informative k-mers. No assembly is needed.
-5. **Teosinte-side k-mers.** Counting k-mers present in the teosinte but missing from B73 (placed on B73 by alignment) would add signal on the DONOR side, where the current model only sees B73 k-mers going missing; this could help where contrast is still low (e.g. *parviglumis* chr3).
+5. **Teosinte-side k-mers.** Counting k-mers present in the teosinte but missing from B73 (placed on B73 by alignment) would add signal on the DONOR side, where the model only sees B73 k-mers going missing; this could help where contrast is still low (e.g. *parviglumis* chr3).
 6. **Noisy plates.** Resequence PN11, PN13 and PN15.
 
 ---
@@ -1301,12 +1299,12 @@ A kinship matrix that includes the tested region already "contains" the QTL: lin
 
 In a backcross population this matters a lot, because tracts are long and few loci carry most of the donor relatedness.
 
-The table compares the two choices of K on the same data (current model: DTS, 1,260 plots, taxon fixed; first model in brackets), using **λ_GC** (the genomic inflation factor; Devlin & Roeder 1999). λ_GC is the median test statistic over all windows divided by the median expected if no window had any effect. λ_GC = 1 means the test statistics look as expected under no effect; above 1, they are larger than expected (inflated); below 1, smaller (deflated, the model is too conservative). In most GWAS a λ_GC well above 1 is read as a warning of uncorrected population structure.
+The table compares the two choices of K on the same data (DTS, 1,260 plots, taxon fixed), using **λ_GC** (the genomic inflation factor; Devlin & Roeder 1999). λ_GC is the median test statistic over all windows divided by the median expected if no window had any effect. λ_GC = 1 means the test statistics look as expected under no effect; above 1, they are larger than expected (inflated); below 1, smaller (deflated, the model is too conservative). In most GWAS a λ_GC well above 1 is read as a warning of uncorrected population structure.
 
 | K | λ_GC | Best window chr10 (ZmCCT10 region, 94–98 Mb) | Best window chr5 (~221.7 Mb) |
 |---|---|---|---|
-| **LOCO** | 4.10 (3.97) | −log10 p **9.1**, +1.0 day per teosinte copy (9.1) | **9.4** (9.7) |
-| Whole genome | 0.59 (0.65) | 2.7 (2.9) | 6.0 (6.1) |
+| **LOCO** | 4.10 | −log10 p **9.1**, +1.0 day per teosinte copy | **9.4** |
+| Whole genome | 0.59 | 2.7 | 6.0 |
 
 With the whole-genome K, the chr10 flowering signal almost disappears and λ_GC falls **below 1**: the model over-corrects. LOCO is the fix.
 
@@ -1435,7 +1433,7 @@ The support interval (the windows within 1.5 −log10 p of the peak) says where 
 
 **What limits the resolution.** Windows that lie inside the same tract in every pool have the same dosage in every pool, so no method can split them: they share the probability equally. The resolution is set by where the tracts of different pools end inside the interval, not by the 100-kb window size. Calling SNPs instead of counting k-mers would not change this, because every SNP inside a tract carries the same information as its window.
 
-**Result for the 81 QTL that hold in the joint model** (medians; first model, 78 QTL: 4.65 Mb / 120 genes, 3.65 Mb / 101 genes, 1.2 Mb / 30 genes):
+**Result for the 81 QTL that hold in the joint model** (medians):
 
 | | Width | Genes |
 |---|---|---|
@@ -1479,7 +1477,7 @@ Scripts: `final_script/33a_qtl_gene_tables.py` (genes per QTL), `33_susie_finema
 
 ### 3.5 How to run
 
-The current model's calls are made by `new_model/fix1/` (steps fx1_1 to fx1_6; see its README). Everything downstream reads them when `MODEL=fix1` is set (`final_script/config.sh`); without it, the first model's calls are used. No script activates an environment: jobs use the env that is active when you submit.
+The calls are made by `new_model/fix1/` (steps fx1_1 to fx1_6; see its README; the folder and setting names are historical). Everything downstream reads them when `MODEL=fix1` is set (`final_script/config.sh`); without it, the scripts read the earlier version's calls (`data/introgression_spread/`). No script activates an environment: jobs use the env that is active when you submit.
 
 ```bash
 # Cluster, from new_model/fix1/ (login node):
@@ -1536,7 +1534,7 @@ All results are in `data/introgression_fix1/` (figures in `figures/fix1/`):
 
 ![DTS: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_DTS.png)
 
-Two QTL pass the 1,000-permutation threshold (−log10 p > 5.50), and both hold in the joint model (Bonferroni over 2 QTL: −log10 p > 1.60). They are the same two QTL as in the first model.
+Two QTL pass the 1,000-permutation threshold (−log10 p > 5.50), and both hold in the joint model (Bonferroni over 2 QTL: −log10 p > 1.60).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
@@ -1605,19 +1603,19 @@ Results: `data/introgression_fix1/assoc_gridlmm_spats_y2023`, `_y2025` and `join
 
 ![DTA: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_DTA.png)
 
-Six QTL pass the threshold (−log10 p > 5.00); three hold in the joint model (Bonferroni over 6: −log10 p > 2.08). The first model had three, all holding; two of them are the same here (chr5 221.8 Mb and *ZmCCT10*), and the third (chr9 10.9 Mb, *MADS74*) is still above the scan threshold but no longer holds once the new chr9 1.4 Mb QTL is in the model.
+Six QTL pass the threshold (−log10 p > 5.00); three hold in the joint model (Bonferroni over 6: −log10 p > 2.08). chr9 10.9 Mb (*MADS74*) is above the scan threshold but does not hold once the chr9 1.4 Mb QTL is in the model.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
 | **Q6 chr10 101.2 Mb** | Zm00001eb418700 (ZmCCT10) | 0.009 (**top**) | +0.77 d | 4.4 | yes | 1.9 (no) | No significant difference between taxa (Zd +1.07, Zv +0.44, Zx +0.54). Same region as DTS Q2 (ZmCCT10 at 96.2 Mb is inside the interval, 93.0–106.0 Mb); the strongest DTA scan peak (9.4). |
-| **Q1 chr1 84.5 Mb** | — | 0.03 (best window; top windows 75.3–85.8 Mb, 55 genes) | +0.71 d | 5.3 | yes | 17.2 (yes) | New in this model. Differs strongly between taxa: almost all *luxurians* (Zl +3.47; Zh +0.96, Zv +0.59, Zx +0.16, Zd −0.09). Suggestive for DTS (5.3). |
+| **Q1 chr1 84.5 Mb** | — | 0.03 (best window; top windows 75.3–85.8 Mb, 55 genes) | +0.71 d | 5.3 | yes | 17.2 (yes) | Differs strongly between taxa: almost all *luxurians* (Zl +3.47; Zh +0.96, Zv +0.59, Zx +0.16, Zd −0.09). Suggestive for DTS (5.3). |
 | **Q2 chr5 221.8 Mb** | Zm00001eb257680 (HDR1-like) | 0.429 (**top**) | +0.62 d | 5.0 | yes | 11.2 (yes) | Differs between taxa (Zd +1.48, Zl +2.95, Zv +0.14, Zx +0.20). Same QTL as DTS Q1 (Zm00001eb257680), mostly *luxurians* and *diploperennis*. It delays pollen shedding less than silking (DTS +1.00 d), so it also lengthens ASI. |
 | Q4 chr9 10.9 Mb | Zm00001eb372960 (MADS74) | 0.011 (CS) | −0.32 d | 1.3 | yes | 0.5 (no) | Teosinte flowers earlier in every taxon (Zd −0.67, Zh −0.27, Zl −1.40, Zv −0.38, Zx −0.13). Above the scan threshold (5.5) but does not hold in the joint model; it shares tracts with Q3 (chr9 1.4 Mb, also earlier, also not holding). |
 
 **Candidate genes:**
 - **Q2, chr5 221.8 Mb, shared with DTS Q1:** Zm00001eb257680, the ortholog of rice *HEADING DATE REPRESSOR 1* (see DTS). *Fine-mapping (3.4.3): PIP 0.429 (the highest in the interval); in the top windows (10 genes).*
 - **Q6, chr10 101.2 Mb, the DTS Q2 region:** Zm00001eb418700, *ZmCCT10* (see DTS). *Fine-mapping (3.4.3): PIP 0.009; in the top windows, but they are wide (94.1–104.6 Mb, 78 genes), so fine-mapping does not separate its genes.*
-- **Q4, chr9 10.9 Mb (above the scan threshold for DTA, suggestive for DTS; does not hold in the joint model):** Zm00001eb372960 (*MADS74*; 8.36 Mb, inside the support interval 6.1–13.7 Mb). The teosinte allele makes plants shed pollen earlier, alike in every taxon. *MADS74* is an *SVP*-like MADS-box transcription factor: its Arabidopsis relative in the Gramene gene tree is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540), and its annotation names the rice SVP-like MADS-box transcription factors 22 and 55. *SVP* is a flowering repressor, so an earlier-flowering teosinte allele fits a weaker repressor. In the first model this QTL held (joint −log10 p 5.6); here it does not (1.3), so it is a weaker candidate than before. *Fine-mapping (3.4.3): PIP 0.011; in the 95% credible set, but outside the top windows (9.5–13.7 Mb, 102 genes).*
+- **Q4, chr9 10.9 Mb (above the scan threshold for DTA, suggestive for DTS; does not hold in the joint model):** Zm00001eb372960 (*MADS74*; 8.36 Mb, inside the support interval 6.1–13.7 Mb). The teosinte allele makes plants shed pollen earlier, alike in every taxon. *MADS74* is an *SVP*-like MADS-box transcription factor: its Arabidopsis relative in the Gramene gene tree is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540), and its annotation names the rice SVP-like MADS-box transcription factors 22 and 55. *SVP* is a flowering repressor, so an earlier-flowering teosinte allele fits a weaker repressor. It does not hold in the joint model (joint −log10 p 1.3), so it is a weaker candidate. *Fine-mapping (3.4.3): PIP 0.011; in the 95% credible set, but outside the top windows (9.5–13.7 Mb, 102 genes).*
   - SVP delays flowering by repressing the florigen gene *FT*, binding directly to the CArG motifs in its sequence. It also links flowering to temperature: plants flower later at 16 °C than at 23 °C, but *svp* mutants flower at almost the same time at both (Lee et al. 2007). At 16 °C, SVP switches on a second repressor, *TEMPRANILLO2*, which also represses *FT* and *TWIN SISTER OF FT* (Marín-González et al. 2015).
   - Natural alleles of *SVP* change flowering time: the Arabidopsis flowering QTL *FAQ1* is *SVP*, where one amino-acid change makes a loss-of-function, early-flowering allele, and how large its effect is depends on the genetic background (Méndez-Vigo et al. 2013).
   - *mads73* (ASI Q9, chr5 217.8 Mb) is a second *SVP*-like gene among our QTL.
@@ -1643,42 +1641,41 @@ Every gene in each interval, with its GO annotation, the k-mer GWAS −log10 p o
 
 ![ASI: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_ASI.png)
 
-ASI = anthesis–silking interval, DTS − DTA. 10 regions, 6 hold in the joint model (Bonferroni over 10: −log10 p > 2.30). Many other chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. Five of the six are the QTL of the first model; the sixth, chr4 67.0 Mb, replaces the first model's chr4 52.0 Mb QTL (*tga1*), as the lead of the same long chr4 region (below).
+ASI = anthesis–silking interval, DTS − DTA. 10 regions, 6 hold in the joint model (Bonferroni over 10: −log10 p > 2.30). Many other chr2 and chr3 peaks drop in the joint model: they share one signal through linked tracts. chr4 67.0 Mb leads the long chr4 region that also holds *tga1* (below).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
 | **Q10 chr7 165.6 Mb** | Zm00001eb323880 (bhlh90) | 0.083 (CS) | -0.36 d | 13.5 | yes | 0.3 (no) | No significant difference between taxa (Zd -0.47, Zl -0.57, Zv -0.36, Zx -0.30). The strongest ASI QTL: teosinte shortens the interval. |
 | **Q9 chr5 217.8 Mb** | Zm00001eb255670 (mads73) | 0.273 (**top**) | +0.34 d | 9.1 | yes | 3.4 (yes) | Differs between taxa (Zl +1.03, Zv +0.24, Zx +0.26). Lengthens ASI, mostly *luxurians*; next to the DTS/DTA chr5 221.8 Mb QTL. |
 | **Q1 chr1 4.8 Mb** | Zm00001eb001510 (remorin) | 0.050 (CS) | +0.25 d | 6.5 | yes | 0.0 (no) | No significant difference between taxa (Zd +0.18, Zh +0.22, Zl +0.14, Zv +0.32, Zx +0.23). Lengthens ASI. |
-| **Q7 chr4 67.0 Mb** | — | 0.049 (best window; top windows 66.9–68.0 Mb, 8 genes) | -0.29 d | 5.2 | yes | 0.2 (no) | No significant difference between taxa (Zh -0.52, Zl -0.96, Zv -0.37, Zx -0.23; Zd +0.03). Shortens ASI. The lead of the long chr4 region that held *tga1* in the first model. |
+| **Q7 chr4 67.0 Mb** | — | 0.049 (best window; top windows 66.9–68.0 Mb, 8 genes) | -0.29 d | 5.2 | yes | 0.2 (no) | No significant difference between taxa (Zh -0.52, Zl -0.96, Zv -0.37, Zx -0.23; Zd +0.03). Shortens ASI. The lead of the long chr4 region that also holds *tga1* (52.0 Mb, below). |
 | **Q8 chr4 206.2 Mb** | Zm00001eb201580 (ZmFKF1b) | 0.004 (CS) | -0.21 d | 4.8 | yes | 0.3 (no) | No significant difference between taxa (Zd -0.36, Zl +0.52, Zv -0.28, Zx -0.15). Shortens ASI. |
 | **Q2 chr2 26.1 Mb** | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.012 (CS); 0.015 (CS) | -0.16 d | 3.7 | yes | 0.1 (no) | No significant difference between taxa (Zd -0.17, Zh -0.51, Zl -0.16, Zv -0.20, Zx -0.13). Shortens ASI. |
 
 **Candidate genes:**
 - **Q10, chr7 165.6 Mb (the strongest ASI QTL):** Zm00001eb323880 (*bhlh90*, bHLH transcription factor 90; 165.74 Mb, in a window with −log10 p 12.6 next to the top window). MaizeGDB annotates it as the ortholog of Arabidopsis *FLOWERING BHLH 4* (Neupane et al. 2025); Gramene lists Arabidopsis *FBH3* (AT1G51140) as its closest homolog and rice *OsFBH1* / *POH1* (Os08g0506700) as its closest rice gene. In Arabidopsis the four FBH proteins bind E-boxes in the *CONSTANS* promoter and activate *CO*: their overexpression causes early flowering regardless of photoperiod, and *CO* levels drop in the *fbh* quadruple mutant (Ito et al. 2012). In rice, POH1 forms a dimer with HBP1, both bind the *Hd1* promoter and activate *Hd1*; their overexpression delays flowering by suppressing *Ehd1*, *Hd3a* and *RFT1* (Yin et al. 2023). *Fine-mapping (3.4.3): PIP 0.083 (highest window 0.30); in the 95% credible set, but outside the top windows (165.5–165.7 Mb, 4 genes).*
-- **Q9, chr5 217.8 Mb:** Zm00001eb255670 (*mads73*, MADS-box transcription factor; 217.89 Mb, in a window with −log10 p 9.5). *Fine-mapping (3.4.3): PIP 0.273 (the highest in the interval); in the top windows (217.8–218.0 Mb, 4 genes), so the fine-mapping now points to it more clearly than in the first model (0.136, 16 genes).* In its Gramene gene tree, the Arabidopsis gene is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540; also *AGL22*), a MADS-box repressor of flowering:
+- **Q9, chr5 217.8 Mb:** Zm00001eb255670 (*mads73*, MADS-box transcription factor; 217.89 Mb, in a window with −log10 p 9.5). *Fine-mapping (3.4.3): PIP 0.273 (the highest in the interval); in the top windows (217.8–218.0 Mb, 4 genes), so the fine-mapping points to it.* In its Gramene gene tree, the Arabidopsis gene is *SHORT VEGETATIVE PHASE* (*SVP*, AT2G22540; also *AGL22*), a MADS-box repressor of flowering:
   - SVP represses the florigen gene *FT* by binding the CArG motifs in its sequence. It mediates the response of flowering to ambient temperature: plants flower later at 16 °C than at 23 °C, but *svp* mutants flower at almost the same time at both temperatures (Lee et al. 2007).
   - At low temperature (16 °C), SVP also switches on another floral repressor, *TEMPRANILLO2* (*TEM2*), which represses *FT* and *TWIN SISTER OF FT* (Marín-González et al. 2015).
   - Natural variation in *SVP* changes flowering time: the Arabidopsis flowering QTL *FAQ1* is *SVP*, where a single amino-acid change makes an early-flowering allele, and its effect depends on the genetic background (Méndez-Vigo et al. 2013).
-- **Q1, chr1 4.8 Mb:** Zm00001eb001510 (remorin family protein; Zm00001d027403 in B73 v4; 4.45 Mb, in a window with −log10 p 5.8). In a maize panel, Wang et al. (2026) found a chr1 segment (v4 4,418,001–4,420,000 bp) both by GWAS for days to silking and days to tasseling and by a genetic-differentiation scan between subpopulations (Fst 0.53), and listed its seven genes, including this one, among 41 flowering-time candidates (their Table 2). In the same segment they point to a NAC transcription factor (*NAC78*, Zm00001d027395) and a histone H4 gene (Zm00001d027394). *Fine-mapping (3.4.3): PIP 0.050 (highest window 0.09); in the 95% credible set, but outside the top windows (3.9–4.8 Mb, 29 genes; in the first model it was in them).*
+- **Q1, chr1 4.8 Mb:** Zm00001eb001510 (remorin family protein; Zm00001d027403 in B73 v4; 4.45 Mb, in a window with −log10 p 5.8). In a maize panel, Wang et al. (2026) found a chr1 segment (v4 4,418,001–4,420,000 bp) both by GWAS for days to silking and days to tasseling and by a genetic-differentiation scan between subpopulations (Fst 0.53), and listed its seven genes, including this one, among 41 flowering-time candidates (their Table 2). In the same segment they point to a NAC transcription factor (*NAC78*, Zm00001d027395) and a histone H4 gene (Zm00001d027394). *Fine-mapping (3.4.3): PIP 0.050 (highest window 0.09); in the 95% credible set, but outside the top windows (3.9–4.8 Mb, 29 genes).*
 - **Q8, chr4 206.2 Mb:** Zm00001eb201580 (*ZmFKF1b*, *FLAVIN-BINDING, KELCH REPEAT, F-BOX 1b*; Zm00001d053091 in B73 v4; 216.2 Mb, in a window with −log10 p 4.2). The gene is 10 Mb from the top window but inside the support interval (202.3–226.0 Mb). FKF1 is a blue-light receptor whose expression follows the circadian clock. It has a light-sensing LOV domain, an F-box (which lets it tag proteins for breakdown) and Kelch repeats. In *Arabidopsis* it stabilizes CONSTANS (CO) and raises its expression (Sawa et al. 2007; Song et al. 2012), and CO switches on the florigen gene *FT* (Suárez-López et al. 2001). *Fine-mapping (3.4.3): PIP 0.004 (highest window 0.02); in the 95% credible set, but outside the top windows (206.2–218.4 Mb, 82 genes).* Chen et al. (2024) showed that the maize copy works in the same pathway:
   - CRISPR knockouts of *ZmFKF1b*, and of its paralog *ZmFKF1a* (Zm00001d007445 in v4), each flowered significantly later than the wild type under short days, both for anthesis and for silking (Chen et al. 2024).
   - Both proteins bind ZmCONZ1 (the maize CO homolog) and ZmGI1 (GIGANTEA1), and both raise the expression of *ZmCONZ1* and of the maize florigen gene *ZCN8* (Chen et al. 2024).
   - *ZmFKF1b* lies in a known flowering-time QTL and in regions earlier found to be under selection, and its allele frequencies shifted during Chinese maize breeding from the 1960s–70s to the 1980s–90s (Chen et al. 2024).
   - **The link to geography:** the coding sequence has three main haplotypes. Hap_Z58 (as in the inbred Zheng58) is found mostly in temperate maize, at up to 92%. Hap_C7 (as in Chang7-2) is spread evenly over temperate and tropical maize. In an F2 population, plants with Hap_C7 flowered earlier, and Hap_C7 raised *ZmCONZ1* expression more. The authors propose that Hap_C7 suits a wider range of climate zones and could help adapt tropical maize to temperate regions (Chen et al. 2024).
 
-  In our lines the teosinte allele shortens ASI by 0.21 d per copy, and the taxa do not differ significantly (from −0.15 d in *mexicana* to −0.36 d in *diploperennis*; *luxurians* goes the other way, +0.52 d, but with only 6 carrier lines). At the *ZmFKF1b* window itself the signal is for ASI (−log10 p 4.2), not for DTS (0.5) or DTA (0.0). Our donors were collected from 80 to 2,713 m, in very different climates, and we asked (first model) whether this QTL's effect changes with the donor's environment: it does not change with elevation, annual mean temperature, minimum temperature of the coldest month, rainfall, rainfall seasonality, aridity or soil pH (all p ≥ 0.20; `old_scripts/34_env_tests.R`, results in `data/env/tests/B_qtl_effect_x_env.tsv`). So in our population the teosinte allele acts the same way wherever the donor came from. The k-mer data can't tell which *ZmFKF1b* haplotype each donor carries, so the haplotype–climate link of Chen et al. (2024) can't be tested here.
+  In our lines the teosinte allele shortens ASI by 0.21 d per copy, and the taxa do not differ significantly (from −0.15 d in *mexicana* to −0.36 d in *diploperennis*; *luxurians* goes the other way, +0.52 d, but with only 6 carrier lines). At the *ZmFKF1b* window itself the signal is for ASI (−log10 p 4.2), not for DTS (0.5) or DTA (0.0). Our donors were collected from 80 to 2,713 m, in very different climates, and we asked (with the earlier version's calls, [`old_model_README.md`](old_model_README.md)) whether this QTL's effect changes with the donor's environment: it does not change with elevation, annual mean temperature, minimum temperature of the coldest month, rainfall, rainfall seasonality, aridity or soil pH (all p ≥ 0.20; `old_scripts/34_env_tests.R`, results in `data/env/tests/B_qtl_effect_x_env.tsv`). So in our population the teosinte allele acts the same way wherever the donor came from. The k-mer data can't tell which *ZmFKF1b* haplotype each donor carries, so the haplotype–climate link of Chen et al. (2024) can't be tested here.
 - **Q2, chr2 26.1 Mb:** Zm00001eb076990 (*ckx12*, cytokinin oxidase/dehydrogenase 12; Zm00001d002989 in B73 v4; 29.06 Mb, in a window with −log10 p 6.3). CKX enzymes break down cytokinin, the hormone that keeps meristem cells dividing; in rice, lower expression of the homolog *OsCKX2* (*Gn1a*) lets cytokinin build up in the inflorescence meristem and increases grain number (Ashikari et al. 2005). *Fine-mapping (3.4.3): PIP 0.012 (highest window 0.05); in the 95% credible set, but outside the top windows (25.3–28.2 Mb, 33 genes).* Ni et al. (2024) mapped kernel row number in an advanced backcross of a two-rowed *mexicana* teosinte (MT1, donor) into the inbred Mo17:
   - The chr2 short-arm QTL *qKRN2* split into two closely linked QTL, *qKRN2-1* (fine-mapped to 272 kb) and *qKRN2-2* (775 kb), which explain 33.5% and 35.3% of the variance in kernel row number in their populations. The Mo17 alleles add about 1.4 and 1.2 rows (Ni et al. 2024).
   - Of the genes in the *qKRN2-1* interval, Zm00001d002989 (this gene) was expressed 3.7 times more in young ears (3–4 mm) of the line carrying the teosinte allele than in the line carrying the Mo17 allele. RNA in situ hybridization placed its expression in the primordia of the inflorescence meristem and of the spikelet-pair meristems, which set the number of kernel rows. They propose it as the causal gene: more CKX means less cytokinin, fewer spikelet-pair meristems and fewer rows (Ni et al. 2024).
 
   In our lines the teosinte allele at Q2 shortens ASI by 0.16 d per copy, and the taxa do not differ significantly. Why a gene acting in the developing ear would change ASI isn't known; we did not score kernel row number. The same interval also holds EH Q1 (+2.06 cm), and Prolif Q4–Q5 lie on either side of it (see [Regions shared between traits](#3613-regions-shared-between-traits)).
-- **No longer a QTL of its own: chr4 52.0 Mb, Zm00001eb175150 (*tga1*, *teosinte glume architecture1*; 46.65 Mb).** In the first model this was ASI Q9 (joint −log10 p 3.0). The scan signal is still there (−log10 p 6.1 at *tga1*'s window and at 52.0 Mb), but chr4 is significant over a long stretch, and its lead is now at 67.0 Mb (Q7, interval 65.0–71.3 Mb), which does not include *tga1*; the conditional scan does not add a second QTL at 52 Mb. *tga1* is a classic maize domestication gene: it is the reason maize kernels are naked, while teosinte kernels are sealed inside a hard fruitcase made of a hardened glume and the rachis.
+- **Not a QTL of its own: chr4 52.0 Mb, Zm00001eb175150 (*tga1*, *teosinte glume architecture1*; 46.65 Mb).** The scan signal is there (−log10 p 6.1 at *tga1*'s window and at 52.0 Mb), but chr4 is significant over a long stretch, and its lead is at 67.0 Mb (Q7, interval 65.0–71.3 Mb), which does not include *tga1*; the conditional scan does not add a second QTL at 52 Mb. *tga1* is a classic maize domestication gene: it is the reason maize kernels are naked, while teosinte kernels are sealed inside a hard fruitcase made of a hardened glume and the rachis.
   - *tga1* encodes an SBP-box transcription factor. Maize and teosinte differ at a single fixed site in the gene, which changes one amino acid (Lys in teosinte, Asn in maize). This change turns maize TGA1 into a transcriptional repressor. Both forms bind the same GTAC motif in DNA, but the maize form makes more stable dimers. Because it is the only fixed difference, it is most likely the change that made naked kernels (Wang H et al. 2015).
   - TGA1 sits in a gene network with the other big domestication gene, *teosinte branched1* (*tb1*): TB1 binds the *tga1* promoter and activates it. TGA1 in turn regulates MADS-box genes, a family that sets the identity of floral and inflorescence organs: of eight tested, five were expressed more in immature ears with the teosinte allele of *tga1*, and TGA1 bound the promoters of five. One of them is *zmm19*, the *Tunicate* locus, whose overexpression makes the glumes grow around each kernel. Several genes in the network show signatures of selection during domestication (Studer et al. 2017).
 
-  Since the Lys/Asn difference is fixed between maize and teosinte, every donor tract at *tga1* should carry the teosinte allele. In the first model, the teosinte segment shortened ASI by 0.24 d per copy. How *tga1* would change ASI isn't known: it acts in the developing ear, so the effect could come through ear development. Whether the chr4 signal is one QTL (at 67 Mb) or two (also near *tga1*) is not resolved by our data.
-- **Not in a QTL interval in this model:** Zm00001eb132420 (*LNK2*, a circadian clock gene) was in a chr3 QTL of the first model that did not hold.
+  Since the Lys/Asn difference is fixed between maize and teosinte, every donor tract at *tga1* should carry the teosinte allele. How *tga1* would change ASI isn't known: it acts in the developing ear, so the effect could come through ear development. Whether the chr4 signal is one QTL (at 67 Mb) or two (also near *tga1*) is not resolved by our data.
 
 The chr3 95.8 Mb peak (−log10 p 4.9) lies inside the chr3 108.3 Mb region (93.8–121.6 Mb), and the conditional scan does not add it.
 
@@ -1705,7 +1702,7 @@ Bonferroni over the 10 QTL: −log10 p > 2.30 (bold). Top windows: the fewest wi
 
 ![NBR: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_NBR.png)
 
-Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20). The first model had 4 holding; chr10 98.2 Mb and chr8 126.2 Mb are the same, chr9 4.2 Mb is new, and chr1 260.8 Mb (2.1) and chr9 140 Mb no longer hold.
+Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
@@ -1774,12 +1771,12 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
 
   The current B73 v5 annotation lists the gene as uncharacterized (protein family: SICKLE).
 
-  In our lines the teosinte allele adds 0.18 brace-root nodes per copy (joint −log10 p 9.4), and the effect differs between taxa: +0.29 in *diploperennis*, +0.23 in *parviglumis* and +0.08 in *mexicana* (in the first model *diploperennis* was the smallest, +0.05).
+  In our lines the teosinte allele adds 0.18 brace-root nodes per copy (joint −log10 p 9.4), and the effect differs between taxa: +0.29 in *diploperennis*, +0.23 in *parviglumis* and +0.08 in *mexicana*.
 
   **Is this just flowering time?** The QTL is 2 Mb from *ZmCCT10* (Zm00001eb418700, 96.18 Mb), whose teosinte allele delays flowering (Hung et al. 2012; here DTS Q2, DTA Q6), and a later-flowering plant can make more nodes. Two results argue against that:
   - NBR is hardly correlated with flowering time in our lines (r = 0.10 with DTS, 0.11 with DTA). In a linear model with taxon (1,243 pools), adding DTS as a covariate barely changes the Q8 effect (+0.18 → +0.16 nodes per copy, p = 5 × 10⁻⁸). Adding DTS, DTA and plant height together lowers it to +0.11 (p = 2 × 10⁻⁴), mostly because of plant height (r = 0.34 with NBR), which has its own QTL in this region (PH Q15).
   - The flowering effect of this region is the same in all taxa (DTS Q2: taxa differ −log10 p 1.0), but the NBR effect differs between taxa (2.7).
-  - The position no longer helps: in this model the DTS peak is at 97.8 Mb, 0.5 Mb from the NBR peak (3.7 Mb in the first model).
+  - The position does not help: the DTS peak is at 97.8 Mb, 0.5 Mb from the NBR peak.
   - **Fine-mapping does not favour this gene.** Its window has PIP 0.003 and lies outside the 95% credible set; the QTL's probability is spread over 98.0–99.4 Mb (highest window 0.05; 27 genes in the top windows, listed with `in_top_windows = yes` in `data/introgression_fix1/qtl_genes/NBR_qtl_genes.tsv`). This lowers the support from our own data, but does not remove the gene: the case for it comes from the brace-root GWAS of Sun et al. (2022), not from the position of our peak, and a low PIP does not rule a gene out (section 3.4.3). The genes in the top windows are equally worth a look.
 
   So the brace-root effect is not explained by flowering time. Our tracts are too long to separate Zm00001eb418930 from *ZmCCT10*, though: only 1 of the 1,243 pools has a different state at the two genes (117 carry a donor segment there). Script: `final_script/nbr_q8_flowering_check.py`; output `data/introgression_fix1/checks/nbr_q8.txt`.
@@ -1802,7 +1799,7 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
 
   Scripts: `final_script/36_qtl_env.py` (dosage × environment per QTL), `36b_qtl_env_accession.py` (per accession), `36c_monthly_climate.R` (monthly WorldClim per accession → `data/env/BZea_accession_monthly.csv`), `36d_month_profile.py` (month by month), `36e_qtl_rain_figure.py` (the figure). Their run commands are in each script's header.
 
-The five chr1 peaks (all with negative effects) share their signal and do not hold individually. **Q4 chr1 219.8 Mb** has no overall effect but differs between taxa (joint −log10 p 0.2, taxa differ 2.5: *luxurians* carriers have fewer brace-root nodes, −0.86). *ZmD14* (Zm00001eb007670) is in the interval of Q2 (chr1 23.9 Mb; joint 1.8, taxa differ 1.9), which does not hold. The first model's chr10 25.4 Mb QTL (only *diploperennis* carriers, taxa differ 6.1) is not among this model's peaks.
+The five chr1 peaks (all with negative effects) share their signal and do not hold individually. **Q4 chr1 219.8 Mb** has no overall effect but differs between taxa (joint −log10 p 0.2, taxa differ 2.5: *luxurians* carriers have fewer brace-root nodes, −0.86). *ZmD14* (Zm00001eb007670) is in the interval of Q2 (chr1 23.9 Mb; joint 1.8, taxa differ 1.9), which does not hold.
 
 <details><summary>All NBR QTL with per-taxon effects and all genes in the interval</summary>
 
@@ -1825,7 +1822,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
 
 ![SPAD: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_SPAD2.png)
 
-SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The meter reads how green the leaf is, a proxy for its chlorophyll; at this stage the leaves begin to senesce, so a high value means the leaf keeps its chlorophyll longer (stay-green), and nitrogen moving out of the leaf to the grain lowers it. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20). The first model had 4: chr10 148 Mb, chr7 123 Mb and chr9 (now at 96.8 Mb) are the same; chr1 148.6 Mb no longer holds (below).
+SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The meter reads how green the leaf is, a proxy for its chlorophyll; at this stage the leaves begin to senesce, so a high value means the leaf keeps its chlorophyll longer (stay-green), and nitrogen moving out of the leaf to the grain lowers it. 8 regions, 3 hold (Bonferroni over 8: −log10 p > 2.20).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
@@ -1839,7 +1836,7 @@ SPAD is the SPAD-meter reading 36 days after silking (2023 only; H2 0.40). The m
   - Second candidate: Zm00001eb432850 (chlorophyll a/b-binding protein, chloroplastic; 148.97 Mb, window 4.0). Chlorophyll a/b-binding (light-harvesting) proteins hold most of the leaf's chlorophyll in the antenna of photosystem II, so more of them means more chlorophyll per leaf area, which is what the SPAD meter reads. *Fine-mapping (3.4.3): PIP 0.040; in the top windows (148.2–149.5 Mb, 52 genes).*
 - **The same region in predicted leaf nitrogen.** The end of chr10 is also the best region for leaf nitrogen predicted from leaf spectra (PredN, 2025; top window 146.85 Mb, inside the Q8 interval; −log10 p 2.8, below its threshold of 4.23; see [Other traits](#3615-other-traits)). As for SPAD, the teosinte allele goes up there.
 - **Q6, chr7 123.3 Mb:** Zm00001eb313460 (senescence-associated protein; 123.47 Mb, −log10 p 4.5, next to the top window). The teosinte allele makes leaves less green (−2.98 per copy). *Fine-mapping (3.4.3): PIP 0.039; in the top windows (122.2–126.2 Mb, 56 genes).*
-- **chr1: strong in the scan, but no QTL holds.** Much of chr1 from 35 to 164 Mb is above the scan threshold, all with the teosinte allele making leaves less green (−1.5 to −3.7 per copy). The joint model splits it into five QTL (Q1–Q5) that share tracts, and none holds on its own (joint −log10 p 0.0–1.4). In the first model, one of them (chr1 148.6 Mb, interval 144.5–163.4 Mb) held just above its cut (2.4 against 2.08); here that stretch is outside every QTL interval (its windows are at −log10 p 4.4–5.7, median 4.8). Four genes there act on chlorophyll, photosynthesis or amino-acid recycling; they are candidates for the chr1 signal as a whole, not for a QTL that holds:
+- **chr1: strong in the scan, but no QTL holds.** Much of chr1 from 35 to 164 Mb is above the scan threshold, all with the teosinte allele making leaves less green (−1.5 to −3.7 per copy). The joint model splits it into five QTL (Q1–Q5) that share tracts, and none holds on its own (joint −log10 p 0.0–1.4). The stretch around 148.6 Mb is outside every QTL interval (its windows are at −log10 p 4.4–5.7, median 4.8). Four genes there act on chlorophyll, photosynthesis or amino-acid recycling; they are candidates for the chr1 signal as a whole, not for a QTL that holds:
   - Zm00001eb027950 (*rccr1*, *red chlorophyll catabolite reductase1*; 144.52 Mb, window −log10 p 4.5), an enzyme of the pathway that breaks chlorophyll down during senescence. In the maize NAM population it is the candidate gene at a locus for the first principal component of leaf metabolites, a trait that correlates most with glutamate, chlorophyll a and malate (r = 0.74, 0.62 and 0.61); in a predicted protein-interaction network its cluster is enriched for chlorophyll breakdown (Poretsky et al. 2024).
   - Zm00001eb029690 (*bsd2*, *bundle sheath defective2*; 162.00 Mb, window 5.0), a chloroplast protein with a DnaJ-like zinc-finger domain that is needed for Rubisco. *bsd2* mutants have no detectable Rubisco although the *rbcL* mRNA is abundant and on polysomes, so BSD2 acts after translation; the mutant plants are pale green and their bundle-sheath chloroplasts are abnormal (Brutnell et al. 1999). Without Rubisco the mutant fixes no carbon, yet PEPC kinase and PEPC in the mesophyll are still activated by light, so that signal does not need a working Calvin cycle (Smith et al. 1998).
   - Zm00001eb028550 (*ppd1*, PsbP domain-containing protein1; 152.01 Mb, window 4.8). In *Arabidopsis*, PPD1 is a protein of the thylakoid lumen that is essential for photosynthetic growth: it helps assemble photosystem I, and RNAi lines lose assembled photosystem I in step with the loss of PPD1 (Roose et al. 2014). It is one of the known photosystem I assembly factors, with Ycf3, Ycf4, PYG7 and Y3IP1 (Li M et al. 2026).
@@ -1868,7 +1865,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
 
 ![PH: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_PH.png)
 
-15 regions, 10 hold in the joint model (Bonferroni over 15: −log10 p > 2.48). Effects are in cm per teosinte copy and alike across taxa (no "taxa differ" test passes). Seven of the first model's eight held QTL are found again (chr2, chr3, chr4, chr5 118 Mb, chr7, chr9, chr10 *ZmCCT10*); chr1 201.8 Mb is replaced by chr1 184.1 Mb (Q1, −3.83 cm), and two QTL are new: chr5 2.6 Mb (Q6, +3.05 cm; just below the threshold in the first model) and chr10 6.5 Mb (Q14, +3.27 cm, added by the conditional scan). The strongest are Q13 chr9 139.8 Mb (+4.64 cm, joint −log10 p 10.5) and Q12 chr7 137.8 Mb (below).
+15 regions, 10 hold in the joint model (Bonferroni over 15: −log10 p > 2.48). Effects are in cm per teosinte copy and alike across taxa (no "taxa differ" test passes). chr10 6.5 Mb (Q14, +3.27 cm) was added by the conditional scan. The strongest are Q13 chr9 139.8 Mb (+4.64 cm, joint −log10 p 10.5) and Q12 chr7 137.8 Mb (below).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
@@ -1878,7 +1875,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
 | **Q4 chr4 198.4 Mb** | Zm00001eb197430 (ns2) | 0.027 (**top**) | +4.05 cm | 2.8 | yes | 0.1 (no) | No significant difference between taxa (Zd +6.75, Zh +4.71, Zl +11.94, Zv +5.04, Zx +3.72). Same region as EH Q4, BL Q5 and SL Q3. |
 
 **Candidate genes:**
-- **Q12, chr7 137.8 Mb:** Zm00001eb316740 (*tsh4*, *tassel sheath4*; 138.54 Mb, in a window with −log10 p 9.9; the top window is at 137.75 Mb, −log10 p 10.5; in the first model it was at 139.05 Mb). *tsh4* encodes an SBP-box (SPL) transcription factor and is one of the genes that miR156 represses (the dominant *Corngrass1* mutant overexpresses miR156; Chuck et al. 2007, 2010). *Fine-mapping (3.4.3): PIP 0.017 (highest window 0.08); in the 95% credible set, but outside the top windows (137.5–139.1 Mb, 26 genes).* It works in the developing tassel and ear:
+- **Q12, chr7 137.8 Mb:** Zm00001eb316740 (*tsh4*, *tassel sheath4*; 138.54 Mb, in a window with −log10 p 9.9; the top window is at 137.75 Mb, −log10 p 10.5). *tsh4* encodes an SBP-box (SPL) transcription factor and is one of the genes that miR156 represses (the dominant *Corngrass1* mutant overexpresses miR156; Chuck et al. 2007, 2010). *Fine-mapping (3.4.3): PIP 0.017 (highest window 0.08); in the 95% credible set, but outside the top windows (137.5–139.1 Mb, 26 genes).* It works in the developing tassel and ear:
   - **It suppresses the bract and promotes branching.** In the maize inflorescence, each branch forms with a small leaf (the bract) below it, and that leaf normally stays tiny. In *tsh4* mutants the bracts grow out into leaves and the tassel has fewer branches. TSH4 binds the promoters of *tsh1* (a GATA zinc-finger gene) and *liguleless2* and keeps them on in the suppressed bract; *tsh1*, *tsh4* and *lg2* act together to keep bracts small and branch meristems indeterminate, i.e. growing into long branches (Xiao et al. 2022).
   - **It works with its two closest relatives.** *unbranched2* and *unbranched3* act redundantly with *tsh4*: the triple mutant makes very few tassel branches, more tillers, and up to twice as many leaves above the top ear, yet flowers at the same time as the wild type. The three genes slow the rate at which new side primordia form, so the meristem has time to renew its stem cells (Chuck et al. 2014).
   - **It responds to shade.** UB2, UB3 and TSH4 are hubs of a network of over 2,400 genes during early tassel development. Simulated shade makes tassels and ears develop early, but the *ub2 ub3* double mutant and the *tsh4* single mutant hardly respond; the three proteins directly regulate *barren inflorescence2* (*BIF2*, auxin signaling) and *ZmTCP30* (Kong et al. 2023).
@@ -1889,7 +1886,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
   - Zm00001eb316880 (*wakl38*, wall-associated receptor kinase-like 38; 138.94 Mb). It is one of 13 candidate genes for ear shank length from BSA-seq and RNA-seq in a cross of a long-shank (L135) and a short-shank (WL134) inbred: it lies in their chr7 QTL *qESL10* and is expressed more in the long-shank parent (An et al. 2026). The two parents also differ in plant height, but the gene's function has not been tested. *Fine-mapping (3.4.3): PIP 0.084 (the highest in the interval); in the top windows (26 genes).*
 
   **Does *tsh4* interact with *ra2* in our lines?** Since RA2 represses *tsh4*, we tested whether the teosinte segments at the two genes (PH Q3 and Q12) interact for plant height. With the pool state at each gene (B73 = 0, SEG = 0.5, DONOR = 1) and taxon as covariates, in an ordinary linear model on the PH BLUEs of 1,257 pools, each segment shortens plants on its own (*ra2* −3.4 cm and *tsh4* −4.9 cm per copy, both p < 10⁻⁴), and the interaction is not significant (p = 0.27). The 24 pools that carry both segments are 15.9 cm shorter than the 971 pools that carry neither, more than the two single effects added up (5.3 + 5.3 cm), but not significantly. So the two segments add up for plant height; with only 24 double carriers, the test can't rule out a modest interaction. Script: `final_script/ra2_tsh4_interaction.py`; output `data/introgression_fix1/checks/ra2_tsh4.txt`.
-- **Q3, chr3 13.2 Mb:** Zm00001eb123060 (*ra2*, *ramosa2*; 12.83 Mb, in a window with −log10 p 6.3; the top window is 0.4 Mb away). *ra2* encodes a LATERAL ORGAN BOUNDARY (LOB) domain transcription factor. *Fine-mapping (3.4.3): PIP 0.057 (highest window 0.09); in the top windows (12.8–13.5 Mb, 19 genes; 3 genes in the first model).* It is one of the three *ramosa* genes that keep the short branches of the maize inflorescence (the spikelet pairs) short:
+- **Q3, chr3 13.2 Mb:** Zm00001eb123060 (*ra2*, *ramosa2*; 12.83 Mb, in a window with −log10 p 6.3; the top window is 0.4 Mb away). *ra2* encodes a LATERAL ORGAN BOUNDARY (LOB) domain transcription factor. *Fine-mapping (3.4.3): PIP 0.057 (highest window 0.09); in the top windows (12.8–13.5 Mb, 19 genes).* It is one of the three *ramosa* genes that keep the short branches of the maize inflorescence (the spikelet pairs) short:
   - In *ra2* mutants, spikelet pairs are replaced by longer branches that carry single spikelets or groups of several spikelets, the tassel has more secondary branches, the branches stand more upright, and the ears branch. *ra2* is switched on briefly in the small group of cells that will become each new branch meristem of the tassel and the ear (long branches, spikelet pairs and spikelets), but not in the vegetative shoot meristem. It acts upstream of the other branching genes and is needed for normal expression of *ra1* (Bortiri et al. 2006).
   - Xie et al. (2023) showed how RA2 limits tassel branching: it binds the promoter of *tassel sheath4* (*TSH4*, Zm00001eb316740), an SBP-box gene that promotes branching, and represses it. CRISPR *ra2* knockouts had about four times as many tassel branches as the wild type, and plants overexpressing RA2 about half as many. The circadian clock protein ZmELF3.1 (Zm00001eb159890) binds both RA2 and ZmELF4.2 (Zm00001eb311850) and makes RA2 bind and repress *TSH4* more strongly; *Zmelf3.1* mutants flower later and have 28–57% more tassel branches (Xie et al. 2023). This links the flowering clock to tassel branching.
 
@@ -1900,7 +1897,7 @@ Bonferroni over the 8 QTL: −log10 p > 2.20 (bold). Top windows: the fewest win
 
   In our lines the teosinte allele at Q4 makes plants taller (+4.05 cm per copy; joint −log10 p 2.8; +3.7 to +11.9 cm in the five taxa). The same segment raises the ear (EH Q4, +3.15 cm, the strongest EH QTL), shortens the leaf blade (BL Q5, −1.20 cm) and lengthens the sheath (SL Q3). Loss of *ns2* shortens internodes, so a teosinte allele with more NS2 activity would fit taller plants, but we have no expression data to test this. *ns2* is 2.2 Mb from the PH top window, and the interval (194.5–201.4 Mb) holds 164 genes.
 
-The chr6 peaks (Q9–Q11), Q5 chr4 218.6 Mb and Q7 chr5 64.0 Mb (*td1*, Zm00001eb228140) lose their signal in the joint model. The chr5 2.6 Mb QTL (Q6), shared with EH (Q5) and SL (Q4), now holds, and its probability is concentrated: its best window (2.6–2.7 Mb) has PIP 0.53.
+The chr6 peaks (Q9–Q11), Q5 chr4 218.6 Mb and Q7 chr5 64.0 Mb (*td1*, Zm00001eb228140) lose their signal in the joint model. The chr5 2.6 Mb QTL (Q6), shared with EH (Q5) and SL (Q4), holds, and its probability is concentrated: its best window (2.6–2.7 Mb) has PIP 0.53.
 
 <details><summary>All PH QTL with per-taxon effects and all genes in the interval</summary>
 
@@ -1930,7 +1927,7 @@ Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest wi
 
 ![EH: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_EH.png)
 
-16 regions, 9 hold (Bonferroni over 16: −log10 p > 2.51). Ear height follows flowering: several QTL hold known flowering genes in their intervals. Six of the first model's seven held QTL are found again (chr2 25 Mb, chr3 13 Mb, chr4 197 Mb, chr5 2.6 Mb, chr7 184 Mb, chr8 126–129 Mb); chr7 124 Mb (Q8) no longer holds, and chr2 83.5 Mb, chr6 105 Mb and chr10 99.5 Mb (*ZmEMF1a*, just below the cut before) now hold.
+16 regions, 9 hold (Bonferroni over 16: −log10 p > 2.51). Ear height follows flowering: several QTL hold known flowering genes in their intervals.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
@@ -1938,7 +1935,7 @@ Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest wi
 | **Q11 chr8 129.2 Mb** | Zm00001eb353250 (ZCN8) | 0.016 (**top**) | +2.82 cm | 6.0 | yes | 0.3 (no) | No significant difference between taxa (Zd +2.22, Zh +5.38, Zl +1.48, Zv +2.98, Zx +2.41). *ZCN8* is the maize florigen (126.68 Mb, inside the interval 125.7–133.7 Mb). |
 | **Q10 chr7 184.4 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.018 (outside CS); 0.076 (**top**) | +2.15 cm | 5.7 | yes | 0.4 (no) | No significant difference between taxa (Zd +2.95, Zl −0.62, Zv +1.63, Zx +2.13). Same region as BL Q7. |
 | **Q3 chr3 13.2 Mb** | Zm00001eb123060 (ra2) | 0.047 (**top**) | −2.15 cm | 5.1 | yes | 1.8 (no) | No significant difference between taxa (Zd −5.33, Zh +0.25, Zl +0.11, Zv −3.38, Zx −1.22). Same window as PH Q3. |
-| **Q1 chr2 25.4 Mb** | — | 0.024 (best window) | +2.06 cm | 5.0 | yes | 1.3 (no) | Higher ears (Zh +2.15, Zv +2.18, Zx +2.73; Zd −1.09). *ckx12* and *GA2ox2* (29.1–29.3 Mb), in this QTL's interval in the first model, are now just outside it (16.2–28.7 Mb). |
+| **Q1 chr2 25.4 Mb** | — | 0.024 (best window) | +2.06 cm | 5.0 | yes | 1.3 (no) | Higher ears (Zh +2.15, Zv +2.18, Zx +2.73; Zd −1.09). *ckx12* and *GA2ox2* (29.1–29.3 Mb) are just outside its interval (16.2–28.7 Mb). |
 | **Q5 chr5 2.6 Mb** | — | 0.244 (best window) | +2.06 cm | 4.5 | yes | 0.6 (no) | Higher ears in every taxon. Same region as PH Q6 and SL Q4. |
 | **Q2 chr2 83.5 Mb** | — | 0.010 (best window) | +1.55 cm | 2.7 | no | 0.6 (no) | Wide interval (79.6–98.4 Mb). |
 | **Q7 chr6 105.0 Mb** | — | 0.078 (best window) | +2.26 cm | 2.6 | yes | 3.2 (yes) | The only QTL where taxa differ: *parviglumis* +6.64 cm and *diploperennis* +3.61 cm, *luxurians* −2.81 cm. |
@@ -1952,7 +1949,7 @@ Not held: Q12 chr9 116.8 Mb (+1.57 cm, joint −log10 p 2.1; *ZmCCT9*, Zm00001eb
 - **The link to ear height:** besides small kernels, *sks1* plants are significantly shorter, with **lower ears**, shorter internodes and a shorter tassel spindle (Li et al. 2026).
 - Its paralog *ZmEMF1b* (Zm00001d010894, on chr8) is expressed mostly in tassels (Li et al. 2026).
 
-In our lines the teosinte segment raises the ear by 2.41 cm per copy at Q16 (joint −log10 p 2.6, just above the cut of 2.51; in the first model 2.5, just below), and every window from 89 to 100 Mb is significant for EH (−log10 p 6.0–7.2), so genes in the interval can't be told apart with our tract lengths. The interval also holds *ZmCCT10* (Zm00001eb418700, 96.18 Mb), the flowering gene behind DTS Q2, DTA Q6 and PH Q15, so later flowering may add to the ear-height effect; and two less-known genes: another EMF1-like protein (Zm00001eb418530, 95.20 Mb) and *mads85* (Zm00001eb417540, 89.03 Mb), related to rice *OsMADS87*, which controls seed size and heat sensitivity in young endosperm (Chen C et al. 2016).
+In our lines the teosinte segment raises the ear by 2.41 cm per copy at Q16 (joint −log10 p 2.6, just above the cut of 2.51), and every window from 89 to 100 Mb is significant for EH (−log10 p 6.0–7.2), so genes in the interval can't be told apart with our tract lengths. The interval also holds *ZmCCT10* (Zm00001eb418700, 96.18 Mb), the flowering gene behind DTS Q2, DTA Q6 and PH Q15, so later flowering may add to the ear-height effect; and two less-known genes: another EMF1-like protein (Zm00001eb418530, 95.20 Mb) and *mads85* (Zm00001eb417540, 89.03 Mb), related to rice *OsMADS87*, which controls seed size and heat sensitivity in young endosperm (Chen C et al. 2016).
 
 <details><summary>All EH QTL with per-taxon effects and all genes in the interval</summary>
 
@@ -1985,7 +1982,7 @@ Bonferroni over the 16 QTL: −log10 p > 2.51 (bold). Top windows: the fewest wi
 
 17 regions plus one QTL added by the conditional scans (Q9 chr4 183.6 Mb, marked "*"); 12 of the 18 hold (Bonferroni over 18: −log10 p > 2.56). EN counts the stem nodes that bear an ear. **Every QTL that holds is positive: teosinte alleles add ear-bearing nodes**, as expected from teosinte, which bears ears at many nodes.
 
-The scan is almost the same as in the first model, but chr2, chr4 and chr7 are significant over long stretches, and within such a stretch the lead window can move between two nearly equal peaks. So several QTL sit at a different place than before: chr2 19.0 Mb (Q2; −log10 p 18.3, against 17.9 at the first model's 22.4 Mb), chr2 205.3 Mb (Q3; first model 202.4 Mb), chr4 119.3 Mb and 183.6 Mb (Q8, Q9; first model 120.2 and 167.0 Mb, which still has −log10 p 14.6 in the scan) and chr7 165.3 Mb (Q12; first model 143.6 Mb, still 10.1 in the scan). The QTL at chr1 22.9 Mb (Q1), chr6 96 and 173 Mb (Q10, Q11), chr8 36.7 Mb (Q13) and chr10 148.6 Mb (Q18; first model 144.0 Mb) are the same or close.
+chr2, chr4 and chr7 are significant over long stretches, and within such a stretch two peaks can be nearly equal, so the lead window is not a precise position: chr2 22.4 Mb (−log10 p 17.9, next to Q2 at 19.0 Mb, 18.3), chr4 167.0 Mb (14.6, between Q8 and Q9) and chr7 143.6 Mb (10.1, next to Q12 at 165.3 Mb) are nearly as strong as the leads.
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
@@ -1994,7 +1991,7 @@ The scan is almost the same as in the first model, but chr2, chr4 and chr7 are s
 | **Q3 chr2 205.3 Mb** | — | 0.23 (best window) | +0.16 | 15.1 | yes | 3.5 (yes) | Differs between taxa: *parviglumis* +0.22 and *mexicana* +0.19, *diploperennis* −0.09, *luxurians* +0.02. Same window as Prolif Q6. |
 | **Q12 chr7 165.3 Mb** | — | 0.19 (best window) | +0.15 | 11.2 | moved (chr7 143.1) | 0.5 (no) | Alike in the taxa (Zd +0.11, Zv +0.16, Zx +0.16). Next to the ASI Q10 peak (165.6 Mb). |
 
-Not holding: Q4 chr3 12.4 Mb (+0.07, joint 1.4) holds *ra2* (Zm00001eb123060). *Rap2.7* (Zm00001eb355240) and *lg4a* (Zm00001eb354880), in a chr8 QTL of the first model that did not hold, and the clock-coupling gene *ZGT* (Zm00001eb020350; first model's chr1 81.3 Mb QTL) are not in any QTL interval in this model.
+Not holding: Q4 chr3 12.4 Mb (+0.07, joint 1.4) holds *ra2* (Zm00001eb123060). *Rap2.7* (Zm00001eb355240), *lg4a* (Zm00001eb354880) and the clock-coupling gene *ZGT* (Zm00001eb020350) are not in any QTL interval.
 
 <details><summary>All EN QTL with per-taxon effects and all genes in the interval</summary>
 
@@ -2027,15 +2024,15 @@ Bonferroni over the 18 QTL: −log10 p > 2.56 (bold). Top windows: the fewest wi
 
 ![Prolif: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_Prolif.png)
 
-13 regions plus two QTL added by the conditional scans (Q5 chr2 34.4 Mb and Q11 chr4 114.3 Mb, marked "*"); 9 of the 15 hold (Bonferroni over 15: −log10 p > 2.48). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN, all positive** (teosinte adds ears per node): the same loci raise both the number of ear-bearing nodes and the number of ears per node. Eight of the first model's ten held QTL are found again; chr7 142.3 Mb no longer holds (1.4), and the first model's chr2 191.3 Mb QTL is now at chr2 205.2 Mb (Q6), the same window as EN Q3 (chr2 is significant from 101 to 220 Mb, and the lead moved between two nearly equal peaks; 191.3 Mb still has −log10 p 11.3 in the scan).
+13 regions plus two QTL added by the conditional scans (Q5 chr2 34.4 Mb and Q11 chr4 114.3 Mb, marked "*"); 9 of the 15 hold (Bonferroni over 15: −log10 p > 2.48). Prolificacy is the largest number of ears on a single node (teosinte clusters several ears per node). **Largely the same loci as EN, all positive** (teosinte adds ears per node): the same loci raise both the number of ear-bearing nodes and the number of ears per node. Q6 (chr2 205.2 Mb) is the same window as EN Q3; chr2 is significant from 101 to 220 Mb, and 191.3 Mb, nearly as strong (−log10 p 11.3), is another candidate position. chr7 142.3 Mb does not hold (1.4).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
 | **Q1 chr1 23.2 Mb** | — | 0.57 (best window; top windows 23.2–23.3 Mb, 2 genes) | +0.20 | 16.2 | yes | 1.0 (no) | The strongest QTL (scan 19.4); the same peak as EN Q1. Fine-mapping puts more than half of the probability on one window. |
 | **Q7 chr3 11.4 Mb** | Zm00001eb122680 (CYP734A6) | 0.158 (**top**) | +0.15 | 12.0 | yes | 0.4 (no) | No significant difference between taxa (Zd +0.18, Zh +0.12, Zl +0.08, Zv +0.23, Zx +0.12). |
-| **Q4 chr2 9.2 Mb** | — | 0.07 (best window) | +0.08 | 5.4 | yes | 0.7 (no) | No significant difference between taxa (Zd +0.11, Zh +0.13, Zl +0.12, Zv +0.03, Zx +0.06). Its interval (6.5–9.8 Mb) no longer reaches *ckx12* and *GA2ox2*. |
+| **Q4 chr2 9.2 Mb** | — | 0.07 (best window) | +0.08 | 5.4 | yes | 0.7 (no) | No significant difference between taxa (Zd +0.11, Zh +0.13, Zl +0.12, Zv +0.03, Zx +0.06). Its interval (6.5–9.8 Mb) does not reach *ckx12* and *GA2ox2*. |
 | **Q5 chr2 34.4 Mb** (added) | Zm00001eb076990 (ckx12); Zm00001eb077080 (GA2ox2) | 0.001 (outside CS); <0.001 (outside CS) | +0.08 | 5.0 | moved (chr2 9.2) | 0.7 (no) | No significant difference between taxa (Zd +0.06, Zl +0.01, Zv +0.13, Zx +0.10). Added by the conditional scan: a second QTL on the chr2 short arm; its 29.7-Mb interval has no credible set. |
-| **Q3 chr1 214.1 Mb** | Zm00001eb040280 (CKX10) | 0.010 (CS) | +0.12 | 6.2 | yes | 0.6 (no) | No significant difference between taxa (Zd +0.05, Zh −0.09, Zl +0.02, Zv +0.13, Zx +0.15). *CKX10* is a cytokinin oxidase. Stronger than in the first model (joint 3.1). |
+| **Q3 chr1 214.1 Mb** | Zm00001eb040280 (CKX10) | 0.010 (CS) | +0.12 | 6.2 | yes | 0.6 (no) | No significant difference between taxa (Zd +0.05, Zh −0.09, Zl +0.02, Zv +0.13, Zx +0.15). *CKX10* is a cytokinin oxidase. |
 
 The other held QTL are Q6 chr2 205.2 Mb (+0.12; taxa differ 3.5: mostly *mexicana*), Q11 chr4 114.3 Mb (+0.14, added by the conditional scan), Q12 chr4 171.3 Mb (+0.15) and Q15 chr9 32.0 Mb (+0.09).
 
@@ -2067,7 +2064,7 @@ Bonferroni over the 15 QTL: −log10 p > 2.48 (bold). Top windows: the fewest wi
 
 ![SL: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_SL.png)
 
-13 regions, 11 hold (Bonferroni over 13: −log10 p > 2.41; 12 in the first model, where chr5 92 Mb and chr10 151 Mb held; chr5 161.8 Mb is new here). Sheath length shares several regions with plant height, as expected: the sheath wraps the internode, and longer internodes make both taller plants and longer sheaths.
+13 regions, 11 hold (Bonferroni over 13: −log10 p > 2.41). Sheath length shares several regions with plant height, as expected: the sheath wraps the internode, and longer internodes make both taller plants and longer sheaths.
 
 <details><summary>All SL QTL with per-taxon effects and all genes in the interval</summary>
 
@@ -2095,16 +2092,16 @@ Bonferroni over the 13 QTL: −log10 p > 2.41 (bold). Top windows: the fewest wi
 
 ![BL: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_BL.png)
 
-6 regions plus one QTL added by the conditional scans (Q1 chr2 9.2 Mb, marked "*"); 6 of the 7 hold (Bonferroni over 7: −log10 p > 2.15). **chr2 has two QTL** (Q1 and Q2), which were one region in the scan. The six held QTL are those of the first model plus chr3 184.4 Mb (Q3, just below the cut before), with chr4 238.3 Mb not holding (1.3).
+6 regions plus one QTL added by the conditional scans (Q1 chr2 9.2 Mb, marked "*"); 6 of the 7 hold (Bonferroni over 7: −log10 p > 2.15). **chr2 has two QTL** (Q1 and Q2), which were one region in the scan. chr4 238.3 Mb does not hold (1.3).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
-| **Q2 chr2 35.1 Mb** | — | 0.20 (best window; top windows 35.0–35.3 Mb, 9 genes) | −1.52 | 7.8 | yes | 2.0 (no) | No significant difference between taxa (Zd −0.71, Zl +1.59, Zv −1.57, Zx −1.93). Not in *luxurians*. The peak moved from 39.8 Mb (first model; still −log10 p 10.4 in the scan), so *FT-INTERACTING PROTEIN 1* (Zm00001eb079900, 40.14 Mb) is no longer in the interval (34.7–36.0 Mb). |
+| **Q2 chr2 35.1 Mb** | — | 0.20 (best window; top windows 35.0–35.3 Mb, 9 genes) | −1.52 | 7.8 | yes | 2.0 (no) | No significant difference between taxa (Zd −0.71, Zl +1.59, Zv −1.57, Zx −1.93). Not in *luxurians*. 39.8 Mb also has −log10 p 10.4 in the scan, but *FT-INTERACTING PROTEIN 1* (Zm00001eb079900, 40.14 Mb) is outside the interval (34.7–36.0 Mb). |
 | **Q1 chr2 9.2 Mb** (added) | — | 0.07 (best window; no credible set) | −1.35 | 6.8 | yes | 0.0 (no) | Shorter blades in every taxon (Zd −1.76, Zh −1.31, Zl −2.90, Zv −1.40, Zx −1.04). |
 | **Q7 chr7 185.2 Mb** | Zm00001eb331630 (PRR37-like); Zm00001eb331880 (dlf1) | 0.021 (CS); 0.066 (**top**) | −1.19 | 4.9 | yes | 1.0 (no) | No significant difference between taxa (Zd −0.05, Zl +0.51, Zv −1.49, Zx −1.62). Same region as EH Q10. |
 | **Q5 chr4 198.1 Mb** | Zm00001eb197430 (ns2) | 0.019 (**top**) | −1.20 | 2.8 | yes | 0.1 (no) | The PH/EH/SL chr4 region (Zd +2.12, Zh −2.91, Zl +0.93, Zv −0.03, Zx −1.80). |
 | **Q4 chr3 204.2 Mb** | Zm00001eb153000 (CCD8); Zm00001eb153190 (ZCN12) | 0.011 (CS); 0.015 (**top**) | +0.92 | 2.2 | yes | 0.4 (no) | No significant difference between taxa (Zd +0.78, Zh +0.39, Zl +0.04, Zv +0.90, Zx +1.22). |
-| **Q3 chr3 184.4 Mb** | — | 0.06 (best window) | +0.94 | 2.1 | no | 0.7 (no) | Longer blades; holds just above the cut. *liguleless2* (Zm00001eb147220), named here in the first model, is outside this model's interval (182.9–185.8 Mb). |
+| **Q3 chr3 184.4 Mb** | — | 0.06 (best window) | +0.94 | 2.1 | no | 0.7 (no) | Longer blades; holds just above the cut. *liguleless2* (Zm00001eb147220) is outside the interval (182.9–185.8 Mb). |
 
 The chr4 238.3 Mb peak (Q6, −log10 p 4.9 in the scan) does not hold in the joint model (1.3): given chr4 198 Mb and the other QTL, it is not an independent QTL.
 
@@ -2128,7 +2125,7 @@ Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Top windows: the fewest win
 
 ![BW: k-mer ancestry GWAS and joint QTL model](figures/fix1/joint_qtl_BW.png)
 
-12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves. Five of the first model's six held QTL are found again (chr4 237.6 Mb, chr5 39–41 Mb, chr6 146.4 Mb, chr7 136 Mb, chr9 0.8–1.8 Mb); chr4 166.3 Mb does not hold (1.9, as before), and chr9 159.8 Mb and chr10 149.7 Mb are new.
+12 regions, 7 hold (Bonferroni over 12: −log10 p > 2.38). **All effects are negative: teosinte alleles make narrower leaf blades**, as expected from teosinte's narrow leaves. chr4 166.3 Mb does not hold (1.9).
 
 | QTL | Known genes | Fine-mapping PIP | Effect (joint) | Joint −log10 p | Stepwise | Taxa differ | What it says |
 |---|---|---|---|---|---|---|---|
@@ -2136,7 +2133,7 @@ Bonferroni over the 7 QTL: −log10 p > 2.15 (bold). Top windows: the fewest win
 | **Q5 chr6 146.4 Mb** | — | 0.06 (best window) | −0.28 | 7.8 | yes | 0.0 (no) | Alike in the taxa (Zd −0.25, Zv −0.28, Zx −0.31). |
 | **Q10 chr9 0.8 Mb** | — | 0.26 (best window, 0.7–0.9 Mb, no gene) | −0.24 | 6.9 | yes | 1.3 (no) | Mostly *mexicana* (Zx −0.34, Zd −0.15, Zv −0.06). |
 | **Q3 chr4 237.6 Mb** | — | 0.12 (best window) | −0.24 | 6.6 | yes | 0.0 (no) | Alike in the taxa (Zd −0.22, Zl −0.31, Zv −0.34, Zx −0.21). |
-| **Q6 chr7 135.7 Mb** | — | 0.07 (best window) | −0.18 | 4.7 | no | 0.3 (no) | Alike in the taxa (Zd −0.10, Zh −0.20, Zl −0.09, Zv −0.28, Zx −0.15). Its interval (130.7–136.3 Mb) no longer reaches *tsh4* (Zm00001eb316740, 138.54 Mb), which was in it in the first model. |
+| **Q6 chr7 135.7 Mb** | — | 0.07 (best window) | −0.18 | 4.7 | no | 0.3 (no) | Alike in the taxa (Zd −0.10, Zh −0.20, Zl −0.09, Zv −0.28, Zx −0.15). Its interval (130.7–136.3 Mb) does not reach *tsh4* (Zm00001eb316740, 138.54 Mb). |
 
 The other held QTL are Q11 chr9 159.8 Mb (−0.15) and Q12 chr10 149.7 Mb (−0.16); both have their probability on a few windows (best window PIP 0.28 and 0.30). The chr6 133.1 Mb peak (*fea4*, Zm00001eb280500; −log10 p 4.86) is above the threshold, but the scan puts it in the same significant region as chr6 146.4 Mb and does not make it a QTL of its own.
 
@@ -2182,7 +2179,7 @@ Bonferroni over the 12 QTL: −log10 p > 2.38 (bold). Top windows: the fewest wi
 | chr5 ~2–3 Mb | PH +, EH +, SL + | |
 | chr8 ~126–129 Mb | EH +, NBR + (DTA +, PH +, both below threshold) | Zm00001eb353250 (*ZCN8*) |
 | chr7 ~183–186 Mb | EH +, BL − (DTS + in 2025) | Zm00001eb331880 (*dlf1*), Zm00001eb331630 (PRR37-like) |
-| chr9 ~139–141 Mb | PH + (NBR + in the first model) | Zm00001eb397240 (*PRR73*) |
+| chr9 ~139–141 Mb | PH + | Zm00001eb397240 (*PRR73*) |
 
 All genes in every region, with their GO terms and the −log10 p of the window they lie in, are in `data/introgression_fix1/GO/genes_GO_all_<TRAIT>.tsv` (one file per trait).
 
@@ -2207,7 +2204,7 @@ The same two analyses were rerun with *mexicana* split into its four races (Chal
 **What changes:**
 - **The QTL are essentially the same.** Most differences are a peak moving by one or two windows (e.g. PH chr7 137.8 → 141.7 Mb, PH chr4 198.4 → 197.8 Mb) or a broad region being split differently at a slightly different threshold. The races run adds DTS chr1 84.5 Mb (joint −log10 p 5.1), which is DTA Q1 and suggestive for DTS in the taxon run. So splitting *mexicana* does not create or remove signals; treating it as one taxon was not hiding race-specific QTL.
 - **DTS / DTA chr5 221.8 Mb:** within *mexicana*, the effect comes from **Chalco** (+1.07 ± 0.41 d for DTS, 8 carrier plots); Mesa Central (+0.21), Nobogame (+0.19) and Durango (+0.09) are near zero. Chalco is the highland race (median 2,390 m). This is the same QTL where *luxurians* and *diploperennis* have the largest effects.
-- **DTA chr9 10.9 Mb** (teosinte flowers earlier; not holding in this model): Durango −0.70 d and Nobogame −0.68 d, Mesa Central −0.10, Chalco +0.15.
+- **DTA chr9 10.9 Mb** (teosinte flowers earlier; does not hold in the joint model): Durango −0.70 d and Nobogame −0.68 d, Mesa Central −0.10, Chalco +0.15.
 - ***ZmCCT10* (chr10 97.8 Mb):** all four races delay flowering (DTS: Durango +1.02, Chalco +0.95, Nobogame +0.94, Mesa Central +0.61 d).
 - **Caution:** a race has 6–40 carrier plots at a QTL, and Durango (3 accessions) and Nobogame (2) come from very few donor plants, so a race effect can be one accession's allele.
 

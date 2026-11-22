@@ -1392,6 +1392,32 @@ So **72 of the 81 QTL are also found by the stepwise model** (agreement between 
 
 **Why the joint model stays the main result:** with tracts tens of Mb long, the stepwise search places QTL less reliably. Its refinement step moves QTL tens of Mb along the same tract (the 4 above), and it can split one region into two neighbouring windows with large opposite effects that cancel out (PH and EH at chr10 99.5 and 101.5 Mb: +16.6 and −10.9 cm for PH; BW at chr8 60.0 and 61.6 Mb). The joint model keeps every QTL at its scan peak and reports, rather than silently drops, the ones that do not hold.
 
+**Check: is each QTL carried by many families, and does it show in both years?** (`final_script/39_qtl_families_years.R`; one row per QTL in `data/introgression_fix1/checks/qtl_families_years.tsv`). A large effect carried by one or two F1 families would rest on those families alone, whatever its p-value. For each of the 81 QTL that hold:
+- **Carriers:** accessions and F1 families with plots that carry teosinte at the QTL window, and the share of carrier plots in the largest family.
+- **Without the largest family:** the single-QTL effect (y ~ taxon + copies + kinship, as in the scan) with all plots of the largest carrier family left out, as a multiple of the effect with all plots.
+- **Families that agree:** in each F1 family with both carrier and non-carrier plots, carriers minus non-carriers; the share of families that differ in the direction of the QTL effect (50% if the QTL did nothing; single families are small and noisy, so 100% is not expected).
+- **Years:** the same model on each year's BLUEs alone: QTL with the same sign and p < 0.05 in that year. The years are the same lines in two fields, and the QTL were chosen on both years together, so this checks consistency, not independent replication.
+
+| Trait | QTL that hold | Carrier accessions | Carrier F1 families | Largest family's share of carriers (max) | Effect without the largest family (× all plots) | Families in the QTL's direction, median (range) | Same sign, p < 0.05: 2023 | 2025 |
+|---|---|---|---|---|---|---|---|---|
+| DTS | 2 | 49–57 | 55–61 | 8% | 0.93–1.05 | 66% (62–71%) | 2 of 2 | 2 of 2 |
+| DTA | 3 | 48–57 | 53–62 | 8% | 0.97–1.09 | 68% (57–72%) | 3 of 3 | 3 of 3 |
+| ASI | 6 | 40–57 | 44–67 | 8% | 0.91–1.03 | 73% (59–85%) | 6 of 6 | 6 of 6 |
+| NBR | 3 | 47–60 | 53–67 | 7% | 0.98–1.19 | 74% (66–75%) | 2 of 3 | 3 of 3 |
+| SPAD | 3 | 51–58 | 56–65 | 7% | 0.94–1.06 | 66% (61–70%) | 3 of 3 | – |
+| PH | 10 | 45–70 | 49–78 | 8% | 0.97–1.08 | 69% (56–81%) | 10 of 10 | 10 of 10 |
+| EH | 9 | 46–65 | 51–74 | 8% | 0.97–1.09 | 67% (56–80%) | 9 of 9 | 9 of 9 |
+| EN | 12 | 38–67 | 43–76 | 8% | 0.90–1.12 | 69% (57–77%) | 11 of 12 | 11 of 12 |
+| Prolif | 9 | 38–67 | 43–76 | 8% | 0.90–1.08 | 62% (51–67%) | 9 of 9 | 9 of 9 |
+| SL | 11 | 40–65 | 45–75 | 8% | 0.89–1.09 | 70% (63–76%) | 11 of 11 | – |
+| BL | 6 | 51–65 | 55–73 | 8% | 0.91–1.14 | 66% (59–76%) | 6 of 6 | – |
+| BW | 7 | 39–64 | 41–70 | 10% | 0.85–1.07 | 69% (61–78%) | 7 of 7 | – |
+| **All** | **81** | **38–70** | **41–78** | **10%** | **0.85–1.19** | **68% (51–85%)** | **79 of 81** | **53 of 54** |
+
+- **No QTL rests on one or two families.** Every QTL is carried by 38–70 accessions and 41–78 F1 families, the largest family holds at most 10% of the carriers, and leaving it out changes the effect by at most 15% (0.85–1.19 ×).
+- **Most families point the same way:** a median of 68% of families per QTL (lowest: Prolif Q4, 51%).
+- **The QTL show in both years:** 79 of 81 in 2023 and 53 of 54 in 2025 (SPAD, SL, BL and BW were measured only in 2023). Effects are about the same in 2023 and somewhat smaller in 2025 (median 0.83 × the two-year effect). The exceptions are weak in one year but have the same sign: NBR Q6 (2023: +0.06, p = 0.11; 2025: +0.12, p = 0.001), EN Q11 (2023: p = 0.11) and EN Q10 (2025: +0.04, p = 0.13; EN's heritability is lowest in 2025, 0.42).
+
 #### 3.4.2 Why some QTL show fewer taxa
 
 A per-taxon effect needs carriers: plots of that taxon with the teosinte allele at the QTL. Taxa with fewer than 5 carrier plots at a QTL get no estimate. For example, DTS Q2 (chr10) has carriers from Zd (23), Zv (24) and Zx (66) but only 4 from *huehuetenangensis* and 2 from *luxurians*, so those two are not shown. Which taxa carry a tract depends on where the backcrosses happened to keep donor segments.
@@ -1716,6 +1742,7 @@ Number of stem nodes that carry brace roots. 8 regions, 3 hold (Bonferroni over 
     - In the mixed model per group (step 38, `zcn8_by_taxon.tsv`), DTA and DTS are later in all five taxa and all four *mexicana* races, and NBR goes up in 7 of 8 groups (*mexicana* Nobogame −0.01, 2 accessions).
     - In the raw plot means (panels c, d) the one exception is *parviglumis* DTA (−0.18 days); its sibs, which share the same donor plant, show +0.53. The largest NBR effect is in *huehuetenangensis* (+0.54; sibs +0.71), from only 2 accessions.
     - So we see no sign of an early *ZCN8* allele among our donors.
+  - **By year:** +0.06 nodes per copy in 2023 (p = 0.11) and +0.12 in 2025 (p = 0.001): the same direction, significant in 2025 only (step 39, [3.4.1](#341-why-the-joint-model-starts-from-the-peaks-and-not-from-all-windows-at-once)).
   - **Within families:** sibs from the same BC2 plant with the segment have +0.21 more brace-root nodes than those without (83 families, Wilcoxon p = 0.006) and flower +0.35 days later (86 families, p = 0.19). So the NBR effect is not a background difference between plots; the flowering effect is too small to show up family by family.
   - **It is the mirror image of Lin et al. on the three traits both studies measured:**
 
